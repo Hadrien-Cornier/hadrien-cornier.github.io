@@ -25,7 +25,7 @@ In summer 2018 I did an AI internship at the french research agency CEA in the t
 I did a research internship in summer 2017 the BULL Quantum team in charge of the development of "AQASM", a operating system that mimics the behaviour of a quantum computer (running of course on a regular super computer, for now). I used Haskell to build a translator of Quipper programs into AQASM.
 
 ## Talks
-[Super Fast Streaming on Billions of Rows @AI+Data Austin,TX](https://www.youtube.com/watch?v=OpW7WJiGBkI)
+[Super Fast Streaming on Billions of Rows @AI+Data Austin,TX](https://www.youtube.com/watch?v=WKQL3tBR1jc)
 
 ## Skills
 Software :
