@@ -61,10 +61,21 @@
     <div class="profile-box">
         <img src="pic.jpeg" alt="Hadrien Cornier">
         <h2>Hadrien Cornier</h2>
-        <p><a href="URL_TO_YOUR_RESUME">Resume</a></p>
+        <p><a href="#" id="resumeLink">Resume</a></p>
         <p><a href="URL_TO_YOUR_BLOG">Blog</a></p>
+        <!-- Initially hidden iframe -->
+        <iframe id="resumeIframe" src="resume.pdf" width="100%" height="500px" style="display:none;"></iframe>
     </div>
 </div>
+
+<script>
+    document.getElementById('resumeLink').addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent the default link behavior
+        var iframe = document.getElementById('resumeIframe');
+        iframe.style.display = iframe.style.display === 'none' ? 'block' : 'none'; // Toggle display
+    });
+</script>
+
 
 </body>
 </html>
