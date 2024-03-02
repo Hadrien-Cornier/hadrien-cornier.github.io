@@ -19,7 +19,7 @@ System 2 thinking only allows you to allocate a finite amount of things in your 
 George Hotz sees the human machine intelligence question as a continuum. There is a computer in everyone of us and that computer runs on a flesh and bone biological stack instead of in a computer silicon stack. The stack is everything from the perception to the decision of action. 
 
 So in other words we reach higher and higher intelligence states by simply retaining more context. 
-For instance if we were able to process every previous impression of a job seeker along with the newest feature set at every point in the inference process, then we should logically be able to make even better decisions by reaching "system2" levels of cognition. 
+For instance if we were able to process every previous bit of data along with the newest feature set at every point in the inference process, then we should logically be able to make even better decisions by reaching "system2" levels of cognition. 
 
 
 
