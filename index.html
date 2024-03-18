@@ -3,79 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Name</title>
+    <title>Hadrien Cornier's Resume</title>
     <style>
         body, html {
             height: 100%;
             margin: 0;
-            font-family: Arial, sans-serif;
+            background: #000; /* Set background to black */
         }
-        .container {
-            position: relative;
+        iframe {
+            width: 100%;
             height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #ffffff;
-        }
-        .profile-box {
-            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-            transition: 0.3s;
-            width: 300px;
-            text-align: center;
-            background: #fff;
-            padding: 20px;
-            border-radius: 5px;
-        }
-        .profile-box img {
-            width: 100px;
-            border-radius: 50%;
-            margin-top: -50px;
-        }
-        .profile-box h2 {
-            margin: 0;
-        }
-        .profile-box p {
-            color: grey;
-            font-size: 16px;
-        }
-        .profile-box a {
-            text-decoration: none;
-            font-weight: bold;
-            color: #333;
-            padding: 8px 20px;
-            border: 1px solid #333;
-            border-radius: 5px;
-            display: inline-block;
-            margin: 10px 5px;
-        }
-        .profile-box a:hover {
-            background: #333;
-            color: #fff;
+            border: none; /* Remove border around iframe */
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="profile-box">
-        <img src="pic.jpeg" alt="Hadrien Cornier">
-        <h2>Hadrien Cornier</h2>
-        <p><a href="#" id="resumeLink">Resume</a></p>
-        <!-- <p><a href="URL_TO_YOUR_BLOG">Blog</a></p> -->
-        <!-- Initially hidden iframe -->
-        <iframe id="resumeIframe" src="out/resume.pdf" width="100%" height="500px" style="display:none;"></iframe>
-    </div>
-</div>
-
-<script>
-    document.getElementById('resumeLink').addEventListener('click', function(e) {
-        e.preventDefault(); // Prevent the default link behavior
-        var iframe = document.getElementById('resumeIframe');
-        iframe.style.display = iframe.style.display === 'none' ? 'block' : 'none'; // Toggle display
-    });
-</script>
-
+<iframe src="out/resume.pdf" width="100%" height="100%"></iframe>
 
 </body>
 </html>
