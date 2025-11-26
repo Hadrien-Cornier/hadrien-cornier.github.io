@@ -3,23 +3,367 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hadrien Cornier's Resume</title>
+    <title>Hadrien Cornier - Resume</title>
+    
+    <!-- AI-friendly meta tags -->
+    <meta name="description" content="Hadrien Cornier - Engineering Manager and Senior ML Engineer based in Austin, TX. Experience in machine learning, AI systems, distributed systems, and data engineering at Talroo, Augustus Intelligence, and more.">
+    <meta name="author" content="Hadrien Cornier">
+    <meta name="keywords" content="Hadrien Cornier, Machine Learning Engineer, Engineering Manager, ML, AI, Python, Spark, Data Engineering, Austin TX">
+    
+    <!-- Open Graph tags for social sharing and AI crawlers -->
+    <meta property="og:title" content="Hadrien Cornier - Resume">
+    <meta property="og:description" content="Engineering Manager and Senior ML Engineer with expertise in machine learning systems, distributed computing, and AI-powered job matching.">
+    <meta property="og:type" content="profile">
+    <meta property="og:url" content="https://hadrien-cornier.github.io/">
+    
+    <!-- Structured Data for AI and Search Engines -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Hadrien Cornier",
+        "jobTitle": "Engineering Manager",
+        "email": "hadrien.cornier@gmail.com",
+        "url": "https://hadrien-cornier.github.io/",
+        "sameAs": [
+            "https://linkedin.com/in/hadrien-cornier"
+        ],
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Austin",
+            "addressRegion": "TX",
+            "addressCountry": "US"
+        },
+        "alumniOf": [
+            {
+                "@type": "CollegeOrUniversity",
+                "name": "Columbia University",
+                "location": "New York City"
+            },
+            {
+                "@type": "CollegeOrUniversity",
+                "name": "École Polytechnique",
+                "location": "Palaiseau, France"
+            }
+        ],
+        "worksFor": {
+            "@type": "Organization",
+            "name": "Talroo",
+            "location": "Austin, TX"
+        },
+        "knowsAbout": [
+            "Machine Learning",
+            "Python",
+            "Spark",
+            "Research and Development",
+            "Data Engineering",
+            "Inference Optimization",
+            "Distributed Systems"
+        ]
+    }
+    </script>
+    
     <style>
-        body, html {
-            height: 100%;
+        /* Reset and base styles matching LaTeX output */
+        * {
             margin: 0;
-            background: #000; /* Set background to black */
+            padding: 0;
+            box-sizing: border-box;
         }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none; /* Remove border around iframe */
+        
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 9pt;
+            line-height: 1.3;
+            color: #000;
+            background: #fff;
+        }
+        
+        /* A4 page styling with LaTeX margins */
+        .resume-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 2.5cm 2cm;
+            background: #fff;
+        }
+        
+        /* Download button - positioned at top */
+        .download-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 14px;
+            z-index: 1000;
+            transition: background 0.2s;
+        }
+        
+        .download-btn:hover {
+            background: #555;
+        }
+        
+        @media print {
+            .download-btn {
+                display: none;
+            }
+        }
+        
+        /* Header - Name centered and large */
+        header {
+            text-align: center;
+            margin-bottom: 4mm;
+        }
+        
+        h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            margin-bottom: 2mm;
+        }
+        
+        .contact-info {
+            font-size: 9pt;
+        }
+        
+        .contact-info a {
+            color: #000;
+            text-decoration: none;
+        }
+        
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Section headers with rule underneath */
+        section {
+            margin-top: 4mm;
+        }
+        
+        h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            padding-bottom: 1mm;
+            border-bottom: 0.5pt solid #000;
+            margin-bottom: 2mm;
+        }
+        
+        /* Experience and Education entries */
+        .entry {
+            margin-bottom: 3mm;
+        }
+        
+        .entry-header {
+            position: relative;
+            padding-right: 150px;
+        }
+        
+        .entry-header-left {
+            display: inline;
+        }
+        
+        .entry-date {
+            position: absolute;
+            right: 0;
+            top: 0;
+            white-space: nowrap;
+        }
+        
+        .entry-title {
+            font-weight: bold;
+        }
+        
+        .entry-company {
+            font-weight: normal;
+        }
+        
+        .entry-location {
+            font-style: italic;
+        }
+        
+        .entry-description {
+            margin-top: 0.5mm;
+        }
+        
+        .entry-details {
+            margin-top: 0.5mm;
+            font-style: normal;
+        }
+        
+        /* Skills section */
+        .skills-list {
+            font-size: 9pt;
+        }
+        
+        /* Responsive adjustments for mobile */
+        @media screen and (max-width: 600px) {
+            .resume-container {
+                padding: 20px;
+            }
+            
+            .entry-header {
+                padding-right: 0;
+            }
+            
+            .entry-date {
+                position: static;
+                display: block;
+                text-align: left;
+                margin-top: 1mm;
+            }
+            
+            .download-btn {
+                position: static;
+                display: block;
+                text-align: center;
+                margin-bottom: 20px;
+            }
         }
     </style>
 </head>
 <body>
-
-<iframe src="out/resume.pdf" width="100%" height="100%"></iframe>
-
+    <a href="out/resume.pdf" download="Hadrien_Cornier_Resume.pdf" class="download-btn">Download Resume (PDF)</a>
+    
+    <article class="resume-container" itemscope itemtype="https://schema.org/Person">
+        <header>
+            <h1 itemprop="name">Hadrien Cornier</h1>
+            <p class="contact-info">
+                <span itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+                    <span itemprop="addressLocality">Austin</span>, <span itemprop="addressRegion">Texas</span>, <span itemprop="addressCountry">United States</span>
+                </span> | 
+                <a href="mailto:hadrien.cornier@gmail.com" itemprop="email">hadrien.cornier@gmail.com</a> | 
+                <a href="https://linkedin.com/in/hadrien-cornier" itemprop="sameAs">linkedin.com/in/hadrien-cornier</a>
+            </p>
+        </header>
+        
+        <section>
+            <h2>Experience</h2>
+            
+            <div class="entry" itemprop="worksFor" itemscope itemtype="https://schema.org/OrganizationRole">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="roleName">Engineering Manager</span>, <span class="entry-company" itemprop="memberOf" itemscope itemtype="https://schema.org/Organization"><span itemprop="name">Talroo</span></span>, <span class="entry-location">Austin, TX</span>
+                    </span>
+                    <span class="entry-date"><time itemprop="startDate" datetime="2025-01">Jan 2025</time> - Present</span>
+                </div>
+                <p class="entry-description" itemprop="description">Leading product engineering with cross-functional team including AI, Data, and Fullstack engineers. Managing hiring for all engineers. Managing publisher partnerships to expand distribution channels and drive growth.</p>
+            </div>
+            
+            <div class="entry" itemprop="hasOccupation" itemscope itemtype="https://schema.org/OrganizationRole">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="roleName">Senior ML Engineer</span>, <span class="entry-company">Talroo</span>, <span class="entry-location">Austin, TX</span>
+                    </span>
+                    <span class="entry-date"><time itemprop="startDate" datetime="2022-10">Oct 2022</time> - <time itemprop="endDate" datetime="2025-01">Jan 2025</time></span>
+                </div>
+                <p class="entry-description" itemprop="description">Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by 20%. Optimized ML system, saving $1M annually by reducing computational cost by 7x.</p>
+            </div>
+            
+            <div class="entry" itemprop="hasOccupation" itemscope itemtype="https://schema.org/OrganizationRole">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="roleName">ML Engineer</span>, <span class="entry-company">Talroo</span>, <span class="entry-location">Austin, TX</span>
+                    </span>
+                    <span class="entry-date"><time itemprop="startDate" datetime="2021-07">Jul 2021</time> - <time itemprop="endDate" datetime="2022-10">Oct 2022</time></span>
+                </div>
+                <p class="entry-description" itemprop="description">Worked on the AI powering hundreds of job boards in the US. Delivered millions in savings by decreasing latency by 25% and computational cost by 7x. Merged inference strategies into a single system, which improved CTR by 15%.</p>
+            </div>
+            
+            <div class="entry" itemprop="hasOccupation" itemscope itemtype="https://schema.org/OrganizationRole">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="roleName">ML Engineer</span>, <span class="entry-company">Augustus Intelligence</span>, <span class="entry-location">New York City</span>
+                    </span>
+                    <span class="entry-date"><time itemprop="startDate" datetime="2020-04">Apr 2020</time> - <time itemprop="endDate" datetime="2021-07">Jul 2021</time></span>
+                </div>
+                <p class="entry-description" itemprop="description">R&D for a Bayesian computer vision pipeline for visual industrial anomaly detection. Engineered full redesign for the control system of a network of thousands of sensors.</p>
+            </div>
+            
+            <div class="entry" itemprop="hasOccupation" itemscope itemtype="https://schema.org/OrganizationRole">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="roleName">ML Intern</span>, <span class="entry-company">Revelio Labs</span>, <span class="entry-location">New York City</span>
+                    </span>
+                    <span class="entry-date"><time itemprop="startDate" datetime="2019-06">Jun 2019</time> - <time itemprop="endDate" datetime="2019-08">Aug 2019</time></span>
+                </div>
+                <p class="entry-description" itemprop="description">Designed and deployed 2 models for company payroll estimation and resume value generating $150k in revenue. Decreased the average error rate by 50% through tuning.</p>
+            </div>
+            
+            <div class="entry" itemprop="hasOccupation" itemscope itemtype="https://schema.org/OrganizationRole">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="roleName">Summer Research Intern</span>, <span class="entry-company">Atos</span>, <span class="entry-location">Les Clayes-sous-Bois, France</span>
+                    </span>
+                    <span class="entry-date"><time itemprop="startDate" datetime="2017-04">Apr 2017</time> - <time itemprop="endDate" datetime="2017-09">Sep 2017</time></span>
+                </div>
+                <p class="entry-description" itemprop="description">Wrote a Haskell transpiler of Quipper into aQasm for the quantum computing team working on the Atos Quantum Learning Machine (Atos QLM), a quantum computer simulator.</p>
+            </div>
+            
+            <div class="entry" itemprop="hasOccupation" itemscope itemtype="https://schema.org/OrganizationRole">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="roleName">Officer Cadet</span>, <span class="entry-company">Gendarmerie Nationale</span>, <span class="entry-location">Ajaccio, Corsica</span>
+                    </span>
+                    <span class="entry-date"><time itemprop="startDate" datetime="2015-09">Sep 2015</time> - <time itemprop="endDate" datetime="2016-04">Apr 2016</time></span>
+                </div>
+                <p class="entry-description" itemprop="description">Assisted the regional commander with a report on organized crime.</p>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Education</h2>
+            
+            <div class="entry" itemprop="alumniOf" itemscope itemtype="https://schema.org/CollegeOrUniversity">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="name">Columbia University</span>, <span class="entry-location">New York City</span>
+                    </span>
+                    <span class="entry-date">2018 - 2019</span>
+                </div>
+                <p class="entry-details">Master of Science - MS, Data Science, Statistics, Machine Learning</p>
+            </div>
+            
+            <div class="entry" itemprop="alumniOf" itemscope itemtype="https://schema.org/CollegeOrUniversity">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="name">École Polytechnique</span>, <span class="entry-location">Palaiseau, France</span>
+                    </span>
+                    <span class="entry-date">2015 - 2019</span>
+                </div>
+                <p class="entry-details">Master of Science - MS, Computer Science and Applied Mathematics</p>
+                <p class="entry-details">#1 French engineering school, ranked 34th at the entrance exam</p>
+            </div>
+            
+            <div class="entry" itemprop="alumniOf" itemscope itemtype="https://schema.org/EducationalOrganization">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="name">Collège Stanislas Paris</span>, <span class="entry-location">Paris, France</span>
+                    </span>
+                    <span class="entry-date">2013 - 2015</span>
+                </div>
+                <p class="entry-details">Top Classes préparatoires scientifique in France (MPSI - PSI*), Mathematics, Physics, Computer Science</p>
+                <p class="entry-details">Intensive preparation for the highly competitive entrance exams to the grandes écoles</p>
+            </div>
+            
+            <div class="entry" itemprop="alumniOf" itemscope itemtype="https://schema.org/EducationalOrganization">
+                <div class="entry-header">
+                    <span class="entry-header-left">
+                        <span class="entry-title" itemprop="name">Collège Stanislas Paris</span>, <span class="entry-location">Paris, France</span>
+                    </span>
+                    <span class="entry-date">2008 - 2013</span>
+                </div>
+                <p class="entry-details">Scientific Baccalauréat - Option Mathematics</p>
+                <p class="entry-details">In senior year, spent 8 months in a team of 6 preparing for the French submission to the International Physicist Tournament.</p>
+            </div>
+        </section>
+        
+        <section>
+            <h2>Skills</h2>
+            <p class="skills-list" itemprop="knowsAbout">Machine Learning, Python, Spark, Research and Development (R&D), Data Engineering, Inference Optimization, Distributed Systems, Startups</p>
+        </section>
+    </article>
 </body>
 </html>
