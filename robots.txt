@@ -1,0 +1,7 @@
+# Allow all crawlers to index everything
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://hadrien-cornier.github.io/sitemap.xml
+
