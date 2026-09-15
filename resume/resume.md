@@ -7,15 +7,15 @@ Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornie
 ## Experience
 
 **Engineering Manager**, Talroo, *Austin, TX* — Jan 2025 - Present  
-- Hire and lead a 7-person AI, data, and full-stack team. Completed and submitted 288 interview scorecards (January 2022–September 2026). Automated recruiting summaries and screening recommendations for human review.
+- Hire and lead a 7-person AI, data, and full-stack team. Completed and submitted 288 interview scorecards (January 2022–September 2026). Automated recruiting summaries and screening recommendations for human review. Named reviewer on 1,082 pull requests by 30 colleagues since 2021.
 - Created the foundation for searchable company knowledge. Turned meeting actions into reviewable engineering proposals. Extended daily sales and engineering recaps.
 - Reviewed sales sequences and designed research and follow-up workflows with sales and marketing.
-- Designed publisher controls, analytics, and onboarding. Advanced personalization adoption with publishers. Extended application APIs to preserve and deliver qualifying answers.
+- Took over publisher monitoring and feed setup in August 2025. Designed publisher controls, analytics, and onboarding. Advanced personalization adoption with publishers. Extended application APIs to preserve and deliver qualifying answers.
 - Evaluated ATS integrations and Facebook acquisition with product and sales. Joined external partnership negotiations.
 - Adapted Firstmate with review gates and privacy-aware routing. Trained engineers and support staff on AI-assisted work.
 
 **Senior ML Engineer**, Talroo, *Austin, TX* — Oct 2022 - Jan 2025  
-Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by approximately $20M. Optimized the ML system, saving $1M annually. Built Vespa search infrastructure and candidate-search models and pipelines. Added qualification-aware question selection.
+Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by approximately $20M. Optimized the ML system, saving $1M annually. Built Vespa search infrastructure and candidate-search models and pipelines. Added qualification-aware question selection. Built requirement extraction covering 100% of 3,673,416 live jobs (September 15, 2026).
 
 **ML Engineer**, Talroo, *Austin, TX* — Jul 2021 - Oct 2022  
 Worked on the AI powering hundreds of job boards in the US. Moved ranking and text models to shared Triton serving. Delivered millions in savings. Merged inference strategies into a single system.
