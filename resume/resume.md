@@ -7,7 +7,7 @@ Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornie
 ## Experience
 
 **Engineering Manager**, Talroo, *Austin, TX* — Jan 2025 - Present  
-- Hire and lead a 7-person AI, data, and full-stack team. Automated recruiting summaries and screening recommendations for human review.
+- Hire and lead a 7-person AI, data, and full-stack team. Completed and submitted 288 interview scorecards (January 2022–September 2026). Automated recruiting summaries and screening recommendations for human review.
 - Created the foundation for searchable company knowledge. Turned meeting actions into reviewable engineering proposals. Extended daily sales and engineering recaps.
 - Reviewed sales sequences and designed research and follow-up workflows with sales and marketing.
 - Designed publisher controls, analytics, and onboarding. Advanced personalization adoption with publishers. Extended application APIs to preserve and deliver qualifying answers.
