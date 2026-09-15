@@ -7,13 +7,18 @@ Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornie
 ## Experience
 
 **Engineering Manager**, Talroo, *Austin, TX* — Jan 2025 - Present  
-Leading a 7-person product engineering team spanning AI, Data, and Fullstack. Owning hiring and mentoring engineers, including training the team on agentic coding workflows for AI-assisted development. Driving publisher partnerships and sales/customer-success optimization to expand distribution and accelerate growth.
+- Lead a 7-person team across AI, data, and full-stack engineering. Hire and coach engineers. Automated résumé summaries and screening recommendations for human review.
+- Helped give teams searchable company knowledge and daily sales and engineering recaps from meeting records.
+- Reviewed sales sequences and shaped account-research and follow-up workflows with sales and marketing.
+- Designed publisher controls and analytics workflows. Coordinated personalization adoption, data-quality investigations, and onboarding with publisher partners.
+- Helped evaluate ATS integrations and Facebook acquisition with product and sales teams. Participated in external partnership negotiations.
+- Adapted Firstmate for agent-assisted engineering with review gates and privacy-aware model routing. Trained engineers and support staff on AI-assisted work.
 
 **Senior ML Engineer**, Talroo, *Austin, TX* — Oct 2022 - Jan 2025  
-Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by 20%. Optimized ML system, saving $1M annually by reducing computational cost by 7x.
+Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by 20%. Optimized ML system, saving $1M annually by reducing computational cost by 7x. Built Vespa search infrastructure and candidate-search models. Added qualification-based question selection.
 
 **ML Engineer**, Talroo, *Austin, TX* — Jul 2021 - Oct 2022  
-Worked on the AI powering hundreds of job boards in the US. Delivered millions in savings by decreasing latency by 25%. Merged inference strategies into a single system, which improved CTR by 15%.
+Worked on the AI powering hundreds of job boards in the US. Moved ranking and text models to shared Triton serving. Delivered millions in savings by decreasing latency by 25%. Merged inference strategies into a single system, which improved CTR by 15%.
 
 **ML Engineer**, Augustus Intelligence, *New York City* — Apr 2020 - Jul 2021  
 R&D for a Bayesian computer vision pipeline for visual industrial anomaly detection. Engineered full redesign for the control system of a network of thousands of sensors.
@@ -53,5 +58,4 @@ In senior year, spent 8 months in a team of 6 preparing for the French submissio
 
 ## Skills
 
-Machine Learning, Python, Spark, Research and Development (R&D), Data Engineering, Distributed Systems, Engineering Management, Programmatic Advertising, Pricing & Recommendation Models, Sales/CS Optimization, Startups
-
+Engineering Management, Machine Learning, Python, Spark, Data Engineering, Distributed Systems, AI-Assisted Engineering, Business Automation, Product Design, Programmatic Advertising, Sales Operations, Publisher Partnerships, Negotiation
