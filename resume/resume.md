@@ -7,15 +7,15 @@ Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornie
 ## Experience
 
 **Engineering Manager**, Talroo, *Austin, TX* — Jan 2025 - Present  
-- Lead a 7-person team across AI, data, and full-stack engineering. Hire and coach engineers. Automated résumé summaries and screening recommendations for human review.
-- Helped give teams searchable company knowledge and daily sales and engineering recaps from meeting records.
-- Reviewed sales sequences and shaped account-research and follow-up workflows with sales and marketing.
-- Designed publisher controls and analytics workflows. Coordinated personalization adoption, data-quality investigations, and onboarding with publisher partners.
-- Helped evaluate ATS integrations and Facebook acquisition with product and sales teams. Participated in external partnership negotiations.
-- Adapted Firstmate for agent-assisted engineering with review gates and privacy-aware model routing. Trained engineers and support staff on AI-assisted work.
+- Hire and lead a 7-person AI, data, and full-stack team. Automated recruiting summaries and screening recommendations for human review.
+- Created the foundation for searchable company knowledge. Turned meeting actions into reviewable engineering proposals. Extended daily sales and engineering recaps.
+- Reviewed sales sequences and designed research and follow-up workflows with sales and marketing.
+- Designed publisher controls, analytics, and onboarding. Advanced personalization adoption with publishers. Extended application APIs to preserve and deliver qualifying answers.
+- Evaluated ATS integrations and Facebook acquisition with product and sales. Joined external partnership negotiations.
+- Adapted Firstmate with review gates and privacy-aware routing. Trained engineers and support staff on AI-assisted work.
 
 **Senior ML Engineer**, Talroo, *Austin, TX* — Oct 2022 - Jan 2025  
-Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by 20%. Optimized ML system, saving $1M annually by reducing computational cost by 7x. Built Vespa search infrastructure and candidate-search models. Added qualification-based question selection.
+Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by 20%. Optimized ML system, saving $1M annually by reducing computational cost by 7x. Built Vespa search infrastructure and candidate-search models and pipelines. Added qualification-aware question selection.
 
 **ML Engineer**, Talroo, *Austin, TX* — Jul 2021 - Oct 2022  
 Worked on the AI powering hundreds of job boards in the US. Moved ranking and text models to shared Triton serving. Delivered millions in savings by decreasing latency by 25%. Merged inference strategies into a single system, which improved CTR by 15%.
