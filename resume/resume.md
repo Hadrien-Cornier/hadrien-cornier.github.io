@@ -15,7 +15,7 @@ Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornie
 - Adapted Firstmate with review gates and privacy-aware routing. Trained engineers and support staff on AI-assisted work.
 
 **Senior ML Engineer**, Talroo, *Austin, TX* — Oct 2022 - Jan 2025  
-Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by 20%. Optimized the ML system, saving $1M annually. Built Vespa search infrastructure and candidate-search models and pipelines. Added qualification-aware question selection.
+Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by approximately $20M. Optimized the ML system, saving $1M annually. Built Vespa search infrastructure and candidate-search models and pipelines. Added qualification-aware question selection.
 
 **ML Engineer**, Talroo, *Austin, TX* — Jul 2021 - Oct 2022  
 Worked on the AI powering hundreds of job boards in the US. Moved ranking and text models to shared Triton serving. Delivered millions in savings. Merged inference strategies into a single system.
