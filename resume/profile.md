@@ -15,6 +15,7 @@ Engineering manager and hands-on ML/data engineer leading a team of seven data, 
 - Responsible for backend data systems spanning job ingestion and enrichment, analytics, application delivery to employer systems, and pricing information sent to publishers. Own the coordination platform for ETL, training, inference, and production jobs.
 - Conducted about 300 software engineer interviews and built the hiring system, including evaluation heuristics.
 - Lead seven data, machine learning, and backend engineers while remaining hands-on in architecture, technical review, hiring, and delivery.
+- Set direction and identify opportunities, giving engineers autonomy and freedom in how they approach their work. Motivate the team and connect engineers with direct feedback on the features they build.
 - Built and scaled job-enrichment pipelines processing about one million jobs per day across BERT and LLM extraction. Added caching, incremental processing, and change-ID imports.
 - Built feedback and correction streams, freshness metrics, dashboards, and alerts. The underlying platform handles about 200 million events daily.
 - Built automated rollback and recovery for production jobs, restoring healthy versions and escalating unrecoverable failures.
@@ -30,19 +31,22 @@ Engineering manager and hands-on ML/data engineer leading a team of seven data, 
 
 #### AI tooling & company workflows
 
+- Rolled out transcription and built an AI knowledge base to preserve conversations as a reusable data asset, designed to become more valuable as models improve.
+- Connected sales and customer support directly with engineers through AI summaries of raw transcripts, without intermediaries. Created a fast feedback loop on features so engineers could get customer feedback directly and see the impact of their work.
 - Built an internal MCP server connecting agents to analytics dashboards, company data, and operational systems, with documentation and reusable skills. Developed a benchmark based on common engineer queries to evaluate accuracy, coverage, and utility.
-- Created the company’s AI knowledge base and transcription system. Automated sales recaps and engineering status reports; used n8n to help non-engineers automate business workflows.
+- Automated sales recaps and engineering status reports; used n8n to help non-engineers automate business workflows.
 - Introduced Perplexity in 2022, Cursor around November 2023, and Claude Code in June 2025. Led the transition from ChatGPT to Claude for internal MCP workflows and trained engineers and data scientists in agentic coding.
 - Built campaign-monitoring agents for anomaly investigation and issue routing. Automated publisher responses and reporting, and automatically flagged issues for follow-up.
 
 #### Commercial & operating responsibility
 
-- Negotiated with Appcast, Talroo’s largest agency partner, generating an additional $500K in monthly revenue. Secured better terms with Kombo.
+- Negotiated with our largest agency partner, generating an additional $500K in monthly revenue. Negotiated better terms with our ATS-integration provider.
+- Helped prepare the technical-commercial case for the agency negotiation and participated in follow-through. Internal reports subsequently recorded doubled partner spend.
 - Rebuilt prospect prioritization as a live CRM automation with ranked queues and sales briefs. Connected lead enrichment, follow-ups, and interaction summaries; turned churn analysis into win-back drafts and product feedback.
 - Established recurring sales-engineer workshops and gathered feedback from sales, support, and CRM records to guide product changes. Partnered with account leadership on contact priorities and escalation rules; connected engineering updates to refreshed marketing materials.
 - Took over a declining publisher network in August 2025. Added monitoring, personalization, notifications, and self-service controls; translated partner-targeting needs into technical requirements. Monthly volume returned to year-over-year growth by mid-2026.
 - Responsible for the publisher network and allocating approximately $1M in monthly spend across publishers.
-- Own all company software contracts, including renewals, spending forecasts, and negotiations to secure better terms.
+- Responsible for $5M a year in cloud and software contracts. Own all company software contracts, including renewals, spending forecasts, and negotiations to secure better terms.
 
 Mentored by founder Bruce Ge for roughly three hours weekly over multiple years in operations, product, and engineering.
 
