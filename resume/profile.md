@@ -2,7 +2,7 @@
 
 Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornier@gmail.com) | [linkedin.com/in/hadrien-cornier](https://linkedin.com/in/hadrien-cornier)
 
-Engineering manager and hands-on ML/data engineer leading a seven-person team and responsible for backend data infrastructure. Built systems for collection, enrichment, sensor telemetry, evaluation, and production ML across three companies. Works closely with the founder on product, commercial strategy, negotiation, and operations.
+Engineering manager and hands-on ML/data engineer leading a team of seven data, machine learning, and backend engineers and responsible for backend data infrastructure. Built systems for collection, enrichment, sensor telemetry, evaluation, and production ML across three companies. Works closely with the founder on product, commercial strategy, negotiation, and operations.
 
 ## Experience
 
@@ -14,7 +14,7 @@ Engineering manager and hands-on ML/data engineer leading a seven-person team an
 
 - Responsible for backend data systems spanning job ingestion and enrichment, analytics, application delivery to employer systems, and pricing information sent to publishers. Own the coordination platform for ETL, training, inference, and production jobs.
 - Conducted about 300 software engineer interviews and built the hiring system, including evaluation heuristics.
-- Lead seven data and ML engineers while remaining hands-on in architecture, technical review, hiring, and delivery.
+- Lead seven data, machine learning, and backend engineers while remaining hands-on in architecture, technical review, hiring, and delivery.
 - Built and scaled job-enrichment pipelines processing about one million jobs per day across BERT and LLM extraction. Added caching, incremental processing, and change-ID imports.
 - Built feedback and correction streams, freshness metrics, dashboards, and alerts. The underlying platform handles about 200 million events daily.
 - Built automated rollback and recovery for production jobs, restoring healthy versions and escalating unrecoverable failures.
