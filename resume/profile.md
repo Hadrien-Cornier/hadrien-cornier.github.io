@@ -10,6 +10,8 @@ Engineering manager and hands-on ML/data engineer leading a team of seven data, 
 
 **Engineering Manager** 2025–present · **Senior ML Engineer** 2022–2025 · **ML Engineer** 2021–2022
 
+Talroo is an Austin-based talent platform for frontline and skilled-trades hiring, founded in 2008 as Jobs2Careers. Its pay-for-performance job discovery network helps employers hire hourly, frontline, and skilled workers at scale.
+
 #### Data platform & team leadership
 
 - Responsible for backend data systems spanning job ingestion and enrichment, analytics, application delivery to employer systems, and pricing information sent to publishers. Own the coordination platform for ETL, training, inference, and production jobs.
@@ -48,7 +50,7 @@ Engineering manager and hands-on ML/data engineer leading a team of seven data, 
 - Responsible for the publisher network and allocating approximately $1M in monthly spend across publishers.
 - Responsible for $5M a year in cloud and software contracts. Own all company software contracts, including renewals, spending forecasts, and negotiations to secure better terms.
 
-Mentored by founder Bruce Ge for roughly three hours weekly over multiple years in operations, product, and engineering.
+Bruce Ge, an engineer and Talroo's founder and CEO, started the company in 2008, bootstrapped it to $200M in annual recurring revenue, and mentored me for roughly three hours a week over multiple years across operations, product, and engineering.
 
 ### Augustus Intelligence · New York City | Apr 2020–Jul 2021
 
