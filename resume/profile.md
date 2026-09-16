@@ -13,7 +13,8 @@ Engineering manager and hands-on ML/data engineer leading a seven-person team an
 #### Data platform & team leadership
 
 - Responsible for backend data systems spanning job ingestion and enrichment, analytics, application delivery to employer systems, and pricing information sent to publishers. Own the coordination platform for ETL, training, inference, and production jobs.
-- Lead seven data and ML engineers while remaining hands-on in architecture, technical review, hiring, and delivery. Interviewed more than 300 data and ML engineers.
+- Conducted about 300 software engineer interviews and built the hiring system, including evaluation heuristics.
+- Lead seven data and ML engineers while remaining hands-on in architecture, technical review, hiring, and delivery.
 - Built and scaled job-enrichment pipelines processing about one million jobs per day across BERT and LLM extraction. Added caching, incremental processing, and change-ID imports.
 - Built feedback and correction streams, freshness metrics, dashboards, and alerts. The underlying platform handles about 200 million events daily.
 - Built automated rollback and recovery for production jobs, restoring healthy versions and escalating unrecoverable failures.
@@ -36,11 +37,12 @@ Engineering manager and hands-on ML/data engineer leading a seven-person team an
 
 #### Commercial & operating responsibility
 
+- Negotiated with Appcast, Talroo’s largest agency partner, generating an additional $500K in monthly revenue. Secured better terms with Kombo.
 - Rebuilt prospect prioritization as a live CRM automation with ranked queues and sales briefs. Connected lead enrichment, follow-ups, and interaction summaries; turned churn analysis into win-back drafts and product feedback.
-- Helped prepare and negotiate the technical-commercial case with our largest agency partner and participated in follow-through. Internal reports subsequently recorded doubled partner spend. Negotiated better ATS-integration terms.
 - Established recurring sales-engineer workshops and gathered feedback from sales, support, and CRM records to guide product changes. Partnered with account leadership on contact priorities and escalation rules; connected engineering updates to refreshed marketing materials.
 - Took over a declining publisher network in August 2025. Added monitoring, personalization, notifications, and self-service controls; translated partner-targeting needs into technical requirements. Monthly volume returned to year-over-year growth by mid-2026.
-- Responsible for $12M a year in publisher spend and $5M a year in cloud and software contracts.
+- Responsible for the publisher network and allocating approximately $1M in monthly spend across publishers.
+- Own all company software contracts, including renewals, spending forecasts, and negotiations to secure better terms.
 
 Mentored by founder Bruce Ge for roughly three hours weekly over multiple years in operations, product, and engineering.
 

@@ -18,10 +18,11 @@ if len(chapters) != len(ids):
 chapter_html = ''
 for i, ((title, content), ident) in enumerate(zip(chapters, ids), 1):
     bullets = re.findall(r'^- (.*)', content, re.M)
+    visible_count = 2 if ident == 'data-platform' else 1
     chapter_html += f'''<section class="chapter" id="{ident}" aria-labelledby="{ident}-title">
     <div class="chapter-number">0{i}</div><div><h3 id="{ident}-title">{esc(title)}</h3>
-    <p class="lead">{esc(bullets[0])}</p>
-    <details><summary>Explore this work <span aria-hidden="true">+</span></summary><ul>{''.join('<li>'+esc(b)+'</li>' for b in bullets[1:])}</ul></details></div></section>'''
+    {''.join('<p class="lead">'+esc(b)+'</p>' for b in bullets[:visible_count])}
+    <details><summary>Explore this work <span aria-hidden="true">+</span></summary><ul>{''.join('<li>'+esc(b)+'</li>' for b in bullets[visible_count:])}</ul></details></div></section>'''
 earlier = source.split('### Augustus Intelligence')[1].split('## Education')[0]
 earlier = '### Augustus Intelligence' + earlier
 career = ''
@@ -47,11 +48,10 @@ page = f'''<!doctype html>
 <meta name="theme-color" content="#f6f5f0"><link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script>
 </head><body><a class="skip" href="#main">Skip to content</a>
 <header class="topbar"><a class="wordmark" href="#">HC<span>.</span></a><nav aria-label="Main navigation"><a href="#experience">Experience</a><a href="#education">Education</a><a href="#skills">Skills</a></nav><a class="resume-link" href="out/resume.pdf" download="Hadrien_Cornier_Resume.pdf">Resume PDF <span aria-hidden="true">↗</span></a></header>
-<main id="main"><section class="hero" aria-labelledby="name"><div class="hero-top"><p class="eyebrow"><span class="dot"></span>Austin, Texas</p><p class="eyebrow">Engineering · Machine learning · Data</p></div><h1 id="name">Hadrien Cornier<span>.</span></h1><div class="hero-bottom"><h2>Engineering manager.<br>Hands-on builder.</h2><div><p class="intro">{esc(intro)}</p><div class="contact"><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a><a href="https://linkedin.com/in/hadrien-cornier">LinkedIn <span aria-hidden="true">↗</span></a></div></div></div></section>
-<section class="numbers" aria-label="Work at a glance"><div><strong>7</strong><span>Data & ML engineers led</span></div><div><strong>~1M</strong><span>Jobs enriched per day</span></div><div><strong>~20M</strong><span>ML inference requests daily</span></div><div><strong>$1M</strong><span>Annual ML cost savings</span></div></section>
-<div class="work-layout" id="experience"><aside><p class="eyebrow">Selected experience</p><h2>From systems<br>to strategy.</h2><nav aria-label="Areas of work">{nav}<a href="#earlier"><span>05</span>Earlier experience</a></nav></aside><div class="work"><div class="company-heading"><div><p class="eyebrow">Jul 2021–Present · Austin, TX</p><h2>Talroo</h2></div><button id="expand-all" type="button" hidden>Expand all details</button></div><p class="progression">Engineering Manager <span>2025–present</span><br>Senior ML Engineer <span>2022–2025</span><br>ML Engineer <span>2021–2022</span></p>{chapter_html}<p class="mentorship">{esc(re.search(r'Mentored.*',source).group())}</p></div></div>
+<main id="main"><section class="hero" aria-labelledby="name"><div class="hero-top"><p class="eyebrow"><span class="dot"></span>Austin, Texas</p><p class="eyebrow">Engineering · Machine learning · Data</p></div><h1 id="name">Hadrien Cornier<span>.</span></h1><div class="hero-bottom"><h2>Engineering Manager<br><span class="hero-company">Talroo</span></h2><div><p class="intro">{esc(intro)}</p><div class="contact"><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a><a href="https://linkedin.com/in/hadrien-cornier">LinkedIn <span aria-hidden="true">↗</span></a></div></div></div></section>
+<div class="work-layout" id="experience"><aside><h2>Experience</h2><nav aria-label="Areas of work">{nav}<a href="#earlier"><span>05</span>Earlier experience</a></nav></aside><div class="work"><div class="company-heading"><div><p class="eyebrow">Jul 2021–Present · Austin, TX</p><h2>Talroo</h2></div><button id="expand-all" type="button" hidden>Expand all details</button></div><p class="progression">Engineering Manager <span>2025–present</span><br>Senior ML Engineer <span>2022–2025</span><br>ML Engineer <span>2021–2022</span></p>{chapter_html}<p class="mentorship">{esc(re.search(r'Mentored.*',source).group())}</p></div></div>
 <section class="earlier section" id="earlier"><div class="section-title"><p class="eyebrow">Before Talroo</p><h2>Earlier experience</h2></div><div>{career}</div></section>
-<section class="section" id="education"><div class="section-title"><p class="eyebrow">Education & continued learning</p><h2>A foundation<br>to build on.</h2></div><div class="education-grid">{education}</div></section>
+<section class="section" id="education"><div class="section-title"><h2>Education</h2></div><div class="education-grid">{education}</div></section>
 <section class="section" id="skills"><div class="section-title"><p class="eyebrow">Tools & practice</p><h2>Skills</h2></div><ul class="skills">{''.join('<li>'+esc(skill)+'</li>' for skill in skills)}</ul></section>
 <footer><p>Hadrien Cornier<span>Austin, Texas</span></p><a href="mailto:hadrien.cornier@gmail.com">hadrien.cornier@gmail.com ↗</a><a href="#">Back to top ↑</a></footer></main></body></html>'''
 (ROOT / 'index.html').write_text(page)
