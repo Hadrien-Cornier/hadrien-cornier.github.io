@@ -40,8 +40,8 @@ Engineering manager and hands-on ML/data engineer leading a team of seven data, 
 
 #### Commercial & operating responsibility
 
-- Negotiated with our largest agency partner, generating an additional $500K in monthly revenue. Negotiated better terms with our ATS-integration provider.
-- Helped prepare the technical-commercial case for the agency negotiation and participated in follow-through. Internal reports subsequently recorded doubled partner spend.
+- Negotiated with our largest customer, an agency, doubling their spend with us. Negotiated better terms with our ATS-integration provider.
+- Helped prepare the technical-commercial case for the negotiation and participated in follow-through.
 - Rebuilt prospect prioritization as a live CRM automation with ranked queues and sales briefs. Connected lead enrichment, follow-ups, and interaction summaries; turned churn analysis into win-back drafts and product feedback.
 - Established recurring sales-engineer workshops and gathered feedback from sales, support, and CRM records to guide product changes. Partnered with account leadership on contact priorities and escalation rules; connected engineering updates to refreshed marketing materials.
 - Took over a declining publisher network in August 2025. Added monitoring, personalization, notifications, and self-service controls; translated partner-targeting needs into technical requirements. Monthly volume returned to year-over-year growth by mid-2026.
