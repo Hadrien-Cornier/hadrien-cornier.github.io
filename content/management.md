@@ -1,0 +1,5 @@
+High Output Management by Andrew Grove has shaped how I think about management: my contribution is the output of my team. I look for where my time can increase that output most: hiring, training, and moving work along the critical path. I help engineers understand the vision and connect their work to business and shareholder value. I set a clear direction and high standards, then give people the autonomy to decide how to deliver.
+
+My engineers write a daily status update. AI summarizes those updates and sends them to leadership every day, giving engineers visibility beyond our team. Three engineers on my team were promoted within one year. Seeing people grow is one of the most gratifying parts of my work, and I try to put engineers on the critical path and give them the support and visibility to grow.
+
+7 Powers influences how I approach products. I look for opportunities to build process power and data flywheels: ways for what we learn through operating a product to improve it over time. I want that accumulated knowledge to create a lasting advantage.
