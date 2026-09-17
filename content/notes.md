@@ -1,10 +1,14 @@
 ## Hiring
 
-I like to start with something a candidate knows well and ask progressively deeper questions. A few follow-ups often tell me a lot about their curiosity, how thoroughly they understand their work, and what interests them enough to keep digging.
+Hiring engineers is an attempt to find the right combination of talent, motivation, and commitment. I think of talent as shaping the rate at which someone can learn and create more value. Motivation determines how much of that ability they apply. Commitment gives that growth time to compound.
 
-I'm skeptical of LeetCode-style questions as a way to identify good engineers. I prefer logic problems that let me see how someone structures their thinking. Can they follow an argument through to its conclusion? What happens when I offer a counterexample?
+By commitment, I do not mean loyalty for its own sake. People do their best work when they have enough time to understand the company, build judgment, and learn from the consequences of their decisions. The company has a responsibility to create an environment worth staying in and to keep earning that commitment.
 
-Those abilities matter with AI tools, too. I want engineers who can follow a line of reasoning to the end and consider counterexamples, even when using AI tools.
+The difficulty is that an interview is a short sample of what may become a long working relationship. In that limited time, I am especially tuned to passion, curiosity, and an engineering mindset. I want to understand what draws someone into a problem, how quickly they learn, and whether they care enough to keep looking after the obvious answer.
+
+I like to start with something a candidate knows well and ask progressively deeper questions. A few follow-ups often reveal how thoroughly they understand their work and what interests them enough to keep digging. I am skeptical of LeetCode-style questions as a way to identify good engineers. I prefer logic problems that let me see how someone structures their thinking. Can they follow an argument through to its conclusion? What happens when I offer a counterexample?
+
+Those abilities matter even more with AI tools. AI can produce a plausible answer quickly, but the engineer still has to examine the reasoning, find weak assumptions, and test counterexamples. I look for people who can use the tools without giving up the judgment that makes the result trustworthy.
 
 ## Product strategy
 
