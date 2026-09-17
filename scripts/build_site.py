@@ -38,7 +38,7 @@ if len(chapters) != len(ids):
 chapter_html = ''
 for i, ((title, content), ident) in enumerate(zip(chapters, ids), 1):
     bullets = re.findall(r'^- (.*)', content, re.M)
-    visible_count = 2 if ident in ('data-platform', 'ai-tooling') else 1
+    visible_count = 2 if ident in ('data-platform', 'ai-tooling', 'commercial') else 1
     chapter_html += f'''<section class="chapter" id="{ident}" aria-labelledby="{ident}-title">
     <div class="chapter-number">0{i}</div><div><h3 id="{ident}-title">{esc(title)}</h3>
     {''.join('<p class="lead">'+esc(b)+'</p>' for b in bullets[:visible_count])}

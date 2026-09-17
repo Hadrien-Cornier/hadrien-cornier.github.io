@@ -24,12 +24,13 @@ Talroo is an Austin-based talent platform for frontline and skilled-trades hirin
 
 #### Evaluation & production ML
 
-- Built a job-suitability model using human and LLM labels, model training, and balanced evaluation sets. Established reference answers with a small human-labeled gold dataset and expanded evaluation using LLM-as-judge. Built offline evaluation for models extracting requirements, benefits, pay, and schedule.
+- Led production ML across retrieval, ranking, forecasting, bidding, and applicant screening, from evaluation and experimentation through deployment and serving.
 - Co-built and productionized a hybrid retrieval engine combining learned job–seeker embeddings with keyword and geographic signals. Redesigned the recommender, increasing revenue by approximately $20M.
+- Co-led AI applicant screening and matching, setting technical direction and guiding implementation. Led delivery of explainable qualification checks, editable application questions, and controls for AI-assisted product customization.
+- Built evaluation systems for job suitability and models extracting requirements, benefits, pay, and schedule. Combined human and LLM labels with balanced evaluation sets, using a small human-labeled gold dataset for reference answers and LLM-as-judge to expand coverage.
 - Optimized throughput, latency, and cost for ML systems serving roughly 20 million inference requests daily. Used batching, warm-up, monitoring, numerical validation, and TensorRT/Triton serving; ML optimization saved $1M annually.
 - Built deep-learning forecasts of delivery volume and its response to price. Integrated forecasts into job-level bidding, pacing, and delivery controls.
 - Replaced manual weekly ML releases with scripted training and deployment workflows, staged serving, and A/B-gated promotion. Ran hundreds of experiments across ranking, retrieval, forecasting, bidding, and publisher quality.
-- Co-led AI applicant screening and matching through implementation and technical direction. Led the team that delivered explainable qualification checks and editable application questions; built controls for AI-assisted product customization.
 
 #### AI tooling & company workflows
 
@@ -43,14 +44,14 @@ Talroo is an Austin-based talent platform for frontline and skilled-trades hirin
 #### Commercial & operating responsibility
 
 - Negotiated with our largest customer, an agency, doubling their spend with us. Negotiated better terms with our ATS-integration provider.
-- Helped prepare the technical-commercial case for the negotiation and participated in follow-through.
-- Rebuilt prospect prioritization as a live CRM automation with ranked queues and sales briefs. Connected lead enrichment, follow-ups, and interaction summaries; turned churn analysis into win-back drafts and product feedback.
+- Improved sales strategy by analyzing churn and failed client engagements to identify which customer profiles to pursue and which were a poor fit. Turned those findings into a new prioritization model, live ranked CRM queues, and sales briefs.
+- Built the technical-commercial case for our largest-customer negotiation and supported execution after signing.
 - Established recurring sales-engineer workshops and gathered feedback from sales, support, and CRM records to guide product changes. Partnered with account leadership on contact priorities and escalation rules; connected engineering updates to refreshed marketing materials.
 - Took over a declining publisher network in August 2025. Added monitoring, personalization, notifications, and self-service controls; translated partner-targeting needs into technical requirements. Monthly volume returned to year-over-year growth by mid-2026.
 - Responsible for the publisher network and allocating approximately $1M in monthly spend across publishers.
 - Responsible for $5M a year in cloud and software contracts. Own all company software contracts, including renewals, spending forecasts, and negotiations to secure better terms.
 
-Bruce Ge, an engineer and Talroo's founder and CEO, started the company in 2008, bootstrapped it to $200M in annual recurring revenue, and mentored me for roughly three hours a week over multiple years across operations, product, and engineering.
+Bruce Ge, an engineer who founded Talroo in 2008 and remains its CEO, bootstrapped the company to $200M in annual recurring revenue. He has mentored me extensively over several years through structured training and ongoing discussions about operations, product, and engineering.
 
 ### Augustus Intelligence · New York City | Apr 2020–Jul 2021
 
