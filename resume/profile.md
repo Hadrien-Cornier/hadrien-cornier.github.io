@@ -2,7 +2,7 @@
 
 Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornier@gmail.com) | [linkedin.com/in/hadrien-cornier](https://linkedin.com/in/hadrien-cornier)
 
-Engineering manager and hands-on ML/data engineer leading a team of seven data, machine learning, and backend engineers and responsible for backend data infrastructure. Built systems for collection, enrichment, sensor telemetry, evaluation, and production ML across three companies. Works closely with the founder on product, commercial strategy, negotiation, and operations.
+I am an engineering manager and hands-on ML/data engineer leading seven data, machine learning, and backend engineers. I own our backend data infrastructure and have built distributed batch and streaming systems across three companies that collect, transform, and enrich large-scale data into specialized datasets and production ML models. I work closely with the founder on product direction, commercial strategy, negotiations, and operations.
 
 ## Experience
 
