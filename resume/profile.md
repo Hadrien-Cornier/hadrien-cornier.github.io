@@ -87,4 +87,4 @@ Accounting and Finance for the Non-Financial Executive
 
 ## Skills
 
-Python · SQL · Spark · Vespa · Triton · TensorRT · Data Pipelines · Workflow Orchestration · Model Evaluation · ML Serving · A/B Testing · MCP · n8n · Agentic Coding · Engineering Management · Negotiation · Sales Operations
+Data Systems · Production ML · Testing and Experimentation · Workflow Automation and Agentic Coding · Engineering Management · Negotiation and Sales Operations · Product Judgment and Business Problem Solving

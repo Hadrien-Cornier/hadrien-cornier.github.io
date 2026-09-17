@@ -73,7 +73,7 @@ page = f'''<!doctype html>
 <section class="section" id="management" aria-labelledby="management-title"><div class="section-title"><h2 id="management-title">Management philosophy</h2></div><div class="prose">{management}<a class="notes-link" href="notes.html">More notes on engineering and business <span aria-hidden="true">↗</span></a></div></section>
 <section class="earlier section" id="earlier"><div class="section-title"><p class="eyebrow">Before Talroo</p><h2>Earlier experience</h2></div><div>{career}</div></section>
 <section class="section" id="education"><div class="section-title"><h2>Education</h2></div><div class="education-grid">{education}</div></section>
-<section class="section" id="skills"><div class="section-title"><p class="eyebrow">Tools & practice</p><h2>Skills</h2></div><ul class="skills">{''.join('<li>'+esc(skill)+'</li>' for skill in skills)}</ul></section>
+<section class="section" id="skills"><div class="section-title"><p class="eyebrow">Areas of focus</p><h2>Skills</h2></div><ul class="skills">{''.join('<li>'+esc(skill)+'</li>' for skill in skills)}</ul></section>
 <footer><p>Hadrien Cornier<span>Austin, Texas</span></p><a href="mailto:hadrien.cornier@gmail.com">hadrien.cornier@gmail.com ↗</a><a href="#">Back to top ↑</a></footer></main></body></html>'''
 (ROOT / 'index.html').write_text(page)
 
