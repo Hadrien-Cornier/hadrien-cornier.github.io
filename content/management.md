@@ -2,4 +2,6 @@ High Output Management by Andrew Grove has shaped how I think about management: 
 
 I improved communication across the team and reduced meetings that fragmented the workday. I removed unnecessary meetings, especially those in the middle of the day, and protected longer stretches of uninterrupted focus. I want communication to create clarity without becoming overhead, so engineers have the context to stay aligned and the space to work through difficult problems.
 
+Engineers on my team have often been promoted faster than the company's typical two-year timeline. I give people meaningful responsibility, support their growth, and make sure their work is visible.
+
 7 Powers influences how I approach products. I look for opportunities to build process power and data flywheels: ways for what we learn through operating a product to improve it over time. I want that accumulated knowledge to create a lasting advantage.
