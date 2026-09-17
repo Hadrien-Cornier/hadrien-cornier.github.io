@@ -51,7 +51,7 @@ Talroo is an Austin-based talent platform for frontline and skilled-trades hirin
 - Responsible for the publisher network and allocating approximately $1M in monthly spend across publishers.
 - Responsible for $5M a year in cloud and software contracts. Own all company software contracts, including renewals, spending forecasts, and negotiations to secure better terms.
 
-Bruce Ge, an engineer who founded Talroo in 2008 and remains its CEO, bootstrapped the company to $200M in annual recurring revenue. He has mentored me extensively over several years through structured training and ongoing discussions about operations, product, and engineering.
+Talroo founder and CEO Bruce Ge has mentored me over several years through structured training and ongoing discussions about operations, product, and engineering.
 
 ### Augustus Intelligence · New York City | Apr 2020–Jul 2021
 
@@ -82,7 +82,7 @@ MS, Computer Science and Applied Mathematics
 **Harvard Law School Executive Education** · Cambridge, MA | Mar 2026
 Negotiation and Leadership
 
-**Stanford University** · Stanford, CA | Jan 2027 (Upcoming)
+**Stanford University Executive Education** · Stanford, CA | Jan 2027 (Upcoming)
 Accounting and Finance for the Non-Financial Executive
 
 ## Skills

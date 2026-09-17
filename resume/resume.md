@@ -40,7 +40,7 @@ Engineering manager and hands-on ML and data engineer leading seven data, machin
 - **Columbia University** | MS, Data Science, Statistics and Machine Learning | 2018 - 2019
 - **École Polytechnique** | MS, Computer Science and Applied Mathematics | 2015 - 2019
 - **Harvard Law School Executive Education** | Negotiation and Leadership | Mar 2026
-- **Stanford University** | Accounting and Finance for the Non-Financial Executive | Jan 2027 (Upcoming)
+- **Stanford University Executive Education** | Accounting and Finance for the Non-Financial Executive | Jan 2027 (Upcoming)
 
 ## Skills
 
