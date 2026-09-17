@@ -15,6 +15,19 @@ def inline(text):
     return re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', esc(text))
 def paragraphs(text):
     return ''.join('<p>' + esc(p.strip()) + '</p>' for p in text.strip().split('\n\n') if p.strip())
+def note_body(text):
+    rendered = []
+    for block in text.strip().split('\n\n'):
+        lines = block.strip().splitlines()
+        items = [re.match(r'^\d+\. \*\*(.+?)\*\* (.+)$', line) for line in lines]
+        if lines and all(items):
+            rendered.append('<ol class="principles">' + ''.join(
+                f'<li><strong>{esc(item.group(1))}</strong> {esc(item.group(2))}</li>'
+                for item in items
+            ) + '</ol>')
+        elif block.strip():
+            rendered.append('<p>' + esc(block.strip()) + '</p>')
+    return ''.join(rendered)
 management = paragraphs((ROOT / 'content/management.md').read_text())
 notes_source = (ROOT / 'content/notes.md').read_text()
 notes = re.findall(r'^## ([^\n]+)\n\n(.*?)(?=^## |\Z)', notes_source, re.S | re.M)
@@ -24,7 +37,7 @@ note_ids = [re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-') for title, _ in
 if len(set(note_ids)) != len(note_ids):
     raise ValueError('Note titles must produce unique section IDs.')
 notes_nav = ''.join(f'<a href="#{ident}">{esc(title)}</a>' for ident, (title, _) in zip(note_ids, notes))
-notes_html = ''.join(f'<article class="note" id="{ident}" aria-labelledby="{ident}-title"><h2 id="{ident}-title">{esc(title)}</h2>{paragraphs(body)}</article>' for ident, (title, body) in zip(note_ids, notes))
+notes_html = ''.join(f'<article class="note" id="{ident}" aria-labelledby="{ident}-title"><h2 id="{ident}-title">{esc(title)}</h2>{note_body(body)}</article>' for ident, (title, body) in zip(note_ids, notes))
 intro = source.split('\n\n')[2]
 talroo_intro_match = re.search(
     r'\*\*Engineering Manager\*\*.*?\n\n(.*?)\n\n#### Data platform',
