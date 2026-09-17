@@ -24,4 +24,4 @@ Open http://127.0.0.1:8765. Check desktop and mobile layouts, section links, and
 
 ## Downloadable resume
 
-The PDF link points to `out/resume.pdf`. This is the existing concise resume, maintained separately from the expanded website. See `resume/README.md` for LaTeX compilation instructions.
+The PDF link points to `out/resume.pdf`. Edit the concise source at `resume/resume.md`, then run `python3 resume/build_resume.py`. See `resume/README.md` for details.

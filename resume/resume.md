@@ -2,56 +2,46 @@
 
 Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornier@gmail.com) | [linkedin.com/in/hadrien-cornier](https://linkedin.com/in/hadrien-cornier)
 
----
+## Summary
+
+Engineering manager and hands-on ML and data engineer leading seven data, machine learning, and backend engineers. Owns backend data infrastructure and has built production systems for collection, enrichment, evaluation, serving, and workflow automation across three companies. Partners with the founder on product, commercial strategy, negotiation, and operations.
 
 ## Experience
 
-**Engineering Manager**, Talroo, *Austin, TX* — Jan 2025 - Present  
-Leading a 7-person product engineering team spanning AI, Data, and Fullstack. Owning hiring and mentoring engineers, including training the team on agentic coding workflows for AI-assisted development. Driving publisher partnerships and sales/customer-success optimization to expand distribution and accelerate growth.
+### Talroo | Austin, TX | Jul 2021 - Present
 
-**Senior ML Engineer**, Talroo, *Austin, TX* — Oct 2022 - Jan 2025  
-Led R&D efforts redesigning core ML recommender system end-to-end, increasing revenue by 20%. Optimized ML system, saving $1M annually by reducing computational cost by 7x.
+**Engineering Manager** Jan 2025 - Present | **Senior ML Engineer** Oct 2022 - Jan 2025 | **ML Engineer** Jul 2021 - Oct 2022
 
-**ML Engineer**, Talroo, *Austin, TX* — Jul 2021 - Oct 2022  
-Worked on the AI powering hundreds of job boards in the US. Delivered millions in savings by decreasing latency by 25%. Merged inference strategies into a single system, which improved CTR by 15%.
+- Lead seven data, machine learning, and backend engineers while remaining hands-on in architecture, technical review, hiring, and delivery. Conducted about 300 software engineer interviews and built the hiring system.
+- Own backend data systems for job ingestion, enrichment, analytics, application delivery, publisher pricing, and orchestration of ETL, training, inference, and production jobs. Built pipelines processing about one million jobs daily on a platform handling about 200 million events daily.
+- Led production ML across retrieval, ranking, forecasting, bidding, and applicant screening. Co-built a hybrid retrieval engine and redesigned the recommender, increasing revenue by approximately $20M.
+- Optimized ML systems serving roughly 20 million inference requests daily, saving $1M annually. Replaced manual releases with scripted training, staged serving, and A/B-gated promotion; ran hundreds of experiments.
+- Built an AI knowledge base and internal MCP server connecting engineers to company data and operations. Automated feedback and reporting workflows and trained engineers and data scientists in agentic coding.
+- Negotiated with Talroo's largest customer, doubling its spend. Improved sales targeting through churn and failed-client analysis, allocated about $1M in monthly publisher spend, and owned $5M in annual cloud and software contracts.
 
-**ML Engineer**, Augustus Intelligence, *New York City* — Apr 2020 - Jul 2021  
-R&D for a Bayesian computer vision pipeline for visual industrial anomaly detection. Engineered full redesign for the control system of a network of thousands of sensors.
+### Augustus Intelligence | New York City | Apr 2020 - Jul 2021
 
-**ML Intern**, Revelio Labs, *New York City* — Jun 2019 - Aug 2019  
-Designed and deployed 2 production models for company payroll estimation and resume valuation, owning the models end-to-end.
+**ML Engineer**
 
-**Summer Research Intern**, Atos, *Les Clayes-sous-Bois, France* — Apr 2017 - Sep 2017  
-Wrote a Haskell transpiler of Quipper into aQasm for the quantum computing team working on the Atos Quantum Learning Machine (Atos QLM), a quantum computer simulator.
+- Built backend and data pipelines for distributed retail camera sensors, plus the control plane for remote updates, monitoring, and automated processing. Contributed to computer-vision research for industrial anomaly detection.
 
-**Officer Cadet**, Gendarmerie Nationale, *Ajaccio, Corsica* — Sep 2015 - Apr 2016  
-Assisted the regional commander with a report on organized crime.
+### Revelio Labs | New York City | Jun 2019 - Aug 2019
 
----
+**ML Intern**
+
+- Refactored web-scraping and enrichment pipelines, improving responsiveness and enabling SQL queries. Owned two production models for payroll estimation and resume valuation.
+
+### Gendarmerie Nationale | Ajaccio, Corsica | Sep 2015 - Apr 2016
+
+**Officer Cadet**
 
 ## Education
 
-**Harvard Law School Executive Education**, *Cambridge, MA* — March 2026  
-Negotiation and Leadership
-
-**Columbia University**, *New York City* — 2018 - 2019  
-Master of Science - MS, Data Science, Statistics, Machine Learning
-
-**École Polytechnique**, *Palaiseau, France* — 2015 - 2019  
-Master of Science - MS, Computer Science and Applied Mathematics  
-#1 French engineering school, ranked 34th at the entrance exam
-
-**Collège Stanislas Paris**, *Paris, France* — 2013 - 2015  
-Top Classes préparatoires scientifique in France (MPSI - PSI*), Mathematics, Physics, Computer Science
-Intensive preparation for the highly competitive entrance exams to the grandes écoles
-
-**Collège Stanislas Paris**, *Paris, France* — 2008 - 2013  
-Scientific Baccalauréat - Option Mathematics  
-In senior year, spent 8 months in a team of 6 preparing for the French submission to the International Physicist Tournament.
-
----
+- **Columbia University** | MS, Data Science, Statistics and Machine Learning | 2018 - 2019
+- **École Polytechnique** | MS, Computer Science and Applied Mathematics | 2015 - 2019
+- **Harvard Law School Executive Education** | Negotiation and Leadership | Mar 2026
+- **Stanford University** | Accounting and Finance for the Non-Financial Executive | Jan 2027 (Upcoming)
 
 ## Skills
 
-Machine Learning, Python, Spark, Research and Development (R&D), Data Engineering, Distributed Systems, Engineering Management, Programmatic Advertising, Pricing & Recommendation Models, Sales/CS Optimization, Startups
-
+Data Systems | Production ML | Testing and Experimentation | Workflow Automation and Agentic Coding | Engineering Management | Negotiation and Sales Operations | Product Judgment and Business Problem Solving
