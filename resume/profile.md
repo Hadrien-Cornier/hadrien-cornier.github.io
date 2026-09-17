@@ -77,7 +77,7 @@ Talroo founder and CEO Bruce Ge has mentored me over several years through struc
 MS, Data Science, Statistics and Machine Learning
 
 **École Polytechnique** · Palaiseau, France | 2015–2019
-MS, Computer Science and Applied Mathematics
+MS, Computer Science and Applied Mathematics · France's #1 engineering school
 
 **Harvard Law School Executive Education** · Cambridge, MA | Mar 2026
 Negotiation and Leadership
