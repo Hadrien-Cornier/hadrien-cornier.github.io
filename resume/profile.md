@@ -2,7 +2,7 @@
 
 Austin, Texas, United States | [hadrien.cornier@gmail.com](mailto:hadrien.cornier@gmail.com) | [linkedin.com/in/hadrien-cornier](https://linkedin.com/in/hadrien-cornier)
 
-I build and lead data infrastructure and production ML systems. At Talroo, I lead seven engineers and own backend systems processing roughly 300 million raw event records and serving 20 million inference requests a day. I stay hands-on in architecture, review, and delivery, and work with the founder on product, commercial strategy, and operations.
+I build and run data infrastructure and production ML. At Talroo, I lead seven engineers and own backend data infrastructure, ML projects, software contracts, engineering hiring (300+ interviews), and the publisher network. I work with the founder on product, strategy, sales, negotiations, and operations. Previously, I built infrastructure for distributed camera sensors.
 
 ## Experience
 
@@ -14,8 +14,9 @@ Talroo is an Austin-based talent platform for frontline and skilled-trades hirin
 
 #### Data platform & team leadership
 
+- Own Talroo's backend data infrastructure, ML projects, software contracts, engineering hiring, and publisher network.
+- Lead seven data, machine learning, and backend engineers while remaining hands-on in architecture, technical review, and delivery. Have conducted more than 300 interviews across my Talroo tenure, building the hiring process and evaluation heuristics.
 - Own distributed batch and streaming systems processing roughly 300 million raw event records a day. The platform spans job ingestion and enrichment, analytics, application delivery to employer systems, and pricing information sent to publishers, with orchestration for ETL, model training, inference, and production jobs.
-- Lead seven data, machine learning, and backend engineers while remaining hands-on in architecture, technical review, and delivery. Own all engineering hiring and have conducted more than 300 interviews across my Talroo tenure, building the hiring process and evaluation heuristics.
 - Set direction and identify opportunities, giving engineers autonomy and freedom in how they approach their work. Motivate the team and connect engineers with direct feedback on the features they build.
 - Built and scaled job-enrichment pipelines processing about one million jobs per day across BERT and LLM extraction, along with candidate-profile systems. Added caching, incremental processing, and change-ID imports.
 - Built feedback and correction streams, freshness metrics, dashboards, and alerts to make data quality and system health observable.
@@ -28,7 +29,7 @@ Talroo is an Austin-based talent platform for frontline and skilled-trades hirin
 - As Senior ML Engineer, built and productionized a hybrid retrieval engine combining learned job-seeker embeddings with keyword and geographic signals. Designed a custom retrieval loss and stabilized training of the embedding space. The redesign transformed the matching engine and helped generate approximately $20M in additional revenue.
 - Co-led AI applicant screening and matching, setting technical direction and guiding implementation. Led delivery of explainable qualification checks, editable application questions, and controls for AI-assisted product customization.
 - As Engineering Manager, built custom datasets to measure LLM extraction quality and guide prompt iteration for job enrichment. Built evaluation systems for job suitability and models extracting requirements, benefits, pay, and schedule. Combined human and LLM labels with balanced evaluation sets, using a small human-labeled gold dataset for reference answers and LLM-as-judge to expand coverage.
-- As ML Engineer, cut production ML compute by 7x and saved $1M annually across systems serving roughly 20 million inference requests daily. Improved batching, warm-up, monitoring, numerical validation, and TensorRT/Triton serving.
+- As ML Engineer, cut ML compute requirements sevenfold and saved $1M annually. Improved batching, warm-up, monitoring, numerical validation, and TensorRT/Triton serving across systems handling roughly 20 million inference requests daily.
 - As Engineering Manager, lead development of deep-learning models that learn how delivery volume responds to price. Integrated these models into bidding, pacing, and delivery controls, enabling granular price control for each job.
 - Ran hundreds of A/B tests to improve search.
 
@@ -43,6 +44,7 @@ Talroo is an Austin-based talent platform for frontline and skilled-trades hirin
 
 #### Commercial & operating responsibility
 
+- Work with the founder on product, strategy, sales, negotiations, and operations.
 - Negotiated with our largest customer, doubling their spend with us. Built the technical-commercial case and supported execution after signing. Negotiated better terms with our ATS-integration provider.
 - Built customer scoring from interviews with salespeople and manual analysis of churn and failed engagements across more than 100 companies. Changed how accounts are assigned to salespeople and the order in which they are worked, with live ranked CRM queues and sales briefs.
 - Established recurring sales-engineer workshops and gathered feedback from sales, support, and CRM records to guide product changes. Partnered with account leadership on contact priorities and escalation rules; connected engineering updates to refreshed marketing materials.
