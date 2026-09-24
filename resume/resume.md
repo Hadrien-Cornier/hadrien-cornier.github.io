@@ -13,9 +13,9 @@ Engineering manager and hands-on ML and data engineer leading seven data, machin
 **Engineering Manager** Jan 2025 - Present | **Senior ML Engineer** Oct 2022 - Jan 2025 | **ML Engineer** Jul 2021 - Oct 2022
 
 - Lead seven data, machine learning, and backend engineers while remaining hands-on in architecture, technical review, hiring, and delivery. Conducted about 300 software engineer interviews and built the hiring system.
-- Own backend data systems for job ingestion, enrichment, analytics, application delivery, publisher pricing, and orchestration of ETL, training, inference, and production jobs. Built pipelines processing about one million jobs daily on a platform handling about 200 million events daily.
+- Own backend data systems for job ingestion, enrichment, analytics, application delivery, publisher pricing, and orchestration of ETL, training, inference, and production jobs. Built pipelines processing about one million jobs daily on a platform handling roughly 300 million raw event records daily.
 - Led production ML across retrieval, ranking, forecasting, bidding, and applicant screening. Co-built a hybrid retrieval engine and redesigned the recommender, increasing revenue by approximately $20M.
-- Optimized ML systems serving roughly 20 million inference requests daily, saving $1M annually. Replaced manual releases with scripted training, staged serving, and A/B-gated promotion; ran hundreds of experiments.
+- Cut compute requirements sevenfold for ML systems serving roughly 20 million inference requests daily, saving $1M annually. Ran hundreds of A/B tests to improve search.
 - Built an AI knowledge base and internal MCP server connecting engineers to company data and operations. Automated feedback and reporting workflows and trained engineers and data scientists in agentic coding.
 - Negotiated with Talroo's largest customer, doubling its spend. Improved sales targeting through churn and failed-client analysis, allocated about $1M in monthly publisher spend, and owned $5M in annual cloud and software contracts.
 
