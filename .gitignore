@@ -7,3 +7,5 @@ out/resume.log
 out/resume.out
 out/resume.synctex.gz
 .DS_Store
+
+node_modules/

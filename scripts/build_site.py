@@ -1,8 +1,9 @@
-"""Build the static profile from resume/profile.md. No third-party dependencies."""
+"""Build the static profile, notes, and optional Robotics articles."""
 from pathlib import Path
 import hashlib
 import html
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 source = (ROOT / 'resume/profile.md').read_text()
@@ -84,7 +85,7 @@ page = f'''<!doctype html>
 <meta property="og:title" content="Hadrien Cornier | Data Infrastructure &amp; Production ML"><meta property="og:description" content="Engineering manager building and running data infrastructure and production ML. Leading seven engineers at Talroo."><meta property="og:type" content="website"><meta property="og:url" content="https://hadrien-cornier.github.io/">
 <meta name="theme-color" content="#f6f5f0"><link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script>
 </head><body><a class="skip" href="#main">Skip to content</a>
-<header class="topbar"><a class="wordmark" href="#">HC<span>.</span></a><nav aria-label="Main navigation"><a href="#experience">Experience</a><a href="#management">Management</a><a href="#education">Education</a><a href="notes.html">Notes</a></nav><a class="resume-link" href="{resume_href}" download="Hadrien_Cornier_Resume.pdf">Resume PDF <span aria-hidden="true">↗</span></a></header>
+<header class="topbar"><a class="wordmark" href="#">HC<span>.</span></a><nav aria-label="Main navigation"><a href="#experience">Experience</a><a href="#management">Management</a><a href="#education">Education</a><a href="notes.html">Notes</a><a href="robotics/">Robotics</a></nav><a class="resume-link" href="{resume_href}" download="Hadrien_Cornier_Resume.pdf">Resume PDF <span aria-hidden="true">↗</span></a></header>
 <main id="main"><section class="hero" aria-labelledby="name"><div class="hero-top"><p class="eyebrow"><span class="dot"></span>Austin, Texas</p><p class="eyebrow">Data infrastructure · Production ML</p></div><h1 id="name">Hadrien Cornier<span>.</span></h1><div class="hero-bottom"><h2>Engineering Manager<br><span class="hero-company">Talroo</span></h2><div><p class="intro">{esc(intro)}</p><div class="contact"><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a><a href="https://linkedin.com/in/hadrien-cornier">LinkedIn <span aria-hidden="true">↗</span></a></div></div></div></section>
 <div class="work-layout" id="experience"><aside><h2>Experience</h2><nav aria-label="Areas of work">{nav}<a href="#earlier"><span>05</span>Earlier experience</a></nav></aside><div class="work"><div class="company-heading"><div><p class="eyebrow">Jul 2021–Present · Austin, TX</p><h2>Talroo</h2></div><button id="expand-all" type="button" hidden>Expand all details</button></div><p class="company-intro">{esc(talroo_intro)}</p><p class="progression">Engineering Manager <span>2025–present</span><br>Senior ML Engineer <span>2022–2025</span><br>ML Engineer <span>2021–2022</span></p>{chapter_html}<p class="mentorship">{esc(re.search(r'Talroo founder.*',source).group())}</p></div></div>
 <section class="section" id="management" aria-labelledby="management-title"><div class="section-title"><h2 id="management-title">Management philosophy</h2></div><div class="prose">{management}<a class="notes-link" href="notes.html">More notes on engineering and business <span aria-hidden="true">↗</span></a></div></section>
@@ -100,8 +101,12 @@ notes_page = f'''<!doctype html>
 <link rel="canonical" href="https://hadrien-cornier.github.io/notes.html"><meta name="theme-color" content="#f6f5f0">
 <meta property="og:title" content="Notes | Hadrien Cornier"><meta property="og:description" content="Thoughts on engineering and business."><meta property="og:type" content="website"><meta property="og:url" content="https://hadrien-cornier.github.io/notes.html">
 <link rel="stylesheet" href="assets/site.css"></head><body><a class="skip" href="#main">Skip to content</a>
-<header class="topbar"><a class="wordmark" href="index.html" aria-label="Hadrien Cornier home">HC<span>.</span></a><nav aria-label="Main navigation"><a href="index.html#experience">Experience</a><a href="index.html#management">Management</a><a href="index.html#education">Education</a><a href="notes.html" aria-current="page">Notes</a></nav><a class="resume-link" href="{resume_href}" download="Hadrien_Cornier_Resume.pdf">Resume PDF <span aria-hidden="true">↗</span></a></header>
+<header class="topbar"><a class="wordmark" href="index.html" aria-label="Hadrien Cornier home">HC<span>.</span></a><nav aria-label="Main navigation"><a href="index.html#experience">Experience</a><a href="index.html#management">Management</a><a href="index.html#education">Education</a><a href="notes.html" aria-current="page">Notes</a><a href="robotics/">Robotics</a></nav><a class="resume-link" href="{resume_href}" download="Hadrien_Cornier_Resume.pdf">Resume PDF <span aria-hidden="true">↗</span></a></header>
 <main id="main"><header class="notes-header"><p class="eyebrow">Hadrien Cornier</p><h1>Notes<span>.</span></h1><p>Thoughts on engineering and business.</p></header>
 <div class="notes-layout"><nav class="notes-nav" aria-label="Notes">{notes_nav}<a class="profile-link" href="index.html">← Back to profile</a></nav><div class="notes-content">{notes_html}</div></div>
 <footer><p>Hadrien Cornier<span>Austin, Texas</span></p><a href="mailto:hadrien.cornier@gmail.com">hadrien.cornier@gmail.com ↗</a><a href="#main">Back to top ↑</a></footer></main></body></html>'''
 (ROOT / 'notes.html').write_text(notes_page)
+
+# Robotics has its own standard Markdown renderer; profile and notes stay unchanged.
+if (ROOT / "content/robotics").is_dir():
+    subprocess.run(["node", str(ROOT / "scripts/build_robotics.mjs")], cwd=ROOT, check=True)

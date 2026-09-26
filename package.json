@@ -1,0 +1,17 @@
+{
+  "name": "hadrien-cornier-website",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "python3 scripts/build_site.py",
+    "build:robotics": "node scripts/build_robotics.mjs",
+    "test:robotics": "node --test scripts/build_robotics.test.mjs"
+  },
+  "engines": { "node": ">=22" },
+  "devDependencies": {
+    "@mdit/plugin-katex": "1.1.3",
+    "gray-matter": "4.0.3",
+    "katex": "0.18.9",
+    "markdown-it": "15.0.2"
+  }
+}

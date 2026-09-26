@@ -1,0 +1,72 @@
+/* Robotics shares the profile palette and typefaces; all content works without JS. */
+.robotics .topbar nav { gap: 22px; }
+.robotics-header { padding: 55px 0 42px; border-bottom: 1px solid var(--line); }
+.robotics-header h1 { font-size: clamp(44px, 6vw, 78px); letter-spacing: -2.5px; margin: 22px 0; max-width: 1000px; }
+.series-intro, .post-description { max-width: 790px; color: var(--muted); font-size: 18px; line-height: 1.75; }
+.post-meta { margin-top: 24px; color: var(--muted); font-size: 13px; }
+.report-list { max-width: 850px; padding: 12px 0 65px; }
+.report-card { padding: 34px 0; border-bottom: 1px solid var(--line); }
+.report-card:last-child { border-bottom: 0; }
+.report-card h2 { margin: 15px 0; font-family: Georgia, serif; font-size: 34px; letter-spacing: -.6px; }
+.report-card p:not(.eyebrow) { color: var(--muted); max-width: 720px; }
+.report-link { display: inline-block; margin-top: 20px; color: var(--green); font-size: 14px; }
+.post-layout { display: grid; grid-template-columns: 210px minmax(0, 820px); gap: 50px; padding: 42px 0 70px; }
+.article-toc { position: sticky; top: 30px; align-self: start; max-height: calc(100vh - 60px); overflow-y: auto; font-size: 13px; }
+.article-toc summary { color: var(--green); font-weight: 600; cursor: pointer; padding: 8px 0; }
+.article-toc ol { list-style: none; margin: 12px 0 0; padding: 0; }
+.article-toc li { margin-bottom: 12px; line-height: 1.5; }
+.article-toc .toc-h3 { padding-left: 14px; color: var(--muted); }
+.article-body { min-width: 0; font-size: 17px; line-height: 1.85; overflow-wrap: anywhere; }
+.article-body > :first-child { margin-top: 0; }
+.article-body p, .article-body ul, .article-body ol { margin: 0 0 23px; }
+.article-body li { margin-bottom: 8px; }
+.article-body h2 { font-family: Georgia, serif; font-size: 34px; letter-spacing: -.6px; margin: 54px 0 24px; padding-top: 22px; border-top: 1px solid var(--line); scroll-margin-top: 28px; }
+.article-body h3 { font-size: 24px; margin: 34px 0 18px; scroll-margin-top: 28px; }
+.article-body h4 { font-size: 19px; margin: 28px 0 14px; }
+.article-body a:not(.figure-link) { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+.article-body .article-figure { margin: 30px 0 38px; }
+.article-body img { display: block; width: 100%; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 3px; background: white; }
+.article-body figcaption { color: var(--muted); font-size: 13px; line-height: 1.6; margin-top: 12px; }
+.article-body blockquote { border-left: 3px solid #8caa91; margin: 25px 0; padding: 8px 22px; color: var(--muted); }
+.article-body blockquote > :last-child { margin-bottom: 0; }
+.article-body details { border: 1px solid var(--line); border-radius: 4px; padding: 16px 22px; margin: 28px 0; background: var(--white); }
+.article-body summary { color: var(--green); font-weight: 600; cursor: pointer; line-height: 1.5; }
+.article-body details[open] summary { margin-bottom: 22px; }
+.article-body details > :last-child { margin-bottom: 0; }
+.article-body pre { overflow-x: auto; padding: 18px; background: #e9ede5; border-radius: 3px; font-size: 13px; line-height: 1.65; }
+.article-body code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .86em; }
+.article-body :not(pre) > code { background: #e9ede5; padding: 2px 5px; border-radius: 3px; }
+.article-body .katex { font-size: 1.08em; }
+.article-body .katex-display { overflow-x: auto; overflow-y: hidden; padding: 12px 2px; margin: 22px 0; }
+.article-body .katex-display > .katex { white-space: nowrap; }
+.table-scroll { max-width: 100%; overflow-x: auto; margin: 26px 0; }
+.article-body table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.6; }
+.article-body th, .article-body td { text-align: left; vertical-align: top; padding: 12px 15px; border-bottom: 1px solid var(--line); min-width: 110px; }
+.article-body th { color: var(--green); background: #e9ede5; }
+.article-body hr { border: 0; border-top: 1px solid var(--line); margin: 40px 0; }
+.article-body .series-return { margin-top: 50px; padding-top: 26px; border-top: 1px solid var(--line); font-size: 14px; }
+@media (max-width: 1100px) {
+  .post-layout { display: block; max-width: 820px; margin: auto; }
+  .article-toc { position: static; max-height: none; margin-bottom: 36px; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+}
+@media (max-width: 700px) {
+  .robotics-header { padding: 35px 0 30px; }
+  .robotics-header h1 { font-size: 43px; letter-spacing: -1.6px; }
+  .series-intro, .post-description { font-size: 16px; }
+  .article-body { font-size: 16px; line-height: 1.8; }
+  .article-body h2, .report-card h2 { font-size: 29px; }
+  .article-body h3 { font-size: 23px; }
+  .article-body details { padding: 14px; }
+  .article-body .article-figure { margin: 24px -8px 30px; }
+  .article-body .katex { font-size: 1em; }
+}
+@media print {
+  .article-toc, .series-return { display: none; }
+  .robotics-header { padding: 0 0 20px; }
+  .robotics-header h1 { font-size: 32pt; }
+  .post-layout { display: block; padding: 20px 0; }
+  .article-body { font-size: 11pt; }
+  .article-body details::details-content { content-visibility: visible; }
+  .article-body h2 { font-size: 23pt; }
+  .article-body figure { break-inside: avoid; }
+}
