@@ -161,13 +161,11 @@ The Jacobian is a **matrix-valued field over configuration space**. Its value ch
 
 At an interior point of $Q_{valid}$, its image contains the attainable instantaneous position velocities. Its kernel contains joint velocities that preserve hand position to first order. Rank 3 means the position derivative is surjective.
 
-I also mixed up **kinematics**, **dynamics**, and **proprioception**. Their roots help: motion, power, and one's own body.
+I kept mixing up three words. Their roots helped me separate them:
 
-- **Kinematics** describes motion and geometry, including velocities and accelerations, without asking which forces cause them.
-- **Dynamics** relates forces and torques to motion. The same configuration with different velocities is a different state: an arm passing through a point may need braking where a stationary arm does not.
-- **Proprioception** is sensing the robot's own state, for example through joint encoders.
-
-[Etymology and mechanics](https://people.ohio.edu/williams/html/PDF/HistoryOfMechanisms.pdf); [proprioceptive](https://ahdictionary.com/word/search.html?q=proprioceptive).
+- **Kinematics** comes from Greek *kīnēma*, “motion,” from *kīnein*, “to move.” It describes positions, velocities, and accelerations without considering the forces that produce them. [Word origin](https://ahdictionary.com/word/search.html?q=kinematics).
+- **Dynamics** comes from Greek *dynamis*, “power.” It connects forces and torques to motion. The same arm configuration with different velocities is a different state: a moving arm may need braking where a stationary arm does not. [Word origin](https://ahdictionary.com/word/search.html?q=dynamic).
+- **Proprioception** combines Latin *proprius*, “one's own,” with the ending of *reception*, “receiving.” It means sensing your own body's state. For a robot, joint encoders provide this kind of information. [Word origin](https://www.ahdictionary.com/word/search.html?q=proprioception).
 
 ## Where can the hand actually go?
 
@@ -227,7 +225,7 @@ $$
 
 This is a rotation matrix, $R\in SO(3)$. Position and orientation together give a **pose**, $(p,R)\in SE(3)$. $R=I$ means aligned axes.
 
-Now the minus sign in a planar rotation has a picture:
+Imagine looking straight down at the arm in the video. Put two perpendicular arrows on the gripper, lying in the tabletop plane: X points right and Y points up the page. Now turn both arrows counterclockwise by $\theta$. Where does each arrow point? Those coordinates become the columns of the rotation matrix.
 
 ![Two perpendicular axes rotate together, giving cosine and negative sine in the first row](/assets/robotics/arm-control/04_rotation_columns.png)
 
@@ -247,7 +245,7 @@ The **pose workspace** contains reachable position-orientation pairs. The **dext
 
 We can now work backward from the motor. In the SO-101 position-control setup, the servo needs a joint-angle target. It cannot interpret “grasp the cup.” Something above it must turn that goal into commands.
 
-![Three ways to produce joint targets: planned motion, ACT action chunks, or learned task-space targets with IK and planning](/assets/robotics/arm-control/v3/command_routes.png)
+![A question tree branches between planning, learned joint targets, and learned hand targets, then joins at the servo feedback loop](/assets/robotics/arm-control/v3/command_questions.png)
 
 **Classical planning:** choose a grasp pose, use IK to find a joint configuration, then plan and time a collision-free path into intermediate joint targets. IK chooses an endpoint; planning supplies the motion between endpoints.
 
