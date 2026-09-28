@@ -28,7 +28,8 @@ Watch the wrist rotate. The joints before it stay fixed; the gripper's pointing 
 <figcaption>Simulated Franka wrist motion. Watch the local axes rotate with the gripper. <a class="video-link" href="/assets/robotics/arm-control/v3/franka_wrist_motion.mp4">Open video</a></figcaption>
 </figure>
 
-## How does the encoder find the angle?
+<details id="section-how-does-the-encoder-find-the-angle">
+<summary>Optional deep dive: how does the encoder find the angle?</summary>
 
 The magnetic encoder was one of the details I found most clever. A magnet turns with the shaft while a sensor chip stays fixed beneath it. Take the Hall-based [AS5600](https://www.infineon.com/assets/row/public/documents/24/49/infineon-as5600-datasheet-en.pdf) as an example.
 
@@ -63,7 +64,7 @@ Imagine the measured vector is $(X,Y)=(0.866,0.5)$, pointing at roughly 30°. CO
 
 Smaller corrections bring the estimate toward 30°. These are rotations of numbers in registers; the magnet supplies the original measurement.
 
-### Why do additions and shifts rotate a vector?
+#### Why do additions and shifts rotate a vector?
 
 Start with $(x,y)=(1,0)$. A 45° clockwise rotation gives $(0.707\ldots,-0.707\ldots)$. The update $(x+y,y-x)$ gives $(1,-1)$. Both point in the same direction. The second vector is simply longer.
 
@@ -125,7 +126,7 @@ These updates scale the vector's length while preserving the direction of each r
 
 </details>
 
-### Is CORDIC actually faster than a Taylor expansion?
+#### Is CORDIC actually faster than a Taylor expansion?
 
 I implemented both and tested them on the same inputs. For Taylor, the series is:
 
@@ -189,6 +190,8 @@ Operation types matter: a division and a shift have different costs. These are s
 Each method receives the same coordinate pairs, rounded to 30 fractional bits. Taylor receives exact floating-point versions of those values. Input preparation happens before timing. The reference is the system's double-precision `atan2`. Timing uses 65,536 fixed-seed inputs, 64 passes per trial, and rotating method order. Apple Clang 21 compiles with `-O3` and floating-point contraction disabled. Media rendering was stopped during the timing run.
 
 [Implementations, raw timings, operation counts, and accuracy checks](https://github.com/Hadrien-Cornier/maniskill-playground/tree/main/experiments/encoder-benchmark).
+
+</details>
 
 </details>
 
