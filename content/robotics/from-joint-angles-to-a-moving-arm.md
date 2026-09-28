@@ -28,6 +28,52 @@ Watch the wrist rotate. The joints before it stay fixed; the gripper's pointing 
 <figcaption>Simulated Franka wrist motion. Watch the local axes rotate with the gripper. <a class="video-link" href="/assets/robotics/arm-control/v3/franka_wrist_motion.mp4">Open video</a></figcaption>
 </figure>
 
+## How does the encoder find the angle?
+
+The magnetic encoder was one of the details I found most clever. A magnet turns with the shaft while a sensor chip stays fixed beneath it. Take the Hall-based [AS5600](https://www.infineon.com/assets/row/public/documents/24/49/infineon-as5600-datasheet-en.pdf) as an example.
+
+The **[Hall effect](https://www.ti.com/document-viewer/lit/html/sszt164)** turns a magnetic field into a voltage. Current flows through a semiconductor; the field pushes the moving charges sideways, creating a voltage across it. As the magnet turns, the sensor array and its electronics produce two signed signals, a quarter-cycle apart:
+
+$$
+X=A\cos\theta,\qquad Y=A\sin\theta.
+$$
+
+Here $A$ is the signal amplitude and $\theta$ is the shaft angle. The two signals act like perpendicular coordinates. The rotating magnetic field supplies the sine and cosine signals. The chip's job is to recover the angle.
+
+One signal leaves an ambiguity: 30° and 150° have the same sine. Their cosine signs differ, so the pair distinguishes them. The calculation is $\theta=\operatorname{atan2}(Y,X)$, which keeps both signs to identify the quadrant. [TI's encoder guide](https://www.ti.com/lit/ug/tiduc07/tiduc07.pdf) explains this signal pair.
+
+An analog-to-digital converter turns the voltages into numbers. Then I wondered how a tiny chip computes the angle. **CORDIC**, short for *Coordinate Rotation Digital Computer*, does it with additions, subtractions, bit shifts, and a small lookup table. The AS5600 has a hardwired CORDIC block.
+
+Imagine the measured vector is $(X,Y)=(0.866,0.5)$, pointing at roughly 30°. CORDIC rotates its coordinates toward the horizontal axis. Positive Y means turn clockwise; negative Y means turn back. It adds each signed turn to an angle estimate:
+
+| Turn | Angle estimate |
+|---|---:|
+| Clockwise by 45° | 45° |
+| Back by 26.565° | 18.435° |
+| Clockwise by 14.036° | 32.471° |
+| Back by 7.125° | 25.346° |
+
+Smaller corrections bring the estimate toward 30°. These are rotations of numbers in registers; the magnet supplies the original measurement.
+
+The trick is choosing $\phi_i=\arctan(2^{-i})$. With fixed-point numbers, stored as scaled integers, multiplication by $2^{-i}$ becomes a right shift in binary. The angle values are computed ahead of time and stored in the table. The runtime calculation needs no Taylor expansion. [ST's CORDIC explanation](https://www.st.com/resource/en/application_note/an5325-how-to-use-the-cordic-to-perform-mathematical-functions-on-stm32-mcus-stmicroelectronics.pdf).
+
+<details>
+<summary>The shift-and-add update</summary>
+
+For the 30° example, start with $x_0=X$, $y_0=Y$, and $a_0=0$. At step $i$, choose $d_i=+1$ if $y_i\geq0$, otherwise $d_i=-1$:
+
+$$
+x_{i+1}=x_i+d_i\,2^{-i}y_i,\qquad
+y_{i+1}=y_i-d_i\,2^{-i}x_i,\qquad
+a_{i+1}=a_i+d_i\phi_i.
+$$
+
+Both coordinate updates use the old values. At the first step, $i=0$, this gives $x_1=0.866+0.5=1.366$ and $y_1=0.5-0.866=-0.366$. The negative Y tells us we overshot, so the next step turns back.
+
+These updates scale the vector's length while preserving the direction of each rotation. For angle recovery, the direction is what matters. Once Y is close to zero, the accumulated angle $a$ is close to the original angle.
+
+</details>
+
 ## How does a motor follow an angle?
 
 Sending “30°” does not tell a bare motor how long to turn. A **servo**, short for servomechanism, is an actuator with feedback: it compares a measured quantity with a target and corrects the error. In the SO-101, the smart servo packages the motor, encoder, driver, gears, and controller together.
