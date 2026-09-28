@@ -1,26 +1,24 @@
 ---
 title: 'Why I am learning robotics'
-description: 'A new learning project: robot data, bodies, and control, with AI as a tool and writing as a way to test my understanding.'
+description: 'What drew me to robotics, what I want to try with my SO-101, and why I am writing as I learn.'
 date: '2026-09-28'
 slug: 'why-i-am-learning-robotics'
 ---
 
-I started learning robotics recently. Part of the appeal is the gap between the robots I expected from science fiction and what we can actually use. It feels like an especially interesting time to try to understand that gap. AI is changing how robots learn, and there are still basic questions about what to build and how to teach it.
+I started learning robotics because I want to understand how a machine turns knowledge into physical action. "Pick up the cup" is a simple request. Carrying it out means finding the cup, reaching it, closing a gripper, and adjusting if it slips. I want to understand how those pieces fit together.
 
-[ACT, Action Chunking with Transformers](https://tonyzhaozh.github.io/aloha/), was one of the things that drew me in. In 2023, it learned selected manipulation tasks from 50 demonstrations per task, about ten minutes of human operation. That felt like something I could try myself.
+Part of the appeal is the gap between the robots I expected from science fiction and what we can actually use. [ACT, Action Chunking with Transformers](https://tonyzhaozh.github.io/aloha/), made experimenting feel within reach. In 2023, it learned tasks such as opening a condiment cup and inserting a battery from 50 demonstrations per task, about ten minutes of human operation. That felt like something I could try myself.
 
-What interests me most is connecting language and knowledge to physical action. A model can identify an object or explain a task. Making an arm carry it out requires choosing movements, coordinating joints, and reacting to what happens. Systems such as [PaLM-E](https://palm-e.github.io/), which connects language commands to a robot policy, make that connection worth exploring.
+I own an SO-101 arm and have started exploring a Franka arm in simulation. [Jacob Rothschild's writing about robot control](https://x.com/ja_rothschild/article/2100633491432239411) helped inspire this project. I am starting with basic questions: how do joint angles determine where the gripper goes, and how does a motor follow the angle I ask for?
 
-There are several ways into the problem. Teleoperation can supply demonstrations. Simulation gives us environments to experiment in. Reinforcement learning can improve behavior through rewards, in simulation or on a real robot. These can be combined. I want to understand what each contributes, where it fails, and what useful training data actually looks like.
+From there, I want to understand how to give a robot useful experience. I can guide an arm through a task and record demonstrations. In simulation, I can repeat an experiment and change one thing at a time. With reinforcement learning, I can give rewards for progress and let the robot learn through trial and error. What does each approach teach it? What still fails when the objects or surroundings change?
 
-The data question became more concrete when Figure announced [Index on August 25, 2026](https://www.figure.ai/news/introducing-index). The app pays contributors to record everyday tasks at home or work. Its [product page](https://www.figure.ai/index-app) describes providing a recording device and paying by the minute. Figure's earlier [Project Go-Big](https://www.figure.ai/news/project-go-big) used egocentric video, filmed from a person's perspective, to train robot navigation. Watching human activity become training data makes me curious about what transfers to a robot and what still requires robot experience.
+The data question becomes especially interesting when the examples come from people. [Figure's Index](https://www.figure.ai/news/introducing-index) pays contributors to record everyday tasks, such as folding laundry or stocking shelves. A person and a robot have different bodies. What can the robot learn from watching us, and what does it need to try for itself?
 
-The bodies are just as interesting. When does a humanoid make sense? When is a purpose-built arm enough? How do tendon-driven hands compare with other ways of transmitting motor force? The answers could differ across factories, construction sites, and homes. I also want to understand what a robot remembers and whether it maintains a useful map beyond its latest camera image.
+That leads to questions about the body itself. When does a humanoid make sense, and when is a purpose-built arm enough? I am curious about hands driven by tendons, which transmit motor force through cables. I also want to understand memory: if a robot turns away from a cup, how does it keep track of where the cup is?
 
-My guess is that general-purpose robots could become useful in homes within five to ten years. That is speculation, not a forecast I can defend yet. Reliability, cost, and the range of tasks they can handle matter more than an impressive demonstration. I would like to understand those limits well enough to revise my guess.
+My guess is that general-purpose robots could become useful in homes within five to ten years. Whether that happens depends on their reliability, cost, and the range of tasks they can handle. Learning how they work should help me judge their progress and revise that guess.
 
-[Jacob Rothschild's writing about robot control](https://x.com/ja_rothschild/article/2100633491432239411) helped inspire this project. I want to learn by trying things and writing down the parts I can explain. I own an SO-101 and have started exploring a Franka arm in simulation.
+AI makes this easier to begin. I can ask a basic question, follow it into equations or code, and get help setting up an experiment. But a clear answer can arrive before I've done the thinking. Working through a derivative or testing a prediction helps me find what I haven't understood.
 
-AI makes this easier to begin. I can ask a basic question, follow it into equations or code, and get help setting up an experiment. But a clear answer can arrive before I've done the thinking. Some friction is useful: working through a derivative, checking an assumption, or finding the example that exposes what I haven't understood.
-
-That is why I want to write these reports. A post makes me sit down, check the claims, choose the diagrams, and explain the result in my own order. I plan to publish weekly as I learn. The first technical report starts with [joint angles, hand poses, and motor control](/robotics/from-joint-angles-to-a-moving-arm/).
+Writing gives me another way to check. To explain a result, I have to trace the steps, check the claims, and choose an example that makes sense without the conversation that led to it. I plan to publish weekly as I learn. The first technical report starts with [joint angles, hand poses, and motor control](/robotics/from-joint-angles-to-a-moving-arm/).
