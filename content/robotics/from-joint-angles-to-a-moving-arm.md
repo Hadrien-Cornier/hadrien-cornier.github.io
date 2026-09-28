@@ -63,7 +63,40 @@ Imagine the measured vector is $(X,Y)=(0.866,0.5)$, pointing at roughly 30°. CO
 
 Smaller corrections bring the estimate toward 30°. These are rotations of numbers in registers; the magnet supplies the original measurement.
 
-The trick is choosing $\phi_i=\arctan(2^{-i})$. With fixed-point numbers, stored as scaled integers, multiplication by $2^{-i}$ becomes a right shift in binary. The angle values are computed ahead of time and stored in the table. The runtime calculation needs no Taylor expansion. [ST's CORDIC explanation](https://www.st.com/resource/en/application_note/an5325-how-to-use-the-cordic-to-perform-mathematical-functions-on-stm32-mcus-stmicroelectronics.pdf).
+### Why do additions and shifts rotate a vector?
+
+Start with $(x,y)=(1,0)$. A 45° clockwise rotation gives $(0.707\ldots,-0.707\ldots)$. The update $(x+y,y-x)$ gives $(1,-1)$. Both point in the same direction. The second vector is simply longer.
+
+Here is why. Write the original vector as $(r\cos\theta,r\sin\theta)$. Turning clockwise by $\phi$ changes its angle to $\theta-\phi$. The angle-subtraction identities give:
+
+$$
+\begin{aligned}
+x_{\rm rot}&=x\cos\phi+y\sin\phi,\\
+y_{\rm rot}&=y\cos\phi-x\sin\phi.
+\end{aligned}
+$$
+
+Factor out the same cosine from both coordinates:
+
+$$
+\begin{aligned}
+x_{\rm rot}&=\cos\phi\,(x+y\tan\phi),\\
+y_{\rm rot}&=\cos\phi\,(y-x\tan\phi).
+\end{aligned}
+$$
+
+For our turns between 0° and 45°, $\cos\phi$ is positive. Multiplying both coordinates by this common factor changes the length while preserving the direction. We only need the angle, so we can leave that factor out.
+
+Now choose $\tan\phi_i=2^{-i}$. The remaining update becomes:
+
+$$
+x_{\rm new}=x+2^{-i}y,\qquad
+y_{\rm new}=y-2^{-i}x.
+$$
+
+That is the whole trick. At $i=0$, add and subtract the coordinates directly. At $i=1$, use half of each coordinate. At $i=2$, use a quarter. With scaled integers, these divisions become right shifts. For a counterclockwise turn, reverse the two signs. Both updates use the old coordinates.
+
+**This is an exact rotation followed by a stretch.** The approximation comes from stopping after finitely many turns and rounding the stored numbers. Each chosen angle $\phi_i=\arctan(2^{-i})$ is computed ahead of time and kept in the lookup table. [ST's CORDIC explanation](https://www.st.com/resource/en/application_note/an5325-how-to-use-the-cordic-to-perform-mathematical-functions-on-stm32-mcus-stmicroelectronics.pdf).
 
 Watch the same process with small integers. Start at $(X,Y)=(887,512)$, whose angle is about 29.995°. The first update gives $x=887+512=1399$ and $y=512-887=-375$. We have turned too far, so the next step turns back. A right shift divides by a power of two and rounds down: `1399 >> 1 = 699`.
 
@@ -100,7 +133,29 @@ $$
 \arctan z=z-\frac{z^3}{3}+\frac{z^5}{5}-\cdots.
 $$
 
-Near $z=1$, it converges slowly. But we can first map the angle to a smaller interval. That makes a huge difference, so I tested both versions.
+Near $z=1$, the powers $z^3,z^5,\ldots$ shrink slowly. **Range reduction** means using an identity to replace the input with a smaller one, applying the series there, then restoring the known angle.
+
+Here, first use signs and axis swaps to reduce the angle to between 0° and 45°, with $z$ between 0 and 1. If it is above 22.5°, compute its small offset from 45°. The tangent-subtraction identity gives:
+
+$$
+\tan\left(\alpha-\frac{\pi}{4}\right)
+=\frac{\tan\alpha-1}{1+\tan\alpha}
+=\frac{z-1}{z+1},\qquad \alpha=\arctan z.
+$$
+
+So we can recover the angle with:
+
+$$
+\arctan z=\frac{\pi}{4}+\arctan\left(\frac{z-1}{z+1}\right).
+$$
+
+For example, $z=0.8$ becomes $(0.8-1)/(0.8+1)=-1/9$. We evaluate the series at about $-0.111$, then add 45°. Using the same three terms, $w-w^3/3+w^5/5$:
+
+- Directly at $w=0.8$: about **39.81308°**.
+- At $w=-1/9$, then adding 45°: about **38.6598066°**.
+- Reference value: about **38.6598083°**.
+
+The same short polynomial becomes much more accurate because its input is smaller. Across the full reduced interval, the series now sees inputs with magnitude at most $\tan(22.5°)\approx0.4142$.
 
 I set the error target to half a 12-bit encoder step: $360°/8192\approx0.0439°$. All three methods passed on 1,114,197 coordinate pairs. These are native C++ results on an Apple M1 Max, using the median of 11 timing trials:
 
