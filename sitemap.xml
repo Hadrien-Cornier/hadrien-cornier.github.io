@@ -25,12 +25,17 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/</loc>
-    <lastmod>2026-09-26</lastmod>
+    <lastmod>2026-09-28</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/why-i-am-learning-robotics/</loc>
+    <lastmod>2026-09-28</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/from-joint-angles-to-a-moving-arm/</loc>
-    <lastmod>2026-09-26</lastmod>
+    <lastmod>2026-09-28</lastmod>
     <changefreq>monthly</changefreq>
   </url>
 </urlset>

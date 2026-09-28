@@ -1,6 +1,6 @@
 # Robot mesh sources and notices
 
-The robot mesh portions of `results/seed7-dense/robot_geometry.json`, the embedded geometry in `figures-v2/workspace.html`, and the Franka renderings in `figures-v2` and `figures-lesson` come from the Panda visual assets distributed with **ManiSkill 3.0.1**. The robot is the Franka Panda. Credit belongs to the upstream Franka model authors and the ManiSkill contributors who distribute these assets.
+The robot mesh portions of `results/seed7-dense/robot_geometry.json`, the embedded geometry in `figures-v2/workspace.html`, and the Franka renderings in `figures-v2`, `figures-lesson`, and `figures-v3` come from the Panda visual assets distributed with **ManiSkill 3.0.1**. The robot is the Franka Panda. Credit belongs to the upstream Franka model authors and the ManiSkill contributors who distribute these assets.
 
 ## License notices
 
@@ -18,7 +18,7 @@ The assets are supplied without warranties, under the disclaimers in the linked 
 
 Source assets are in [ManiSkill v3.0.1's Panda visual mesh directory](https://github.com/haosulab/ManiSkill/tree/v3.0.1/mani_skill/assets/robots/panda/franka_description/meshes/visual): `link0.glb` through `link7.glb`, `hand.glb`, and `finger.glb`.
 
-The local export reads the loaded SAPIEN render meshes and their material colors. It merges duplicate vertices, rounds positions to 0.0000001 m, saves link-frame triangles as JSON, and places those triangles using sampled robot configurations. The HTML and PNG figures render this transformed geometry. These are modified representations of the upstream assets. Per-file SHA-256 hashes are stored in `robot_geometry.json` under `provenance.visual_asset_sha256`.
+The local export reads the loaded SAPIEN render meshes and their material colors. It merges duplicate vertices, rounds positions to 0.0000001 m, saves link-frame triangles as JSON, and places those triangles using sampled robot configurations. The HTML, PNG figures, and MP4 teaching videos render this transformed geometry. These are modified representations of the upstream assets. Per-file SHA-256 hashes are stored in `robot_geometry.json` under `provenance.visual_asset_sha256`.
 
 The original Franka source notices were obtained from:
 

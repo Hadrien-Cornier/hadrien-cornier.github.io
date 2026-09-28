@@ -1,199 +1,266 @@
 ---
-title: 'Learning robotics: from joint angles to a moving arm'
-description: 'Joint and task space, kinematics, and motor control, explored through an SO-101 and a simulated Franka arm.'
+title: 'How an arm moves: joints, geometry, and motor control'
+description: 'From encoder readings to gripper position: a visual guide to robot geometry, servos, and the commands that connect them.'
 date: '2026-09-26'
+updated: '2026-09-28'
 slug: 'from-joint-angles-to-a-moving-arm'
 ---
 
-I started learning robotics recently. These weekly reports are a way to keep track of what I try and what I understand. I've moved beyond some of the questions in this first entry, but they're a useful checkpoint.
+I own an SO-101 arm. I wanted to understand how a number sent from my laptop becomes a movement, and how joint angles determine where the gripper ends up. [Why I'm learning robotics](/robotics/why-i-am-learning-robotics/) is a separate post.
 
-[ACT, Action Chunking with Transformers](https://arxiv.org/abs/2304.13705), got me interested: in 2023, it learned selected manipulation tasks from just 50 demonstrations per task, about ten minutes of human operation. That seemed like something I could experiment with.
+## How do we describe the arm?
 
-I want to explore how we collect training data, what simulation can teach, and what robots remember. [Original OpenVLA](https://arxiv.org/html/2406.09246v3#S6), surprisingly, acted from a single image without observation history. Other systems add memory or spatial maps. Then there are the bodies themselves: humanoids, purpose-built arms, tendon-driven hands. There's a lot to try.
+Here is the Franka Panda used in my ManiSkill experiment. Its seven arm joints rotate; the fingers slide. The names below describe their motions, alongside the model's joint numbers.
 
-I own an SO-101 and use a Franka arm in simulation. This first report follows a command from the geometry of the arm down to the motor.
+![Franka arm with human-readable joint names and colored rotation arrows](/assets/robotics/arm-control/v3/franka_joint_names.png)
 
-## Starting with the arm
+We could record the Cartesian position of every joint. But those coordinates are constrained by the rigid links, and joint-center positions alone miss rotation about a link's axis. A simpler description is the vector of **joint angles**, $q=(q_1,\ldots,q_7)$. Given the robot's geometry, these determine the positions and orientations of its arm links.
 
-Here is the **Franka Panda** in ManiSkill. It has seven arm degrees of freedom, plus finger opening. My SO-101 has five arm joints and one gripper actuator. Its six motors do not give the hand six pose degrees of freedom.
+My SO-101 has five arm joints and a gripper actuator. An **encoder** inside each smart servo measures its angle. The arm's angles are its *configuration*. Its mechanical state also includes joint velocities, $(q,\dot q)$.
 
-![Franka Panda with seven colored joint rotation arrows and separate sliding fingers](/assets/robotics/arm-control/franka_motion_arrows.png)
+Watch the wrist rotate. The joints before it stay fixed; the gripper's pointing direction alone does not describe this motion.
 
-The joint angles form the **configuration** $q$. A basic arm **state** is $(q,\dot q)$; a manipulation state also includes objects. Camera images are observations. An **action** is a command: a target angle, angle increment, velocity, or torque, depending on the interface.
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v3/franka_wrist_motion.png" aria-label="Wrist twist with the upstream arm joints fixed">
+<source src="/assets/robotics/arm-control/v3/franka_wrist_motion.mp4" type="video/mp4">
+<a href="/assets/robotics/arm-control/v3/franka_wrist_motion.mp4">Watch the video</a>
+</video>
+<figcaption>Simulated Franka wrist motion. Watch the local axes rotate with the gripper. <a class="video-link" href="/assets/robotics/arm-control/v3/franka_wrist_motion.mp4">Open video</a></figcaption>
+</figure>
 
-“Hand above the cup, facing down” specifies a **task-space** target. A vector of joint angles specifies a **joint-space** target. I initially blurred the two.
+## How does a motor follow an angle?
 
-![Joint angles map forward to hand pose; inverse kinematics searches for a set of joint solutions](/assets/robotics/arm-control/task_joint_mapping.png)
-
-In the joint/task-space and control-flow diagrams: **teal = task space**, **purple = joint space**, **amber = motor effort**.
-
-## Turning angles into a hand position
-
-I first imagined each joint controlling a world direction. But lifting a straight arm moves the hand upward *and inward*. For two planar links:
-
-![One and two rigid links showing horizontal cosine and vertical sine projections](/assets/robotics/arm-control/01_link_projections.png)
-
-$$
-x=L_1\cos q_1+L_2\cos(q_1+q_2),\qquad
-y=L_1\sin q_1+L_2\sin(q_1+q_2).
-$$
-
-These are sums of projections. The second link's absolute angle is $q_1+q_2$ because the elbow angle is relative to the first link.
-
-**Forward kinematics** is the smooth, nonlinear map $f:Q\to SE(3)$ from joint configurations to hand poses. Here $SE(3)$ is the space of rigid poses: a translation and a rotation. Joint limits and collision constraints select $Q_{valid}\subset Q$.
-
-**Inverse kinematics (IK)** seeks a valid point in the preimage:
-
-$$
-f^{-1}(T^*)\cap Q_{valid}=\{q\in Q_{valid}:f(q)=T^*\}.
-$$
-
-The map is generally neither injective nor surjective onto $SE(3)$: several configurations can produce one pose, and some poses are unreachable. IK is therefore a constrained search, not a globally defined inverse function. A particular solver may omit collision checking.
-
-When I saw $\dot p=J(q)\dot q$, I wanted to know where the Jacobian came from. Write the position component of forward kinematics as $p=g(q)$. The equation is just the chain rule:
-
-$$
-\dot p=J(q)\dot q,\qquad
-J(q)=Dg(q)=\begin{bmatrix}
-\frac{\partial x}{\partial q_1}&\cdots&\frac{\partial x}{\partial q_n}\\
-\frac{\partial y}{\partial q_1}&\cdots&\frac{\partial y}{\partial q_n}\\
-\frac{\partial z}{\partial q_1}&\cdots&\frac{\partial z}{\partial q_n}
-\end{bmatrix}.
-$$
-
-![The same small joint turn produces different hand velocities in two arm configurations](/assets/robotics/arm-control/jacobian_local_motion.png)
-
-The $3\times n$ position Jacobian is a **matrix-valued field over configuration space**. Each column gives the hand velocity produced by one joint's unit velocity. At an interior point of $Q_{valid}$, its image contains the attainable instantaneous hand velocities; its kernel contains joint velocities that leave hand position unchanged to first order. Rank 3 means the derivative is surjective onto position velocities. This is a local statement, not a claim about the whole workspace.
-
-Two configurations with the same hand position can have different Jacobians. For a small displacement, $\Delta p\approx J(q)\Delta q$.
-
-<details>
-<summary>Is this a tensor field?</summary>
-
-More precisely, $dg_q:T_qQ\to T_{g(q)}\mathbb R^3$ is a linear map between tangent spaces. The derivative is a section of $T^*Q\otimes g^*T\mathbb R^3$, not an ordinary $(1,1)$ tensor field on $Q$. [Tangent bundles](https://math.stanford.edu/~conrad/diffgeomPage/handouts/bundle.pdf).
-
-</details>
-
-For my SO-101, a useful simplification is to separate shoulder pan from the side-view geometry. Sum the links' horizontal projections to get signed reach $r$, then rotate it about the base:
-
-![Simplified SO-101 side and top views showing signed radial reach and shoulder pan](/assets/robotics/arm-control/02_so101_signed_reach.png)
-
-$$
-x=r\cos q_1,\qquad y=r\sin q_1.
-$$
-
-Shoulder lift, elbow flex, and wrist flex change $r$ and height. Folding past the pan axis can make $r$ negative; horizontal distance is $|r|$. This schematic omits real offsets. Wrist roll leaves the chosen on-axis point fixed.
-
-## Where can the hand actually go?
-
-I pictured a sphere, then perhaps a quarter sphere once I considered the joint limits and table. But that assumes the arm can reach everything inside its outer boundary.
-
-![Ideal two-link arms showing why unequal link lengths can leave an inner unreachable hole](/assets/robotics/arm-control/03_workspace_intuitions.png)
-
-An ideal two-link arm has minimum reach $|L_1-L_2|$ when unrestricted folding is allowed. Real joint limits and collisions can exclude more space. There can be an inner hole, but there need not be one.
-
-For the actual Franka model, I sampled joint configurations and computed their hand positions:
-
-![Computed Franka workspace slices distinguish valid samples, rejected samples, and unsampled cells](/assets/robotics/arm-control/franka_workspace_cuts.png)
-
-Teal cells contain valid samples. Rose cells contain only colliding samples. Cream cells contain none. **Neither rose nor cream proves unreachability.** Some valid points below tabletop height lie beyond its edge.
-
-The **position workspace** is the image $g(Q_{valid})$. It ignores orientation and does not establish that a collision-free path exists from the starting configuration.
-
-## Carrying a little coordinate frame
-
-I found orientation easier to picture as three axes attached to the gripper. A single pointing direction is insufficient: a screwdriver can twist without changing where it points.
-
-![Three actual Franka wrist orientations with fixed tool position and local Z axis](/assets/robotics/arm-control/franka_wrist_roll.png)
-
-Only the last wrist joint turns here. The hand's local Z axis and position stay fixed while its X and Y axes rotate.
-
-The three local unit axes, expressed in world coordinates, are the columns of $R\in SO(3)$. Thus $R^TR=I$ and $\det R=1$. Position $p$ and orientation $R$ together specify pose. $R=I$ means aligned axes, not the robot's neutral configuration.
-
-I could see the first column of a planar rotation, $(\cos\theta,\sin\theta)$, but the minus sign in the second bothered me.
-
-![Perpendicular arrows rotate together, showing why the second column has negative sine](/assets/robotics/arm-control/04_rotation_columns.png)
-
-The second axis stays $\pi/2$ ahead:
-$\cos(\theta+\pi/2)=-\sin\theta$ and $\sin(\theta+\pi/2)=\cos\theta$.
-At $\theta=\pi/2$, the first arrow points up and the second points left. For the Franka wrist rotation shown above:
-
-$$
-R_{new}=R_{old}\begin{bmatrix}\cos\theta&-\sin\theta&0\\\sin\theta&\cos\theta&0\\0&0&1\end{bmatrix}.
-$$
-
-Reaching a position does not mean reaching it at every orientation:
-
-![Three Franka configurations place their hands in one small box with different orientations](/assets/robotics/arm-control/franka_orientation_box.png)
-
-These hands occupy the same 15 cm box, at slightly different positions. They illustrate orientation variation, not complete coverage at a fixed point.
-
-The **pose workspace** is $f(Q_{valid})\subset SE(3)$. The **dexterous workspace**, in its strict sense, contains positions reachable at *every* orientation. Neither follows from a position cloud alone. Even a plot of tool-axis directions misses rotation about that axis.
-
-## From a goal to the next command
-
-So where does ACT fit? Geometry tells us which configurations produce a pose. Something still has to choose the motion.
-
-![Classical control, ACT, VLM, and VLA routes with task, joint, and motor commands in distinct colors](/assets/robotics/arm-control/control_spaces_overview.png)
-
-- **Classical pipeline:** choose a grasp pose, solve IK, plan a collision-free path, and time it into targets for the controller. These steps can be interleaved.
-- **ACT:** predicts a chunk of future targets from images and joint positions. In the original ALOHA setup, these are joint-position targets learned from human-operated leader arms. No hand-target IK step is required. [ACT, §IV](https://arxiv.org/html/2304.13705v1#S4).
-- **VLM:** a vision-language model can choose a high-level step. PaLM-E generates language commands for a separate robot policy. [PaLM-E](https://palm-e.github.io/).
-- **VLA:** a vision-language-action model outputs robot actions. Original OpenVLA uses end-effector commands; other systems use joint commands. The action's units, frame, and absolute or relative convention must match the controller. [OpenVLA](https://arxiv.org/html/2406.09246v3#S3).
-
-A **policy** selects actions from observations. A **dynamics model** predicts how actions change the state through forces, inertia, gravity, and contact. A **planner** searches for a motion; a **controller** tracks its targets through feedback. Model predictive control uses a dynamics model to replan as observations arrive. These roles can overlap.
-
-## The command still has to reach a motor
-
-I initially thought the SO-101's USB board might be the motor controller. It is a bus adapter. Each smart servo contains its own feedback loop, sensor, driver, motor, and gears.
+Sending “30°” does not tell a bare motor how long to turn. A **servo**, short for servomechanism, is an actuator with feedback: it compares a measured quantity with a target and corrects the error. In the SO-101, the smart servo packages the motor, encoder, driver, gears, and controller together.
 
 ![Laptop commands pass through the USB adapter to a local controller and encoder loop inside each servo](/assets/robotics/arm-control/so101_servo_feedback.png)
 
-The servo receives a target, measures its angle with a magnetic encoder, and adjusts motor drive. That loop continues between laptop commands. [Waveshare's FAQ](https://docs.waveshare.com/Bus_Servo_Adapter_A/FAQ) documents the adapter; the [STS3215 datasheet](https://files.seeedstudio.com/products/Feetech/108090023_STS3215-C001_Datasheet.pdf) documents magnetic sensing and PID. I haven't verified the firmware's timing or filtering.
+The USB board passes messages to the servo bus. Each servo runs its own feedback loop between laptop commands. A magnetic encoder senses a rotating magnet to measure angle. The [adapter documentation](https://docs.waveshare.com/Bus_Servo_Adapter_A/FAQ) and [STS3215 datasheet](https://files.seeedstudio.com/products/Feetech/108090023_STS3215-C001_Datasheet.pdf) describe this hardware. The firmware's exact timing and filtering remain unverified.
 
-For desired angle $q_d$ and measured angle $q$, the standard **PID** law is:
+Suppose the desired angle is $q_d=30°$ and the measured angle is $q=20°$. The error is $e=10°$. The target command is an **action**; the encoder reading is an observation of the current state. A standard **PID controller** turns that error into a drive command:
 
 $$
 e(t)=q_d(t)-q(t),\qquad
 u(t)=K_Pe(t)+K_I\int_0^t e(s)\,ds+K_D\dot e(t).
 $$
 
-- **P:** proportional correction for current error.
-- **I:** accumulated error supplies sustained effort, for example against gravity. It needs protection against accumulation when the actuator saturates.
-- **D:** derivative feedback. For a fixed target, $\dot e=-\dot q$, so it opposes velocity. Noise makes filtering necessary.
+Here $u$ is the requested motor drive. The three gains $K_P,K_I,K_D$ set the strength of three corrections:
 
-![P reads current error, I accumulates signed area, and D reads the slope of the same error curve](/assets/robotics/arm-control/03_pid_terms.png)
+- **Proportional:** react to the current error. A larger gap produces a larger correction.
+- **Integral:** accumulate past error. This can supply the sustained effort needed to hold against gravity.
+- **Derivative:** react to changing error. For a fixed target, $\dot e=-\dot q$, so this term opposes motion and helps brake before overshoot.
 
-This figure uses a prescribed error curve. The equation is a teaching model, not a reconstruction of the servo firmware; $u$ requests drive, not guaranteed torque.
+![The proportional term reads error, the integral accumulates its area, and the derivative reads its slope](/assets/robotics/arm-control/03_pid_terms.png)
 
-I then wanted to understand why one response overshoots while another creeps toward its target.
+This is a teaching law, not a reconstruction of the servo firmware. Integral windup and derivative noise need handling. Motor drive is not automatically equal to torque.
 
-![Ideal underdamped, critically damped, and overdamped step responses at fixed natural frequency](/assets/robotics/arm-control/01_damping_step_responses.png)
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v3/damping_joint_responses_poster.png" aria-label="Three joint responses to the same angle target">
+<source src="/assets/robotics/arm-control/v3/damping_joint_responses.mp4" type="video/mp4">
+<a href="/assets/robotics/arm-control/v3/damping_joint_responses.mp4">Watch the video</a>
+</video>
+<figcaption>Teaching model: underdamped, critically damped, and overdamped responses. No physical robot measurement. <a class="video-link" href="/assets/robotics/arm-control/v3/damping_joint_responses.mp4">Open video</a></figcaption>
+</figure>
 
-In this second-order step response, underdamping produces oscillation, critical damping is the non-oscillatory boundary, and overdamping gives a slower non-oscillatory response.
+The clips use the same target and clock. An **underdamped** joint overshoots and oscillates. An **overdamped** joint approaches slowly without oscillation. **Critical damping** is the boundary between those two responses in this ideal second-order model.
 
 <details>
-<summary>The one-joint model</summary>
+<summary>The equation behind the animation</summary>
 
-With inertia $M$, viscous friction $b$, a fixed target, and PD control:
+For a single joint with inertia $M$, viscous friction $b$, and PD control at a fixed target:
 
 $$
 M\ddot e+(b+K_D)\dot e+K_Pe=0,\qquad
 \zeta=\frac{b+K_D}{2\sqrt{MK_P}}.
 $$
 
-For $M,K_P>0$, $0<\zeta<1$ is underdamped, $\zeta=1$ critical, and $\zeta>1$ overdamped. This model omits integral action, gravity, contact, delay, and limits.
+$M$ measures resistance to angular acceleration. $b$ measures friction proportional to speed. The dimensionless **damping ratio** $\zeta$ (zeta) compares damping with its critical value: between 0 and 1 is underdamped, 1 is critical, and above 1 is overdamped. The animation assumes positive inertia and proportional gain and omits integral action, gravity, delay, and contact.
+
+Changing the load or arm configuration changes the response even with the same controller gains. Gains can differ by joint or vary with pose and load. [PD control and damping](https://modernrobotics.northwestern.edu/nu-gm-book-resource/11-4-motion-control-with-torque-or-force-inputs-part-1-of-3/).
 
 </details>
 
-[Jacob Rothschild's article](https://x.com/ja_rothschild/article/2100633491432239411) says, “The controller's D, however, is fixed”. I read that as a global restriction. It is a fixed *gain* in his example, not a universal damping constant.
+## Joint angles or a gripper target?
 
-![Assigned inertias produce different damping ratios despite identical controller gains](/assets/robotics/arm-control/02_fixed_gains_changing_inertia.png)
+The servo accepts a joint target. But I usually care about the gripper: “put it at this point above the cup.” These are two descriptions of the task.
 
-Pose changes effective inertia. Consequently, fixed gains do not imply a fixed damping ratio. These curves use assigned inertias, not Franka measurements. Gains can differ by joint and vary with pose or load. [PD control and damping](https://modernrobotics.northwestern.edu/nu-gm-book-resource/11-4-motion-control-with-torque-or-force-inputs-part-1-of-3/).
+**Joint space** contains configurations $q$. **Task space** contains the quantity we want to control: here, the gripper position $p=(x,y,z)$. Later we'll add orientation.
+
+**Forward kinematics** is a function $g:Q\to\mathbb R^3$, with $p=g(q)$. For this arm, it is non-injective: distinct configurations can put the gripper at the same point. It is not surjective onto $\mathbb R^3$ because reach is bounded. It is surjective onto its image. With joint and collision constraints, the reachable position workspace is $g(Q_{valid})$.
+
+![Two Franka configurations hold the gripper at the same target with different arm arrangements](/assets/robotics/arm-control/v3/franka_same_pose_two_configs.png)
+
+The gripper has the same position **and orientation** in both configurations, while the elbow moves about 38 cm. The target object is schematic; this is a kinematic comparison, not a tested grasp.
+
+**Inverse kinematics (IK)** searches for joint angles matching a target:
+
+$$
+\{q\in Q_{valid}:g(q)=p^*\}.
+$$
+
+$Q_{valid}$ imposes joint limits and the chosen collision constraints. The answer may be empty or contain many configurations. IK is not a single-valued inverse function, and an IK solution is not a motion path.
+
+This ambiguity matters during motion. A numerical solver seeded with the current configuration tends to select nearby solutions. Otherwise, repeated solves can choose different branches and produce abrupt target jumps. Seeding helps continuity; it does not guarantee it or certify collision-free motion.
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v3/ik_branch_selection_poster.png" aria-label="IK branch jumps compared with continuous branch selection">
+<source src="/assets/robotics/arm-control/v3/ik_branch_selection.mp4" type="video/mp4">
+<a href="/assets/robotics/arm-control/v3/ik_branch_selection.mp4">Watch the video</a>
+</video>
+<figcaption>Teaching model: alternating solutions versus choosing the solution nearest the previous one. <a class="video-link" href="/assets/robotics/arm-control/v3/ik_branch_selection.mp4">Open video</a></figcaption>
+</figure>
+
+This schematic deliberately alternates between two valid analytic branches on the left. On the right it selects the solution nearest the previous one. It illustrates the continuity problem and the purpose of seeding, not the behavior of every unseeded solver.
+
+## How do we describe gripper position mathematically?
+
+Seven joints make the geometry look complicated. So first, simplify the model. Hold base pan fixed and replace the arm with links that all bend in one plane. This is a planar teaching model, not a claim that locking the Franka's base makes its other joints planar.
+
+Start with one link of length $L_1$ at angle $\theta_1$. Its endpoint is $(L_1\cos\theta_1,L_1\sin\theta_1)$. Then add a second link, then a third:
+
+![One, two, and three planar links show how relative joint angles add and projections sum](/assets/robotics/arm-control/v3/link_projections_one_two_three.png)
+
+The second link's absolute angle is $\theta_1+\theta_2$. The third's is $\theta_1+\theta_2+\theta_3$. The diagram uses planar coordinates $(x,y)$. For the vertical arm plane, rename them $(r,z-h)$. For $n$ links:
+
+$$
+r=\sum_{i=1}^{n}L_i\cos\alpha_i,\qquad
+z=h+\sum_{i=1}^{n}L_i\sin\alpha_i,\qquad
+\alpha_i=\sum_{j=1}^{i}\theta_j.
+$$
+
+Here $h$ is shoulder height and $r$ is the signed horizontal reach. This gives a convenient parametrization of the simplified SO-101 geometry. From the side we compute $(r,z)$; from above, shoulder pan $\phi$ rotates that reach into $(x,y)$:
+
+![A marked observer view connects the vertical arm plane, side view, and top view through horizontal reach r](/assets/robotics/arm-control/v3/so101_radial_side_top.png)
+
+$$
+x=r\cos\phi,\qquad y=r\sin\phi.
+$$
+
+Folding past the pan axis can make $r$ negative; horizontal distance is $|r|$. Real offsets require the full robot model.
+
+## How does a small joint turn move the gripper?
+
+Once $p=g(q)$ is defined, differentiate it:
+
+$$
+\dot p=Dg(q)\dot q=J(q)\dot q.
+$$
+
+That derivative is the **Jacobian**. For position control:
+
+$$
+J(q)=\begin{bmatrix}
+\frac{\partial x}{\partial q_1}&\cdots&\frac{\partial x}{\partial q_n}\\
+\frac{\partial y}{\partial q_1}&\cdots&\frac{\partial y}{\partial q_n}\\
+\frac{\partial z}{\partial q_1}&\cdots&\frac{\partial z}{\partial q_n}
+\end{bmatrix}.
+$$
+
+For example, $\partial x/\partial q_2$ is the change in gripper X per small change in joint 2, with other angles fixed. Repeat for every coordinate and joint. Column 2 gives the resulting 3D velocity per unit joint velocity.
+
+![The same shoulder turn produces large and small gripper motion in extended and folded configurations](/assets/robotics/arm-control/v3/jacobian_extended_folded.png)
+
+The Jacobian is a **matrix-valued field over configuration space**, not merely over gripper position. Its value changes with the whole arm configuration. For small changes, $\Delta p\approx J(q)\Delta q$.
+
+At an interior point of $Q_{valid}$, its image contains the attainable instantaneous position velocities. Its kernel contains joint velocities that preserve hand position to first order. Rank 3 means the position derivative is surjective. This local condition says nothing about global reachability.
+
+I also mixed up **kinematics**, **dynamics**, and **proprioception**. Their roots help: motion, power, and one's own body.
+
+- **Kinematics** describes motion and geometry, including velocities and accelerations, without asking which forces cause them.
+- **Dynamics** relates forces and torques to motion. The same configuration with different velocities is a different state: an arm passing through a point may need braking where a stationary arm does not.
+- **Proprioception** is sensing the robot's own state, for example through joint encoders.
+
+[Etymology and mechanics](https://people.ohio.edu/williams/html/PDF/HistoryOfMechanisms.pdf); [proprioceptive](https://ahdictionary.com/word/search.html?q=proprioceptive).
+
+## Where can the hand actually go?
+
+Looking at my arm on its table, I wondered about the whole reachable region. It cannot pass through the tabletop or its own links. The thickness of the hardware matters, as do objects around it.
+
+My first guess was part of a sphere. Suppose, just for the sketch, pan were limited to 180° and the arm stayed above a table. That leaves half of the upper hemisphere: a quarter-ball envelope. It still does not follow that every point inside is reachable.
+
+![A hypothetical arm above a table with a 180-degree pan sweep gives a quarter-ball outer guess](/assets/robotics/arm-control/v3/hypothetical_quarter_ball.png)
+
+These are assumed limits, not measured SO-101 or Franka limits. Even two ideal links cannot fold closer than $|L_1-L_2|$ to the shoulder. Joint limits, thickness, and obstacles can exclude more space.
+
+I tested the question on the Franka model. For each sampled set of joint angles, I computed the gripper position and checked collisions. The result is evidence about the image $g(Q_{valid})$.
+
+![A highlighted slab through the sampled Franka workspace is shown beside the corresponding face-on cut](/assets/robotics/arm-control/v3/franka_workspace_slab.png)
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v3/franka_workspace_slab.png" aria-label="Moving slab through the Franka workspace with a matching side view">
+<source src="/assets/robotics/arm-control/v3/franka_workspace_slab.mp4" type="video/mp4">
+<a href="/assets/robotics/arm-control/v3/franka_workspace_slab.mp4">Watch the video</a>
+</video>
+<figcaption>Sampled workspace: the highlighted slab in 3D corresponds to the 2D cut beside it. <a class="video-link" href="/assets/robotics/arm-control/v3/franka_workspace_slab.mp4">Open video</a></figcaption>
+</figure>
+
+The orange slab is a **6 cm thick band**, moving sideways through the cloud. The right panel looks straight at that band: signed forward/back position relative to the base versus height, grouped into 4 cm cells. It shows only the above-table portion of the data. Teal means at least one valid hand position was found in that cell. Blank means none was found, not that reaching it is impossible. The arm is a fixed spatial reference; the video scans the sampled positions, not an arm trajectory.
+
+<details>
+<summary>What did the experiment actually measure?</summary>
+
+I sampled 300,000 configurations uniformly within the seven arm joints' model limits, with the fingers open. Of these, 263,270 passed the recorded self-collision and environment checks. The table, ground, and task cube were included. Uniform joint sampling is not uniform sampling of hand positions.
+
+This is a static simulation experiment. An accepted configuration does not prove a safe path from the start. An empty region does not prove unreachability. The installed ManiSkill 3.0.1 setup lacks an SO-101 agent, so these results concern Franka. [Model, joint limits, collision rules, data, and reproduction](https://github.com/Hadrien-Cornier/maniskill-playground/tree/main/experiments/workspace).
+
+</details>
+
+## Reaching the stem is not enough
+
+Suppose I want to grasp a wine glass by its stem. Reaching the stem's position is only part of the problem: the gripper must approach in a useful orientation, with room for its fingers.
+
+![A gripper reaches a schematic wine-glass stem with different orientations at the same target](/assets/robotics/arm-control/v3/franka_wine_orientation_comparison.png)
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v3/franka_wine_orientation.png" aria-label="Gripper orientations around a fixed wine-stem target">
+<source src="/assets/robotics/arm-control/v3/franka_wine_orientation.mp4" type="video/mp4">
+<a href="/assets/robotics/arm-control/v3/franka_wine_orientation.mp4">Watch the video</a>
+</video>
+<figcaption>Kinematic illustration with a schematic glass; not a demonstrated physical grasp. <a class="video-link" href="/assets/robotics/arm-control/v3/franka_wine_orientation.mp4">Open video</a></figcaption>
+</figure>
+
+The simulated hand keeps the same target point while changing orientation. The glass is a visual reference, not part of a validated grasp: contact, finger clearance against the glass, and forces are not modeled here.
+
+So the hand needs more than an XYZ point. Attach an orthonormal frame to it. Express its three unit axes in world coordinates and put them in the columns of a matrix:
+
+$$
+R=\begin{bmatrix}|&|&|\\\mathbf x_g&\mathbf y_g&\mathbf z_g\\|&|&|\end{bmatrix},\qquad
+R^TR=I,\quad\det R=1.
+$$
+
+This is a rotation matrix, $R\in SO(3)$. Position and orientation together give a **pose**, $(p,R)\in SE(3)$. $R=I$ means aligned axes, not necessarily the robot's neutral configuration.
+
+Now the minus sign in a planar rotation has a picture:
+
+![Two perpendicular axes rotate together, giving cosine and negative sine in the first row](/assets/robotics/arm-control/04_rotation_columns.png)
+
+$$
+R_z(\theta)=\begin{bmatrix}
+\cos\theta&-\sin\theta&0\\
+\sin\theta&\cos\theta&0\\
+0&0&1
+\end{bmatrix}.
+$$
+
+The first axis becomes $(\cos\theta,\sin\theta,0)$. The second stays $\pi/2$ ahead, hence $(-\sin\theta,\cos\theta,0)$. At 90°, it points left. A twist about the gripper's local Z axis composes as $R_{new}=R_{old}R_z(\theta)$.
+
+The **pose workspace** contains reachable position-orientation pairs. The **dexterous workspace**, in its strict sense, contains positions reachable at every orientation. Position reachability alone establishes neither.
+
+## Who chooses the next target?
+
+We can now work backward from the motor. In the SO-101 position-control setup, the servo needs a joint-angle target. It cannot interpret “grasp the cup.” Something above it must turn that goal into commands.
+
+![Three ways to produce joint targets: planned motion, ACT action chunks, or learned task-space targets with IK and planning](/assets/robotics/arm-control/v3/command_routes.png)
+
+**Classical planning:** choose a grasp pose, use IK to find a joint configuration, then plan and time a collision-free path into intermediate joint targets. IK chooses an endpoint; planning supplies the motion between endpoints.
+
+**ACT:** predicts a chunk of future joint targets from images and measured joint positions in the original ALOHA setup. Execution selects or combines chunk targets as fresh observations produce new predictions. Temporal ensembling can combine overlapping chunks. This is a learned policy, not a one-target-at-a-time autoregressive planner. [ACT paper](https://tonyzhaozh.github.io/aloha/).
+
+**Learned task-space targets:** a model can instead propose a hand pose or displacement. An interface then uses IK or a Cartesian controller to produce commands the robot accepts. Continuity, timing, and collision handling still matter.
+
+A **vision-language model (VLM)** can select a high-level goal, while a **vision-language-action model (VLA)** predicts motion commands. That is one possible hierarchy, not a universal modern stack. Some VLAs take images and instructions directly; their outputs may be joint or task-space commands. [PaLM-E](https://palm-e.github.io/), [OpenVLA](https://arxiv.org/html/2406.09246v3#S3).
+
+Other robots accept velocity or torque commands. The common requirement is to match the controller's interface, units, frame, and timing. A model's output shape alone does not tell us what its actions mean.
 
 ---
 
-**Experiment.** 300,000 Franka configurations sampled; 263,270 accepted under the recorded collision rules. The installed ManiSkill 3.0.1 setup lacks an SO-101 agent. These are simulated results; the simplified geometry and control plots are labeled separately. [Code, joint limits, sampling, collision checks, and data](https://github.com/Hadrien-Cornier/maniskill-playground/tree/main/experiments/workspace). [Interactive viewer: download and open locally](https://github.com/Hadrien-Cornier/maniskill-playground/blob/main/experiments/workspace/figures-v2/workspace.html).
-
-**References and assets.** [Modern Robotics](https://modernrobotics.northwestern.edu/nu-gm-book-resource/5-1-1-space-jacobian/); [SO-101 joint guide](https://huggingface.co/docs/lerobot/so101); [robot asset credits and CC BY-NC 4.0 license](/assets/robotics/arm-control/ASSET-NOTICES.md).
+**Sources and inspiration.** Jacob Rothschild's [control article](https://x.com/ja_rothschild/article/2100633491432239411) helped inspire this report. Also: [Modern Robotics](https://modernrobotics.northwestern.edu/nu-gm-book-resource/5-1-1-space-jacobian/), [SO-101 joint guide](https://huggingface.co/docs/lerobot/so101), and [asset credits and licenses](/assets/robotics/arm-control/ASSET-NOTICES.md). Robot renderings use the simulated model; the planar and control animations are teaching schematics.
