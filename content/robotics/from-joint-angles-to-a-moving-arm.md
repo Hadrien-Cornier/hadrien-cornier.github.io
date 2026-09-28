@@ -32,6 +32,10 @@ Watch the wrist rotate. The joints before it stay fixed; the gripper's pointing 
 
 The magnetic encoder was one of the details I found most clever. A magnet turns with the shaft while a sensor chip stays fixed beneath it. Take the Hall-based [AS5600](https://www.infineon.com/assets/row/public/documents/24/49/infineon-as5600-datasheet-en.pdf) as an example.
 
+![A rotating magnet above a fixed AS5600 chip, with the signal path from Hall voltages through digitization and CORDIC to shaft angle](/assets/robotics/arm-control/v4/magnet_chip_signal_path.png)
+
+A ready-to-connect [Seeed Grove board with this chip](https://www.seeedstudio.com/Grove-12-bit-Magnetic-Rotary-Position-Sensor-AS5600-p-4192.html) was listed at **US$6.50 for one** on September 28, 2026, before tax and shipping. I find it remarkable that this much sensing and computation fits on a board that costs so little.
+
 The **[Hall effect](https://www.ti.com/document-viewer/lit/html/sszt164)** turns a magnetic field into a voltage. Current flows through a semiconductor; the field pushes the moving charges sideways, creating a voltage across it. As the magnet turns, the sensor array and its electronics produce two signed signals, a quarter-cycle apart:
 
 $$
@@ -42,7 +46,11 @@ Here $A$ is the signal amplitude and $\theta$ is the shaft angle. The two signal
 
 One signal leaves an ambiguity: 30° and 150° have the same sine. Their cosine signs differ, so the pair distinguishes them. The calculation is $\theta=\operatorname{atan2}(Y,X)$, which keeps both signs to identify the quadrant. [TI's encoder guide](https://www.ti.com/lit/ug/tiduc07/tiduc07.pdf) explains this signal pair.
 
-An analog-to-digital converter turns the voltages into numbers. Then I wondered how a tiny chip computes the angle. **CORDIC**, short for *Coordinate Rotation Digital Computer*, does it with additions, subtractions, bit shifts, and a small lookup table. The AS5600 has a hardwired CORDIC block.
+![The unit-circle positions at 30 and 150 degrees share Y equals 0.5, while X has opposite signs](/assets/robotics/arm-control/v4/equal_sine_opposite_cosine.png)
+
+An analog-to-digital converter turns the voltages into numbers. How does a tiny chip recover the angle? Does it evaluate a Taylor expansion? That sounds like a lot of calculations.
+
+**CORDIC**, short for *Coordinate Rotation Digital Computer*, does it with additions, subtractions, bit shifts, and a small lookup table. The AS5600 has a hardwired CORDIC block.
 
 Imagine the measured vector is $(X,Y)=(0.866,0.5)$, pointing at roughly 30°. CORDIC rotates its coordinates toward the horizontal axis. Positive Y means turn clockwise; negative Y means turn back. It adds each signed turn to an angle estimate:
 
@@ -56,6 +64,16 @@ Imagine the measured vector is $(X,Y)=(0.866,0.5)$, pointing at roughly 30°. CO
 Smaller corrections bring the estimate toward 30°. These are rotations of numbers in registers; the magnet supplies the original measurement.
 
 The trick is choosing $\phi_i=\arctan(2^{-i})$. With fixed-point numbers, stored as scaled integers, multiplication by $2^{-i}$ becomes a right shift in binary. The angle values are computed ahead of time and stored in the table. The runtime calculation needs no Taylor expansion. [ST's CORDIC explanation](https://www.st.com/resource/en/application_note/an5325-how-to-use-the-cordic-to-perform-mathematical-functions-on-stm32-mcus-stmicroelectronics.pdf).
+
+Watch the same process with small integers. Start at $(X,Y)=(887,512)$, whose angle is about 29.995°. The first update gives $x=887+512=1399$ and $y=512-887=-375$. We have turned too far, so the next step turns back. A right shift divides by a power of two and rounds down: `1399 >> 1 = 699`.
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v4/cordic_walkthrough_poster.png" aria-label="Twelve CORDIC steps showing each integer shift, addition, subtraction, and angle estimate">
+<source src="/assets/robotics/arm-control/v4/cordic_walkthrough.mp4" type="video/mp4">
+<a href="/assets/robotics/arm-control/v4/cordic_walkthrough.mp4">Watch the video</a>
+</video>
+<figcaption>Each step shows the old numbers, their shifted values, and the new angle estimate. The vector approaches horizontal as the estimate approaches 30°. <a class="video-link" href="/assets/robotics/arm-control/v4/cordic_walkthrough.mp4">Open video</a></figcaption>
+</figure>
 
 <details>
 <summary>The shift-and-add update</summary>
@@ -71,6 +89,51 @@ $$
 Both coordinate updates use the old values. At the first step, $i=0$, this gives $x_1=0.866+0.5=1.366$ and $y_1=0.5-0.866=-0.366$. The negative Y tells us we overshot, so the next step turns back.
 
 These updates scale the vector's length while preserving the direction of each rotation. For angle recovery, the direction is what matters. Once Y is close to zero, the accumulated angle $a$ is close to the original angle.
+
+</details>
+
+### Is CORDIC actually faster than a Taylor expansion?
+
+I implemented both and tested them on the same inputs. For Taylor, the series is:
+
+$$
+\arctan z=z-\frac{z^3}{3}+\frac{z^5}{5}-\cdots.
+$$
+
+Near $z=1$, it converges slowly. But we can first map the angle to a smaller interval. That makes a huge difference, so I tested both versions.
+
+I set the error target to half a 12-bit encoder step: $360°/8192\approx0.0439°$. All three methods passed on 1,114,197 coordinate pairs. These are native C++ results on an Apple M1 Max, using the median of 11 timing trials:
+
+| Method | Steps or terms | Largest tested angle error | Time per angle in a batch |
+|---|---:|---:|---:|
+| Basic Taylor | 326 terms | 0.04394° | 590.6 ns |
+| CORDIC | 12 steps | 0.02798° | 10.78 ns |
+| Taylor after extra range reduction | 3 terms | 0.01512° | 1.79 ns |
+
+CORDIC was about **55 times faster than basic Taylor**. But the range-reduced Taylor method was about **6 times faster than CORDIC** on this laptop. I expected the shifts and additions to win; reducing the problem before doing the arithmetic mattered more here.
+
+The appeal of CORDIC in a chip is its simple repeated step: shift, add or subtract, read a stored angle. A dedicated circuit can implement that directly. The AS5600 has such a CORDIC block.
+
+<details>
+<summary>Operation counts and benchmark setup</summary>
+
+These counts describe the core calculation in the source code:
+
+| Core calculation | Additions / subtractions | Multiplications | Right shifts | Table entries |
+|---|---:|---:|---:|---:|
+| CORDIC, 12 steps | 36 integer | 0 | 24 | 12 |
+| Basic Taylor, 326 terms | 325 floating-point | 327 | 0 | 326 |
+| Reduced Taylor, 3 terms | 2 floating-point | 4 | 0 | 3 |
+
+CORDIC also makes 12 sign checks. Full-circle handling adds sign tests and possible negations. Returning its result as floating-point radians adds one conversion and one multiplication.
+
+Both Taylor methods form a coordinate ratio with one division and handle signs and axis swaps. The reduced method sometimes uses a second division to replace $z$ with $(z-1)/(z+1)$, then adds $\pi/4$ to the answer. The polynomial's input then has magnitude at most $\tan(\pi/8)\approx0.4142$. Averaged over the timing inputs, this version uses 4 multiplications, 4.50 additions/subtractions, and 1.50 divisions, plus sign handling.
+
+Operation types matter: a division and a shift have different costs. These are source-level counts; the compiler chooses the machine instructions. Loop bookkeeping and checksums are excluded from the counts.
+
+Each method receives the same coordinate pairs, rounded to 30 fractional bits. Taylor receives exact floating-point versions of those values. Input preparation happens before timing. The reference is the system's double-precision `atan2`. Timing uses 65,536 fixed-seed inputs, 64 passes per trial, and rotating method order. Apple Clang 21 compiles with `-O3` and floating-point contraction disabled. Media rendering was stopped during the timing run.
+
+[Implementations, raw timings, operation counts, and accuracy checks](https://github.com/Hadrien-Cornier/maniskill-playground/tree/main/experiments/encoder-benchmark).
 
 </details>
 
@@ -92,10 +155,65 @@ $$
 Here $u$ is the requested motor drive. The three gains $K_P,K_I,K_D$ set the strength of three corrections:
 
 - **Proportional:** react to the current error. A larger gap produces a larger correction.
-- **Integral:** accumulate past error. This can supply the sustained effort needed to hold against gravity.
+- **Integral:** accumulate error over time. The stored correction keeps producing torque even after the error reaches zero.
 - **Derivative:** react to changing error. For a fixed target, $\dot e=-\dot q$, so this term opposes motion and helps brake before overshoot.
 
 ![The proportional term reads error, the integral accumulates its area, and the derivative reads its slope](/assets/robotics/arm-control/03_pid_terms.png)
+
+Why keep past error? Imagine the arm stops a little below its target under a steady load. The proportional correction balances the load, so the arm stays still. But the error is still positive. The integral keeps growing, adds more torque, and lifts the arm closer to the target. Once the error reaches zero, the integral stops growing. Its stored value supplies the torque that holds the load.
+
+[PID control under a load](https://modernrobotics.northwestern.edu/nu-gm-book-resource/11-4-motion-control-with-torque-or-force-inputs-part-2-of-3/).
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v4/why_integral_helps.png" aria-label="The integral term builds torque to support a constant load as the angle error shrinks">
+<source src="/assets/robotics/arm-control/v4/why_integral_helps.mp4" type="video/mp4">
+<a href="/assets/robotics/arm-control/v4/why_integral_helps.mp4">Watch the video</a>
+</video>
+<figcaption>The orange area records past error. As the arm reaches its target, the stored integral supplies the 2 N·m needed to hold the load. <a class="video-link" href="/assets/robotics/arm-control/v4/why_integral_helps.mp4">Open video</a></figcaption>
+</figure>
+
+### What happens if we remove P, I, or D?
+
+I simulated one rotary link under a constant clockwise load. Every run starts at rest at 0°, with a target of 45.8°. I kept the same gains and set one to zero. This is an **ablation test**: change one part and watch what happens.
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v4/pid_ablation_comparison.png" aria-label="Four synchronized simulations compare full PID with removal of I, D, or P">
+<source src="/assets/robotics/arm-control/v4/pid_ablation_comparison.mp4" type="video/mp4">
+<a href="/assets/robotics/arm-control/v4/pid_ablation_comparison.mp4">Watch the video</a>
+</video>
+<figcaption>Same link, target, load, and starting state. Each panel removes one term from the same controller. The video shows 24 simulated seconds at twice normal speed. <a class="video-link" href="/assets/robotics/arm-control/v4/pid_ablation_comparison.mp4">Open video</a></figcaption>
+</figure>
+
+| Controller | What happened | What the missing term was doing |
+|---|---|---|
+| Full PID | Reaches within 2% of the target in 2.20 s and stays there | All three corrections work together |
+| Remove I | Stops 7.16° short | I supplies the holding torque at zero error |
+| Remove D | Overshoots by 64.3% and rings; settles in about 30 s | D brakes the motion |
+| Remove P | Initially falls away from the target, then oscillates more and more | P supplies an immediate correction toward the target |
+
+The no-I result has a simple explanation. At rest, D is zero, so P must balance the 2 N·m load. With $K_P=16$, this requires an error of $2/16=0.125$ rad, or 7.16°. With I enabled, the stored integral supplies that torque while the error approaches zero.
+
+Removing D still leaves passive friction, so those oscillations eventually decay. Removing P produces growing oscillations with these gains. The arm and load stay fixed; each run removes one gain and keeps the others unchanged.
+
+<details>
+<summary>Simulation setup and checks</summary>
+
+The link rotates in a horizontal plane with inertia $M=1$ kg·m² and viscous friction $b=0.5$ N·m·s/rad. A constant external torque of 2 N·m opposes positive rotation. The controller supplies torque directly:
+
+$$
+M\ddot q=u-b\dot q-2,\qquad
+u=16e+4\int_0^t e(s)\,ds-7\dot q.
+$$
+
+The initial angle, velocity, and integrated error are zero. Each ablation sets one gain to zero. Actuation is continuous, with unlimited torque. The derivative uses measured velocity to avoid a kick when the target changes.
+
+I integrated at 2 ms, repeated at 1 ms, and checked against the exact solution of this linear system. Angle differences were below $10^{-7}$ rad. Settling means staying within 2% of the target over an 80-second run. The system's poles confirm that the no-P response is unstable.
+
+[Code, parameters, full traces, and results](https://github.com/Hadrien-Cornier/maniskill-playground/tree/main/experiments/pid-ablation).
+
+</details>
+
+### Why does the arm overshoot?
 
 <figure class="article-figure">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/arm-control/v3/damping_joint_responses_poster.png" aria-label="Three joint responses to the same angle target">
