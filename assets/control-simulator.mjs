@@ -52,7 +52,7 @@ function observe(state) {
     objects:state.objects.map((object) => ({id:swapped ? (object.id === 'red' ? 'blue' : 'red') : object.id, physicalId:object.id, ...project(object)})),
     obstacle:{...state.obstacle, ...project(state.obstacle)},
     tray:project(state.tray), frameRotation, labelsSwapped:swapped,
-    note:frameRotation ? 'The estimated camera frame is rotated 25 degrees about the fixed arm base.' : swapped ? 'Observed color labels are swapped by the injected visual error.' : 'The observed scene matches the real table.',
+    note:frameRotation ? 'The estimated camera frame is rotated 25 degrees around the initial gripper position.' : swapped ? 'Observed color labels are swapped by the injected visual error.' : 'The observed scene matches the real table.',
   };
   return state.observation;
 }
@@ -354,6 +354,19 @@ function requestPlan(state, background = false) {
   state.plan = background ? [point(state.robot), ...state._queue.map(point), ...result.route.slice(1).map(point)] : result.route.map(point);
   state.candidates = result.noisy ? result.noisy.map((route) => route.map(point)) : result.candidates.map((route) => route.map(point));
   state.predictions = result.predictions;
+  // Display provenance travels with predictions, even after more ticks or edits.
+  // These copies are never used by planning, movement, grasping, or scoring.
+  state.predictionContext = result.predictions.length ? Object.freeze({
+    time:snapshot.startTime,
+    latency:snapshot.latency,
+    selectedCandidate:result.selectedCandidate,
+    objects:Object.freeze(state.objects.map(object => Object.freeze({...object}))),
+    tray:Object.freeze({...state.tray}),
+    obstacle:Object.freeze({...state.obstacle}),
+    carrying:state.robot.carrying,
+    trailIndex:Math.max(0, state.trail.length - 1),
+    frameRotation:state.observation.frameRotation,
+  }) : null;
   state.selectedCandidate = result.selectedCandidate;
   if (!background) state.phase = 'planning';
   state.message = background ? 'Moving on a committed batch while the next batch is planned.' : {
@@ -525,7 +538,7 @@ export function createSimulation({mode = 'scripted', seed = 7, latency = .30, sc
     robot:{...INITIAL_ROBOT, carrying:null},
     objects:[{id:'red', ...TAUGHT_PICKUP}, {id:'blue', x:.72, y:.66}],
     tray:{x:.84, y:.22}, instruction:'red', obstacle:{enabled:false, x:.48, y:.50, r:.085},
-    trail:[point(INITIAL_ROBOT)], plan:[], candidates:[], predictions:[], committed:[], selectedCandidate:0,
+    trail:[point(INITIAL_ROBOT)], plan:[], candidates:[], predictions:[], predictionContext:null, committed:[], selectedCandidate:0,
     settings:{latency:clamp(latency, 0, .60), speed:SPEED, chunkDuration:HORIZON, schedule},
     stats:{elapsed:0, replans:0, waitTime:0, distance:0, missedGrasps:0},
     observation:null, events:[], failureReason:'', challengeMessage:SCENARIOS.find((item) => item.id === scenario).summary,

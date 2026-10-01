@@ -1,6 +1,6 @@
 # Control playground
 
-The homepage compares five architecture examples on one task: move a cube into a tray. Each card explains the real method and links its paper. Execution timing and scene challenges are separate controls.
+The homepage widget, **Test different policies**, compares five architecture examples on one task: move a cube into a tray. Each card explains the real method and links its paper. Execution timing and scene challenges are separate controls.
 
 The scene, architecture and task choices, Run, Replay, and Try a failure stay visible. Native drawers start closed. About this approach holds the summary, paper, action generation, and training. Experiment settings holds timing, challenges, scene edits, delay, and counters. Predicted futures appears for the world model. Why it failed appears after a failed run. What this shows holds the shared assumptions and sources. Readers choose when to open each drawer. With scripts unavailable, settings and simulation buttons stay hidden while the static scene and explanation drawers remain available.
 
@@ -43,9 +43,15 @@ All examples share the same workspace, starting arm position, cubes, tray, speed
 
 A delay change applies to the next planning request. A plan already being computed keeps its earlier delay.
 
-A grasp uses the real distance to a physical cube. The carried cube follows the arm and cannot be dragged away. Collision checks use the actual movement segment. Success requires the requested physical cube to be released within 0.035 workspace units of the real tray. A failure label is never assigned just because an architecture or challenge was selected.
+A grasp uses the real distance to a physical cube. The carried cube follows the gripper and cannot be dragged away. Collision checks use the actual gripper movement segment. Success requires the requested physical cube to be released within 0.035 workspace units of the real tray. A failure label is never assigned just because an architecture or challenge was selected.
 
-The solid trail shows actual movement. Dashed lines show plans. The blue segment shows committed commands. Diffusion candidates change during planning, while the actual arm waits or executes its earlier batch. World frames show predicted tip positions; a predicted collision stops at contact.
+The top view draws a fixed-base arm with a shoulder, two moving links, a connected wrist, and parallel jaws. Its joints are computed from the simulated gripper position for display. The shoulder keeps the moving joints inside the compact view without sudden pose changes. The links do not add reach limits or link collisions to the policy comparison. The optional explanation states this display assumption.
+
+The solid trail shows actual movement. Dashed lines show plans. The blue segment shows committed commands. Diffusion candidates change during planning, while the actual arm waits or executes its earlier batch.
+
+The world-model drawer shows a table-sized comparison. Readers can inspect candidate A, B, or C, then select one of three predicted times. The gripper positions come from the engine's recorded predictions. A predicted collision stops at contact. The view identifies the route the planner chose separately from the one being inspected. A rust trail shows the real movement after the saved plan.
+
+Each comparison carries the exact request time and a copied scene from that request. Later motion and edits cannot rewrite it. After a trial, the drawer retains an earlier comparison with long routes or a predicted collision, instead of showing nearly identical final endpoints. Its saved time stays visible. Preview controls only change the drawing.
 
 ## Scene challenges and injected errors
 
@@ -57,7 +63,7 @@ Choosing a challenge loads its prepared scene. **Try a failure** selects a relev
 | Moving target | The red cube circles at 0.60 units/s, faster than the 0.27 units/s arm. | These rules chase an observed position. Compute delay and execution make that position stale. They do not plan an interception. The blue cube stays still. |
 | Late obstacle | After 0.18 units of travel, a blocker is placed on the current queued movement segment. | Earlier commands still point through the new blocker. Contact ends the trial through the shared collision check. |
 | Swapped visual cues | An injected visual error swaps the observed red and blue labels. The physical cubes keep their identities. | A planner that reads those labels can grasp the wrong physical cube. The fixed script does not read them. |
-| Wrong camera frame | The world planner's observed scene is rotated 25 degrees around the fixed arm base. The real table stays unchanged. | Predictions use the wrong coordinates. Physical grasp checks still use the real table, so the arm can repeatedly close at an empty point. Other examples do not receive this rotation. |
+| Wrong camera frame | The world planner's observed scene is rotated 25 degrees around the initial gripper position. The real table stays unchanged. | Predictions use the wrong coordinates. Physical grasp checks still use the real table, so the arm can repeatedly close at an empty point. Other examples do not receive this rotation. |
 
 These errors are inserted by the simulator. They illustrate what follows from a stale observation, blocked command, wrong label, or wrong coordinate frame. Their frequency and size are chosen for this scene. They are not measurements of neural perception, pretrained generalization, or learned prediction accuracy.
 
@@ -78,7 +84,9 @@ The papers also report limits:
 
 ## Files and checks
 
-`assets/control-approaches.mjs` supplies the source-grounded cards and timing explanations. `assets/control-simulator.mjs` owns deterministic simulation state, observations, injected challenges, and physical checks. It has no page dependencies. `assets/control-playground.js` handles browser input and drawing. `assets/control-playground.css` stays scoped to the homepage widget. The HTML template supplies a static scene and explanation before scripts load.
+`assets/control-approaches.mjs` supplies the source-grounded cards and timing explanations. `assets/control-simulator.mjs` owns deterministic simulation state, observations, injected challenges, and physical checks. It has no page dependencies. `assets/control-playground.js` handles browser input and drawing. `assets/control-visuals.mjs` supplies display geometry and planning comparisons. `assets/control-playground.css` stays scoped to the homepage widget. The HTML template supplies a static scene and explanation before scripts load.
+
+The homepage writing feature uses `assets/robotics/modern-control/moved-target-preview.svg`. This vector drawing has a connected gripper, a dashed old cube position, and a movement arrow. Its dimensions, alt text, and content hash are set by the builder. The original essay image stays in the article.
 
 Run `npm test` for the builder and simulation contracts. Run `npm run build` to generate public pages. Check desktop and phone layouts. Exercise all five examples, both schedules where supported, all five challenges, both tasks, delay changes, Pause, Replay, dragging after scrolling, and keyboard cube movement. Check that scene edits survive architecture changes and replay.
 
@@ -93,3 +101,5 @@ Browser checks covered all five architecture cards and their paper links. Their 
 The no-mistakes service did not become responsive during setup, so its full pipeline did not run. These checks cover supplied rules and the website. Trained-model or real-robot results were not measured.
 
 The compact drawer layout was also checked on October 1. The full 33-test suite passed again. Browser checks covered opening and closing drawers, changing an approach while its explanation is open, real-time timing, delay, scene edits, Pause, and Replay. Try a failure ran with settings closed. The world model's failure explanation appeared in a closed drawer, and its predicted frames were visible when their drawer opened. A 389-pixel phone view had no horizontal overflow. A separate agent checked DOM hooks, default states, and the static fallback. The review service was still unavailable.
+
+The arm and future-view update passed all 40 tests. New checks cover fixed link geometry, smooth red and blue routes, a fully folded pose, jaw clearance at every angle, immutable saved plans, and exact request-time scene provenance. Browser checks verified a successful blue-cube task, its paused grasp, an obstacle trial with A blocked and B chosen, route/time inspection after completion, and 44-pixel phone buttons without horizontal overflow. Preview cubes allow normal touch scrolling. The new SVG writing illustration was inspected on desktop and phone. Independent review found and resolved display-time drift, a tied-route caption, cube corner clipping, false drag affordances, and an elbow pose jump. The full review service remained unavailable.

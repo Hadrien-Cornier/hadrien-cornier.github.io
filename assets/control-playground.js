@@ -6,12 +6,13 @@ const versionedModule = path => {
 };
 
 try {
-  const [simulator, approaches] = await Promise.all([
+  const [simulator, approaches, visuals] = await Promise.all([
     import(versionedModule('./control-simulator.mjs')),
     import(versionedModule('./control-approaches.mjs')),
+    import(versionedModule('./control-visuals.mjs')),
   ]);
   for (const root of document.querySelectorAll('[data-control-playground]')) {
-    initializePlayground(root, simulator, approaches);
+    initializePlayground(root, simulator, approaches, visuals);
   }
 } catch {
   // Keep the static illustration and article link available if initialization fails.
@@ -20,13 +21,14 @@ try {
   }
 }
 
-function initializePlayground(root, simulator, knowledge) {
+function initializePlayground(root, simulator, knowledge, visuals) {
   const {
     SCENARIOS, createSimulation, stepSimulation, setObjectPosition, setInstruction,
     toggleObstacle, startSimulation, pauseSimulation, setInferenceDelay,
     setExecutionSchedule, setScenario,
   } = simulator;
   const { APPROACHES, SCHEDULING } = knowledge;
+  const { armPose, gripperGeometry, capturePlanningView, candidateView, planningViewPriority } = visuals;
   const get = selector => root.querySelector(selector);
   const svg = get('[data-control-scene]');
   const modeSelect = get('[data-control-mode]');
@@ -39,6 +41,10 @@ function initializePlayground(root, simulator, knowledge) {
   const failureDetails = get('[data-control-failure-details]');
   const observedScene = get('[data-control-observed-scene]');
   const robot = get('[data-control-robot]');
+  const armLinks = [...root.querySelectorAll('[data-control-arm-links]')];
+  const armElbow = get('[data-control-arm-elbow]');
+  const wrist = get('[data-control-wrist]');
+  const jaws = get('[data-control-jaws]');
   const tray = get('[data-control-tray]');
   const obstacle = get('[data-control-obstacle]');
   const trail = get('[data-control-trail]');
@@ -95,6 +101,24 @@ function initializePlayground(root, simulator, knowledge) {
   let isVisible = true;
   let perturbation = 0;
   let drag = null;
+  let lastElbow = null;
+  let lastPredictionSource = null;
+  let currentPlanningView = null;
+  let retainedPlanningView = null;
+  let displayedPlanningView = null;
+  let futureViewer = null;
+  let previewCandidate = 0;
+  let previewStep = 1;
+
+  function resetVisualTrial() {
+    lastPredictionSource = null;
+    currentPlanningView = null;
+    retainedPlanningView = null;
+    displayedPlanningView = null;
+    lastElbow = null;
+    previewCandidate = 0;
+    previewStep = 1;
+  }
 
   // Keep edits as the next trial's starting scene. Robot transport never changes this setup.
   function captureSetup(current) {
@@ -110,6 +134,7 @@ function initializePlayground(root, simulator, knowledge) {
 
   function replaceState(mode = state.mode) {
     stopFrame();
+    resetVisualTrial();
     state = createSimulation({ mode, seed, latency:setup.latency, schedule:setup.schedule, scenario:setup.scenario });
     for (const item of setup.objects) setObjectPosition(state, item.id, item.x, item.y);
     setInstruction(state, setup.instruction);
@@ -217,6 +242,7 @@ function initializePlayground(root, simulator, knowledge) {
     stopFrame();
     const instruction = state.instruction;
     if (!setScenario(state, id)) return;
+    resetVisualTrial();
     setInstruction(state, instruction);
     setup = captureSetup(state);
     instructionSelect.value = state.instruction;
@@ -224,76 +250,204 @@ function initializePlayground(root, simulator, knowledge) {
     render();
   }
 
-  function makeFutureFrame() {
+  function makeFutureViewer() {
     const container = document.createElement('div');
-    container.className = 'control-future-frame';
-    const picture = svgNode('svg', { viewBox: '0 0 100 54', 'aria-hidden': 'true' });
-    picture.append(svgNode('rect', { x: 2, y: 2, width: 96, height: 50, rx: 2, fill: '#f1f3eb' }));
-    const destination = svgNode('rect', { width: 13, height: 10, rx: 1, fill: '#e0e7d4', stroke: '#a3af97', 'stroke-width': .6 });
-    destination.dataset.futureTray = '';
+    container.className = 'control-future-viewer';
+    const context = document.createElement('p');
+    context.className = 'control-future-context';
+    context.dataset.futureContext = '';
+    const choices = document.createElement('div');
+    choices.className = 'control-future-choices';
+    choices.setAttribute('role', 'group');
+    choices.setAttribute('aria-label', 'Inspect a predicted route');
+    for (let index = 0; index < 3; index++) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.futureCandidate = String(index);
+      button.addEventListener('click', () => { previewCandidate = index; renderFuturePreview(); });
+      choices.append(button);
+    }
+    const picture = svgNode('svg', { viewBox: '0 0 440 255', role: 'img' });
+    picture.classList.add('control-future-scene');
+    picture.append(svgNode('rect', { x: 20, y: 15, width: 400, height: 215, rx: 5, class: 'control-table' }));
+    const destination = svgNode('g', { class: 'control-tray', 'data-future-tray': '' });
+    destination.append(svgNode('rect', { x: -26, y: -21, width: 52, height: 42, rx: 5 }));
     picture.append(destination);
-    const barrier = svgNode('ellipse', { rx: 8.16, ry: 4.25, fill: '#d9decf', stroke: '#8d987f', 'stroke-width': .5 });
-    barrier.dataset.futureObstacle = '';
-    picture.append(barrier);
+    picture.append(svgNode('ellipse', { class: 'control-future-obstacle', 'data-future-obstacle': '' }));
+    const routes = svgNode('g', { class: 'control-future-routes', 'data-future-routes': '' });
+    for (let index = 0; index < 3; index++) routes.append(svgNode('path'));
+    picture.append(routes);
+    picture.append(svgNode('path', { class: 'control-actual-path control-future-real-path', 'data-future-real-path': '' }));
     for (const id of ['red', 'blue']) {
-      const cube = svgNode('rect', { width: 5, height: 5, rx: .6, fill: id === 'red' ? '#b9533b' : '#4d7797' });
-      cube.dataset.futureObject = id;
+      const cube = svgNode('g', { class: `control-object control-object-${id}`, 'data-future-object': id });
+      cube.append(svgNode('rect', { x: -10, y: -10, width: 19, height: 19, rx: 3, class: 'control-cube' }));
+      const label = svgNode('text', { x: -.5, y: 3.5, 'text-anchor': 'middle' });
+      label.textContent = id === 'red' ? 'R' : 'B';
+      cube.append(label);
       picture.append(cube);
     }
-    const tip = svgNode('circle', { r: 3, fill: '#f7f8f3', stroke: '#3e4b33', 'stroke-width': 1.1 });
-    tip.dataset.futureTip = '';
-    picture.append(tip);
-    const caption = document.createElement('p');
-    const time = document.createElement('span');
-    time.dataset.futureTime = '';
-    const cue = document.createElement('span');
-    cue.dataset.futureCue = '';
-    caption.append(time, cue);
-    container.append(picture, caption);
+    const predictedArm = svgNode('g', { class: 'control-future-arm', 'data-future-arm': '' });
+    predictedArm.append(svgNode('path', { class: 'control-arm-link', 'data-future-arm-links': '' }));
+    predictedArm.append(svgNode('circle', { class: 'control-arm-base', cx: 210, cy: 225, r: 13 }));
+    predictedArm.append(svgNode('circle', { class: 'control-arm-base-center', cx: 210, cy: 225, r: 5 }));
+    predictedArm.append(svgNode('circle', { class: 'control-arm-joint', cx: 210, cy: 130, r: 8 }));
+    predictedArm.append(svgNode('circle', { class: 'control-arm-joint', r: 7, 'data-future-elbow': '' }));
+    const grip = svgNode('g', { class: 'control-future-gripper', 'data-future-gripper': '' });
+    grip.append(svgNode('circle', { class: 'control-wrist-body', cx: -24, r: 6 }));
+    grip.append(svgNode('path', { class: 'control-gripper-palm', d: 'M-13-12V12M-13 0H-9' }));
+    grip.append(svgNode('path', { class: 'control-gripper-jaws', d: 'M-13-12H7M-13 12H7' }));
+    predictedArm.append(grip);
+    picture.append(predictedArm);
+    picture.append(svgNode('g', { class: 'control-future-markers', 'data-future-markers': '' }));
+    picture.append(svgNode('circle', { r: 4, class: 'control-future-real-tip', 'data-future-real-tip': '' }));
+    const modelLabel = svgNode('text', { x: 21, y: 249, class: 'control-view-label' });
+    modelLabel.textContent = 'PREDICTED ARM / TOP VIEW';
+    picture.append(modelLabel);
+    const reason = document.createElement('p');
+    reason.className = 'control-future-reason';
+    reason.dataset.futureReason = '';
+    const steps = document.createElement('div');
+    steps.className = 'control-future-steps';
+    steps.setAttribute('role', 'group');
+    steps.setAttribute('aria-label', 'Inspect future time');
+    for (let index = 0; index < 3; index++) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.futureStep = String(index);
+      button.addEventListener('click', () => { previewStep = index; renderFuturePreview(); });
+      steps.append(button);
+    }
+    const legend = document.createElement('p');
+    legend.className = 'control-future-legend';
+    legend.innerHTML = '<span><i class="control-future-prediction-swatch" aria-hidden="true"></i>Predicted route</span><span><i class="control-future-actual-swatch" aria-hidden="true"></i>Real movement after this plan</span>';
+    const note = document.createElement('p');
+    note.className = 'control-future-note';
+    note.dataset.futureNote = '';
+    container.append(context, choices, picture, steps, reason, legend, note);
     return container;
+  }
+
+  function renderFuturePreview() {
+    const view = displayedPlanningView;
+    if (!view || !futureViewer) return;
+    const preview = candidateView(view, previewCandidate);
+    const picture = futureViewer.querySelector('svg');
+    const trayPoint = mapPoint(view.tray);
+    picture.querySelector('[data-future-tray]').setAttribute('transform', `translate(${trayPoint.x} ${trayPoint.y})`);
+    const barrier = picture.querySelector('[data-future-obstacle]');
+    const obstaclePoint = mapPoint(view.obstacle);
+    barrier.style.display = view.obstacle.enabled ? '' : 'none';
+    for (const [name, value] of Object.entries({ cx: obstaclePoint.x, cy: obstaclePoint.y, rx: view.obstacle.r * 400, ry: view.obstacle.r * 215 })) barrier.setAttribute(name, value);
+    const paths = picture.querySelector('[data-future-routes]');
+    for (let index = 0; index < 3; index++) {
+      const candidate = candidateView(view, index);
+      const path = paths.children[index];
+      path.setAttribute('d', pointPath(candidate.route));
+      path.dataset.inspected = String(index === previewCandidate);
+      path.dataset.blocked = String(candidate.blocked);
+      path.dataset.chosen = String(candidate.selected);
+      const button = futureViewer.querySelector(`[data-future-candidate="${index}"]`);
+      button.setAttribute('aria-pressed', String(index === previewCandidate));
+      button.dataset.modelChosen = String(candidate.selected);
+      button.dataset.blocked = String(candidate.blocked);
+      button.setAttribute('aria-label', `Inspect route ${String.fromCharCode(65 + index)}. ${candidate.cue}. ${candidate.reason}`);
+      writeText(button, `${String.fromCharCode(65 + index)} · ${candidate.cue}`);
+    }
+    for (const cube of picture.querySelectorAll('[data-future-object]')) {
+      const item = view.objects.find(object => object.id === cube.dataset.futureObject);
+      const point = mapPoint(item);
+      cube.setAttribute('transform', `translate(${point.x} ${point.y})`);
+    }
+    const prediction = preview.samples[previewStep];
+    if (prediction) {
+      const point = mapPoint(prediction);
+      const pose = armPose(point);
+      const predictedArm = picture.querySelector('[data-future-arm]');
+      predictedArm.style.display = pose ? '' : 'none';
+      if (pose) {
+        picture.querySelector('[data-future-arm-links]').setAttribute('d', `M${pose.base.x} ${pose.base.y} L${pose.shoulder.x} ${pose.shoulder.y} L${pose.elbow.x} ${pose.elbow.y} L${pose.wrist.x} ${pose.wrist.y}`);
+        const joint = picture.querySelector('[data-future-elbow]');
+        joint.setAttribute('cx', pose.elbow.x);
+        joint.setAttribute('cy', pose.elbow.y);
+        const futureGripper = picture.querySelector('[data-future-gripper]');
+        futureGripper.setAttribute('transform', `translate(${point.x} ${point.y}) rotate(${pose.angle})`);
+        const grip = gripperGeometry(pose.angle, Boolean(view.carrying));
+        futureGripper.querySelector('.control-gripper-palm').setAttribute('d', grip.palm);
+        futureGripper.querySelector('.control-gripper-jaws').setAttribute('d', grip.jaws);
+      }
+      const carryingCube = view.carrying && picture.querySelector(`[data-future-object="${view.carrying}"]`);
+      if (carryingCube) carryingCube.setAttribute('transform', `translate(${point.x} ${point.y})`);
+      const offset = Number(prediction.t) - view.time;
+      picture.setAttribute('aria-label', `Route ${String.fromCharCode(65 + previewCandidate)}, future step ${previewStep + 1}, ${offset.toFixed(1)} seconds after this plan. ${preview.reason}`);
+    }
+    const markers = picture.querySelector('[data-future-markers]');
+    markers.replaceChildren();
+    const groups = [];
+    preview.samples.forEach((point, index) => {
+      const existing = groups.find(group => Math.hypot(group.point.x - point.x, group.point.y - point.y) < .018);
+      if (existing) existing.indices.push(index);
+      else groups.push({ point, indices: [index] });
+      const button = futureViewer.querySelector(`[data-future-step="${index}"]`);
+      button.setAttribute('aria-pressed', String(index === previewStep));
+      const time = Math.max(0, Number(point.t) - view.time);
+      writeText(button, `${index + 1} · +${time.toFixed(1)} s`);
+      button.setAttribute('aria-label', `Inspect future step ${index + 1}, ${time.toFixed(1)} seconds after this plan`);
+    });
+    for (const group of groups) {
+      const point = mapPoint(group.point);
+      const marker = svgNode('g', { transform: `translate(${point.x} ${point.y})`, 'data-active': String(group.indices.includes(previewStep)) });
+      marker.append(svgNode('circle', { r: 3, class: 'control-future-tip-dot' }));
+      marker.append(svgNode('line', { x1: 0, y1: -3, x2: 0, y2: -14 }));
+      const markerWidth = Math.max(28, group.indices.length * 12 + 5);
+      marker.append(svgNode('rect', { x: -markerWidth / 2, y: -32, width: markerWidth, height: 19, rx: 3 }));
+      const label = svgNode('text', { x: 0, y: -18, 'text-anchor': 'middle' });
+      label.textContent = group.indices.map(index => index + 1).join(',');
+      marker.append(label);
+      markers.append(marker);
+    }
+    writeText(futureViewer.querySelector('[data-future-reason]'), `Inspecting ${String.fromCharCode(65 + previewCandidate)}. ${preview.reason} The planner chose ${String.fromCharCode(65 + view.selected)}.`);
+    writeText(futureViewer.querySelector('[data-future-note]'), view.frameRotation ?
+      'The model uses the wrong camera frame here. Its route can look clear while the real gripper misses the cube.' :
+      'Tap a route, then a time. The numbered tips show three predicted states. Only the next action is executed before planning again.');
+    renderFutureActualMovement();
+  }
+
+  function renderFutureActualMovement() {
+    if (!displayedPlanningView || !futureViewer) return;
+    const view = displayedPlanningView;
+    const complete = finished.has(state.phase);
+    writeText(futureViewer.querySelector('[data-future-context]'), `${complete ? 'Saved comparison' : 'Plan'} at ${view.time.toFixed(1)} s${complete ? '. Trial finished.' : '. Model predictions.'}`);
+    futureViewer.querySelector('[data-future-real-path]').setAttribute('d', pointPath(state.trail.slice(view.trailIndex)));
+    const real = mapPoint(state.robot);
+    const realTip = futureViewer.querySelector('[data-future-real-tip]');
+    realTip.setAttribute('cx', real.x);
+    realTip.setAttribute('cy', real.y);
   }
 
   function renderPredictions() {
     const show = state.mode === 'world';
     futureRegion.hidden = !show;
     if (!show) return;
-    while (futureFrames.children.length < 3) futureFrames.append(makeFutureFrame());
-    const predictions = (state.predictions || []).filter(point => Number.isFinite(point.x) && Number.isFinite(point.y));
-    const hasCandidateGroups = predictions.some(point => Number.isInteger(point.candidate));
-    const outcomes = hasCandidateGroups ? [0, 1, 2].map(candidate => predictions.filter(point => point.candidate === candidate).at(-1)) : [];
-    const sample = predictions.length ? [0, Math.floor((predictions.length - 1) / 2), predictions.length - 1] : [0, 0, 0];
-    [...futureFrames.children].forEach((container, index) => {
-      const prediction = hasCandidateGroups ? outcomes[index] : predictions[sample[index]];
-      const picture = container.querySelector('svg');
-      const destination = picture.querySelector('[data-future-tray]');
-      destination.setAttribute('x', state.tray.x * 96 + 2 - 6.5);
-      destination.setAttribute('y', state.tray.y * 50 + 2 - 5);
-      const barrier = picture.querySelector('[data-future-obstacle]');
-      barrier.setAttribute('cx', state.obstacle.x * 96 + 2);
-      barrier.setAttribute('cy', state.obstacle.y * 50 + 2);
-      barrier.setAttribute('rx', state.obstacle.r * 96);
-      barrier.setAttribute('ry', state.obstacle.r * 50);
-      barrier.style.display = state.obstacle.enabled ? '' : 'none';
-      for (const cube of picture.querySelectorAll('[data-future-object]')) {
-        const item = state.objects.find(object => object.id === cube.dataset.futureObject);
-        const position = prediction && state.robot.carrying === item.id ? prediction : item;
-        cube.setAttribute('x', position.x * 96 + 2 - 2.5);
-        cube.setAttribute('y', position.y * 50 + 2 - 2.5);
-      }
-      const tip = picture.querySelector('[data-future-tip]');
-      tip.style.display = prediction ? '' : 'none';
-      if (prediction) {
-        tip.setAttribute('cx', prediction.x * 96 + 2);
-        tip.setAttribute('cy', prediction.y * 50 + 2);
-      }
-      container.dataset.collision = String(Boolean(prediction?.collision));
-      const isSelected = Boolean(prediction) && hasCandidateGroups && prediction.candidate === state.selectedCandidate;
-      container.dataset.selected = String(isSelected);
-      const offset = prediction ? Math.max(0, Number(prediction.t || 0) - Number(state.time || 0)) : 0;
-      writeText(container.querySelector('[data-future-time]'), prediction ? `+${offset.toFixed(1)} s` : 'Awaiting plan');
-      const cue = isSelected ? 'Chosen' : prediction?.collision ? 'Blocked' : 'Predicted';
-      writeText(container.querySelector('[data-future-cue]'), prediction ? `${hasCandidateGroups ? `${String.fromCharCode(65 + index)} · ` : ''}${cue}` : '');
-    });
+    if (state.predictions !== lastPredictionSource) {
+      lastPredictionSource = state.predictions;
+      currentPlanningView = capturePlanningView(state);
+      if (currentPlanningView && (!retainedPlanningView || planningViewPriority(currentPlanningView) > planningViewPriority(retainedPlanningView))) retainedPlanningView = currentPlanningView;
+    }
+    const view = finished.has(state.phase) ? retainedPlanningView : currentPlanningView;
+    if (!view) {
+      if (futureViewer) futureViewer = null;
+      if (futureFrames.textContent !== 'Run a trial to compare three possible routes and step through their predicted futures.') futureFrames.textContent = 'Run a trial to compare three possible routes and step through their predicted futures.';
+      futureFrames.classList.add('control-future-empty');
+      return;
+    }
+    futureFrames.classList.remove('control-future-empty');
+    if (!futureViewer) { futureViewer = makeFutureViewer(); futureFrames.replaceChildren(futureViewer); }
+    if (view !== displayedPlanningView) {
+      displayedPlanningView = view;
+      previewCandidate = view.selected;
+      previewStep = 1;
+      renderFuturePreview();
+    } else renderFutureActualMovement();
   }
 
   function render() {
@@ -301,6 +455,18 @@ function initializePlayground(root, simulator, knowledge) {
     const robotPoint = mapPoint(state.robot);
     const trayPoint = mapPoint(state.tray);
     robot.setAttribute('transform', `translate(${robotPoint.x} ${robotPoint.y})`);
+    const pose = armPose(robotPoint, lastElbow);
+    if (pose) {
+      lastElbow = pose.elbow;
+      for (const path of armLinks) path.setAttribute('d', `M${pose.base.x} ${pose.base.y} L${pose.shoulder.x} ${pose.shoulder.y} L${pose.elbow.x} ${pose.elbow.y} L${pose.wrist.x} ${pose.wrist.y}`);
+      armElbow.setAttribute('cx', pose.elbow.x);
+      armElbow.setAttribute('cy', pose.elbow.y);
+      wrist.setAttribute('transform', `rotate(${pose.angle})`);
+      const grip = gripperGeometry(pose.angle, Boolean(state.robot.carrying));
+      robot.querySelector('.control-wrist-body').setAttribute('cx', grip.wristX);
+      jaws.setAttribute('d', grip.jaws);
+      robot.querySelector('.control-gripper-palm').setAttribute('d', grip.palm);
+    }
     tray.setAttribute('transform', `translate(${trayPoint.x} ${trayPoint.y})`);
     obstacle.toggleAttribute('hidden', !state.obstacle.enabled);
     const obstaclePoint = mapPoint(state.obstacle);

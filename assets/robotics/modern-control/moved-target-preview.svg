@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="424" viewBox="0 0 720 424" role="img" aria-labelledby="title description">
+  <title id="title">A moved cube leaves a fixed robot grasp empty</title>
+  <desc id="description">Two top views show the same two-link robot arm. Before the cube moves, the parallel-jaw gripper surrounds it. After the move, a dashed square marks its old position beneath the gripper. A curved arrow points to the cube's new position.</desc>
+  <defs>
+    <marker id="move-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 1 1 L 8 5 L 1 9" fill="none" stroke="#b84d2e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <g id="arm">
+      <rect x="44" y="283" width="68" height="28" rx="14" fill="#dce0d7" stroke="#a1ab9a" stroke-width="1.5"/>
+      <path d="M78 297 L100 124 L244 166" fill="none" stroke="#323a34" stroke-width="21" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M78 297 L100 124 L244 166" fill="none" stroke="#d4dacf" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="78" cy="297" r="17" fill="#f6f6ef" stroke="#323a34" stroke-width="3"/>
+      <circle cx="78" cy="297" r="5" fill="#323a34"/>
+      <circle cx="100" cy="124" r="12" fill="#f6f6ef" stroke="#323a34" stroke-width="3"/>
+      <circle cx="100" cy="124" r="3.5" fill="#323a34"/>
+      <circle cx="244" cy="166" r="8" fill="#f6f6ef" stroke="#323a34" stroke-width="3"/>
+      <path d="M244 174 V188" fill="none" stroke="#323a34" stroke-width="5"/>
+      <rect x="220" y="184" width="48" height="10" rx="4" fill="#323a34"/>
+      <path d="M223 193 V217 H228 M265 193 V217 H260" fill="none" stroke="#323a34" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g id="tray">
+      <rect x="271" y="99" width="52" height="42" rx="7" fill="#e0e5d9" stroke="#98a58c" stroke-width="1.5"/>
+      <rect x="277" y="105" width="40" height="30" rx="3" fill="#edf0e7" stroke="#bbc5b2"/>
+    </g>
+    <g id="cube">
+      <rect width="30" height="30" rx="3" fill="#b84d2e" stroke="#8f3e27" stroke-width="1.5"/>
+      <path d="M4 5 H26 M5 5 V25" fill="none" stroke="#d99474" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </defs>
+  <rect width="720" height="424" fill="#f1f2ed"/>
+  <g font-family="Arial, Helvetica, sans-serif" fill="#242924">
+    <text x="24" y="38" font-size="26">Before</text>
+    <text x="388" y="38" font-size="26">Object moved</text>
+    <text x="333" y="36" text-anchor="end" font-family="ui-monospace, monospace" font-size="11" letter-spacing="1.2" fill="#77806f">01</text>
+    <text x="697" y="36" text-anchor="end" font-family="ui-monospace, monospace" font-size="11" letter-spacing="1.2" fill="#77806f">02</text>
+    <rect x="12" y="58" width="332" height="296" rx="12" fill="#f8f8f2" stroke="#d4d9cd"/>
+    <rect x="376" y="58" width="332" height="296" rx="12" fill="#f8f8f2" stroke="#d4d9cd"/>
+    <use href="#tray"/>
+    <use href="#cube" x="229" y="202"/>
+    <use href="#arm"/>
+    <g transform="translate(364 0)">
+      <use href="#tray"/>
+      <rect x="229" y="202" width="30" height="30" rx="3" fill="none" stroke="#9caa93" stroke-width="2" stroke-dasharray="4 4"/>
+      <use href="#arm"/>
+      <path d="M248 239 C255 261 286 264 293 282" fill="none" stroke="#b84d2e" stroke-width="2.5" stroke-linecap="round" marker-end="url(#move-arrow)"/>
+      <use href="#cube" x="283" y="291"/>
+    </g>
+    <text x="24" y="383" font-size="19">Gripper meets cube.</text>
+    <text x="388" y="383" font-size="19">Same grasp. No cube.</text>
+    <text x="24" y="409" font-family="ui-monospace, monospace" font-size="10" letter-spacing="1.2" fill="#77806f">TOP VIEW / FIXED ARM BASE</text>
+  </g>
+</svg>
