@@ -1,53 +1,91 @@
 # Control playground
 
-The homepage asks one question: **What changes when the object moves?**
+The homepage compares five architecture examples on one task: move a cube into a tray. Each card explains the real method and links its paper. Execution timing and scene challenges are separate controls.
 
-This is a rule-based tabletop simulation. The methods illustrate different parts of a control system. No trained model, real robot, or measured policy score runs here. The methods can overlap in a real system.
+The simulator uses supplied rules. Its failures come from the executed movement, observed scene, and physical task checks. It runs no trained policy and provides no paper benchmark scores.
 
-## Shared setup
+## Architecture examples
 
-All modes share the same normalized workspace, starting pose, cubes, tray, speed limit, grasp rule, collision check, and time limit. Speed is 0.27 workspace units per second. The action horizon is 0.60 seconds. The default compute delay is 0.30 seconds, with a slider from 0 to 0.60 seconds. Physics advances at 120 steps per second, with a 12 second trial limit. Readers can move either cube, choose red or blue, add an obstacle, and change the planning delay. Replay and mode changes preserve the reader's edited setup.
-
-The display separates the solid trail of actual movement from the dashed plan. Diffusion candidates and world-model predictions are drawn before physical movement. They do not move the actual gripper.
-
-## Six mechanisms
-
-| Mode | What the rule illustrates | Read it with |
+| Example | Supplied rule in this simulator | Link to the real method |
 | --- | --- | --- |
-| Scripted path | A taught route follows its saved target position. Moving the cube does not update the route. | Blind replay, rather than all classical control. |
-| Synchronous chunks | Observe, wait for a short plan, execute the chunk, then repeat. | A blocking planning loop. ACT itself can query at every timestep and combine overlapping predictions. |
-| Real-time chunks | Compute the next plan while executing the previous one. Preserve commands that will execute during the delay. | Finite response delay remains. Continuous motion does not imply instant reaction. |
-| Diffusion plans | Refine seeded noisy candidate routes, then execute part of the selected route and observe again. | A visual analogy for action denoising. The geometric planner here is hand-written. |
-| Instruction-conditioned | Choose the red or blue cube from the scene and task. | A finite rule that represents one ability of a generalist policy. It does not represent pretrained model performance. |
-| World-model lookahead | Predict candidate tip positions, score their route, execute the next step, then predict again. | A state predictor. Real world models can predict state, features, or video. These frames are predicted toy states. |
+| Fixed script | Replay a taught pickup position and route. New observations do not change it. | A blind replay baseline. Classical control can also use feedback and planning. |
+| Action transformer | Turn the latest observed target into a short action batch. | ACT learns action sequences from demonstrations. It combines predictions for the same moment to smooth movement, called temporal ensembling. |
+| Diffusion Policy | Refine seeded noisy action plans toward supplied routes, then execute a prefix. | Diffusion Policy learns observation-conditioned action denoising from demonstrations. |
+| Generalist VLA | Read a red/blue instruction and use a supplied obstacle route. | π₀ combines pretrained image and language knowledge with an action expert. The expert learns to turn noise into actions through flow matching. Robot training covers many tasks and bodies. |
+| World model + planner | Predict candidate tip positions, choose a route, execute one waypoint, then predict again. | V-JEPA 2-AC predicts learned scene features and plans toward an image goal. The widget draws toy state predictions. |
 
-The clearest timing comparison is synchronous chunks versus real-time chunks. They use the same speed and compute delay. A stopped arm spends time waiting between synchronous chunks. Real-time planning overlaps that computation with movement.
+The action-transformer, diffusion, and world-model sketches use the red-cube task. The VLA sketch also reads the red/blue instruction. This isolates instruction conditioning here. Those other methods can also use instructions in real systems.
 
-The non-generalist sketches are fixed to the red-cube task. The generalist sketch additionally reads the red/blue instruction. This choice isolates instruction conditioning in the demo. Chunking, diffusion, and world-model planning can also use instructions in real systems.
+Architecture, action generation, training breadth, and execution timing are separate choices. A pretrained policy can use diffusion or flow matching. A model can generate action batches and execute them with real-time chunking.
 
-Other modes explain different mechanisms. Their success and failure depend on this scene and its rules. They do not form a ranking of research methods.
+## Execution timing
+
+Action transformer, Diffusion Policy, and Generalist VLA offer two schedules:
+
+- **Wait between batches:** execute a batch, then wait for the next plan.
+- **Plan while moving:** compute the next batch while committed commands continue. New observations can change later commands after the compute delay.
+
+Compare these settings on the same architecture, scene, and delay. Continuous movement still has a response delay. The original ACT can query at every timestep and combine predictions; the blocking setting here is an execution choice.
+
+The RTC paper applies its method to diffusion and flow policies. The action-transformer sketch borrows the timing idea through a simple queue. The fixed script has no planning delay. The world planner executes its next waypoint, then predicts again.
+
+## Shared physics
+
+All examples share the same workspace, starting arm position, cubes, tray, speed limit, grasp check, collision check, and time limit.
+
+- Arm speed: 0.27 workspace units per second.
+- Action-batch horizon: 0.60 seconds.
+- Default compute delay: 300 ms, adjustable from 0 to 600 ms.
+- Physics: 120 steps per second.
+- Trial limit: 12 seconds.
+
+A delay change applies to the next planning request. A plan already being computed keeps its earlier delay.
+
+A grasp uses the real distance to a physical cube. The carried cube follows the arm and cannot be dragged away. Collision checks use the actual movement segment. Success requires the requested physical cube to be released within 0.035 workspace units of the real tray. A failure label is never assigned just because an architecture or challenge was selected.
+
+The solid trail shows actual movement. Dashed lines show plans. The blue segment shows committed commands. Diffusion candidates change during planning, while the actual arm waits or executes its earlier batch. World frames show predicted tip positions; a predicted collision stops at contact.
+
+## Scene challenges and injected errors
+
+Choosing a challenge loads its prepared scene. **Try a failure** selects a relevant challenge and starts the run. Readers can also drag cubes, use arrow keys, add an obstacle, and change the task. Replay and architecture changes preserve the reader's starting scene edits.
+
+| Challenge | What is changed | Why a run can fail |
+| --- | --- | --- |
+| Clean scene | Stationary cubes and a correctly observed scene. | Establishes the baseline before changing one factor. |
+| Moving target | The red cube circles at 0.60 units/s, faster than the 0.27 units/s arm. | These rules chase an observed position. Compute delay and execution make that position stale. They do not plan an interception. The blue cube stays still. |
+| Late obstacle | After 0.18 units of travel, a blocker is placed on the current queued movement segment. | Earlier commands still point through the new blocker. Contact ends the trial through the shared collision check. |
+| Swapped visual cues | An injected visual error swaps the observed red and blue labels. The physical cubes keep their identities. | A planner that reads those labels can grasp the wrong physical cube. The fixed script does not read them. |
+| Wrong camera frame | The world planner's observed scene is rotated 25 degrees around the fixed arm base. The real table stays unchanged. | Predictions use the wrong coordinates. Physical grasp checks still use the real table, so the arm can repeatedly close at an empty point. Other examples do not receive this rotation. |
+
+These errors are inserted by the simulator. They illustrate what follows from a stale observation, blocked command, wrong label, or wrong coordinate frame. Their frequency and size are chosen for this scene. They are not measurements of neural perception, pretrained generalization, or learned prediction accuracy.
 
 ## Research sources
 
 - [ACT, section IV-A](https://arxiv.org/html/2304.13705v1#S4.SS1): action sequences and temporal ensembling.
-- [Real-Time Chunking, sections 3 and 4](https://arxiv.org/html/2506.07339v1#S4): overlap computation with execution, with a committed prefix and guidance over later actions.
-- [Diffusion Policy, section II-C](https://www.roboticsproceedings.org/rss19/p026.pdf#page=3): denoise an action sequence, execute a portion, and update from new observations. [Official project](https://diffusion-policy.cs.columbia.edu/).
-- [π₀ paper](https://www.pi.website/download/pi0.pdf): a generalist policy combines a pretrained vision-language model with a continuous action expert.
-- [OpenVLA evaluations](https://openvla.github.io/): instructions, broad training, and examples of failures. Generalist training does not guarantee success on every task.
-- [V-JEPA 2, sections 3 and 4](https://arxiv.org/html/2506.09985v1#S3.SS2): predict future features, evaluate candidate actions, execute one action, and replan.
+- [Real-Time Chunking, sections 3 and 4](https://arxiv.org/html/2506.07339v1#S4): overlapping computation and execution, preserving a committed prefix, and guiding later actions.
+- [Diffusion Policy, section II-C](https://www.roboticsproceedings.org/rss19/p026.pdf#page=3): denoise an action sequence, execute a portion, and observe again. [Official project](https://diffusion-policy.cs.columbia.edu/).
+- [π₀ paper](https://www.pi.website/download/pi0.pdf): vision-language pretraining, a flow-matching action expert, broad robot training, and task-specific refinement.
+- [V-JEPA 2, sections 3 and 4](https://arxiv.org/html/2506.09985v1#S3.SS2): future feature prediction, candidate action evaluation, and planning toward image goals.
+
+The papers also report limits:
+
+- [ACT, Appendix F](https://arxiv.org/html/2304.13705v1): failures involving visual cues, including seams.
+- [Diffusion Policy, PDF page 11](https://www.roboticsproceedings.org/rss19/p026.pdf#page=11): training-data coverage and inference latency.
+- [π₀, section VII](https://arxiv.org/html/2410.24164v1#S7): unreliable tasks and the role of task-specific post-training.
+- [V-JEPA 2-AC, section 4.3](https://arxiv.org/html/2506.09985v1#S4.SS3): camera placement and prediction errors over longer planning horizons.
 
 ## Files and checks
 
-`assets/control-simulator.mjs` owns simulation state and transitions. It has no page dependencies. `assets/control-playground.js` turns browser input into state changes and draws the scene. `assets/control-playground.css` stays scoped to the homepage widget. The HTML template supplies a static scene and explanation before scripts load.
+`assets/control-approaches.mjs` supplies the source-grounded cards and timing explanations. `assets/control-simulator.mjs` owns deterministic simulation state, observations, injected challenges, and physical checks. It has no page dependencies. `assets/control-playground.js` handles browser input and drawing. `assets/control-playground.css` stays scoped to the homepage widget. The HTML template supplies a static scene and explanation before scripts load.
 
-Run `npm test` for the builder and simulation contracts. Run `npm run build` to generate the public pages. Check the browser at desktop and phone widths. Exercise Run, Pause, Replay, moved cubes, obstacles, both tasks, all modes, keyboard cube movement, and delay changes. Check that changing modes preserves the edited setup.
+Run `npm test` for the builder and simulation contracts. Run `npm run build` to generate public pages. Check desktop and phone layouts. Exercise all five examples, both schedules where supported, all five challenges, both tasks, delay changes, Pause, Replay, dragging after scrolling, and keyboard cube movement. Check that scene edits survive architecture changes and replay.
 
-The two-link geometry game is an empty `robotics-arm` Markdown fence in the moving-arm article. Only pages with that fence load its controls. Ordinary articles retain static math, media, and native drawers.
+The two-link geometry game uses an empty `robotics-arm` Markdown fence in the moving-arm article. Only pages with that fence load its controls. Ordinary articles keep static math, media, and native drawers.
 
-## Verification on October 1, 2026
+## Current verification
 
-All 25 builder and simulator tests passed. In the untouched red-cube scene at 300 ms delay, synchronous chunks waited 1.80 seconds in total. Real-time chunks waited 0.30 seconds. They used the same speed, horizon, and total traveled distance. These numbers describe this simulator.
+On October 1, 2026, all 33 builder and simulator tests passed. Tests cover both execution schedules on all three action-sequence examples, controlled failures, delivery at the physical tray, and replay at 30, 60, and 120 display frames per second. A separate agent reviewed the paper summaries, simulator, and browser state handling. Review found and fixed an off-tray delivery that could count as success.
 
-Chrome checks covered all six modes, fixed-script success and moved-object failure, both task choices, obstacle planning, chosen future frames, the committed path, pause/resume, replay setup, delay edits after a result, cube dragging after scrolling, and keyboard movement. The homepage and article game fit a 390 pixel phone viewport. Article sliders, equations, and loaded images were checked. No browser errors appeared.
+Browser checks covered all five architecture cards and their paper links. Their suggested challenges produced an empty fixed-script grasp, an action-transformer collision, a diffusion timeout, a wrong-cube VLA delivery, and a world-planner timeout. The scene shows swapped observed labels and displaced model targets. Real-time diffusion completed the clean task; its committed path, Pause, and Resume worked. The VLA completed the blue-cube task. Keyboard scene edits survived an architecture change. The page fit a measured 389-pixel phone width with no horizontal overflow. No browser errors appeared.
 
-The no-mistakes service did not start after setup and a second start attempt. Its pipeline did not run. A separate agent reviewed the code and public explanations before publication. Real robot and trained-model performance were not tested.
+The no-mistakes service did not become responsive during setup, so its full pipeline did not run. These checks cover supplied rules and the website. Trained-model or real-robot results were not measured.

@@ -1,11 +1,20 @@
 /** Deterministic teaching simulator. Every planner below is a taught rule. */
 export const MODES = Object.freeze([
-  {id:'scripted', label:'Scripted path', short:'Replay a fixed taught path.'},
-  {id:'chunks', label:'Synchronous chunks', short:'Wait for each frozen action batch before moving.'},
-  {id:'realtime', label:'Real-time chunks', short:'Plan the next batch while the committed batch keeps moving.'},
-  {id:'diffusion', label:'Diffusion plans', short:'Refine noisy action plans, then execute a short prefix.'},
-  {id:'generalist', label:'Generalist policy', short:'Use a taught red/blue instruction mapping and obstacle rule.'},
-  {id:'world', label:'World-model lookahead', short:'Predict candidate futures, then execute one waypoint.'},
+  {id:'scripted', label:'Fixed script', family:'Baseline', short:'Replay a fixed taught path.'},
+  {id:'chunks', label:'ACT-style policy', family:'Conditional VAE', short:'Generate a short sequence from the current scene.'},
+  {id:'diffusion', label:'Diffusion policy', family:'Diffusion action head', short:'Refine noisy action sequences before executing a prefix.'},
+  {id:'generalist', label:'Vision-language-action', family:'VLA', short:'Use an instruction and scene to choose actions.'},
+  {id:'world', label:'World-model planner', family:'Predictive model', short:'Predict candidate futures, then execute one waypoint.'},
+].map(Object.freeze));
+
+export const SCHEDULES = Object.freeze(['synchronous', 'realtime']);
+
+export const SCENARIOS = Object.freeze([
+  {id:'baseline', label:'Clean scene', summary:'Stationary cubes and a correctly observed scene.'},
+  {id:'moving-target', label:'Moving target', summary:'The red cube moves faster than the arm. Each observation is already aging while a plan is computed.'},
+  {id:'late-obstacle', label:'Late obstacle', summary:'An obstacle appears inside the path of commands already sent to the arm.'},
+  {id:'swapped-cues', label:'Swapped visual cues', summary:'An injected visual error swaps the observed red and blue labels. Physical cube identities stay unchanged.'},
+  {id:'model-gap', label:'Wrong camera frame', summary:'The world planner uses a camera-to-table rotation that is wrong by 25 degrees. Its predicted scene and the real table disagree.'},
 ].map(Object.freeze));
 
 const STEP = 1 / 120;
@@ -15,6 +24,7 @@ const SPEED = .27;
 const HORIZON = .60;
 const TIP_RADIUS = .009;
 const GRASP_RADIUS = .035;
+const DELIVERY_RADIUS = .035;
 const EPS = 1e-10;
 const WORKSPACE = {left:.06, right:.94, top:.08, bottom:.90};
 const TAUGHT_PICKUP = {x:.55, y:.43};
@@ -25,6 +35,60 @@ const point = ({x, y}) => ({x, y});
 const distance = (a, b) => Math.hypot(b.x - a.x, b.y - a.y);
 const inside = ({x, y}) => ({x:clamp(x, WORKSPACE.left, WORKSPACE.right), y:clamp(y, WORKSPACE.top, WORKSPACE.bottom)});
 const length = (route) => route.slice(1).reduce((sum, p, i) => sum + distance(route[i], p), 0);
+const actionSequence = (state) => ['chunks', 'diffusion', 'generalist'].includes(state.mode);
+const realTime = (state) => actionSequence(state) && state.settings.schedule === 'realtime';
+const radians = (degrees) => degrees * Math.PI / 180;
+function rotate(p, center, angle) {
+  const x = p.x - center.x;
+  const y = p.y - center.y;
+  return {x:center.x + Math.cos(angle) * x - Math.sin(angle) * y, y:center.y + Math.sin(angle) * x + Math.cos(angle) * y};
+}
+
+function observe(state) {
+  const swapped = state.scenario === 'swapped-cues';
+  const frameRotation = state.scenario === 'model-gap' && state.mode === 'world' ? 25 : 0;
+  const project = (p) => frameRotation ? inside(rotate(p, INITIAL_ROBOT, radians(frameRotation))) : point(p);
+  state.observation = {
+    objects:state.objects.map((object) => ({id:swapped ? (object.id === 'red' ? 'blue' : 'red') : object.id, physicalId:object.id, ...project(object)})),
+    obstacle:{...state.obstacle, ...project(state.obstacle)},
+    tray:project(state.tray), frameRotation, labelsSwapped:swapped,
+    note:frameRotation ? 'The estimated camera frame is rotated 25 degrees about the fixed arm base.' : swapped ? 'Observed color labels are swapped by the injected visual error.' : 'The observed scene matches the real table.',
+  };
+  return state.observation;
+}
+
+function event(state, type, message) {
+  state.events.push({time:state.time, type, message});
+  state.challengeMessage = message;
+}
+
+function configureScenario(state) {
+  if (state.scenario === 'moving-target') state.objects[0] = {id:'red', x:.78, y:.43};
+  if (state.scenario === 'model-gap') event(state, 'camera-frame-error', 'A 25-degree camera-frame error is injected into the world planner. The physical table has not rotated.');
+  if (state.scenario === 'swapped-cues') event(state, 'visual-error', 'The observation labels are swapped. Red looks blue to the planner and blue looks red.');
+  if (state.scenario === 'moving-target') event(state, 'moving-target', 'The red cube circles at 0.60 units/s. The arm moves at 0.27 units/s.');
+  observe(state);
+}
+
+function updateScenario(state) {
+  if (state.scenario === 'moving-target' && state.robot.carrying !== 'red') {
+    const angle = state.time * .60 / .18;
+    state.objects[0].x = .60 + .18 * Math.cos(angle);
+    state.objects[0].y = .43 + .18 * Math.sin(angle);
+  }
+  if (state.scenario === 'late-obstacle' && !state._challengeTriggered && state.stats.distance >= .18 && state._queue.length) {
+    const next = state._queue.find((waypoint) => distance(waypoint, state.robot) >= .025);
+    if (next) {
+      const d = distance(next, state.robot);
+      const offset = Math.min(.08, d * .75);
+      const radius = Math.max(.011, Math.min(.045, offset - .013));
+      state.obstacle = {enabled:true, x:state.robot.x + (next.x - state.robot.x) * offset / d, y:state.robot.y + (next.y - state.robot.y) * offset / d, r:radius};
+      state._challengeTriggered = true;
+      event(state, 'late-obstacle', 'An obstacle appeared on the current committed segment. Those commands were planned from the earlier clear scene.');
+    }
+  }
+  observe(state);
+}
 
 function random(state) {
   state._rng = (state._rng + 0x6D2B79F5) >>> 0;
@@ -231,7 +295,7 @@ function plannerResult(state, snapshot) {
   let noisy = null;
   let selectedCandidate = 0;
   if (state.mode === 'generalist') route = smoothRoute(avoidRoute(snapshot.from, snapshot.goal, snapshot.obstacle), snapshot.obstacle);
-  if (state.mode === 'realtime') route = blendEntry(route, snapshot.direction, snapshot.obstacle);
+  if (realTime(state)) route = blendEntry(route, snapshot.direction, snapshot.obstacle);
   if (state.mode === 'diffusion' || state.mode === 'world') {
     candidates = candidateRoutes(snapshot.from, snapshot.goal, snapshot.obstacle, state.mode !== 'world');
     if (state.mode === 'diffusion') {
@@ -249,10 +313,10 @@ function plannerResult(state, snapshot) {
   if (state.mode === 'world') queue = queue.slice(0, 1);
   // Both chunk variants can include a grasp followed by delivery in one batch.
   // This keeps an otherwise short final approach batch from creating an RTC gap.
-  if (['chunks', 'realtime'].includes(state.mode) && snapshot.stage === 'approach' && queue.at(-1).action === 'grasp') {
+  if (actionSequence(state) && snapshot.stage === 'approach' && queue.at(-1).action === 'grasp') {
     const remaining = budget - length([route[0], ...queue.map(point)]);
     if (remaining > EPS) {
-      const delivery = [point(route.at(-1)), point(state.tray)];
+      const delivery = state.mode === 'chunks' ? [point(route.at(-1)), point(state.tray)] : smoothRoute(avoidRoute(route.at(-1), state.tray, snapshot.obstacle), snapshot.obstacle);
       queue.push(...prefix(delivery, remaining, 'delivery', snapshot.targetId));
       route = [...route, point(state.tray)];
     }
@@ -277,8 +341,9 @@ function snapshotFor(state, background) {
     else if (end.stage === 'delivery') { stage = 'delivery'; expectedPickup = !state.robot.carrying; }
   }
   const id = targetId(state);
-  const goal = stage === 'delivery' ? point(state.tray) : point(state.objects.find((object) => object.id === id));
-  return {from, goal, stage, targetId:id, direction, expectedPickup, background, obstacle:{...state.obstacle}, latency:state.settings.latency, startTime:state.time};
+  const observed = observe(state);
+  const goal = stage === 'delivery' ? point(observed.tray) : point(observed.objects.find((object) => object.id === id));
+  return {from, goal, stage, targetId:id, direction, expectedPickup, background, obstacle:{...observed.obstacle}, latency:state.settings.latency, startTime:state.time};
 }
 
 function requestPlan(state, background = false) {
@@ -336,6 +401,13 @@ function finished(state, phase, message) {
   state._pending = null;
   state.committed = [];
   state._accumulator = 0;
+  if (phase !== 'success') {
+    if (state.scenario === 'moving-target' && phase === 'timeout') state.failureReason = 'The target kept moving while observations and action sequences aged. The controller ran out of time to complete the real task.';
+    else if (state.scenario === 'late-obstacle' && phase === 'collision') state.failureReason = 'The new obstacle crossed a command that was already committed. A fresh plan could not change that command before physical contact.';
+    else if (state.scenario === 'swapped-cues' && phase === 'wrong-object') state.failureReason = 'The visual error changed which physical cube the planner treated as its target. Success is checked against the real cube identity.';
+    else if (state.scenario === 'model-gap' && phase === 'timeout') state.failureReason = 'The predicted target used the wrong camera coordinates. The real grasp checks still used the physical table, so repeated grasps closed at an empty position.';
+    else state.failureReason = message;
+  }
 }
 
 function followCarriedObject(state) {
@@ -366,7 +438,9 @@ function actionAtWaypoint(state, waypoint) {
       state._queue = [];
       state._pending = null;
       state._stage = 'approach';
-      state.message = 'The object moved away from the frozen grasp position. Planning again.';
+      state.message = 'The gripper closed at an empty position. Observing again before a new plan.';
+      state.stats.missedGrasps++;
+      event(state, 'missed-grasp', 'The real gripper closed at an empty position. The controller observed again and tried a new plan.');
     }
   }
   if (waypoint.action === 'release') {
@@ -374,6 +448,7 @@ function actionAtWaypoint(state, waypoint) {
     state.robot.carrying = null;
     state._stage = 'done';
     if (!carried) finished(state, 'miss', 'The taught pickup position was empty. Nothing reached the tray.');
+    else if (distance(state.objects.find((object) => object.id === carried), state.tray) > DELIVERY_RADIUS) finished(state, 'miss', `The ${carried} object was released outside the tray.`);
     else if (carried !== state.instruction) finished(state, 'wrong-object', `The ${carried} object reached the tray, but the instruction asked for ${state.instruction}.`);
     else finished(state, 'success', `The ${carried} object reached the tray.`);
   }
@@ -420,10 +495,11 @@ function queueDuration(state) {
 }
 
 function tick(state) {
+  updateScenario(state);
   finishPending(state);
   if (!state._queue.length && !state._pending) requestPlan(state);
   finishPending(state);
-  if (state.mode === 'realtime' && state._queue.length && !state._pending && state._queue.at(-1).action !== 'release' && queueDuration(state) <= state.settings.latency + .05 + EPS) requestPlan(state, true);
+  if (realTime(state) && state._queue.length && !state._pending && state._queue.at(-1).action !== 'release' && queueDuration(state) <= state.settings.latency + .05 + EPS) requestPlan(state, true);
   finishPending(state);
   if (state._queue.length) move(state);
   else state.stats.waitTime += STEP;
@@ -432,25 +508,32 @@ function tick(state) {
   state.stats.elapsed = state.time;
   state.committed = state._pending?.snapshot.background ? [point(state.robot), ...state._queue.map(point)] : [];
   updateDenoising(state);
+  observe(state);
   if (state.running && state.time >= MAX_TIME) finished(state, 'timeout', 'The run reached 12 seconds before completing the task.');
 }
 
-export function createSimulation({mode = 'scripted', seed = 7, latency = .30} = {}) {
+export function createSimulation({mode = 'scripted', seed = 7, latency = .30, schedule = 'synchronous', scenario = 'baseline'} = {}) {
+  if (mode === 'realtime') { mode = 'chunks'; schedule = 'realtime'; }
   if (!MODES.some((item) => item.id === mode)) throw new RangeError(`Unknown control mode: ${mode}`);
+  if (!SCHEDULES.includes(schedule)) throw new RangeError(`Unknown execution schedule: ${schedule}`);
+  if (!SCENARIOS.some((item) => item.id === scenario)) throw new RangeError(`Unknown challenge scenario: ${scenario}`);
   if (typeof seed !== 'number' || !Number.isFinite(seed)) throw new TypeError('Seed must be a finite number');
   if (typeof latency !== 'number' || !Number.isFinite(latency)) throw new TypeError('Inference delay must be a finite number');
   const normalizedSeed = Math.trunc(seed) >>> 0;
-  return {
-    mode, seed:normalizedSeed, time:0, running:false, phase:'ready',
+  const state = {
+    mode, scenario, seed:normalizedSeed, time:0, running:false, phase:'ready',
     robot:{...INITIAL_ROBOT, carrying:null},
     objects:[{id:'red', ...TAUGHT_PICKUP}, {id:'blue', x:.72, y:.66}],
     tray:{x:.84, y:.22}, instruction:'red', obstacle:{enabled:false, x:.48, y:.50, r:.085},
     trail:[point(INITIAL_ROBOT)], plan:[], candidates:[], predictions:[], committed:[], selectedCandidate:0,
-    settings:{latency:clamp(latency, 0, .60), speed:SPEED, chunkDuration:HORIZON},
-    stats:{elapsed:0, replans:0, waitTime:0, distance:0},
+    settings:{latency:clamp(latency, 0, .60), speed:SPEED, chunkDuration:HORIZON, schedule},
+    stats:{elapsed:0, replans:0, waitTime:0, distance:0, missedGrasps:0},
+    observation:null, events:[], failureReason:'', challengeMessage:SCENARIOS.find((item) => item.id === scenario).summary,
     message:mode === 'scripted' ? 'Ready to replay a fixed path to the taught red position and tray.' : 'Ready. Move an object, choose a target, then start.',
-    _rng:normalizedSeed, _ticks:0, _accumulator:0, _stage:'approach', _queue:[], _pending:null, _pausedMessage:null,
+    _rng:normalizedSeed, _ticks:0, _accumulator:0, _stage:'approach', _queue:[], _pending:null, _pausedMessage:null, _challengeTriggered:false,
   };
+  configureScenario(state);
+  return state;
 }
 
 export function stepSimulation(state, dt = 1 / 60) {
@@ -469,6 +552,7 @@ export function setObjectPosition(state, id, x, y) {
   const object = state.objects.find((item) => item.id === id);
   if (!object || state.robot.carrying === id || !Number.isFinite(x) || !Number.isFinite(y)) return false;
   Object.assign(object, inside({x, y}));
+  observe(state);
   return true;
 }
 
@@ -480,6 +564,7 @@ export function setInstruction(state, id) {
 
 export function toggleObstacle(state) {
   state.obstacle.enabled = !state.obstacle.enabled;
+  observe(state);
   return true;
 }
 
@@ -489,8 +574,22 @@ export function setInferenceDelay(state, seconds) {
   return true;
 }
 
+export function setExecutionSchedule(state, schedule) {
+  if (!SCHEDULES.includes(schedule)) return false;
+  state.settings.schedule = schedule;
+  return true;
+}
+
+export function setScenario(state, scenario) {
+  if (!SCENARIOS.some((item) => item.id === scenario)) return false;
+  const fresh = createSimulation({mode:state.mode, seed:state.seed, latency:state.settings.latency, schedule:state.settings.schedule, scenario});
+  for (const key of Object.keys(state)) delete state[key];
+  Object.assign(state, fresh);
+  return true;
+}
+
 export function resetSimulation(state) {
-  const fresh = createSimulation({mode:state.mode, seed:state.seed, latency:state.settings.latency});
+  const fresh = createSimulation({mode:state.mode, seed:state.seed, latency:state.settings.latency, schedule:state.settings.schedule, scenario:state.scenario});
   for (const key of Object.keys(state)) delete state[key];
   return Object.assign(state, fresh);
 }

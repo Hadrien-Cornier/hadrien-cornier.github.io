@@ -4,9 +4,9 @@
 <title>Robotics, learning, and systems | Hadrien Cornier</title><meta name="description" content="Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them.">
 <link rel="canonical" href="https://hadrien-cornier.github.io/"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="Robotics, learning, and systems"><meta property="og:description" content="Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them."><meta property="og:type" content="website"><meta property="og:url" content="https://hadrien-cornier.github.io/">
-<link rel="stylesheet" href="/assets/site.css?v=c72f6339d447"><link rel="stylesheet" href="/assets/robotics.css?v=2f1220496bbf"><link rel="stylesheet" href="/assets/control-playground.css?v=b0de532c0f19">
+<link rel="stylesheet" href="/assets/site.css?v=c72f6339d447"><link rel="stylesheet" href="/assets/robotics.css?v=2f1220496bbf"><link rel="stylesheet" href="/assets/control-playground.css?v=18a64b1e52d8">
 <script src="/assets/site.js?v=f497094d1f0e" defer></script>
-<script type="module" src="/assets/control-playground.js?v=bb23db5d2328"></script>
+<script type="module" src="/assets/control-playground.js?v=35be396791dd"></script>
 </head><body class="home-page"><a class="skip" href="#main">Skip to content</a>
 <header class="topbar">
   <a class="wordmark" href="/" aria-label="Hadrien Cornier home"><span class="monogram" aria-hidden="true">hc</span><span>Hadrien Cornier</span></a>
@@ -21,10 +21,29 @@
 <section class="home-hero" aria-labelledby="home-title"><div class="home-hero-copy"><p class="eyebrow">Hadrien Cornier / Personal notes</p><h1 id="home-title">Robotics, learning,<br>and the systems<br>behind them.</h1><p class="home-intro">I build data infrastructure and production ML. Here I write about robot learning, the math behind it, and what I learn by building.</p><div class="home-hero-links"><a href="#writing">Explore the writing <span aria-hidden="true">↓</span></a><a href="/about.html">More about me <span aria-hidden="true">↗</span></a></div></div><section class="control-playground" data-control-playground aria-labelledby="control-playground-title">
   <div class="control-playground-heading"><span class="eyebrow">Control playground</span><span class="control-playground-number" aria-hidden="true">FIG. 01</span></div>
   <h2 id="control-playground-title">One task. Different approaches.</h2>
-  <p class="control-playground-intro">Move the object. Change how the robot reacts.</p>
+  <p class="control-playground-intro">Choose an architecture. Test what can go wrong.</p>
   <div class="control-playground-choices" data-interactive hidden>
-    <label for="control-method">Approach<select id="control-method" data-control-mode><option value="scripted">Scripted path</option><option value="chunks">Synchronous chunks</option><option value="realtime">Real-time chunks</option><option value="diffusion">Diffusion plans</option><option value="generalist">Generalist policy</option><option value="world">World-model lookahead</option></select></label>
-    <label for="control-instruction">Task<select id="control-instruction" data-control-instruction><option value="red">Move red cube</option><option value="blue">Move blue cube</option></select></label>
+    <label for="control-method"><span>Architecture example</span><select id="control-method" data-control-mode><option value="scripted">Fixed script</option><option value="chunks">Action transformer</option><option value="diffusion">Diffusion Policy</option><option value="generalist">Generalist VLA</option><option value="world">World model + planner</option></select></label>
+    <label for="control-instruction"><span>Task</span><select id="control-instruction" data-control-instruction><option value="red">Red cube</option><option value="blue">Blue cube</option></select></label>
+  </div>
+  <p class="control-taxonomy-note">Diffusion is a way to generate actions. Pretraining is prior learning. A model can use both.</p>
+  <div class="control-approach-card" data-control-card aria-live="polite" aria-atomic="true">
+    <p class="control-approach-family" data-control-family>Hand-written replay baseline</p>
+    <p class="control-approach-structure" data-control-structure>Saved route → tracking controller → movement</p>
+    <p data-control-summary>A fixed script follows a saved route. New observations do not change its commands.</p>
+    <p><strong>Expect</strong> <span data-control-expectation>It works when the scene matches the taught route.</span></p>
+    <p><strong>Watch for</strong> <span data-control-limitation>A moved cube or new obstacle can break the task.</span></p>
+    <a class="control-paper" data-control-paper hidden></a>
+    <span class="control-paper" data-control-no-paper>Hand-written baseline. No learned model.</span>
+  </div>
+  <div class="control-execution" data-interactive hidden>
+    <label for="control-execution"><span>Execution timing</span><select id="control-execution" data-control-schedule><option value="synchronous">Wait between batches</option><option value="realtime">Plan while moving</option></select></label>
+    <p data-control-schedule-description>Saved commands run without a new planning step.</p>
+  </div>
+  <div class="control-challenge" data-interactive hidden>
+    <label for="control-challenge"><span>Scene challenge</span><select id="control-challenge" data-control-scenario><option value="baseline">Original setup</option></select></label>
+    <button type="button" data-control-action="failure">Try a failure <span aria-hidden="true">↗</span></button>
+    <p data-control-challenge-description>Start with the unchanged scene, then try a failure.</p>
   </div>
   <figure class="control-playground-figure">
     <svg class="control-scene" data-control-scene viewBox="0 0 440 255" role="group" aria-labelledby="control-scene-title control-scene-description">
@@ -35,6 +54,7 @@
       <rect x="20" y="15" width="400" height="215" rx="5" fill="url(#control-table-grid)"/>
       <g class="control-tray" data-control-tray transform="translate(356 62.3)"><rect x="-26" y="-21" width="52" height="42" rx="5"/><rect class="control-tray-inner" x="-20" y="-15" width="40" height="30" rx="2"/><text x="0" y="35" text-anchor="middle">TRAY</text></g>
       <g class="control-obstacle" data-control-obstacle hidden><ellipse cx="212" cy="122.5" rx="34" ry="18.3"/><path d="M204 114.5l16 16m0-16l-16 16"/><text x="212" y="157" text-anchor="middle">OBSTACLE</text></g>
+      <g class="control-observed-scene" data-control-observed-scene aria-hidden="true"></g>
       <g class="control-candidates" data-control-candidates aria-hidden="true"></g>
       <path class="control-planned-path" data-control-plan d="M80 176.3 L240 107.5 L356 62.3" aria-hidden="true"/>
       <path class="control-committed-path" data-control-committed d="" aria-hidden="true"/>
@@ -59,17 +79,21 @@
   </div>
   <div class="control-playground-status-row"><p class="control-playground-status" data-control-status aria-live="off">Ready to follow a fixed path.</p><span class="control-playground-time" data-control-elapsed hidden>0.0 s</span></div>
   <span class="control-live" data-control-announcement role="status" aria-live="polite" aria-atomic="true"></span>
+  <p class="control-failure-reason" data-control-failure-reason hidden></p>
   <p class="control-playground-mechanism" data-control-mechanism>Replay the same commands. Moving the target leaves the route unchanged.</p>
   <details class="control-playground-details">
     <summary>What this shows <span aria-hidden="true">+</span></summary>
     <div class="control-playground-details-body">
-      <p>One arm, one speed, one scene. The learned methods are represented by simple rules. These runs illustrate mechanisms.</p>
-      <p>Families overlap. Action chunks can come from a diffusion model or a generalist policy. The synchronous example waits between chunks; not every chunked policy does.</p>
-      <p>The other sketches are set to the red-cube task. The generalist sketch also reads the red/blue instruction. Real systems can combine all of these abilities.</p>
-      <p>Real-time chunks keep the commands that are already due to run. The blue segment shows those committed commands while the rest of the plan can change.</p>
-      <label class="control-delay-setting" data-interactive hidden for="control-inference-delay"><span>Compute delay <output data-control-delay-output for="control-inference-delay">300 ms</output></span><input id="control-inference-delay" data-control-delay type="range" min="0" max="600" step="50" value="300"><span class="control-delay-help">The same delay applies to all planning methods. Try zero delay to compare synchronous and real-time chunks.</span></label>
+      <p>One arm, one speed, one scene. The learned methods are represented by simple rules. These runs illustrate mechanisms and failure causes.</p>
+      <p>Diffusion describes how actions are generated. Pretraining describes what the model learned before this task. π₀ combines a pretrained vision-language model with a flow-based action expert. These ideas can be combined.</p>
+      <p>Execution timing is a separate choice. The RTC paper overlaps computation with motion for diffusion and flow policies. This toy also applies that timing idea to the action-transformer sketch.</p>
+      <p>The blue path marks commands that are already committed. New observations still take time to change movement.</p>
+      <p>Challenges introduce specific toy errors: a moving target, a sudden blocker, swapped visual labels, or wrong camera coordinates. Grasping, collisions, and the real cube identity decide the result.</p>
+      <p>The action-transformer, diffusion, and world-model sketches are set to the red-cube task. The VLA sketch also reads the red/blue instruction.</p>
+      <details class="control-model-details"><summary>Architecture and training</summary><dl><dt>Action generation</dt><dd data-control-action-head>Saved waypoints.</dd><dt>Training</dt><dd data-control-training>No learned model.</dd></dl></details>
+      <label class="control-delay-setting" data-interactive hidden for="control-inference-delay"><span>Compute delay <output data-control-delay-output for="control-inference-delay">300 ms</output></span><input id="control-inference-delay" data-control-delay type="range" min="0" max="600" step="50" value="300"><span class="control-delay-help">The same delay applies to each planner. Compare execution settings on the same architecture.</span></label>
       <dl class="control-playground-stats" data-interactive hidden><div><dt>Plan updates</dt><dd data-control-replans>0</dd></div><div><dt>Waiting</dt><dd data-control-wait>0.0 s</dd></div></dl>
-      <p class="control-source-links">Read the research: <a href="https://arxiv.org/abs/2304.13705">ACT</a>, <a href="https://arxiv.org/abs/2506.07339">real-time chunking</a>, <a href="https://diffusion-policy.cs.columbia.edu/">diffusion</a>, <a href="https://openvla.github.io/">OpenVLA</a>, <a href="https://www.pi.website/download/pi0.pdf">π0</a>, <a href="https://arxiv.org/abs/2506.09985">world models</a>.</p>
+      <p class="control-source-links">Papers and their limits: <a href="https://arxiv.org/html/2304.13705v1">ACT</a>, <a href="https://arxiv.org/html/2506.07339v1#S4">real-time chunking</a>, <a href="https://www.roboticsproceedings.org/rss19/p026.pdf#page=11">Diffusion Policy</a>, <a href="https://arxiv.org/html/2410.24164v1#S7">π₀</a>, <a href="https://arxiv.org/html/2506.09985v1#S4.SS3">V-JEPA 2-AC</a>.</p>
     </div>
   </details>
   <div class="control-playground-footer"><span>Illustrated mechanisms in a toy scene.</span><a href="/robotics/how-robot-control-is-changing/">How control is changing <span aria-hidden="true">↗</span></a></div>

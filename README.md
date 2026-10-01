@@ -19,7 +19,7 @@ The generator expects the current profile heading structure: four Talroo work ar
 
 The homepage puts published writing first. It reads the same article metadata as the Robotics section, so new reports appear automatically. The full biography lives at `about.html`; older links such as `/#experience` still lead to the same biography section. Notes and report URLs stay the same.
 
-The homepage control playground compares six control ideas in one small tabletop simulation. Readers can move either cube, add an obstacle, change the task, and set the compute delay. The simulation uses simple rules to explain mechanisms. It does not run trained policies. See [the setup and sources](docs/control-playground.md).
+The homepage control playground compares five architecture examples, with separate execution timing and scene challenges. Each example explains its method and links its paper. Readers can move cubes, change the task and delay, or try an injected failure. The simulation uses supplied rules and shared physical checks. See [the setup and sources](docs/control-playground.md).
 
 The two-link geometry game lives beside the position equations in the moving-arm article. Its sliders change the shoulder and elbow angles. Link lengths stay at 1 and 0.8 units. Add an empty `robotics-arm` code fence to include it in an article. The static drawing works without JavaScript. Interactive controls appear only when ready. The builder loads `assets/arm-geometry.js` only on pages with this component. The homepage loads its separate playground module and styles.
 

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  MODES, createSimulation, stepSimulation, setObjectPosition, setInstruction,
-  toggleObstacle, setInferenceDelay, resetSimulation, startSimulation, pauseSimulation,
+  MODES, SCENARIOS, createSimulation, stepSimulation, setObjectPosition, setInstruction,
+  toggleObstacle, setInferenceDelay, setExecutionSchedule, setScenario, resetSimulation, startSimulation, pauseSimulation,
 } from '../assets/control-simulator.mjs';
 
 const near = (actual, expected, tolerance = 1e-9) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} should be near ${expected}`);
@@ -38,7 +38,11 @@ test('synchronous and real-time chunks share speed, horizon, and inference cost'
   const realtime = run(createSimulation({mode:'realtime'}));
   assert.equal(chunks.phase, 'success');
   assert.equal(realtime.phase, 'success');
-  assert.deepEqual(chunks.settings, realtime.settings);
+  const {schedule:syncSchedule, ...syncSettings} = chunks.settings;
+  const {schedule:rtSchedule, ...rtSettings} = realtime.settings;
+  assert.deepEqual(syncSettings, rtSettings);
+  assert.equal(syncSchedule, 'synchronous');
+  assert.equal(rtSchedule, 'realtime');
   near(chunks.settings.speed, .27);
   near(chunks.settings.chunkDuration, .60);
   near(chunks.stats.waitTime, chunks.stats.replans * .30);
@@ -257,4 +261,164 @@ test('edited positions stay inside the workspace and invalid inputs leave the sc
   assert.deepEqual(state.objects, objects);
   assert.throws(() => createSimulation({mode:'missing'}), RangeError);
   assert.throws(() => stepSimulation(state, NaN), TypeError);
+});
+
+test('architectures and execution schedules are independent, with a compatible real-time alias', () => {
+  assert.deepEqual(MODES.map(({id}) => id), ['scripted', 'chunks', 'diffusion', 'generalist', 'world']);
+  const alias = createSimulation({mode:'realtime'});
+  assert.deepEqual(alias, createSimulation({mode:'chunks', schedule:'realtime'}));
+  for (const mode of ['chunks', 'diffusion', 'generalist']) {
+    const sync = run(createSimulation({mode}));
+    const realtime = run(createSimulation({mode, schedule:'realtime'}));
+    assert.equal(sync.phase, 'success');
+    assert.equal(realtime.phase, 'success');
+    near(sync.stats.distance, realtime.stats.distance);
+    near(sync.stats.waitTime, sync.stats.replans * .30);
+    near(realtime.stats.waitTime, .30);
+    assert.ok(sync.stats.elapsed > realtime.stats.elapsed + 1);
+  }
+  const independent = createSimulation({mode:'diffusion'});
+  assert.equal(setExecutionSchedule(independent, 'realtime'), true);
+  assert.equal(independent.mode, 'diffusion');
+  assert.equal(independent.settings.schedule, 'realtime');
+  const before = structuredClone(independent);
+  assert.equal(setExecutionSchedule(independent, 'unknown'), false);
+  assert.deepEqual(independent, before);
+  assert.throws(() => createSimulation({schedule:'unknown'}), RangeError);
+});
+
+test('a moving object defeats stale plans, while the same initial stationary scene succeeds', () => {
+  for (const mode of ['chunks', 'diffusion', 'generalist', 'world']) {
+    for (const schedule of ['synchronous', 'realtime']) {
+      const moving = createSimulation({mode, schedule, scenario:'moving-target'});
+      const start = pointOf(moving.objects[0]);
+      const stationary = createSimulation({mode, schedule});
+      setObjectPosition(stationary, 'red', start.x, start.y);
+      run(stationary);
+      assert.equal(stationary.phase, 'success', `${mode}/${schedule}: stationary comparison`);
+      run(moving);
+      assert.equal(moving.phase, 'timeout', `${mode}/${schedule}: moving comparison`);
+      assert.equal(moving.robot.carrying, null);
+      assert.ok(separation(moving.objects[0], moving.tray) > .035);
+      assert.match(moving.failureReason, /observations and action sequences aged/);
+      near(moving.settings.speed, stationary.settings.speed);
+      near(moving.settings.latency, stationary.settings.latency);
+    }
+  }
+});
+
+function pointOf({x, y}) { return {x, y}; }
+
+test('a late obstacle intersects already committed motion across action heads and both schedules', () => {
+  for (const {id:mode} of MODES) {
+    for (const schedule of ['synchronous', 'realtime']) {
+      const clear = run(createSimulation({mode, schedule}));
+      assert.equal(clear.phase, 'success');
+      const blocked = run(createSimulation({mode, schedule, scenario:'late-obstacle'}));
+      assert.equal(blocked.phase, 'collision', `${mode}/${schedule}`);
+      assert.equal(blocked.obstacle.enabled, true);
+      near(separation(blocked.robot, blocked.obstacle), blocked.obstacle.r + .009);
+      const insertion = blocked.events.find(({type}) => type === 'late-obstacle');
+      assert.ok(insertion.time > 0, 'the obstacle was inserted after movement began');
+      assert.ok(blocked.time >= insertion.time);
+      assert.match(blocked.failureReason, /already committed/);
+    }
+  }
+});
+
+test('the visual error changes sensed labels, not physical identities or success rules', () => {
+  for (const mode of ['chunks', 'diffusion', 'generalist', 'world']) {
+    for (const schedule of ['synchronous', 'realtime']) {
+      const state = createSimulation({mode, schedule, scenario:'swapped-cues'});
+      const observedRed = state.observation.objects.find(({id}) => id === 'red');
+      assert.equal(observedRed.physicalId, 'blue');
+      near(separation(observedRed, state.objects.find(({id}) => id === 'blue')), 0);
+      run(state);
+      assert.equal(state.phase, 'wrong-object', `${mode}/${schedule}`);
+      assert.equal(state.instruction, 'red');
+      near(separation(state.objects.find(({id}) => id === 'blue'), state.tray), 0);
+      assert.ok(separation(state.objects.find(({id}) => id === 'red'), state.tray) > .035);
+      assert.match(state.failureReason, /real cube identity/);
+    }
+  }
+  const fixed = run(createSimulation({scenario:'swapped-cues'}));
+  assert.equal(fixed.phase, 'success', 'the fixed path does not use the corrupted visual labels');
+});
+
+test('wrong camera coordinates create empty physical grasps even when predicted plans reach their target', () => {
+  const state = createSimulation({mode:'world', scenario:'model-gap'});
+  const physicalRed = pointOf(state.objects[0]);
+  const estimatedRed = pointOf(state.observation.objects.find(({id}) => id === 'red'));
+  assert.equal(state.observation.frameRotation, 25);
+  assert.ok(separation(physicalRed, estimatedRed) > .20);
+  startSimulation(state);
+  const selected = state.predictions.filter(({candidate}) => candidate === state.selectedCandidate);
+  near(separation(selected.at(-1), estimatedRed), 0);
+  assert.ok(selected.every(({collision}) => !collision));
+  run(state);
+  assert.equal(state.phase, 'timeout');
+  assert.ok(state.stats.missedGrasps >= 1);
+  near(separation(state.objects[0], physicalRed), 0);
+  assert.ok(state.trail.some((p) => separation(p, estimatedRed) < .007));
+  assert.match(state.failureReason, /wrong camera coordinates/);
+  const calibrated = run(createSimulation({mode:'world'}));
+  assert.equal(calibrated.phase, 'success');
+  assert.equal(calibrated.stats.missedGrasps, 0);
+  assert.equal(calibrated.observation.frameRotation, 0);
+});
+
+test('delivery is scored at the physical tray, including a corrupted goal coordinate', () => {
+  for (const instruction of ['red', 'blue']) {
+    const state = createSimulation({mode:'world', scenario:'model-gap'});
+    setObjectPosition(state, 'red', .16, .74);
+    setInstruction(state, instruction);
+    run(state);
+    const red = state.objects.find(({id}) => id === 'red');
+    assert.equal(state.phase, 'miss', 'an off-tray release is neither success nor delivery of the wrong object');
+    assert.equal(state.robot.carrying, null);
+    assert.ok(separation(red, state.tray) > .30, 'the real cube is far from the real tray');
+    near(separation(red, state.observation.tray), 0);
+    assert.match(state.message, /released outside the tray/);
+  }
+  const correct = run(createSimulation({mode:'world'}));
+  assert.equal(correct.phase, 'success');
+  near(separation(correct.objects[0], correct.tray), 0);
+  const wrong = createSimulation({mode:'world'});
+  setInstruction(wrong, 'blue');
+  run(wrong);
+  assert.equal(wrong.phase, 'wrong-object');
+  near(separation(wrong.objects[0], wrong.tray), 0);
+});
+
+test('preset reset keeps architecture, schedule and delay and removes changes from the previous run', () => {
+  const state = createSimulation({mode:'diffusion', schedule:'realtime', latency:.45, seed:99});
+  toggleObstacle(state);
+  setObjectPosition(state, 'red', .2, .2);
+  startSimulation(state);
+  advance(state, .3);
+  assert.equal(setScenario(state, 'moving-target'), true);
+  assert.deepEqual(state, createSimulation({mode:'diffusion', schedule:'realtime', latency:.45, seed:99, scenario:'moving-target'}));
+  startSimulation(state);
+  advance(state, .5);
+  resetSimulation(state);
+  assert.deepEqual(state, createSimulation({mode:'diffusion', schedule:'realtime', latency:.45, seed:99, scenario:'moving-target'}));
+  const before = structuredClone(state);
+  assert.equal(setScenario(state, 'unknown'), false);
+  assert.deepEqual(state, before);
+  assert.throws(() => createSimulation({scenario:'unknown'}), RangeError);
+});
+
+test('challenge events, predictions and physical outcomes replay identically at different display rates', () => {
+  for (const {id:scenario} of SCENARIOS) {
+    for (const mode of ['diffusion', 'world']) {
+      const states = [1/30, 1/60, 1/120].map((dt) => {
+        const state = createSimulation({mode, scenario, schedule:'realtime', seed:42});
+        startSimulation(state);
+        advance(state, 12, dt);
+        return state;
+      });
+      assert.deepEqual(states[0], states[1], `${scenario}/${mode}: 30Hz versus 60Hz`);
+      assert.deepEqual(states[1], states[2], `${scenario}/${mode}: 60Hz versus 120Hz`);
+    }
+  }
 });

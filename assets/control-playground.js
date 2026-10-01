@@ -1,11 +1,17 @@
 /* A small scene shows control mechanisms. The engine owns every simulated result. */
-const simulatorURL = new URL('./control-simulator.mjs', import.meta.url);
-simulatorURL.search = new URL(import.meta.url).search;
+const versionedModule = path => {
+  const url = new URL(path, import.meta.url);
+  url.search = new URL(import.meta.url).search;
+  return url.href;
+};
 
 try {
-  const simulator = await import(simulatorURL.href);
+  const [simulator, approaches] = await Promise.all([
+    import(versionedModule('./control-simulator.mjs')),
+    import(versionedModule('./control-approaches.mjs')),
+  ]);
   for (const root of document.querySelectorAll('[data-control-playground]')) {
-    initializePlayground(root, simulator);
+    initializePlayground(root, simulator, approaches);
   }
 } catch {
   // Keep the static illustration and article link available if initialization fails.
@@ -14,15 +20,23 @@ try {
   }
 }
 
-function initializePlayground(root, simulator) {
+function initializePlayground(root, simulator, knowledge) {
   const {
-    MODES, createSimulation, stepSimulation, setObjectPosition, setInstruction,
+    SCENARIOS, createSimulation, stepSimulation, setObjectPosition, setInstruction,
     toggleObstacle, startSimulation, pauseSimulation, setInferenceDelay,
+    setExecutionSchedule, setScenario,
   } = simulator;
+  const { APPROACHES, SCHEDULING } = knowledge;
   const get = selector => root.querySelector(selector);
   const svg = get('[data-control-scene]');
   const modeSelect = get('[data-control-mode]');
   const instructionSelect = get('[data-control-instruction]');
+  const scheduleSelect = get('[data-control-schedule]');
+  const scheduleDescription = get('[data-control-schedule-description]');
+  const scenarioSelect = get('[data-control-scenario]');
+  const challengeDescription = get('[data-control-challenge-description]');
+  const failureReason = get('[data-control-failure-reason]');
+  const observedScene = get('[data-control-observed-scene]');
   const robot = get('[data-control-robot]');
   const tray = get('[data-control-tray]');
   const obstacle = get('[data-control-obstacle]');
@@ -49,8 +63,7 @@ function initializePlayground(root, simulator) {
     .map(node => [node.dataset.controlObject, node]));
   const descriptions = {
     scripted: 'Replay the same commands. Moving the target leaves the route unchanged.',
-    chunks: 'Observe. Compute a short sequence. Execute it. Wait for the next sequence.',
-    realtime: 'Compute the next sequence while moving. Keep commands that must execute, then revise the rest.',
+    chunks: 'A transformer predicts a sequence of actions from the current observation.',
     diffusion: 'Refine a noisy action plan before sending its commands to the arm.',
     generalist: 'Use the scene and instruction to choose the object and movement.',
     world: 'Predict candidate outcomes. Choose a route, move one step, then predict again.',
@@ -76,6 +89,8 @@ function initializePlayground(root, simulator) {
   let lastFrame = null;
   let lastPhase = null;
   let lastRunning = null;
+  let lastCardMode = null;
+  let lastObservation = null;
   let isVisible = true;
   let perturbation = 0;
   let drag = null;
@@ -87,12 +102,14 @@ function initializePlayground(root, simulator) {
       instruction: current.instruction,
       obstacle: { ...current.obstacle },
       latency: current.settings?.latency ?? .3,
+      schedule: current.settings.schedule,
+      scenario: current.scenario,
     };
   }
 
   function replaceState(mode = state.mode) {
     stopFrame();
-    state = createSimulation({ mode, seed });
+    state = createSimulation({ mode, seed, latency:setup.latency, schedule:setup.schedule, scenario:setup.scenario });
     for (const item of setup.objects) setObjectPosition(state, item.id, item.x, item.y);
     setInstruction(state, setup.instruction);
     if (Boolean(state.obstacle.enabled) !== Boolean(setup.obstacle.enabled)) toggleObstacle(state);
@@ -151,6 +168,59 @@ function initializePlayground(root, simulator) {
     while (parent.children.length > routes.length) parent.lastElementChild.remove();
     while (parent.children.length < routes.length) parent.append(svgNode('path'));
     routes.forEach((route, index) => parent.children[index].setAttribute('d', pointPath(route)));
+  }
+
+  function renderApproach() {
+    if (state.mode === lastCardMode) return;
+    const approach = APPROACHES.find(item => item.id === state.mode);
+    for (const field of ['family', 'structure', 'summary', 'expectation', 'limitation', 'action-head', 'training']) {
+      const key = field === 'action-head' ? 'actionHead' : field;
+      writeText(get(`[data-control-${field}]`), approach[key]);
+    }
+    const paper = get('[data-control-paper]');
+    paper.hidden = !approach.paper;
+    get('[data-control-no-paper]').hidden = Boolean(approach.paper);
+    if (approach.paper) {
+      paper.href = approach.paper.url;
+      paper.title = approach.paper.title;
+      paper.setAttribute('aria-label', `Read paper: ${approach.paper.title}`);
+      writeText(paper, `Paper: ${approach.paper.shortTitle} ↗`);
+    } else paper.removeAttribute('href');
+    lastCardMode = state.mode;
+  }
+
+  function renderObservation() {
+    const observation = state.observation;
+    const visible = state.mode !== 'scripted' && (observation.labelsSwapped || observation.frameRotation);
+    const key = visible ? JSON.stringify(observation.objects) : '';
+    if (key === lastObservation) return;
+    observedScene.replaceChildren();
+    if (visible) {
+      for (const perceived of observation.objects) {
+        const actual = state.objects.find(item => item.id === perceived.physicalId);
+        const point = mapPoint(perceived);
+        if (observation.frameRotation) {
+          const realPoint = mapPoint(actual);
+          observedScene.append(svgNode('line', { x1:realPoint.x, y1:realPoint.y, x2:point.x, y2:point.y }));
+          observedScene.append(svgNode('rect', { x:point.x-12, y:point.y-12, width:24, height:24, rx:3 }));
+        }
+        const label = svgNode('text', { x:point.x, y:point.y-19, 'text-anchor':'middle' });
+        label.textContent = `${observation.frameRotation ? 'MODEL' : 'SEES'} ${perceived.id.toUpperCase()}`;
+        observedScene.append(label);
+      }
+    }
+    lastObservation = key;
+  }
+
+  function chooseScenario(id) {
+    stopFrame();
+    const instruction = state.instruction;
+    if (!setScenario(state, id)) return;
+    setInstruction(state, instruction);
+    setup = captureSetup(state);
+    instructionSelect.value = state.instruction;
+    lastPhase = null;
+    render();
   }
 
   function makeFutureFrame() {
@@ -226,6 +296,7 @@ function initializePlayground(root, simulator) {
   }
 
   function render() {
+    renderApproach();
     const robotPoint = mapPoint(state.robot);
     const trayPoint = mapPoint(state.tray);
     robot.setAttribute('transform', `translate(${robotPoint.x} ${robotPoint.y})`);
@@ -250,7 +321,7 @@ function initializePlayground(root, simulator) {
     }
     trail.setAttribute('d', pointPath(state.trail));
     plan.setAttribute('d', pointPath(state.plan));
-    const committedPoints = state.mode === 'realtime' && Array.isArray(state.committed) ? state.committed : [];
+    const committedPoints = Array.isArray(state.committed) ? state.committed : [];
     committed.setAttribute('d', pointPath(committedPoints));
     committedLegend.hidden = committedPoints.length <= 1;
     const candidateRoutes = Array.isArray(state.candidates) ? state.candidates : [];
@@ -259,6 +330,7 @@ function initializePlayground(root, simulator) {
       path.dataset.selected = String(state.mode === 'world' && index === state.selectedCandidate);
     });
     candidateLegend.hidden = !candidateRoutes.length;
+    renderObservation();
     renderPredictions();
     writeText(status, state.message || 'Ready.');
     // Announce phase and pause changes once, rather than every animation frame.
@@ -270,9 +342,24 @@ function initializePlayground(root, simulator) {
     root.dataset.mode = state.mode;
     root.dataset.phase = state.phase;
     root.dataset.running = String(state.running);
+    root.dataset.scenario = state.scenario;
+    root.dataset.schedule = state.settings.schedule;
     root.dataset.result = finished.has(state.phase) && state.phase !== 'success' ? 'failure' : state.phase === 'success' ? 'success' : 'none';
     const fixedTaskCue = state.instruction === 'blue' && state.mode !== 'generalist' ? ' This sketch is set to the red-cube task.' : '';
     writeText(mechanism, (descriptions[state.mode] || 'Choose an approach, then change the scene.') + fixedTaskCue);
+    const usesBatches = SCHEDULING.appliesTo.includes(state.mode);
+    scheduleSelect.disabled = !usesBatches;
+    const inactiveSchedule = scheduleSelect.querySelector('[data-control-inactive-schedule]');
+    inactiveSchedule.hidden = usesBatches;
+    inactiveSchedule.textContent = state.mode === 'scripted' ? 'Fixed replay' : 'One-step replanning';
+    scheduleSelect.value = usesBatches ? state.settings.schedule : 'not-applicable';
+    const timing = SCHEDULING.options.find(item => item.id === state.settings.schedule);
+    writeText(scheduleDescription, usesBatches ? timing.summary : state.mode === 'scripted' ? 'Saved commands run without a new planning step.' : 'Plan one step, observe again, then make a new prediction.');
+    scenarioSelect.value = state.scenario;
+    const challengeScope = state.scenario === 'model-gap' && state.mode !== 'world' ? ' This error is applied only to the world planner.' : state.scenario === 'swapped-cues' && state.mode === 'scripted' ? ' The fixed script does not read these labels.' : '';
+    writeText(challengeDescription, state.challengeMessage + challengeScope);
+    failureReason.hidden = !state.failureReason;
+    writeText(failureReason, state.failureReason ? `Why it failed: ${state.failureReason}` : '');
     writeText(elapsed, `${Number(state.stats.elapsed || 0).toFixed(1)} s`);
     writeText(replanOutput, String(state.stats.replans || 0));
     writeText(waitOutput, `${Number(state.stats.waitTime || 0).toFixed(1)} s`);
@@ -296,7 +383,7 @@ function initializePlayground(root, simulator) {
     writeText(delayOutput, `${Math.round(delay * 1000)} ms`);
   }
 
-  modeSelect.replaceChildren(...MODES.map(mode => {
+  modeSelect.replaceChildren(...APPROACHES.map(mode => {
     const option = document.createElement('option');
     option.value = mode.id;
     option.textContent = mode.label;
@@ -304,6 +391,27 @@ function initializePlayground(root, simulator) {
   }));
   modeSelect.value = state.mode;
   modeSelect.addEventListener('change', () => replaceState(modeSelect.value));
+  for (const [select, items] of [[scheduleSelect, SCHEDULING.options], [scenarioSelect, SCENARIOS]]) {
+    select.replaceChildren(...items.map(item => {
+      const option = document.createElement('option');
+      option.value = item.id;
+      option.textContent = item.label;
+      return option;
+    }));
+  }
+  const inactiveSchedule = document.createElement('option');
+  inactiveSchedule.value = 'not-applicable';
+  inactiveSchedule.dataset.controlInactiveSchedule = '';
+  inactiveSchedule.disabled = true;
+  scheduleSelect.append(inactiveSchedule);
+  scenarioSelect.addEventListener('change', () => chooseScenario(scenarioSelect.value));
+  scheduleSelect.addEventListener('change', () => {
+    const requested = scheduleSelect.value;
+    ensureEditableScene();
+    if (setExecutionSchedule(state, requested)) setup.schedule = requested;
+    render();
+    scheduleFrame();
+  });
   instructionSelect.addEventListener('change', () => {
     const requested = instructionSelect.value;
     ensureEditableScene();
@@ -332,6 +440,11 @@ function initializePlayground(root, simulator) {
         }
       } else if (action === 'replay') {
         replaceState();
+        startSimulation(state);
+        scheduleFrame();
+      } else if (action === 'failure') {
+        const recommended = { scripted:'moving-target', chunks:'late-obstacle', diffusion:'moving-target', generalist:'swapped-cues', world:'model-gap' };
+        chooseScenario(recommended[state.mode]);
         startSimulation(state);
         scheduleFrame();
       } else if (action === 'move') {
