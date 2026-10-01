@@ -77,13 +77,48 @@ export function renderArticle(source, root = ROOT) {
   };
   md.renderer.rules.table_open = () => '<div class="table-scroll" role="region" aria-label="Table" tabindex="0"><table>\n';
   md.renderer.rules.table_close = () => '</table></div>\n';
-  const body = md.render(content);
+  const environment = {};
+  const tokens = md.parse(content, environment);
+  const body = md.renderer.render(tokens, md.options, environment);
   if (body.includes('katex-error')) throw new Error('Math rendering failed');
-  return {...data, date, updated, body, headings};
+  // Count authored prose before KaTeX turns each equation into HTML and MathML.
+  const htmlText = (value) => value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ');
+  const prose = tokens.flatMap((token) => {
+    if (token.type === 'html_block') return [htmlText(token.content)];
+    if (['fence', 'code_block'].includes(token.type)) return [token.content];
+    if (token.type !== 'inline') return [];
+    return token.children.flatMap((child) => {
+      if (['text', 'code_inline'].includes(child.type)) return [child.content];
+      if (child.type === 'html_inline') return [htmlText(child.content)];
+      if (child.type === 'image') return [child.attrGet('title') || ''];
+      return [];
+    });
+  }).join(' ');
+  const words = prose.trim().split(/\s+/).filter(Boolean).length;
+  return {...data, date, updated, body, headings, readingMinutes:Math.max(1, Math.ceil(words / 220))};
 }
 
-function shell({title, description, pathname, content, article}) {
+function template(name, root = ROOT, values = {}) {
+  const local = path.join(root, 'scripts/templates', name);
+  const filename = fs.existsSync(local) ? local : path.join(ROOT, 'scripts/templates', name);
+  return fs.readFileSync(filename, 'utf8').replace(/\{\{([a-z_]+)\}\}/g, (_, key) => {
+    if (!(key in values)) throw new Error(`Unknown ${name} template token: ${key}`);
+    return values[key];
+  }).trim();
+}
+function assetVersion(root, filename) {
+  const local = path.join(root, filename);
+  const file = fs.existsSync(local) ? local : path.join(ROOT, filename);
+  return createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, 12);
+}
+function shell({title, description, pathname, content, article, root = ROOT, interactive = false}) {
   const canonical = `${ORIGIN}${pathname}`;
+  const siteCss = `/assets/site.css?v=${assetVersion(root, 'assets/site.css')}`;
+  const header = template('header.html', root, {
+    writing_current:` aria-current="${pathname === '/' ? 'page' : 'location'}"`,
+    notes_current:'', about_current:'', resume_href:'/out/resume.pdf', site_css:siteCss,
+  });
+  const footer = template('footer.html', root, {resume_href:'/out/resume.pdf', site_css:siteCss});
   const schema = article ? `<script type="application/ld+json">${JSON.stringify({
     '@context':'https://schema.org', '@type':'BlogPosting', headline:article.title,
     description, datePublished:article.date, dateModified:article.updated,
@@ -91,27 +126,68 @@ function shell({title, description, pathname, content, article}) {
   }).replace(/</g, '\\u003c')}</script>` : '';
   return `<!doctype html>
 ${GENERATED_MARKER}
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
-<link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f6f5f0">
+<link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="/assets/site.css"><link rel="stylesheet" href="/assets/vendor/katex/katex.min.css"><link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${schema}
-</head><body class="robotics"><a class="skip" href="#main">Skip to content</a>
-<header class="topbar"><a class="wordmark" href="/" aria-label="Hadrien Cornier home">HC<span>.</span></a><nav aria-label="Main navigation"><a href="/#experience">Experience</a><a href="/#management">Management</a><a href="/#education">Education</a><a href="/notes.html">Notes</a><a href="/robotics/" aria-current="${article ? 'location' : 'page'}">Robotics</a></nav><a class="resume-link" href="/out/resume.pdf" download="Hadrien_Cornier_Resume.pdf">Resume PDF <span aria-hidden="true">↗</span></a></header>
-<main id="main" class="robotics-main">${content}
-<footer><p>Hadrien Cornier<span>Austin, Texas</span></p><a href="mailto:hadrien.cornier@gmail.com">hadrien.cornier@gmail.com ↗</a><a href="#main">Back to top ↑</a></footer></main></body></html>\n`;
+<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}
+</head><body class="${pathname === '/' ? 'home-page' : 'robotics'}"><a class="skip" href="#main">Skip to content</a>
+${header}
+<main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
+${footer}</main></body></html>\n`;
 }
-function articlePage(article) {
+function articlePage(article, root) {
   const toc = article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
-  return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, content:`
-<header class="robotics-header post-header"><a class="eyebrow" href="/robotics/">Robotics / Technical reports</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time>${article.updated !== article.date ? ` · Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time>` : ''}</p></header>
-<div class="post-layout">${toc ? `<aside class="article-toc"><details open><summary>In this report</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/robotics/">← All robotics reports</a></p></article></div>`});
+  return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
+<header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p></header>
+<div class="post-layout${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
-function landingPage(articles) {
-  const cards = articles.map((article) => `<article class="report-card"><p class="eyebrow"><time datetime="${article.date}">${displayDate(article.date)}</time></p><h2><a href="/robotics/${article.slug}/">${escape(article.title)}</a></h2><p>${escape(article.description)}</p><a class="report-link" href="/robotics/${article.slug}/">Read the report <span aria-hidden="true">↗</span></a></article>`).join('\n');
-  return shell({title:'Robotics', description:'Technical reports from learning robotics, with experiments, diagrams, and questions worth revisiting.', pathname:'/robotics/', content:`
-<header class="robotics-header"><p class="eyebrow">Hadrien Cornier / Learning in public</p><h1>Robotics<span>.</span></h1><p class="series-intro">I started learning robotics recently. I plan to share weekly technical reports as checkpoints: what I tried, what I understand so far, and what I still need to work out. These ideas will change as I learn.</p></header>
+function landingPage(articles, root) {
+  const cards = articles.map((article) => `<a class="report-card" href="/robotics/${article.slug}/"><span class="report-date"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`).join('\n');
+  return shell({title:'Robotics', description:'Essays on robot learning, geometry, and control, with experiments and diagrams.', pathname:'/robotics/', root, content:`
+<header class="robotics-header"><p class="eyebrow">Essays &amp; explorations / ${articles.length} ${articles.length === 1 ? 'essay' : 'essays'}</p><h1>Learning robotics.</h1><p class="series-intro">Experiments, diagrams, and questions from learning how robots move, learn, and make decisions.</p></header>
 <section class="report-list" aria-label="Robotics reports">${cards || '<p>The first report is on its way.</p>'}</section>`});
+}
+function previewImage(article, root) {
+  const preferred = {
+    'how-robot-control-is-changing':'/assets/robotics/modern-control/vjepa-planning.png',
+    'from-joint-angles-to-a-moving-arm':'/assets/robotics/arm-control/v3/franka_joint_names.png',
+  }[article.slug];
+  const src = preferred || article.body.match(/<img\s[^>]*src="([^"]+)"/)?.[1];
+  if (!src || !src.startsWith('/assets/robotics/') || src.includes('..')) return '';
+  const file = path.join(root, src);
+  if (!fs.existsSync(file)) return '';
+  const bytes = fs.readFileSync(file);
+  if (!bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) return '';
+  return `<img src="${escape(src)}" alt="" width="${bytes.readUInt32BE(16)}" height="${bytes.readUInt32BE(20)}" loading="lazy" decoding="async">`;
+}
+function homeNotes(root) {
+  const filename = path.join(root, 'content/notes.md');
+  if (!fs.existsSync(filename)) return '';
+  const notes = [...fs.readFileSync(filename, 'utf8').matchAll(/^## ([^\n]+)$/gm)];
+  const selected = ['Principles for engineers', 'Hiring', 'Product strategy'].map((title) => notes.find((note) => note[1] === title)).filter(Boolean);
+  if (!selected.length) return '';
+  const links = selected.map((note, index) => `<a class="home-note-link" href="/notes.html#${slugify(note[1])}"><span class="home-note-number">0${index + 1}</span><span>${escape(note[1])}</span><span aria-hidden="true">↗</span></a>`).join('');
+  return `<section class="home-notes" aria-labelledby="home-notes-title"><div><p class="eyebrow">Beyond robotics</p><h2 id="home-notes-title">Notes on the work.</h2><p>Short notes on engineering, hiring, and building things that matter.</p><a class="home-text-link" href="/notes.html">All notes <span aria-hidden="true">↗</span></a></div><div class="home-note-list">${links}</div></section>`;
+}
+function homePage(articles, root) {
+  const [latest, ...rest] = articles;
+  const hasArmArticle = articles.some((article) => article.slug === 'from-joint-angles-to-a-moving-arm');
+  const armDemo = template('arm-demo.html', root, {
+    arm_article_href:hasArmArticle ? '/robotics/from-joint-angles-to-a-moving-arm/' : '/#writing',
+    arm_article_label:hasArmArticle ? 'The geometry behind it' : 'Explore the writing',
+  });
+  const featureImage = latest ? previewImage(latest, root) : '';
+  const feature = latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest essay</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the essay <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">Figure from the essay</span></div>` : ''}</a>` : '<p class="writing-empty">The first essay is on its way.</p>';
+  const rows = rest.map((article, index) => {
+    const image = previewImage(article, root);
+    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}" href="/robotics/${article.slug}/"><span class="writing-row-number">${String(index + 2).padStart(2, '0')}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
+  }).join('');
+  return shell({title:'Robotics, learning, and systems', description:'Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them.', pathname:'/', root, interactive:true, content:`
+<section class="home-hero" aria-labelledby="home-title"><div class="home-hero-copy"><p class="eyebrow">Hadrien Cornier / Personal notes</p><h1 id="home-title">Robotics, learning,<br>and the systems<br>behind them.</h1><p class="home-intro">I build data infrastructure and production ML. Here I write about robot learning, the math behind it, and what I learn by building.</p><div class="home-hero-links"><a href="#writing">Explore the writing <span aria-hidden="true">↓</span></a><a href="/about.html">More about me <span aria-hidden="true">↗</span></a></div></div>${armDemo}</section>
+<section class="home-writing" id="writing" aria-labelledby="writing-title"><div class="home-section-heading"><div><p class="eyebrow">Essays &amp; explorations</p><h2 id="writing-title">Writing</h2></div><p class="home-count">${String(articles.length).padStart(2, '0')} ${articles.length === 1 ? 'essay' : 'essays'}</p></div>${feature}<div class="writing-rows">${rows}</div></section>
+${homeNotes(root)}
+<section class="home-about" aria-labelledby="home-about-title"><div><p class="eyebrow">A little context</p><h2 id="home-about-title">About me.</h2></div><div><p>Engineering manager at Talroo, based in Austin. I work on data infrastructure, production ML, and teams. Outside work, I’m learning robotics through experiments with simulation and an SO-101 arm.</p><div class="home-about-links"><a href="/about.html">Full experience <span aria-hidden="true">↗</span></a><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a></div><nav class="home-profile-sections" aria-label="Profile sections"><a id="experience" href="/about.html#experience">Experience</a><a id="management" href="/about.html#management">Management</a><a id="education" href="/about.html#education">Education</a></nav></div></section>`});
 }
 export function build(root = ROOT) {
   const sourceDir = path.join(root, 'content/robotics');
@@ -124,8 +200,9 @@ export function build(root = ROOT) {
     return {...renderArticle(source, root), slug};
   }).filter(Boolean).sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
   // Render everything first. A malformed article cannot leave a half-built series.
-  const pages = articles.map((article) => [path.join(root, 'robotics', article.slug, 'index.html'), articlePage(article)]);
-  pages.push([path.join(root, 'robotics/index.html'), landingPage(articles)]);
+  const pages = articles.map((article) => [path.join(root, 'robotics', article.slug, 'index.html'), articlePage(article, root)]);
+  pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);
+  pages.push([path.join(root, 'index.html'), homePage(articles, root)]);
   for (const [filename, page] of pages) { fs.mkdirSync(path.dirname(filename), {recursive:true}); fs.writeFileSync(filename, page); }
   const vendor = path.join(root, 'assets/vendor/katex');
   const katexDir = path.join(ROOT, 'node_modules/katex');
@@ -136,7 +213,11 @@ export function build(root = ROOT) {
   const sitemapFile = path.join(root,'sitemap.xml');
   const current = fs.readFileSync(sitemapFile,'utf8');
   const preserved = current.replace(/\s*<url>\s*<loc>https:\/\/hadrien-cornier\.github\.io\/robotics\/[\s\S]*?<\/url>/g, '');
-  const entries = [{slug:'', updated:articles.map((article) => article.updated).sort().at(-1)}, ...articles.map((article) => ({slug:`${article.slug}/`, updated:article.updated}))].map(({slug, updated}) => `  <url>\n    <loc>${ORIGIN}/robotics/${slug}</loc>${updated ? `\n    <lastmod>${updated}</lastmod>` : ''}\n    <changefreq>monthly</changefreq>\n  </url>\n`).join('');
+  // Stable pages go before the series so their position survives the next build.
+  let entries = '';
+  if (!preserved.includes(`<loc>${ORIGIN}/</loc>`)) entries += `  <url>\n    <loc>${ORIGIN}/</loc>\n    <changefreq>monthly</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+  if (fs.existsSync(path.join(root, 'about.html')) && !preserved.includes(`<loc>${ORIGIN}/about.html</loc>`)) entries += `  <url>\n    <loc>${ORIGIN}/about.html</loc>\n    <changefreq>monthly</changefreq>\n  </url>\n`;
+  entries += [{slug:'', updated:articles.map((article) => article.updated).sort().at(-1)}, ...articles.map((article) => ({slug:`${article.slug}/`, updated:article.updated}))].map(({slug, updated}) => `  <url>\n    <loc>${ORIGIN}/robotics/${slug}</loc>${updated ? `\n    <lastmod>${updated}</lastmod>` : ''}\n    <changefreq>monthly</changefreq>\n  </url>\n`).join('');
   if (!preserved.includes('</urlset>')) throw new Error('Expected sitemap urlset');
   fs.writeFileSync(sitemapFile, preserved.replace('</urlset>', `${entries}</urlset>`));
   // Remove only obsolete HTML bearing this builder's ownership marker.
@@ -152,6 +233,6 @@ export function build(root = ROOT) {
     fs.unlinkSync(index);
     if (fs.readdirSync(directory).length === 0) fs.rmdirSync(directory);
   }
-  console.log(`Built Robotics: ${articles.length} report(s), local math styles and fonts.`);
+  console.log(`Built writing home and Robotics: ${articles.length} report(s), local math styles and fonts.`);
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) build();

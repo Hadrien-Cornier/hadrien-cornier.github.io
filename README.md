@@ -11,9 +11,17 @@ npm ci
 python3 scripts/build_site.py
 ```
 
-Commit the generated `index.html`, `notes.html`, `robotics/`, `sitemap.xml`, and vendored math assets alongside the source. GitHub Pages serves the static HTML directly, with no runtime dependencies. Layout and interactions live in `assets/site.css` and `assets/site.js`.
+Commit the generated `index.html`, `about.html`, `notes.html`, `robotics/`, `sitemap.xml`, and vendored math assets alongside the source. GitHub Pages serves the static HTML directly, with no runtime dependencies. Shared styles and interactions live in `assets/site.css` and `assets/site.js`. The writing and article layouts use `assets/robotics.css`. Shared navigation and footer markup live in `scripts/templates/`.
 
 The generator expects the current profile heading structure: four Talroo work areas, earlier roles, education, and skills. Structural changes should also update the generator. Contact links, Talroo dates and role progression are curated in `scripts/build_site.py`; update those alongside the profile when they change.
+
+## Design and page structure
+
+The homepage puts published writing first. It reads the same article metadata as the Robotics section, so new reports appear automatically. The full biography lives at `about.html`; older links such as `/#experience` still lead to the same biography section. Notes and report URLs stay the same.
+
+The homepage arm is a two-link geometry example. Sliders change the shoulder and elbow angles. Link lengths stay at 1 and 0.8 units, and the coordinates use `x = cos(q1) + 0.8 cos(q1 + q2)` and `y = sin(q1) + 0.8 sin(q1 + q2)`. The drawing and reading links work without JavaScript. Controls appear only when the interaction is ready.
+
+Four alternative designs are saved at `/design-previews/`: editorial, journal, notebook, and dark. They are independent pages, excluded from search indexing and the sitemap. They do not appear in the public navigation.
 
 ## Preview
 
@@ -21,7 +29,7 @@ The generator expects the current profile heading structure: four Talroo work ar
 python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
-Open http://127.0.0.1:8765. Check desktop and mobile layouts, section links, and expand/collapse controls. Details also work without JavaScript. Printing expands all details when JavaScript is enabled.
+Open http://127.0.0.1:8765. Check desktop and mobile layouts, writing links, the arm sliders, Notes, report media and equations, and biography expand/collapse controls. Details also work without JavaScript. Printing expands all details when JavaScript is enabled.
 
 ## Downloadable resume
 
@@ -87,9 +95,9 @@ npm run test:robotics
 npm run build
 ```
 
-`python3 scripts/build_site.py` keeps the existing profile and Notes renderer, then calls
+`python3 scripts/build_site.py` builds About and Notes with the shared navigation, then calls
 `scripts/build_robotics.mjs` when the report source directory exists, including when it is empty. `npm run build:robotics` builds
-only the reports. The renderer uses pinned Markdown-it, gray-matter, and KaTeX packages.
+the writing homepage, Robotics list, and reports. The renderer uses pinned Markdown-it, gray-matter, and KaTeX packages.
 It copies KaTeX styles, fonts, and its license into `assets/vendor/katex/`. Generated pages
 need no network math service or reader-side JavaScript. GitHub Pages serves the committed
 files directly. The build preserves unrelated sitemap entries and updates Robotics entries.

@@ -1,4 +1,4 @@
-"""Build the static profile, notes, and optional Robotics articles."""
+"""Build biography, notes, and the writing homepage from shared templates."""
 from pathlib import Path
 import hashlib
 import html
@@ -9,7 +9,17 @@ ROOT = Path(__file__).resolve().parents[1]
 source = (ROOT / 'resume/profile.md').read_text()
 resume_path = ROOT / 'out' / 'resume.pdf'
 resume_version = hashlib.sha256(resume_path.read_bytes()).hexdigest()[:12]
-resume_href = f'out/resume.pdf?v={resume_version}'
+resume_href = f'/out/resume.pdf?v={resume_version}'
+style_version = hashlib.sha256((ROOT / 'assets/site.css').read_bytes()).hexdigest()[:12]
+script_version = hashlib.sha256((ROOT / 'assets/site.js').read_bytes()).hexdigest()[:12]
+
+def header(current):
+    result = (ROOT / 'scripts/templates/header.html').read_text()
+    for section in ('writing', 'notes', 'about'):
+        result = result.replace('{{' + section + '_current}}', ' aria-current="page"' if current == section else '')
+    return result
+
+footer = (ROOT / 'scripts/templates/footer.html').read_text()
 def esc(text):
     return html.escape(text)
 def inline(text):
@@ -78,35 +88,35 @@ education = education.replace('Jan 2027 (Upcoming)', 'Jan 2027')
 skills = source.split('## Skills')[1].strip().split(' · ')
 nav = ''.join(f'<a href="#{ident}"><span>0{i}</span>{label}</a>' for i,(ident,label) in enumerate(zip(ids,labels),1))
 page = f'''<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hadrien Cornier | Data Infrastructure &amp; Production ML</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<title>About | Hadrien Cornier</title>
 <meta name="description" content="Hadrien Cornier, engineering manager building and running data infrastructure and production ML. Leading seven engineers at Talroo in Austin.">
-<link rel="canonical" href="https://hadrien-cornier.github.io/">
-<meta property="og:title" content="Hadrien Cornier | Data Infrastructure &amp; Production ML"><meta property="og:description" content="Engineering manager building and running data infrastructure and production ML. Leading seven engineers at Talroo."><meta property="og:type" content="website"><meta property="og:url" content="https://hadrien-cornier.github.io/">
-<meta name="theme-color" content="#f6f5f0"><link rel="stylesheet" href="assets/site.css"><script src="assets/site.js" defer></script>
-</head><body><a class="skip" href="#main">Skip to content</a>
-<header class="topbar"><a class="wordmark" href="#">HC<span>.</span></a><nav aria-label="Main navigation"><a href="#experience">Experience</a><a href="#management">Management</a><a href="#education">Education</a><a href="notes.html">Notes</a><a href="robotics/">Robotics</a></nav><a class="resume-link" href="{resume_href}" download="Hadrien_Cornier_Resume.pdf">Resume PDF <span aria-hidden="true">↗</span></a></header>
-<main id="main"><section class="hero" aria-labelledby="name"><div class="hero-top"><p class="eyebrow"><span class="dot"></span>Austin, Texas</p><p class="eyebrow">Data infrastructure · Production ML</p></div><h1 id="name">Hadrien Cornier<span>.</span></h1><div class="hero-bottom"><h2>Engineering Manager<br><span class="hero-company">Talroo</span></h2><div><p class="intro">{esc(intro)}</p><div class="contact"><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a><a href="https://linkedin.com/in/hadrien-cornier">LinkedIn <span aria-hidden="true">↗</span></a></div></div></div></section>
+<link rel="canonical" href="https://hadrien-cornier.github.io/about.html">
+<meta property="og:title" content="Hadrien Cornier | Data Infrastructure &amp; Production ML"><meta property="og:description" content="Engineering manager building and running data infrastructure and production ML. Leading seven engineers at Talroo."><meta property="og:type" content="website"><meta property="og:url" content="https://hadrien-cornier.github.io/about.html">
+<meta name="theme-color" content="#f7f6f2"><link rel="stylesheet" href="/assets/site.css?v={style_version}"><script src="/assets/site.js?v={script_version}" defer></script>
+</head><body class="about-page"><a class="skip" href="#main">Skip to content</a>
+{header("about")}
+<main id="main"><section class="hero" aria-labelledby="name"><div class="hero-top"><p class="eyebrow"><span class="dot"></span>Austin, Texas</p><a class="resume-link" href="{resume_href}" download="Hadrien_Cornier_Resume.pdf">Resume PDF ↗</a></div><h1 id="name">Hadrien Cornier<span>.</span></h1><div class="hero-bottom"><h2>Engineering Manager<br><span class="hero-company">Talroo</span></h2><div><p class="intro">{esc(intro)}</p><div class="contact"><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a><a href="https://linkedin.com/in/hadrien-cornier">LinkedIn <span aria-hidden="true">↗</span></a></div></div></div></section>
 <div class="work-layout" id="experience"><aside><h2>Experience</h2><nav aria-label="Areas of work">{nav}<a href="#earlier"><span>05</span>Earlier experience</a></nav></aside><div class="work"><div class="company-heading"><div><p class="eyebrow">Jul 2021–Present · Austin, TX</p><h2>Talroo</h2></div><button id="expand-all" type="button" hidden>Expand all details</button></div><p class="company-intro">{esc(talroo_intro)}</p><p class="progression">Engineering Manager <span>2025–present</span><br>Senior ML Engineer <span>2022–2025</span><br>ML Engineer <span>2021–2022</span></p>{chapter_html}<p class="mentorship">{esc(re.search(r'Talroo founder.*',source).group())}</p></div></div>
 <section class="section" id="management" aria-labelledby="management-title"><div class="section-title"><h2 id="management-title">Management philosophy</h2></div><div class="prose">{management}<a class="notes-link" href="notes.html">More notes on engineering and business <span aria-hidden="true">↗</span></a></div></section>
 <section class="earlier section" id="earlier"><div class="section-title"><p class="eyebrow">Before Talroo</p><h2>Earlier experience</h2></div><div>{career}</div></section>
 <section class="section" id="education"><div class="section-title"><h2>Education</h2></div><div class="education-grid">{education}</div></section>
 <section class="section" id="skills"><div class="section-title"><p class="eyebrow">Areas of focus</p><h2>Skills</h2></div><ul class="skills">{''.join('<li>'+esc(skill)+'</li>' for skill in skills)}</ul></section>
-<footer><p>Hadrien Cornier<span>Austin, Texas</span></p><a href="mailto:hadrien.cornier@gmail.com">hadrien.cornier@gmail.com ↗</a><a href="#">Back to top ↑</a></footer></main></body></html>'''
-(ROOT / 'index.html').write_text(page)
+{footer}</main></body></html>'''
+(ROOT / 'about.html').write_text(page)
 
 notes_page = f'''<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <title>Notes | Hadrien Cornier</title><meta name="description" content="Short notes by Hadrien Cornier on engineering, hiring, product strategy, and advertising.">
-<link rel="canonical" href="https://hadrien-cornier.github.io/notes.html"><meta name="theme-color" content="#f6f5f0">
+<link rel="canonical" href="https://hadrien-cornier.github.io/notes.html"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="Notes | Hadrien Cornier"><meta property="og:description" content="Thoughts on engineering and business."><meta property="og:type" content="website"><meta property="og:url" content="https://hadrien-cornier.github.io/notes.html">
-<link rel="stylesheet" href="assets/site.css"></head><body><a class="skip" href="#main">Skip to content</a>
-<header class="topbar"><a class="wordmark" href="index.html" aria-label="Hadrien Cornier home">HC<span>.</span></a><nav aria-label="Main navigation"><a href="index.html#experience">Experience</a><a href="index.html#management">Management</a><a href="index.html#education">Education</a><a href="notes.html" aria-current="page">Notes</a><a href="robotics/">Robotics</a></nav><a class="resume-link" href="{resume_href}" download="Hadrien_Cornier_Resume.pdf">Resume PDF <span aria-hidden="true">↗</span></a></header>
-<main id="main"><header class="notes-header"><p class="eyebrow">Hadrien Cornier</p><h1>Notes<span>.</span></h1><p>Thoughts on engineering and business.</p></header>
-<div class="notes-layout"><nav class="notes-nav" aria-label="Notes">{notes_nav}<a class="profile-link" href="index.html">← Back to profile</a></nav><div class="notes-content">{notes_html}</div></div>
-<footer><p>Hadrien Cornier<span>Austin, Texas</span></p><a href="mailto:hadrien.cornier@gmail.com">hadrien.cornier@gmail.com ↗</a><a href="#main">Back to top ↑</a></footer></main></body></html>'''
+<link rel="stylesheet" href="/assets/site.css?v={style_version}"></head><body><a class="skip" href="#main">Skip to content</a>
+{header("notes")}
+<main id="main"><header class="notes-header"><p class="eyebrow">Hadrien Cornier</p><h1>Notes</h1><p>Thoughts on engineering, teams, and building useful things.</p></header>
+<div class="notes-layout"><nav class="notes-nav" aria-label="Notes">{notes_nav}<a class="profile-link" href="/about.html">About the author ↗</a></nav><div class="notes-content">{notes_html}</div></div>
+{footer}</main></body></html>'''
 (ROOT / 'notes.html').write_text(notes_page)
 
-# Robotics has its own standard Markdown renderer; profile and notes stay unchanged.
+# The Markdown renderer owns the writing homepage and Robotics pages.
 if (ROOT / "content/robotics").is_dir():
     subprocess.run(["node", str(ROOT / "scripts/build_robotics.mjs")], cwd=ROOT, check=True)

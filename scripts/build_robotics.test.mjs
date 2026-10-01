@@ -50,15 +50,24 @@ test('build preserves sitemap entries and creates repeatable offline pages', () 
     fs.writeFileSync(path.join(root,'sitemap.xml'), `<urlset>${existing}\n</urlset>`);
     build(root);
     const page = fs.readFileSync(path.join(root,'robotics/example/index.html'),'utf8');
+    const home = fs.readFileSync(path.join(root,'index.html'),'utf8');
     const sitemap = fs.readFileSync(path.join(root,'sitemap.xml'),'utf8');
     assert.ok(sitemap.includes(existing));
     assert.equal((sitemap.match(/\/robotics\/example\//g) ?? []).length, 1);
     assert.ok(fs.existsSync(path.join(root,'assets/vendor/katex/fonts/KaTeX_Main-Regular.woff2')));
     assert.ok(fs.existsSync(path.join(root,'assets/vendor/katex/LICENSE')));
     assert.ok(!fs.existsSync(path.join(root,'robotics/draft/index.html')));
+    assert.match(home, /href="\/robotics\/example\/"/);
+    assert.match(home, /01 essay/);
+    assert.doesNotMatch(home, /Unfinished|\{\{/);
+    assert.match(home, /href="\/about.html"/);
+    assert.match(home, /id="joint-one"/);
+    assert.doesNotMatch(home, /href="\/robotics\/from-joint-angles-to-a-moving-arm\/"/);
+    assert.match(home, /href="\/#writing">Explore the writing/);
     assert.doesNotMatch(page, /<script[^>]*src=|https?:\/\/[^"\s]+\.css/);
     build(root);
     assert.equal(fs.readFileSync(path.join(root,'robotics/example/index.html'),'utf8'), page);
+    assert.equal(fs.readFileSync(path.join(root,'index.html'),'utf8'), home);
     assert.equal(fs.readFileSync(path.join(root,'sitemap.xml'),'utf8'), sitemap);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
@@ -90,6 +99,8 @@ test('published reports disappear when drafted or deleted; unrelated files survi
     build(root);
     assert.ok(!fs.existsSync(post), 'deleting the last Markdown file must remove old HTML');
     assert.match(fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8'), /first report is on its way/);
+    assert.doesNotMatch(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), /href="\/robotics\/example\/"/);
+    assert.match(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), /first essay is on its way/);
     assert.doesNotMatch(fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8'), /\/robotics\/example\//);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });

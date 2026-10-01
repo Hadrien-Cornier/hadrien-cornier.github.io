@@ -1,0 +1,32 @@
+<section class="arm-demo" aria-labelledby="arm-demo-title">
+  <div class="demo-heading"><span class="eyebrow">A small experiment</span><span class="demo-number" aria-hidden="true">FIG. 01</span></div>
+  <h2 id="arm-demo-title">Two joints. One position.</h2>
+  <p class="demo-intro">Turn the joints. Watch the tip move.</p>
+  <svg class="arm-diagram" viewBox="0 0 440 370" role="img" aria-labelledby="arm-title arm-description">
+    <title id="arm-title">A two-link arm seen from above</title>
+    <desc id="arm-description">The first angle rotates the arm from the horizontal axis. The second angle bends the elbow. Link lengths stay fixed at 1 and 0.8 units.</desc>
+    <defs><pattern id="demo-grid" width="17" height="17" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="0.8" fill="#d1d5ca"/></pattern><marker id="axis-arrow" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5" fill="none" stroke="#a1a69c"/></marker></defs>
+    <rect x="20" y="12" width="400" height="340" fill="url(#demo-grid)"/>
+    <circle cx="200" cy="185" r="153" class="demo-reach"/>
+    <path d="M28 185H401 M200 345V25" class="demo-axis" marker-end="url(#axis-arrow)"/>
+    <g class="demo-axis-label"><text x="401" y="176">x</text><text x="210" y="30">y</text><text x="185" y="202">0</text><text x="283" y="202">1</text><text x="183" y="104">1</text></g>
+    <path d="M225 185 A25 25 0 0 0 219.7 169.6" class="demo-angle" id="arm-q1-arc"/>
+    <path d="M284.3 119.2 A22 22 0 0 0 260.9 111.6" class="demo-angle" id="arm-q2-arc"/>
+    <path d="M248.2 67.3V185 M248.2 67.3H200" class="demo-projection" id="arm-projection"/>
+    <line x1="200" y1="185" x2="267" y2="132.7" class="demo-link demo-link-first" id="arm-link-one"/>
+    <line x1="267" y1="132.7" x2="248.2" y2="67.3" class="demo-link demo-link-second" id="arm-link-two"/>
+    <circle cx="200" cy="185" r="11" class="demo-joint-base"/><circle cx="200" cy="185" r="3" class="demo-joint-center"/>
+    <circle cx="267" cy="132.7" r="7" class="demo-joint" id="arm-elbow"/>
+    <circle cx="248.2" cy="67.3" r="13" class="demo-tip-halo" id="arm-tip-halo"/><circle cx="248.2" cy="67.3" r="5" class="demo-tip" id="arm-tip"/>
+    <g class="demo-labels"><text x="236" y="170" id="arm-q1-label">q₁</text><text x="279" y="105" id="arm-q2-label">q₂</text><text x="262" y="60" id="arm-tip-label">tip (x, y)</text></g>
+    <text x="28" y="340" class="demo-view-label">TOP VIEW · FIXED LINK LENGTHS</text>
+  </svg>
+  <div class="demo-controls" id="arm-controls" hidden>
+    <label for="joint-one"><span>Shoulder <span class="control-symbol">q₁</span></span><output id="joint-one-value" for="joint-one">38°</output></label>
+    <input id="joint-one" type="range" min="-20" max="140" value="38" step="1">
+    <label for="joint-two"><span>Elbow <span class="control-symbol">q₂</span></span><output id="joint-two-value" for="joint-two">68°</output></label>
+    <input id="joint-two" type="range" min="-120" max="120" value="68" step="1">
+  </div>
+  <div class="demo-caption"><span>TIP <output id="arm-position">(0.57, 1.38)</output></span><a href="{{arm_article_href}}">{{arm_article_label}} <span aria-hidden="true">↗</span></a></div>
+  <p class="demo-units">Link lengths: 1 and 0.8 units. Angles in degrees.</p>
+</section>
