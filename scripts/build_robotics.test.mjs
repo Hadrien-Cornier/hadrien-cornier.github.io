@@ -6,6 +6,9 @@ import path from 'node:path';
 import { renderArticle, dateValue, build } from './build_robotics.mjs';
 
 const frontmatter = `---\ntitle: Test report\ndescription: A small teaching fixture.\ndate: 2026-09-26\n---\n\n`;
+const timelineFixture = fs.readFileSync(new URL('./fixtures/robotics-timeline.md', import.meta.url), 'utf8');
+const timelineData = JSON.parse(timelineFixture.match(/```robotics-timeline\n([\s\S]*?)\n```/)[1]);
+const timelineArticle = (data) => frontmatter + `\n\`\`\`robotics-timeline\n${JSON.stringify(data)}\n\`\`\`\n\n## First stage\n\n## Second stage\n\n## Third stage\n`;
 test('dates stay UTC and invalid calendar dates fail', () => {
   assert.equal(dateValue(new Date('2026-09-26T00:00:00Z'), 'date'), '2026-09-26');
   assert.throws(() => dateValue('2026-02-30', 'date'), /valid YYYY/);
@@ -39,6 +42,63 @@ A **useful** detail.
 test('bad math and missing metadata fail before publishing', () => {
   assert.throws(() => renderArticle(frontmatter + '$\\notAnActualLatexCommand{x}$'));
   assert.throws(() => renderArticle('## No frontmatter'), /frontmatter/);
+});
+test('timeline renders every stage and stack as static HTML from one fence', () => {
+  const result = renderArticle(timelineFixture);
+  assert.equal(result.components.timeline, true);
+  assert.equal((result.body.match(/data-timeline-stage=/g) ?? []).length, 3);
+  assert.equal((result.body.match(/class="rt-stack-row /g) ?? []).length, 12);
+  assert.match(result.body, /<aside class="rt-inspector"[^>]+hidden>/);
+  assert.match(result.body, /href="#timeline-display-fixture-second"/);
+  assert.match(result.body, /href="#section-third-stage"/);
+  assert.deepEqual(result.headings.map((heading) => heading.id), ['timeline-display-fixture-heading', 'section-first-stage', 'section-second-stage', 'section-third-stage']);
+  assert.doesNotMatch(result.body, /<script|language-robotics-timeline|aria-current/);
+});
+test('timeline rejects missing anchors, incomplete stacks, and broken persistent roles', () => {
+  const changed = () => structuredClone(timelineData);
+  let data = changed();
+  data.stages[0].anchor = 'section-does-not-exist';
+  assert.throws(() => renderArticle(timelineArticle(data)), /does not match an article heading/);
+  data = changed();
+  data.stages[1].stack.pop();
+  assert.throws(() => renderArticle(timelineArticle(data)), /every role exactly once/);
+  data = changed();
+  data.stages[1].stack[2].mode = 'learned';
+  assert.throws(() => renderArticle(timelineArticle(data)), /persistent setting/);
+  data = changed();
+  data.stages[0].sumary = 'A misspelled field';
+  assert.throws(() => renderArticle(timelineArticle(data)), /unknown stage field sumary/);
+  assert.throws(() => renderArticle(frontmatter + '\n```robotics-timeline\nnot JSON\n```'), /valid JSON/);
+});
+test('timeline escapes author text, rejects unsafe sources, and reserves unique IDs', () => {
+  const data = structuredClone(timelineData);
+  data.stages[0].summary = '<img src=x onerror=alert(1)>';
+  data.stages[0].sources = [{label:'Paper <one>', href:'https://example.org/paper?x=1&y=2'}];
+  const result = renderArticle(timelineArticle(data));
+  assert.match(result.body, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.match(result.body, /Paper &lt;one&gt;/);
+  assert.match(result.body, /href="https:\/\/example.org\/paper\?x=1&amp;y=2"/);
+  data.stages[0].sources[0].href = 'javascript:alert(1)';
+  assert.throws(() => renderArticle(timelineArticle(data)), /HTTPS URL/);
+  const fence = `\n\`\`\`robotics-timeline\n${JSON.stringify(timelineData)}\n\`\`\`\n`;
+  assert.throws(() => renderArticle(timelineArticle(timelineData) + fence), /duplicate HTML ID/);
+});
+test('only articles with a timeline load its small runtime script', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-timeline-build-'));
+  try {
+    fs.mkdirSync(path.join(root, 'content/robotics'), {recursive:true});
+    fs.writeFileSync(path.join(root, 'content/robotics/timeline.md'), timelineFixture);
+    fs.writeFileSync(path.join(root, 'content/robotics/plain.md'), frontmatter + 'A plain article.');
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    build(root);
+    const componentPage = fs.readFileSync(path.join(root, 'robotics/timeline/index.html'), 'utf8');
+    const plainPage = fs.readFileSync(path.join(root, 'robotics/plain/index.html'), 'utf8');
+    const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(componentPage, /<script src="\/assets\/robotics-timeline.js\?v=[a-f0-9]+" defer><\/script>/);
+    assert.doesNotMatch(componentPage, /<script src="\/assets\/site.js/);
+    assert.doesNotMatch(plainPage, /<script[^>]*src=/);
+    assert.doesNotMatch(home, /robotics-timeline.js/);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
 test('build preserves sitemap entries and creates repeatable offline pages', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-build-'));

@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import MarkdownIt from 'markdown-it';
 import matter from 'gray-matter';
 import { katex } from '@mdit/plugin-katex';
+import { parseTimeline, renderTimeline, timelineProse } from './robotics-timeline.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ORIGIN = 'https://hadrien-cornier.github.io';
@@ -37,6 +38,7 @@ export function renderArticle(source, root = ROOT) {
   });
   const headings = [];
   const ids = new Set();
+  const components = {timeline:false};
   md.core.ruler.push('article-structure', (state) => {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];
@@ -50,7 +52,7 @@ export function renderArticle(source, root = ROOT) {
         while (ids.has(id)) id = `section-${base}-${++count}`;
         ids.add(id);
         token.attrSet('id', id);
-        if (['h2', 'h3'].includes(token.tag)) headings.push({id, title, level:token.tag});
+        token.meta = {...token.meta, title};
       }
       if (token.type === 'paragraph_open') {
         const inline = state.tokens[i + 1];
@@ -61,7 +63,23 @@ export function renderArticle(source, root = ROOT) {
         }
       }
     }
+    const headingIds = new Set(ids);
+    for (const token of state.tokens) {
+      if (token.type === 'heading_open' && ['h2', 'h3'].includes(token.tag)) {
+        headings.push({id:token.attrGet('id'), title:token.meta.title, level:token.tag});
+      }
+      if (token.type === 'fence' && token.info.trim() === 'robotics-timeline') {
+        token.meta = {...token.meta, timeline:parseTimeline(token.content, {root, headingIds, usedIds:ids})};
+        const timeline = token.meta.timeline;
+        headings.push({id:`${timeline.id}-heading`, title:timeline.heading, level:'h2'});
+        components.timeline = true;
+      }
+    }
   });
+  const renderFence = md.renderer.rules.fence;
+  md.renderer.rules.fence = (tokens, index, options, environment, renderer) => tokens[index].meta?.timeline
+    ? renderTimeline(tokens[index].meta.timeline)
+    : renderFence(tokens, index, options, environment, renderer);
   md.renderer.rules.image = (tokens, index) => {
     const token = tokens[index];
     const src = token.attrGet('src');
@@ -85,6 +103,7 @@ export function renderArticle(source, root = ROOT) {
   const htmlText = (value) => value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ');
   const prose = tokens.flatMap((token) => {
     if (token.type === 'html_block') return [htmlText(token.content)];
+    if (token.meta?.timeline) return [timelineProse(token.meta.timeline)];
     if (['fence', 'code_block'].includes(token.type)) return [token.content];
     if (token.type !== 'inline') return [];
     return token.children.flatMap((child) => {
@@ -95,7 +114,7 @@ export function renderArticle(source, root = ROOT) {
     });
   }).join(' ');
   const words = prose.trim().split(/\s+/).filter(Boolean).length;
-  return {...data, date, updated, body, headings, readingMinutes:Math.max(1, Math.ceil(words / 220))};
+  return {...data, date, updated, body, headings, components, readingMinutes:Math.max(1, Math.ceil(words / 220))};
 }
 
 function template(name, root = ROOT, values = {}) {
@@ -130,7 +149,7 @@ ${GENERATED_MARKER}
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}
+<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}
 </head><body class="${pathname === '/' ? 'home-page' : 'robotics'}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
@@ -140,7 +159,7 @@ function articlePage(article, root) {
   const toc = article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
 <header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p></header>
-<div class="post-layout${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
+<div class="post-layout${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
 function landingPage(articles, root) {
   const cards = articles.map((article) => `<a class="report-card" href="/robotics/${article.slug}/"><span class="report-date"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`).join('\n');
@@ -150,7 +169,7 @@ function landingPage(articles, root) {
 }
 function previewImage(article, root) {
   const preferred = {
-    'how-robot-control-is-changing':'/assets/robotics/modern-control/vjepa-planning.png',
+    'how-robot-control-is-changing':'/assets/robotics/modern-control/v2/observe-again.png',
     'from-joint-angles-to-a-moving-arm':'/assets/robotics/arm-control/v3/franka_joint_names.png',
   }[article.slug];
   const src = preferred || article.body.match(/<img\s[^>]*src="([^"]+)"/)?.[1];
