@@ -43,6 +43,17 @@ test('bad math and missing metadata fail before publishing', () => {
   assert.throws(() => renderArticle(frontmatter + '$\\notAnActualLatexCommand{x}$'));
   assert.throws(() => renderArticle('## No frontmatter'), /frontmatter/);
 });
+test('the geometry component stays static and rejects duplicate instances', () => {
+  const source = frontmatter + '## How do we describe gripper position mathematically?\n\n```robotics-arm\n```\n';
+  const result = renderArticle(source);
+  assert.equal(result.components.geometry, true);
+  assert.match(result.body, /id="joint-one"/);
+  assert.doesNotMatch(result.body, /<script|\{\{/);
+  const elsewhere = renderArticle(frontmatter + '## Two links\n\n```robotics-arm\n```');
+  assert.match(elsewhere.body, /href="#section-two-links"/);
+  assert.throws(() => renderArticle(source + '\n```robotics-arm\n```'), /Only one/);
+  assert.throws(() => renderArticle(frontmatter + '\n```robotics-arm\nunknown\n```'), /does not accept content/);
+});
 test('timeline renders every stage and stack as static HTML from one fence', () => {
   const result = renderArticle(timelineFixture);
   assert.equal(result.components.timeline, true);
@@ -89,15 +100,21 @@ test('only articles with a timeline load its small runtime script', () => {
     fs.mkdirSync(path.join(root, 'content/robotics'), {recursive:true});
     fs.writeFileSync(path.join(root, 'content/robotics/timeline.md'), timelineFixture);
     fs.writeFileSync(path.join(root, 'content/robotics/plain.md'), frontmatter + 'A plain article.');
+    fs.writeFileSync(path.join(root, 'content/robotics/geometry.md'), frontmatter + '## How do we describe gripper position mathematically?\n\n```robotics-arm\n```');
     fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
     build(root);
     const componentPage = fs.readFileSync(path.join(root, 'robotics/timeline/index.html'), 'utf8');
     const plainPage = fs.readFileSync(path.join(root, 'robotics/plain/index.html'), 'utf8');
+    const geometryPage = fs.readFileSync(path.join(root, 'robotics/geometry/index.html'), 'utf8');
     const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
     assert.match(componentPage, /<script src="\/assets\/robotics-timeline.js\?v=[a-f0-9]+" defer><\/script>/);
     assert.doesNotMatch(componentPage, /<script src="\/assets\/site.js/);
     assert.doesNotMatch(plainPage, /<script[^>]*src=/);
     assert.doesNotMatch(home, /robotics-timeline.js/);
+    assert.match(home, /<script type="module" src="\/assets\/control-playground.js\?v=[a-f0-9]+"><\/script>/);
+    assert.match(geometryPage, /<script src="\/assets\/arm-geometry.js\?v=[a-f0-9]+" defer><\/script>/);
+    assert.doesNotMatch(geometryPage, /control-playground.js|robotics-timeline.js/);
+    assert.doesNotMatch(home, /arm-geometry.js/);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
 test('build preserves sitemap entries and creates repeatable offline pages', () => {
@@ -121,9 +138,11 @@ test('build preserves sitemap entries and creates repeatable offline pages', () 
     assert.match(home, /01 essay/);
     assert.doesNotMatch(home, /Unfinished|\{\{/);
     assert.match(home, /href="\/about.html"/);
-    assert.match(home, /id="joint-one"/);
+    assert.match(home, /data-control-playground/);
+    assert.doesNotMatch(home, /id="joint-one"/);
     assert.doesNotMatch(home, /href="\/robotics\/from-joint-angles-to-a-moving-arm\/"/);
-    assert.match(home, /href="\/#writing">Explore the writing/);
+    assert.match(home, /href="#writing">Explore the writing/);
+    assert.doesNotMatch(home, /href="\/robotics\/how-robot-control-is-changing\/"/);
     assert.doesNotMatch(page, /<script[^>]*src=|https?:\/\/[^"\s]+\.css/);
     build(root);
     assert.equal(fs.readFileSync(path.join(root,'robotics/example/index.html'),'utf8'), page);

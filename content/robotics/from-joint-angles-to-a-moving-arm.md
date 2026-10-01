@@ -2,7 +2,7 @@
 title: 'How an arm moves: joints, geometry, and motor control'
 description: 'From encoder readings to gripper position: a visual guide to robot geometry, servos, and the commands that connect them.'
 date: '2026-09-26'
-updated: '2026-09-28'
+updated: '2026-10-01'
 slug: 'from-joint-angles-to-a-moving-arm'
 ---
 
@@ -356,6 +356,16 @@ x=r\cos\phi,\qquad y=r\sin\phi.
 $$
 
 Folding past the pan axis can make $r$ negative; horizontal distance is $|r|$.
+
+Try two links with lengths 1 and 0.8. The shoulder angle is $q_1$. The elbow adds $q_2$, so the second link points at $q_1+q_2$. In the top view below:
+
+$$
+x=\cos q_1+0.8\cos(q_1+q_2),\qquad
+y=\sin q_1+0.8\sin(q_1+q_2).
+$$
+
+```robotics-arm
+```
 
 ## How does a small joint turn move the gripper?
 

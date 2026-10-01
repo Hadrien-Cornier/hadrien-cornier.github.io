@@ -323,3 +323,11 @@
   .article-body .rt-summary { font-size: 10pt; }
   .rt-track::after { transform: none; }
 }
+
+/* The two-link game sits beside its equations in the geometry article. */
+.article-body .arm-demo { max-width: 640px; margin: 32px auto 40px; }
+.article-body .arm-demo h2 { margin: 18px 0 0; padding: 0; border: 0; font-size: 25px; line-height: 1.2; letter-spacing: -.5px; }
+.article-body .arm-demo .demo-intro { margin: 7px 0 0; font-size: 12px; }
+.article-body .arm-demo .demo-units { margin: 8px 0 0; font-size: 10px; }
+.article-body .arm-demo .eyebrow { margin: 0; }
+.article-body .arm-demo .demo-caption a { text-decoration: none; font-size: 10px; }

@@ -38,7 +38,7 @@ export function renderArticle(source, root = ROOT) {
   });
   const headings = [];
   const ids = new Set();
-  const components = {timeline:false};
+  const components = {timeline:false, geometry:false};
   md.core.ruler.push('article-structure', (state) => {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];
@@ -64,9 +64,17 @@ export function renderArticle(source, root = ROOT) {
       }
     }
     const headingIds = new Set(ids);
+    let currentHeading = null;
     for (const token of state.tokens) {
+      if (token.type === 'heading_open') currentHeading = token.attrGet('id');
       if (token.type === 'heading_open' && ['h2', 'h3'].includes(token.tag)) {
         headings.push({id:token.attrGet('id'), title:token.meta.title, level:token.tag});
+      }
+      if (token.type === 'fence' && token.info.trim() === 'robotics-arm') {
+        if (token.content.trim()) throw new Error('robotics-arm does not accept content');
+        if (components.geometry) throw new Error('Only one robotics-arm widget per article');
+        token.meta = {...token.meta, geometry:true, geometryAnchor:currentHeading};
+        components.geometry = true;
       }
       if (token.type === 'fence' && token.info.trim() === 'robotics-timeline') {
         token.meta = {...token.meta, timeline:parseTimeline(token.content, {root, headingIds, usedIds:ids})};
@@ -77,9 +85,14 @@ export function renderArticle(source, root = ROOT) {
     }
   });
   const renderFence = md.renderer.rules.fence;
-  md.renderer.rules.fence = (tokens, index, options, environment, renderer) => tokens[index].meta?.timeline
-    ? renderTimeline(tokens[index].meta.timeline)
-    : renderFence(tokens, index, options, environment, renderer);
+  md.renderer.rules.fence = (tokens, index, options, environment, renderer) => {
+    if (tokens[index].meta?.timeline) return renderTimeline(tokens[index].meta.timeline);
+    if (tokens[index].meta?.geometry) return template('arm-demo.html', root, {
+      arm_article_href:`#${tokens[index].meta.geometryAnchor || 'main'}`,
+      arm_article_label:tokens[index].meta.geometryAnchor ? 'Back to the section' : 'Back to the essay',
+    });
+    return renderFence(tokens, index, options, environment, renderer);
+  };
   md.renderer.rules.image = (tokens, index) => {
     const token = tokens[index];
     const src = token.attrGet('src');
@@ -104,6 +117,7 @@ export function renderArticle(source, root = ROOT) {
   const prose = tokens.flatMap((token) => {
     if (token.type === 'html_block') return [htmlText(token.content)];
     if (token.meta?.timeline) return [timelineProse(token.meta.timeline)];
+    if (token.meta?.geometry) return [];
     if (['fence', 'code_block'].includes(token.type)) return [token.content];
     if (token.type !== 'inline') return [];
     return token.children.flatMap((child) => {
@@ -125,10 +139,14 @@ function template(name, root = ROOT, values = {}) {
     return values[key];
   }).trim();
 }
-function assetVersion(root, filename) {
-  const local = path.join(root, filename);
-  const file = fs.existsSync(local) ? local : path.join(ROOT, filename);
-  return createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, 12);
+function assetVersion(root, ...filenames) {
+  const hash = createHash('sha256');
+  for (const filename of filenames) {
+    const local = path.join(root, filename);
+    const file = fs.existsSync(local) ? local : path.join(ROOT, filename);
+    hash.update(fs.readFileSync(file));
+  }
+  return hash.digest('hex').slice(0, 12);
 }
 function shell({title, description, pathname, content, article, root = ROOT, interactive = false}) {
   const canonical = `${ORIGIN}${pathname}`;
@@ -149,7 +167,7 @@ ${GENERATED_MARKER}
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}
+<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}
 </head><body class="${pathname === '/' ? 'home-page' : 'robotics'}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
@@ -191,10 +209,10 @@ function homeNotes(root) {
 }
 function homePage(articles, root) {
   const [latest, ...rest] = articles;
-  const hasArmArticle = articles.some((article) => article.slug === 'from-joint-angles-to-a-moving-arm');
-  const armDemo = template('arm-demo.html', root, {
-    arm_article_href:hasArmArticle ? '/robotics/from-joint-angles-to-a-moving-arm/' : '/#writing',
-    arm_article_label:hasArmArticle ? 'The geometry behind it' : 'Explore the writing',
+  const hasControlArticle = articles.some((article) => article.slug === 'how-robot-control-is-changing');
+  const controlDemo = template('control-playground.html', root, {
+    control_article_href:hasControlArticle ? '/robotics/how-robot-control-is-changing/' : '/#writing',
+    control_article_label:hasControlArticle ? 'How control is changing' : 'Explore the writing',
   });
   const featureImage = latest ? previewImage(latest, root) : '';
   const feature = latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest essay</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the essay <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">Figure from the essay</span></div>` : ''}</a>` : '<p class="writing-empty">The first essay is on its way.</p>';
@@ -203,7 +221,7 @@ function homePage(articles, root) {
     return `<a class="writing-row${image ? ' writing-row-with-image' : ''}" href="/robotics/${article.slug}/"><span class="writing-row-number">${String(index + 2).padStart(2, '0')}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
   }).join('');
   return shell({title:'Robotics, learning, and systems', description:'Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them.', pathname:'/', root, interactive:true, content:`
-<section class="home-hero" aria-labelledby="home-title"><div class="home-hero-copy"><p class="eyebrow">Hadrien Cornier / Personal notes</p><h1 id="home-title">Robotics, learning,<br>and the systems<br>behind them.</h1><p class="home-intro">I build data infrastructure and production ML. Here I write about robot learning, the math behind it, and what I learn by building.</p><div class="home-hero-links"><a href="#writing">Explore the writing <span aria-hidden="true">↓</span></a><a href="/about.html">More about me <span aria-hidden="true">↗</span></a></div></div>${armDemo}</section>
+<section class="home-hero" aria-labelledby="home-title"><div class="home-hero-copy"><p class="eyebrow">Hadrien Cornier / Personal notes</p><h1 id="home-title">Robotics, learning,<br>and the systems<br>behind them.</h1><p class="home-intro">I build data infrastructure and production ML. Here I write about robot learning, the math behind it, and what I learn by building.</p><div class="home-hero-links"><a href="#writing">Explore the writing <span aria-hidden="true">↓</span></a><a href="/about.html">More about me <span aria-hidden="true">↗</span></a></div></div>${controlDemo}</section>
 <section class="home-writing" id="writing" aria-labelledby="writing-title"><div class="home-section-heading"><div><p class="eyebrow">Essays &amp; explorations</p><h2 id="writing-title">Writing</h2></div><p class="home-count">${String(articles.length).padStart(2, '0')} ${articles.length === 1 ? 'essay' : 'essays'}</p></div>${feature}<div class="writing-rows">${rows}</div></section>
 ${homeNotes(root)}
 <section class="home-about" aria-labelledby="home-about-title"><div><p class="eyebrow">A little context</p><h2 id="home-about-title">About me.</h2></div><div><p>Engineering manager at Talroo, based in Austin. I work on data infrastructure, production ML, and teams. Outside work, I’m learning robotics through experiments with simulation and an SO-101 arm.</p><div class="home-about-links"><a href="/about.html">Full experience <span aria-hidden="true">↗</span></a><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a></div><nav class="home-profile-sections" aria-label="Profile sections"><a id="experience" href="/about.html#experience">Experience</a><a id="management" href="/about.html#management">Management</a><a id="education" href="/about.html#education">Education</a></nav></div></section>`});

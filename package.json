@@ -5,7 +5,9 @@
   "scripts": {
     "build": "python3 scripts/build_site.py",
     "build:robotics": "node scripts/build_robotics.mjs",
-    "test:robotics": "node --test scripts/build_robotics.test.mjs"
+    "test": "node --test scripts/*.test.mjs",
+    "test:robotics": "node --test scripts/build_robotics.test.mjs",
+    "test:control": "node --test scripts/control-simulator.test.mjs"
   },
   "engines": { "node": ">=22" },
   "devDependencies": {

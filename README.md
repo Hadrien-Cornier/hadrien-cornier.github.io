@@ -19,7 +19,9 @@ The generator expects the current profile heading structure: four Talroo work ar
 
 The homepage puts published writing first. It reads the same article metadata as the Robotics section, so new reports appear automatically. The full biography lives at `about.html`; older links such as `/#experience` still lead to the same biography section. Notes and report URLs stay the same.
 
-The homepage arm is a two-link geometry example. Sliders change the shoulder and elbow angles. Link lengths stay at 1 and 0.8 units, and the coordinates use `x = cos(q1) + 0.8 cos(q1 + q2)` and `y = sin(q1) + 0.8 sin(q1 + q2)`. The drawing and reading links work without JavaScript. Controls appear only when the interaction is ready.
+The homepage control playground compares six control ideas in one small tabletop simulation. Readers can move either cube, add an obstacle, change the task, and set the compute delay. The simulation uses simple rules to explain mechanisms. It does not run trained policies. See [the setup and sources](docs/control-playground.md).
+
+The two-link geometry game lives beside the position equations in the moving-arm article. Its sliders change the shoulder and elbow angles. Link lengths stay at 1 and 0.8 units. Add an empty `robotics-arm` code fence to include it in an article. The static drawing works without JavaScript. Interactive controls appear only when ready. The builder loads `assets/arm-geometry.js` only on pages with this component. The homepage loads its separate playground module and styles.
 
 Four alternative designs are saved at `/design-previews/`: editorial, journal, notebook, and dark. They are independent pages, excluded from search indexing and the sitemap. They do not appear in the public navigation.
 
@@ -29,7 +31,7 @@ Four alternative designs are saved at `/design-previews/`: editorial, journal, n
 python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
-Open http://127.0.0.1:8765. Check desktop and mobile layouts, writing links, the arm sliders, Notes, report media and equations, and biography expand/collapse controls. Details also work without JavaScript. Printing expands all details when JavaScript is enabled.
+Open http://127.0.0.1:8765. Check desktop and mobile layouts, writing links, the control playground, the article arm sliders, Notes, report media and equations, and biography expand/collapse controls. Details also work without JavaScript. Printing expands all details when JavaScript is enabled.
 
 ## Downloadable resume
 
@@ -91,7 +93,7 @@ the landing page and sitemap.
 
 ```sh
 npm ci
-npm run test:robotics
+npm test
 npm run build
 ```
 
