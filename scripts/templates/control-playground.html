@@ -6,25 +6,6 @@
     <label for="control-method"><span>Architecture example</span><select id="control-method" data-control-mode><option value="scripted">Fixed script</option><option value="chunks">Action transformer</option><option value="diffusion">Diffusion Policy</option><option value="generalist">Generalist VLA</option><option value="world">World model + planner</option></select></label>
     <label for="control-instruction"><span>Task</span><select id="control-instruction" data-control-instruction><option value="red">Red cube</option><option value="blue">Blue cube</option></select></label>
   </div>
-  <p class="control-taxonomy-note">Diffusion is a way to generate actions. Pretraining is prior learning. A model can use both.</p>
-  <div class="control-approach-card" data-control-card aria-live="polite" aria-atomic="true">
-    <p class="control-approach-family" data-control-family>Hand-written replay baseline</p>
-    <p class="control-approach-structure" data-control-structure>Saved route → tracking controller → movement</p>
-    <p data-control-summary>A fixed script follows a saved route. New observations do not change its commands.</p>
-    <p><strong>Expect</strong> <span data-control-expectation>It works when the scene matches the taught route.</span></p>
-    <p><strong>Watch for</strong> <span data-control-limitation>A moved cube or new obstacle can break the task.</span></p>
-    <a class="control-paper" data-control-paper hidden></a>
-    <span class="control-paper" data-control-no-paper>Hand-written baseline. No learned model.</span>
-  </div>
-  <div class="control-execution" data-interactive hidden>
-    <label for="control-execution"><span>Execution timing</span><select id="control-execution" data-control-schedule><option value="synchronous">Wait between batches</option><option value="realtime">Plan while moving</option></select></label>
-    <p data-control-schedule-description>Saved commands run without a new planning step.</p>
-  </div>
-  <div class="control-challenge" data-interactive hidden>
-    <label for="control-challenge"><span>Scene challenge</span><select id="control-challenge" data-control-scenario><option value="baseline">Original setup</option></select></label>
-    <button type="button" data-control-action="failure">Try a failure <span aria-hidden="true">↗</span></button>
-    <p data-control-challenge-description>Start with the unchanged scene, then try a failure.</p>
-  </div>
   <figure class="control-playground-figure">
     <svg class="control-scene" data-control-scene viewBox="0 0 440 255" role="group" aria-labelledby="control-scene-title control-scene-description">
       <title id="control-scene-title">Move a cube into the tray, seen from above</title>
@@ -47,21 +28,55 @@
     </svg>
     <figcaption class="control-path-legend"><span><i class="control-legend-actual" aria-hidden="true"></i>Actual movement</span><span><i class="control-legend-plan" aria-hidden="true"></i>Planned route</span><span data-control-committed-legend hidden><i class="control-legend-committed" aria-hidden="true"></i>Committed commands</span><span data-control-candidate-legend hidden><i class="control-legend-candidate" aria-hidden="true"></i>Candidates</span></figcaption>
   </figure>
-  <div class="control-futures" data-control-futures hidden>
-    <p class="control-futures-label">Predicted tip positions <span>Possible outcomes</span></p>
-    <div class="control-future-frames" data-control-future-frames aria-label="Three predicted future tip positions"></div>
-  </div>
   <div class="control-playground-actions" data-interactive hidden>
     <button class="control-run" type="button" data-control-action="run">Run <span aria-hidden="true">▷</span></button>
     <button type="button" data-control-action="replay" aria-label="Replay with the same scene">Replay</button>
-    <button type="button" data-control-action="move">Move object</button>
-    <button type="button" data-control-action="obstacle" aria-pressed="false">Add obstacle</button>
+    <button class="control-try-failure" type="button" data-control-action="failure">Try a failure <span aria-hidden="true">↗</span></button>
   </div>
   <div class="control-playground-status-row"><p class="control-playground-status" data-control-status aria-live="off">Ready to follow a fixed path.</p><span class="control-playground-time" data-control-elapsed hidden>0.0 s</span></div>
   <span class="control-live" data-control-announcement role="status" aria-live="polite" aria-atomic="true"></span>
-  <p class="control-failure-reason" data-control-failure-reason hidden></p>
+  <details class="control-drawer control-result-details" data-control-failure-details hidden>
+    <summary>Why it failed <span aria-hidden="true">+</span></summary>
+    <p class="control-failure-reason" data-control-failure-reason hidden></p>
+  </details>
+  <details class="control-drawer control-futures" data-control-futures hidden>
+    <summary>Predicted futures <span aria-hidden="true">+</span></summary>
+    <p class="control-futures-label">Predicted tip positions <span>Possible outcomes</span></p>
+    <div class="control-future-frames" data-control-future-frames aria-label="Three predicted future tip positions"></div>
+  </details>
+  <details class="control-drawer control-about">
+    <summary>About this approach <span aria-hidden="true">+</span></summary>
+  <div class="control-approach-card" data-control-card aria-live="polite" aria-atomic="true">
+    <p class="control-approach-family" data-control-family>Hand-written replay baseline</p>
+    <p class="control-approach-structure" data-control-structure>Saved route → tracking controller → movement</p>
+    <p data-control-summary>A fixed script follows a saved route. New observations do not change its commands.</p>
+    <p><strong>Expect</strong> <span data-control-expectation>It works when the scene matches the taught route.</span></p>
+    <p><strong>Watch for</strong> <span data-control-limitation>A moved cube or new obstacle can break the task.</span></p>
+    <a class="control-paper" data-control-paper hidden></a>
+    <span class="control-paper" data-control-no-paper>Hand-written baseline. No learned model.</span>
+  </div>
+  <p class="control-taxonomy-note">Diffusion is a way to generate actions. Pretraining is prior learning. A model can use both.</p>
+    <div class="control-model-details"><dl><dt>Action generation</dt><dd data-control-action-head>Saved waypoints.</dd><dt>Training</dt><dd data-control-training>No learned model.</dd></dl></div>
   <p class="control-playground-mechanism" data-control-mechanism>Replay the same commands. Moving the target leaves the route unchanged.</p>
-  <details class="control-playground-details">
+  </details>
+  <details class="control-drawer control-settings" data-control-settings data-interactive hidden>
+    <summary>Experiment settings <span aria-hidden="true">+</span></summary>
+  <div class="control-execution" data-interactive hidden>
+    <label for="control-execution"><span>Execution timing</span><select id="control-execution" data-control-schedule><option value="synchronous">Wait between batches</option><option value="realtime">Plan while moving</option></select></label>
+    <p data-control-schedule-description>Saved commands run without a new planning step.</p>
+  </div>
+  <div class="control-challenge" data-interactive hidden>
+    <label for="control-challenge"><span>Scene challenge</span><select id="control-challenge" data-control-scenario><option value="baseline">Original setup</option></select></label>
+    <p data-control-challenge-description>Start with the unchanged scene, then try a failure.</p>
+  </div>
+    <div class="control-playground-actions control-edit-actions" data-interactive hidden>
+      <button type="button" data-control-action="move">Move object</button>
+      <button type="button" data-control-action="obstacle" aria-pressed="false">Add obstacle</button>
+    </div>
+      <label class="control-delay-setting" data-interactive hidden for="control-inference-delay"><span>Compute delay <output data-control-delay-output for="control-inference-delay">300 ms</output></span><input id="control-inference-delay" data-control-delay type="range" min="0" max="600" step="50" value="300"><span class="control-delay-help">The same delay applies to each planner. Compare execution settings on the same architecture.</span></label>
+      <dl class="control-playground-stats" data-interactive hidden><div><dt>Plan updates</dt><dd data-control-replans>0</dd></div><div><dt>Waiting</dt><dd data-control-wait>0.0 s</dd></div></dl>
+  </details>
+  <details class="control-drawer control-playground-details">
     <summary>What this shows <span aria-hidden="true">+</span></summary>
     <div class="control-playground-details-body">
       <p>One arm, one speed, one scene. The learned methods are represented by simple rules. These runs illustrate mechanisms and failure causes.</p>
@@ -70,9 +85,6 @@
       <p>The blue path marks commands that are already committed. New observations still take time to change movement.</p>
       <p>Challenges introduce specific toy errors: a moving target, a sudden blocker, swapped visual labels, or wrong camera coordinates. Grasping, collisions, and the real cube identity decide the result.</p>
       <p>The action-transformer, diffusion, and world-model sketches are set to the red-cube task. The VLA sketch also reads the red/blue instruction.</p>
-      <details class="control-model-details"><summary>Architecture and training</summary><dl><dt>Action generation</dt><dd data-control-action-head>Saved waypoints.</dd><dt>Training</dt><dd data-control-training>No learned model.</dd></dl></details>
-      <label class="control-delay-setting" data-interactive hidden for="control-inference-delay"><span>Compute delay <output data-control-delay-output for="control-inference-delay">300 ms</output></span><input id="control-inference-delay" data-control-delay type="range" min="0" max="600" step="50" value="300"><span class="control-delay-help">The same delay applies to each planner. Compare execution settings on the same architecture.</span></label>
-      <dl class="control-playground-stats" data-interactive hidden><div><dt>Plan updates</dt><dd data-control-replans>0</dd></div><div><dt>Waiting</dt><dd data-control-wait>0.0 s</dd></div></dl>
       <p class="control-source-links">Papers and their limits: <a href="https://arxiv.org/html/2304.13705v1">ACT</a>, <a href="https://arxiv.org/html/2506.07339v1#S4">real-time chunking</a>, <a href="https://www.roboticsproceedings.org/rss19/p026.pdf#page=11">Diffusion Policy</a>, <a href="https://arxiv.org/html/2410.24164v1#S7">π₀</a>, <a href="https://arxiv.org/html/2506.09985v1#S4.SS3">V-JEPA 2-AC</a>.</p>
     </div>
   </details>

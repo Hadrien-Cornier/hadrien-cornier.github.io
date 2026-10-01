@@ -2,6 +2,8 @@
 
 The homepage compares five architecture examples on one task: move a cube into a tray. Each card explains the real method and links its paper. Execution timing and scene challenges are separate controls.
 
+The scene, architecture and task choices, Run, Replay, and Try a failure stay visible. Native drawers start closed. About this approach holds the summary, paper, action generation, and training. Experiment settings holds timing, challenges, scene edits, delay, and counters. Predicted futures appears for the world model. Why it failed appears after a failed run. What this shows holds the shared assumptions and sources. Readers choose when to open each drawer. With scripts unavailable, settings and simulation buttons stay hidden while the static scene and explanation drawers remain available.
+
 The simulator uses supplied rules. Its failures come from the executed movement, observed scene, and physical task checks. It runs no trained policy and provides no paper benchmark scores.
 
 ## Architecture examples
@@ -89,3 +91,5 @@ On October 1, 2026, all 33 builder and simulator tests passed. Tests cover both 
 Browser checks covered all five architecture cards and their paper links. Their suggested challenges produced an empty fixed-script grasp, an action-transformer collision, a diffusion timeout, a wrong-cube VLA delivery, and a world-planner timeout. The scene shows swapped observed labels and displaced model targets. Real-time diffusion completed the clean task; its committed path, Pause, and Resume worked. The VLA completed the blue-cube task. Keyboard scene edits survived an architecture change. The page fit a measured 389-pixel phone width with no horizontal overflow. No browser errors appeared.
 
 The no-mistakes service did not become responsive during setup, so its full pipeline did not run. These checks cover supplied rules and the website. Trained-model or real-robot results were not measured.
+
+The compact drawer layout was also checked on October 1. The full 33-test suite passed again. Browser checks covered opening and closing drawers, changing an approach while its explanation is open, real-time timing, delay, scene edits, Pause, and Replay. Try a failure ran with settings closed. The world model's failure explanation appeared in a closed drawer, and its predicted frames were visible when their drawer opened. A 389-pixel phone view had no horizontal overflow. A separate agent checked DOM hooks, default states, and the static fallback. The review service was still unavailable.

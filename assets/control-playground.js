@@ -36,6 +36,7 @@ function initializePlayground(root, simulator, knowledge) {
   const scenarioSelect = get('[data-control-scenario]');
   const challengeDescription = get('[data-control-challenge-description]');
   const failureReason = get('[data-control-failure-reason]');
+  const failureDetails = get('[data-control-failure-details]');
   const observedScene = get('[data-control-observed-scene]');
   const robot = get('[data-control-robot]');
   const tray = get('[data-control-tray]');
@@ -359,6 +360,7 @@ function initializePlayground(root, simulator, knowledge) {
     const challengeScope = state.scenario === 'model-gap' && state.mode !== 'world' ? ' This error is applied only to the world planner.' : state.scenario === 'swapped-cues' && state.mode === 'scripted' ? ' The fixed script does not read these labels.' : '';
     writeText(challengeDescription, state.challengeMessage + challengeScope);
     failureReason.hidden = !state.failureReason;
+    failureDetails.hidden = !state.failureReason;
     writeText(failureReason, state.failureReason ? `Why it failed: ${state.failureReason}` : '');
     writeText(elapsed, `${Number(state.stats.elapsed || 0).toFixed(1)} s`);
     writeText(replanOutput, String(state.stats.replans || 0));
