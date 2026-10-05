@@ -14,11 +14,11 @@ When I send my arm a smooth path to follow, it doesn't quite follow it. It arriv
 
 > **[MEDIA: tracking viewer clip]** The real arm on the "cat" motion with the `direct` controller. A ghost arm shows the target. The error is magnified 20 times so you can see it. The arm turns red where it misses most.
 
-So I wanted to understand why the arm misses, and what each of the usual fixes actually buys me. This series goes through it one problem at a time, starting from the one idea that made everything else make sense to me.
+So I wanted to understand why the arm misses, and what each of the usual fixes actually buys me. This series goes through it one problem at a time It starts with the gap between the goal and the joint, because the rest of the series builds on it.
 
 ## The map: fourteen controllers, one motion
 
-Before explaining anything, I think it helps to see where we're going. I ran the same motion with each of the controllers I built, where each one starts from an earlier one and adds a single part to it.
+Here is the same motion run with each of the controllers I built. Each one starts from an earlier controller and adds a single part to it.
 
 > **[MEDIA: side-by-side viewer grid]** The same real motion with `direct`, `inv`, `pi`, `solve` and `mpc`, error magnified. Bar chart under it: total error per controller. Real arm, cat motion, 60 Hz: pi 8.4, solve 6.2, mpc 6.0 mrad. direct at 30 Hz: 22.5 mrad. [ROUGH DRAFT: decide which runs share the same rate; check that the grid uses one rate]
 
@@ -26,16 +26,15 @@ If you draw which controller grows out of which, you get a family tree with five
 
 > **[FIGURE: family tree]** Base: direct, lead, inv. Feedback and gravity: pi, sag, grav, pisag. Adaptive: adapt, rls. Model-based: solve, mpc, mpca. Repeated paths: ilc, ilcmpc. Click a name to jump to its section in part 4.
 
-The table below is the one I wish I'd had at the start. Each row is a controller and each column is a kind of error, so if you see a particular error on your arm, you can read down its column to find which controllers deal with it.
+This table shows which errors each controller deals with. Each row is a controller and each column is a kind of error, so if you see a particular error on your arm, you can read down its column.
 
 > **[FIGURE: error matrix "Which error does each controller remove?"]** Columns link to part 2.
 > Note under the matrix: this is a teaching summary. I made it from the design of each controller and from simulated tests. The real arm checked it only for `pi` on one motion.
 
-To read that table you really only need one idea, and the rest of this article is about it.
+The rest of this article explains the idea behind that table.
 
 ## Target, goal, gap
 
-> **[FIGURE: spring picture]** A joint on a spring. The goal is the anchor of the spring, the target is a dashed line. Gravity stretches the spring until kp × gap = G. Three panels: no load (gap 0), gravity (gap 28.7 mrad), gravity plus a tool (larger gap).
 
 Three words confused me for a long time, mostly because I used them as if they meant the same thing. In this series each one has a single meaning:
 
@@ -45,6 +44,8 @@ Three words confused me for a long time, mostly because I used them as if they m
 
 Why would I ever send a goal that isn't the target? The easiest way I found to think about it is to picture the servo as a spring. The goal is where you attach one end of the spring and the joint hangs on the other end. Gravity pulls the joint down, and the spring stretches until it pulls back just as hard. The important part is that the spring only pulls when it's stretched, so the servo can only make torque when there's a gap.
 
+![Three drawings of one joint as a torsion spring. With no load, the goal and the joint sit on the target. With gravity and the goal on the target, the joint sags below and the spring between goal and joint stretches. With the goal moved up past the target, the stretched spring holds the joint on the target.](/assets/robotics/so101-series/spring-goal.png "The servo acts like a torsion spring between the goal and the joint. Angles are exaggerated.")
+
 That means if I put the goal exactly on the target, the joint can't actually stay on the target. It has to sag until the stretch is large enough to hold the arm up, and the size of that sag is the gravity torque divided by the stiffness of the spring:
 
 $$
@@ -53,7 +54,9 @@ $$
 
 The units are N·m ÷ (N·m/rad) = rad, so a torque divided by a stiffness gives you an angle. On the simulated shoulder at the example hold pose, gravity is 0.391 N·m and the servo stiffness is 13.64 N·m/rad, which gives a sag of 28.7 mrad.
 
-The same reasoning works for every other force on the joint: friction, a tool in the gripper, the force needed to speed the joint up, the damping that resists motion. Each of them needs a bit more gap, and if the goal stays on the target, all of that extra gap shows up as error. So the problem I kept coming back to was really just this one: where should I put the goal? Every controller in the series is a different answer to that question.
+The same reasoning works for every other force on the joint: friction, a tool in the gripper, the force needed to speed the joint up, the damping that resists motion. Each of them needs a bit more gap, and if the goal stays on the target, all of that extra gap shows up as error. The spring picture isn't just a metaphor. The P term of the servo is a spring law: the torque is $k_p$ times the gap, exactly like a torsion spring whose torque grows with how much it's twisted. Where the picture stops being exact is everything around that term. The real servo also has damping, a small dead band where it makes no torque at all, and a maximum torque, and we'll get to each of those.
+
+So the problem I kept coming back to was really just this one: where should I put the goal? Every controller in the series is a different answer to that question.
 
 <details>
 <summary>Predict first: what does the servo need to hold the arm still? (exam S1)</summary>
@@ -120,7 +123,7 @@ I also wondered why the integral is set to zero. As far as I can tell it isn't d
 
 ## From torque to milliradians to milliseconds
 
-The most useful thing I picked up in this whole project was a way to move between three units that kept showing up: N·m of torque, mrad of error, and ms of lag. I found it super striking that you can often convert one into the other, as long as you know when the conversion is valid.
+Three units kept showing up in this project: N·m of torque, mrad of error, and ms of lag. I found it super striking that you can often convert one into another, as long as you know when the conversion is valid.
 
 Going from torque to gap is the easy one. The servo only makes torque from the gap, so the gap is the torque divided by $k_p$, and that holds for every controller because it's just how the servo works.
 
@@ -130,7 +133,7 @@ $$
 \text{lag} = \frac{d}{k_p} = \frac{1.058}{13.64} = 77.6\ \text{ms}
 $$
 
-The units work out as (N·m·s/rad) ÷ (N·m/rad) = s, which is what convinced me this wasn't a coincidence. The picture I use is pulling a box through honey with a spring: your hand always has to stay a fixed stretch ahead of the box. Pulling harder makes the box go faster, but your hand is still ahead of it. More torque doesn't remove the lag. What removes it is putting the goal ahead of the target by that amount, which is what control people call feedforward.
+The units work out as (N·m·s/rad) ÷ (N·m/rad) = s. The picture I use is pulling a box through honey with a spring: your hand always has to stay a fixed stretch ahead of the box. Pulling harder makes the box go faster, but your hand is still ahead of it. More torque doesn't remove the lag. What removes it is putting the goal ahead of the target by that amount, which is what control people call feedforward.
 
 The last conversion closes the loop. If the joint runs $\Delta t$ behind and moves at speed $v$, the error is $v\,\Delta t$, and the units are s × rad/s = rad again.
 
@@ -188,7 +191,7 @@ $$
 e \approx \frac{G + d\,v + f + J\,a}{k_p} + \frac{v\,\Delta t}{2}
 $$
 
-where the first part is the torque divided by the stiffness and the last part is the goal hold, which doesn't care about $k_p$ at all. Fitting the normal and the stiff robots gives about 32.2 mrad for the torque part and 5.0 mrad for the goal hold, and that same fit predicts 40.6 mrad for a robot with a weaker supply ($k_p$ × 0.90). The measured value for that robot was 40.5, which made me trust the split.
+where the first part is the torque divided by the stiffness and the last part is the goal hold, which doesn't care about $k_p$ at all. Fitting the normal and the stiff robots gives about 32.2 mrad for the torque part and 5.0 mrad for the goal hold, and that same fit predicts 40.6 mrad for a robot with a weaker supply ($k_p$ × 0.90). The measured value for that robot was 40.5, so the split also works on a third robot.
 
 > **[FIGURE: error against kp]** The curve goes flat at the goal-hold part.
 
@@ -196,4 +199,4 @@ So even an infinitely stiff servo would still leave the goal hold, and on the re
 
 ## What's next
 
-The short version of this part is that the arm misses because the servo needs a gap to make torque, and every force on the joint needs a bit more of it. In [part 2](/robotics/so101-2-what-pulls-the-joint/) I go through those forces one at a time: ticks, dead time, friction, heat, gravity, speed coupling and carrying a payload. [ROUGH DRAFT: links]
+So the arm misses because the servo needs a gap to make torque, and every force on the joint needs a bit more of it. In [part 2](/robotics/so101-2-what-pulls-the-joint/) I go through those forces one at a time: ticks, dead time, friction, heat, gravity, speed coupling and carrying a payload. [ROUGH DRAFT: links]
