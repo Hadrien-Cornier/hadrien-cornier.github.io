@@ -2,7 +2,7 @@
 title: 'Target, goal, and the servo in the middle'
 description: 'Why a cheap robot arm misses the angle you ask for, and why every fix comes down to one question: where do I put the goal?'
 date: '2026-10-05'
-draft: true
+draft: false
 series: 'Where to put the goal'
 part: 1
 ---

@@ -221,7 +221,7 @@ function lagVsError(el) {
   };
   addRange(controls, {label:'Speed v', min:0, max:1.5, step:0.01, value:speed, unit:'rad/s', onInput:(value) => { speed = value; update(); }});
   addRange(controls, {label:'Servo stiffness kp', min:5, max:40, step:0.1, value:kp, unit:'N·m/rad', onInput:(value) => { kp = value; update(); }});
-  addRange(controls, {label:'Damping d', min:0.5, max:3, step:0.01, value:damping, unit:'N·m·s/rad', onInput:(value) => { damping = value; update(); }});
+  addRange(controls, {label:'Damping d', min:0.5, max:3, step:0.001, value:damping, unit:'N·m·s/rad', onInput:(value) => { damping = value; update(); }});
   addRange(controls, {label:'Load torque G', min:0, max:1, step:0.01, value:load, unit:'N·m', onInput:(value) => { load = value; update(); }});
   rate.addEventListener('change', update);
   update();
@@ -259,7 +259,7 @@ function errorBudget(el) {
   worn.setAttribute('aria-label', 'Worn robot');
   wornLabel.append(worn, node('span', 'Worn robot: friction × 2.5, damping × 1.5'));
   el.append(controls, wornLabel, track, budget, total, measured);
-  let speed = 0.70;
+  let speed = 0.7035;
   let extra = 0;
   const dt = 1 / 30;
   const update = () => {
@@ -270,7 +270,7 @@ function errorBudget(el) {
       (1.058 * dampingScale * speed) / 13.64 * 1000,
       (0.196 * frictionScale) / 13.64 * 1000,
       0.028 / 13.64 * 1000,
-      speed * (dt / 2) * 1000 * (12 / (0.70 * (dt / 2) * 1000)),
+      speed * (dt / 2) * 1000 * (12 / (0.7035 * (dt / 2) * 1000)),
     ];
     const rounded = values.map((value) => Number(value.toFixed(1)));
     const sum = rounded.reduce((acc, value) => acc + value, 0);
@@ -280,10 +280,10 @@ function errorBudget(el) {
       output.value = `${format(rounded[index])} mrad`;
       segment.style.width = `${sum ? rounded[index] / sum * 100 : 0}%`;
     });
-    const defaults = speed === 0.70 && extra === 0 && !worn.checked;
+    const defaults = speed === 0.7035 && extra === 0 && !worn.checked;
     measured.hidden = !defaults;
   };
-  addRange(controls, {label:'Speed v', min:0, max:1.2, step:0.01, value:speed, unit:'rad/s', onInput:(value) => { speed = value; update(); }});
+  addRange(controls, {label:'Speed v', min:0, max:1.2, step:0.0005, value:speed, unit:'rad/s', onInput:(value) => { speed = value; update(); }});
   addRange(controls, {label:'Extra load', min:0, max:0.5, step:0.01, value:extra, unit:'N·m', onInput:(value) => { extra = value; update(); }});
   worn.addEventListener('change', update);
   update();
@@ -296,7 +296,7 @@ async function predict(el, config) {
   const question = bank.questions.find((item) => item.id === config.id);
   if (!question) throw new Error(`Unknown question ${config.id}`);
   const body = node('div', undefined, 'so101-question');
-  body.append(node('p', question.situation, 'so101-situation'));
+  if (config.situation && question.situation) body.append(node('p', question.situation, 'so101-situation'));
   body.append(node('p', question.prompt, 'so101-prompt'));
   const answer = node('div', undefined, 'so101-question-answer');
   const feedback = node('div', undefined, 'so101-question-feedback');
@@ -599,7 +599,7 @@ function renderFamilyTree(target, options) {
   controls.setAttribute('aria-label', 'Highlight a controller family');
   const svg = svgElement('svg', {
     class:'so101-tree-svg',
-    viewBox:showLearned ? '0 0 820 470' : '0 0 820 400',
+    viewBox:showLearned ? '0 0 860 470' : '0 0 860 400',
     role:'group',
     'aria-roledescription':'family tree',
     'aria-labelledby':`so101-tree-title-${instance} so101-tree-description-${instance}`,
@@ -685,8 +685,8 @@ function renderFamilyTree(target, options) {
   addNode(repeated, {id:'ilcmpc', label:'ilcmpc', family:'rep', x:645, y:300}, config);
 
   addSvgText(svg, 20, 370, showLearned
-    ? 'Not available in the lab: learned (see section 7).'
-    : 'Not available in the lab: fitted, learned, net, netmpc (see section 7).', 'edge-label muted');
+    ? 'The learned controllers come in part 5.'
+    : 'Learned controllers (Fitted, the network) come in part 5.', 'edge-label muted');
   if (showLearned) {
     const learned = svgElement('g', {class:'family-learned', 'data-family':'learned'});
     addSvgText(learned, 410, 398, 'Part 5', 'small-label family-name', {'text-anchor':'middle'});
@@ -847,5 +847,5 @@ function register(type, fn) {
   initialize();
 }
 
-try { await import('/assets/so101-sims.js'); } catch (error) { console.warn('Optional SO-101 simulator widgets did not load:', error); }
+try { await import(`/assets/so101-sims.js${new URL(import.meta.url).search}`); } catch (error) { console.warn('Optional SO-101 simulator widgets did not load:', error); }
 initialize();

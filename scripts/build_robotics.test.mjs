@@ -201,7 +201,7 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
     const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
     const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
     assert.match(first, /<nav class="series-box" aria-label="Series">[\s\S]*Part 1 of 2/);
-    assert.match(first, /aria-current="page">Part 1: Series part one/);
+    assert.match(first, /aria-current="page">Series part one/);
     assert.match(first, /rel="next" href="\/robotics\/series-two\/"/);
     assert.match(second, /rel="prev" href="\/robotics\/series-one\/"/);
     assert.doesNotMatch(first, /Unpublished part/);

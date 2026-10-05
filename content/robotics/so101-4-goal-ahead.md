@@ -2,7 +2,7 @@
 title: 'Putting the goal ahead: from feedforward to MPC'
 description: 'Fourteen controllers for a cheap servo arm, each one a different answer to the same question: where do I put the goal?'
 date: '2026-10-05'
-draft: true
+draft: false
 series: 'Where to put the goal'
 part: 4
 ---

@@ -2,7 +2,7 @@
 title: 'What pulls the joint off its target'
 description: 'Ticks, dead time, friction, heat, gravity, speed coupling and a payload: each effect that makes a cheap servo miss, and how large each one is.'
 date: '2026-10-05'
-draft: true
+draft: false
 series: 'Where to put the goal'
 part: 2
 ---

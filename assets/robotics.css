@@ -389,7 +389,7 @@
 .so101-widget button:hover { border-color: var(--accent); color: var(--accent); }
 .so101-widget button:focus-visible, .so101-widget input:focus-visible, .so101-widget select:focus-visible, .so101-widget textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .so101-equation { min-width: 0; }
-.so101-equation-flow { display: flex; align-items: stretch; gap: 6px; max-width: 100%; padding: 8px 3px 14px; overflow-x: auto; }
+.so101-equation-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; max-width: 100%; padding: 8px 3px 14px; }
 .so101-equation-arrow { align-self: center; color: var(--muted); }
 .so101-equation-text { align-self: center; flex: 0 0 auto; color: var(--muted); font-family: var(--mono); font-size: 11px; }
 .so101-term { flex: 0 0 auto; max-width: 245px; padding: 9px 11px; border-color: var(--line) !important; background: var(--paper) !important; color: var(--ink) !important; font-family: var(--mono) !important; font-size: 11px !important; text-align: left; }
@@ -426,7 +426,7 @@
 .so101-sim-widget button:focus-visible, .so101-sim-widget a:focus-visible, .so101-sim-widget .so101-tree-scroll:focus-visible, .so101-sim-widget .so101-matrix-scroll:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .so101-tree-scroll, .so101-matrix-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--line); background: var(--white); }
 .so101-tree-scroll { padding: .5rem; }
-.so101-tree-svg { display: block; width: 100%; min-width: 700px; height: auto; }
+.so101-tree-svg { display: block; width: 100%; min-width: 600px; height: auto; }
 .so101-tree-svg text { fill: var(--ink); font-family: inherit; }
 .so101-tree-svg .mono { font-family: var(--mono); }
 .so101-tree-svg .muted { fill: var(--muted); }
@@ -473,9 +473,6 @@
 .so101-matrix-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .so101-matrix-note { border-left: 3px solid var(--so101-learned); padding-left: .6rem; color: var(--muted); font-size: 12px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-@media (prefers-color-scheme: dark) {
-  .so101-widget { --paper: #171b18; --white: #202520; --ink: #e4e7df; --muted: #aab1a5; --line: #3b433b; --accent: #d68a6b; --so101-positive: #7eaa82; --so101-partial: #d0ac66; --so101-negative: #d58a7d; }
-}
 @media (max-width: 600px) {
   .series-box { padding: 15px; }
   .series-box ol { display: grid; gap: 8px; }
