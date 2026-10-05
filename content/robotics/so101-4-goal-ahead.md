@@ -3,29 +3,35 @@ title: 'Putting the goal ahead: from feedforward to MPC'
 description: 'Fourteen controllers for a cheap servo arm, each one a different answer to the same question: where do I put the goal?'
 date: '2026-10-05'
 draft: true
-series: 'Control systems'
+series: 'Where to put the goal'
 part: 4
 ---
 
-> **In this series.** [ROUGH DRAFT: series box. Part 4 of 5.]
-
 The first three parts were about the problem: the servo only makes torque from a gap, every force on the joint needs more of that gap, and the arm only sees itself through ticks. This part is about the fixes. Every controller here answers the same question, where should I put the goal, and they mostly differ in what they use to answer it: a fixed rule, the past error, a model of the servo, or the path that's coming.
 
-> **[FIGURE: family tree, all families]** Click a family to jump to its section.
+```so101-widget
+{"type": "family-tree", "fallback": "Family tree of the controllers. Base: direct, then lead, then inv. Feedback and gravity: pi, sag, grav, pisag. Adaptive: adapt, rls. Model-based: solve, mpc, mpca. Repeated paths: ilc, ilcmpc. Each controller starts from an earlier one and adds one part.", "links": {"direct": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "lead": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "inv": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "pi": "/robotics/so101-4-goal-ahead/#feedback-pi", "sag": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "grav": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "pisag": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "adapt": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "rls": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "mpca": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "solve": "/robotics/so101-4-goal-ahead/#planning-solve-and-mpc", "mpc": "/robotics/so101-4-goal-ahead/#planning-solve-and-mpc", "ilc": "/robotics/so101-4-goal-ahead/#repeating-the-same-path-ilc-and-ilcmpc", "ilcmpc": "/robotics/so101-4-goal-ahead/#repeating-the-same-path-ilc-and-ilcmpc"}}
+```
 
 ## Predicting the future: lead and inv
 
-> **[FIGURE: target, inv goal, joint]** On a real trace: the target, the inv goal shifted ahead, and the joint landing on the target. Compare with direct.
+![Two panels from the real arm on the same motion. With direct, the goal sits on the target and the joint arrives late. With inv, the goal leads the target and the joint lands closer to it.](/assets/robotics/so101-series/inv-goal.png "Real arm, 30 Hz. `inv` sends the goal ahead of the target, so the joint arrives closer to on time.")
 
-> **[MEDIA: viewer clip]** direct against inv on the same real motion, error magnified.
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/sig-inv.png" aria-label="Three copies of the real arm on the same motion with direct, lead and inv, error drawn ten times larger">
+<source src="/assets/robotics/so101-series/sig-inv.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/sig-inv.mp4">Watch the video</a>
+</video>
+<figcaption>Real arm on the same motion with `direct`, `lead` and `inv` at 30 Hz, error drawn 10 times larger. <a class="video-link" href="/assets/robotics/so101-series/sig-inv.mp4">Open video</a></figcaption>
+</figure>
 
-The simplest fixes don't look at the arm at all, only at the target. `lead` just sends the target one tick early. `inv` goes further and inverts the lag of the servo: it sends the target from $t + D$, where $D$ is the fitted dead time plus half a step, and it moves the goal ahead by the speed times the servo lag.
+The simplest fixes don't look at the arm at all, only at the target. `lead` just sends the target one tick early. `inv` goes further and inverts a simple model of the servo, with the dead time and the lag from the step test on my arm:
 
 $$
-\text{goal}(t) = \text{target}(t + D) + \frac{d}{k_p}\,\dot q^*(t + D)
+\text{goal}(t) = q^*(t + 33\ \text{ms}) + 0.106\ \text{s}\cdot\dot q^*(t) + 0.0023\ \text{s}^2\cdot\ddot q^*(t)
 $$
 
-[ROUGH DRAFT: check the exact inv formula in model_controllers.py, including the accel term]
+The first term reads the target one dead time ahead, the second moves the goal ahead by the speed times the servo lag, and the third adds a small push for the acceleration. With a fitted constants file, each joint uses its own dead time, lag and acceleration term instead.
 
 This is feedforward: the goal comes from what we know about the target and the servo, not from the error. It's also the only thing that can deal with dead time, since any feedback arrives at least one dead time late. And because `inv` takes the speed and acceleration of the target from the planned path, it doesn't suffer from the derivative noise of part 3.
 
@@ -38,30 +44,27 @@ Almost, with one change: the offset has to follow the direction. To push up you 
 
 ## Gravity: sag and grav
 
-> **[FIGURE: sag map]** Sag offset of shoulder_lift against the pose, from the fitted sin/cos terms. Two arm poses drawn at the extremes.
-
 `sag` adds a goal offset that depends on the pose, using the fitted sag terms from part 2 with the sines and cosines of the link angles. `grav` does the same thing from a gravity model. Both put in the gap that gravity needs ahead of time, so the joint doesn't have to sag into it.
 
 ## Feedback: pi
 
-> **[FIGURE: 5e, not 4e]** The servo gap split into its parts: the target error e from the servo spring, plus 4e from the outer loop, plus the model offset.
-
-`pi` adds an outer PI loop on top of the servo. It looks at the error, the target minus the reading, and moves the goal:
+`pi` adds an outer PI loop on top of `inv`. It looks at the error $e$, the target minus the reading, and moves the goal a little:
 
 $$
-\text{goal} = \text{target} + \text{offset} + 4\,e + k_i \textstyle\int e\,dt
+\text{goal} = \text{goal}_{inv} + 0.2\,e + 2\ \text{s}^{-1}\textstyle\int e\,dt
 $$
 
-The outer gain is 4, so I assumed the joint would get 4 times stiffer, and that's where I went wrong.
+On the real arm the gains are small on purpose: 0.2 for the proportional part and 2 per second for the integral, with limits on both. The integral is the part that matters, because it slowly builds up whatever offset the model is missing, like a steady sag, until it's gone. On my "cat" motion at 60 Hz, `pi` gets 8.4 mrad.
 
-<details>
-<summary>Predict first: how much stiffer? (exam C1)</summary>
+The gains are small because of everything from part 2. The arm only covers about 0.15 of a goal change in one 33 ms step, and the dead time means the loop always acts on old information. In the simulation study, the Classical controller used a much larger proportional gain of 4, without any dead time, and that's where I learned the next lesson.
 
-[ROUGH DRAFT: predict box C1. The model lacks 0.378 N·m. Outer P gain 4. Static error? Answer 5.5 mrad.]
+![The servo gap split into three parts: e from the servo spring, 4e from the outer loop, and the model offset, adding up to 5e plus the offset.](/assets/robotics/so101-series/pi-five.png "With an outer gain of 4, the joint feels 5 times the servo stiffness against a missing torque.")
 
-</details>
+```so101-widget
+{"type": "predict", "id": "C1", "fallback": "Exam question C1: with an outer gain of 4, how much stiffer does the joint get against a missing torque?"}
+```
 
-It's 5 times, not 4. The servo gap is the goal minus the joint, which works out to
+I assumed an outer gain of 4 would make the joint 4 times stiffer. It's 5 times. The servo gap is the goal minus the joint, which works out to
 
 $$
 \text{goal} - q = (\text{target} - q) + \text{offset} + 4e = 5e + \text{offset}
@@ -76,23 +79,35 @@ I multiplied $k_p$ by 4 and got about 7 mrad. I found the mistake myself after a
 
 </details>
 
-Why 4 and not 100? In one 33 ms step, the arm only covers about 0.15 of a goal change. With a gain of 4 it covers about 0.6 of the error per step, which is stable. With a gain of 100 it would try to cover 15 times the error, so it overshoots, the next error is larger on the other side, and the oscillation keeps growing. A gain of 100 would also turn a single tick of reading noise into a 153 mrad jump of the goal.
+Why not a gain of 100, then? With a gain of 4, the arm covers about 0.6 of the error per step, which is stable. With a gain of 100 it would try to cover 15 times the error, so it overshoots, the next error is larger on the other side, and the oscillation keeps growing. A gain of 100 would also turn a single tick of reading noise into a 153 mrad jump of the goal. Add a 33 ms dead time and even a gain of 4 is too much: when I tried the Classical gains (4 and 10) with the dead time of my real arm in the shake test below, the servo spent about 95 % of the time at its torque limit.
 
 The model also helps the feedback. A plain outer PID with no model saturated the servo on 10.9 % of the steps on a stiff simulated robot, while the same feedback on top of a model offset saturated on 0 %. The model does most of the work, so the feedback gains can stay low.
 
-> **[WIDGET: servo-playground, pi mode]** Sliders for the outer P and I gains. Watch the response to a load step, and the oscillation at a high gain.
-
-On the real arm, on my "cat" motion at 60 Hz, `pi` gets 8.4 mrad.
+```so101-widget
+{"type": "servo-playground", "mode": "pi", "fallback": "Interactive: one joint following a sine with a load step at 3 s. Sliders for the outer P and I gains show the load being absorbed, and oscillation at high gains."}
+```
 
 ## Shaking a load up and down, or left and right
 
-> **[MEDIA: side-by-side clip]** Vertical and horizontal shake, pi and mpc.
+This is the example that made the planners click for me. Suppose I hold a weight in the gripper and shake it up and down. Gravity on the weight is a steady extra load, so the integral of `pi` should slowly build up the extra torque and hold it. Now suppose I shake it left and right instead. Gravity on the weight doesn't change, but the weight has to be stopped and turned around at each end of the stroke, and that inertia torque reverses every half stroke, so the integral is always half a cycle late. What should help there is something that sees the end of the stroke coming and starts pushing before it gets there.
 
-This is the example that made the planners click for me. Suppose I hold a weight in the gripper and shake it up and down. Gravity on the weight is a steady extra load, so the integral of `pi` slowly builds up the extra torque and holds it. Now suppose I shake it left and right instead. Gravity on the weight doesn't change, but the weight has to be stopped and turned around at each end of the stroke, and that inertia torque reverses every half stroke. The integral is always half a cycle late.
+I tested this in simulation, with the SO-101 model in MuJoCo, a 150 g load in the gripper, the simulated servo, a 33 ms dead time and a 30 Hz loop. The arm reaches forward and either the shoulder lifts the load up and down, or the base swings it left and right, by 0.1 rad at 1 Hz. I compared five controllers: `direct`, `pi` with the real-arm gains, `inv` plus `pi`, and two "preview" controllers that compute the torque the planned path needs from the arm's inverse dynamics, one with a model that doesn't know about the load and one that does.
 
-What would help there is something that sees the end of the stroke coming and starts braking before it gets there. And since the servo has a maximum torque, braking early may be the only way to stop in time.
+![Two panels of error over time and two bar charts. In the vertical shake, direct has an error of 88 mrad with a mean of 50, pi has 77 with a mean of 0, and preview without the payload has 6. In the horizontal shake, direct has 65, pi has 66, and preview without the payload has 1.8.](/assets/robotics/so101-series/shake-test.png "Simulation. The integral removes the steady sag of the vertical shake but not the shake itself, and it does nothing for the horizontal shake.")
 
-That's my hypothesis, and here is the test. [ROUGH DRAFT: shake experiment, stand-in simulation, pi against mpc, vertical and horizontal, same amplitude and frequency. Report the result even if it goes against the story.]
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/shake.png" aria-label="Four simulated arms shaking a 150 gram load, vertically and horizontally, with pi and with preview, error drawn five times larger">
+<source src="/assets/robotics/so101-series/shake.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/shake.mp4">Watch the video</a>
+</video>
+<figcaption>Simulated SO-101 shaking a 150 g load at 1 Hz, error drawn 5 times larger. Top row vertical, bottom row horizontal; left `pi`, right preview. <a class="video-link" href="/assets/robotics/so101-series/shake.mp4">Open video</a></figcaption>
+</figure>
+
+The result was half what I expected. In the vertical shake, the integral did remove the steady part: the mean error went from 50 mrad with `direct` to 0 with `pi`. But the shake itself stayed, with an RMS error of 77 mrad against 88, because the vertical shake also has to accelerate and stop the load, and that part reverses just like in the horizontal case. In the horizontal shake there was no steady part to remove, and `pi` did nothing at all, 66 mrad against 65.
+
+What fixed both was looking ahead. `inv` plus `pi` brought the errors down to 22 and 11 mrad, and the preview controller to 6 and 1.8 mrad, even with a model that didn't know about the load. With the load in its model, both went under 1 mrad. So the integral handles what stays the same, and the path ahead handles what changes, which is exactly the job of the planners below.
+
+I didn't push this test hard enough to reach the torque limit, so the second half of my idea, that braking early is the only way to stop a heavy load in time, is still untested here. I also used a simple preview feedforward rather than the full `mpc`, so this shows what the path ahead is worth, not how well `mpc` itself uses it.
 
 ## Planning: solve and mpc
 
@@ -108,58 +123,48 @@ That last part is called a receding horizon: the plan itself is never executed, 
 
 ### The difference is the plan they can choose
 
-> **[WIDGET: plan-compare]** The target over the next 0.25 s. A solve plan with one slider (the destination). An mpc plan with one handle per step. Both show the predicted joint path and the cost.
+```so101-widget
+{"type": "plan-compare", "fallback": "solve chooses one destination goal and the steps follow a fixed rule toward it. mpc chooses a free goal for each step of the 0.25 s horizon. With a dead band, a constant goal between 90 and 110 mrad does nothing, so the cost is flat there and a gradient method does not move."}
+```
 
 `solve` chooses one number per joint, a destination goal on whole encoder ticks, and the goals in between follow a fixed rule toward that destination. So it searches a family of plans with a single knob. `mpc` chooses one goal for each step of the horizon, 8 goals at 30 Hz, 15 at 60 Hz and 25 at 100 Hz, so its plan can do anything: overshoot, brake early, or hold.
 
 The mpc cost has three parts: the mean squared tracking error, a small cost on goal changes beyond what `inv` would do, and a tiny cost on straying away from `inv`.
 
-<details>
-<summary>Predict first: what does solve choose each step? (exam L1)</summary>
-
-[ROUGH DRAFT: predict box L1.]
-
-</details>
+```so101-widget
+{"type": "predict", "fallback": "Predict first. At each tick, what does solve choose for one joint? Answer: One destination goal per joint, on whole encoder ticks.", "id": "L1"}
+```
 
 ### Why mpc needs 50 warm starts
 
-> **[FIGURE: toy cost curve]** Cost against goal. Flat from 90 to 110, then falling to zero at 125.
+![Cost after one step against a constant goal. The cost is flat from 90 to 110 mrad, inside the dead band, then falls to its minimum at 125 mrad and rises again.](/assets/robotics/so101-series/deadband-cost.png "The toy dead-band case: a gradient method that starts in the flat part has nothing to follow.")
 
 A toy example helped me here. Suppose the joint is at 100 mrad, the target is 115, and the dead band is 10 mrad on each side. Any goal between 90 and 110 makes no torque at all, so the joint stays at 100 and the error stays at 15. Above 110, the joint follows the goal minus 10. If you plot the cost against the goal, it's flat from 90 to 110 and then falls. A gradient method that starts somewhere in the flat part sees a slope of zero and doesn't move.
 
 So `mpc` starts from 50 different plans: 49 plans of the form "`inv` plus a constant offset", spread across the band, plus the previous step's plan shifted by one step. Then it takes two Gauss-Newton steps from the best one. `solve` doesn't have this problem because it tries a list of whole-tick destinations directly.
 
-<details>
-<summary>Predict first: why 50 starts? (exam L5)</summary>
-
-[ROUGH DRAFT: predict box L5.]
-
-</details>
+```so101-widget
+{"type": "predict", "fallback": "Predict first. Why does mpc test 49 'inv goal + constant offset' plans before its Gauss-Newton steps? Answer: The flat cost in the dead band stops a gradient method. The 49 plans find the correct side of the band first.", "id": "L5"}
+```
 
 ### Two rules against chatter
-
-> **[FIGURE: goal trace with and without the gate]** Real or stand-in trace: the goal reverses 17 times per second without the gate, 1.8 with it.
 
 Left alone, both planners chatter, and two rules fix most of it. The hold rule keeps the last goal if a new plan would gain less than half a tick, which stops the goal from flipping every time the reading flips between two ticks. The reversal gate deals with the dead band: a correction that reverses across the band costs a big goal jump, so the gate only allows it if it gains at least 1.5 ticks (2.3 mrad) and at least about 0.2 s have passed since the last reversal. Without the gate the goal reversed up to 17 times per second, and with it 1.8 times or fewer. The price is 0.4 to 1.0 mrad more error on holds.
 
 <details>
 <summary>The reversal gate, with numbers</summary>
 
-[ROUGH DRAFT: toy example from the tutor: last push up, goal 110, joint at 100, target 99. To move down 1 mrad, the goal must jump below 90.]
+Suppose the dead band is 10 mrad on each side and the last push was up: the goal is at 110 and the joint sits at 100. The target is 99. To move the joint down even 1 mrad, the goal has to drop below 90, a jump of more than 20 mrad. With a goal of 88, the joint goes to 98, now 1 below the target. To fix that, the goal has to go back above 108, another 20 mrad jump. Each small fix overshoots, so the goal bounces up and down. The gate only lets a goal reverse against its last push if the model predicts at least 1.5 ticks less error, and if the last reversal of that joint is at least about 0.2 s old. A reversal in the direction the target is moving is always allowed. The price is that a static error below about 1.5 ticks can stay.
 
 </details>
 
 ### Can they model gravity at different poses?
 
-> **[FIGURE: predicted against measured sag]** For a set of poses: the sag the model predicts and the sag measured.
-
 Partly. The servo model has the sag terms from the link angles, as in part 2. They're in goal units, radians of steady error, rather than in torque.
 
 ### Why not run a full physics simulator inside?
 
-> **[FIGURE: model sizes]** Per-joint servo model (a few numbers) against the full MuJoCo arm, with the rollout time and the fit data needed.
-
-I asked this too. They do simulate a model and keep the best goal, but the model is small: one fitted model per joint, from real logs. Speed isn't the problem, since a full MuJoCo rollout of 0.25 s takes about 0.75 ms on my Mac. [ROUGH DRAFT: give the other reasons from the tutor: fit quality, robustness]
+I asked this too. They do simulate a model and keep the best goal, but the model is small: one fitted model per joint, from real logs. There are three reasons. The first is time: one 0.25 s MuJoCo rollout of the SO-101 takes about 0.75 ms on my Mac, the budget at 100 Hz is about 2 ms per step, and the planners test dozens of plans. The second is coupling: in the full arm, the shoulder goal changes the elbow load, so the search would have to try combinations of all five joints instead of five separate searches. The third is accuracy, which matters most. A physics model is only as good as its constants, and the masses in the model aren't measured on my arm. A Genesis model fitted to my arm predicted held-out logs only a little better than the small servo model (elbow 13.5 against 16.1 mrad, in simulation). So the real question isn't physics or no physics, it's which model predicts my arm best and fast enough.
 
 <details>
 <summary>Where I was wrong: is solve the same as Mink?</summary>
@@ -170,7 +175,13 @@ I thought `solve` was basically Mink. It isn't. Mink is inverse kinematics: it t
 
 ### The real-arm numbers
 
-> **[MEDIA: 3D tracking viewer]** pi, solve and mpc on the cat motion, real traces, error magnified. Play, pause, change the magnification.
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-four.png" aria-label="The same real motion with four controllers side by side: direct, pi, solve and mpc, error drawn ten times larger">
+<source src="/assets/robotics/so101-series/cat-four.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/cat-four.mp4">Watch the video</a>
+</video>
+<figcaption>Real arm on the cat motion: `direct` at 30 Hz, `pi`, `solve` and `mpc` at 60 Hz, error drawn 10 times larger. <a class="video-link" href="/assets/robotics/so101-series/cat-four.mp4">Open video</a></figcaption>
+</figure>
 
 On the real arm, on the "cat" motion at 60 Hz, the errors in mrad were:
 
@@ -180,15 +191,15 @@ On the real arm, on the "cat" motion at 60 Hz, the errors in mrad were:
 | solve | 6.2 | 3.2 | 7.4 | 6.7 | 8.7 | 2.8 |
 | mpc | 6.0 | 3.0 | 7.0 | 6.1 | 8.6 | 2.8 |
 
-> **[FIGURE: per-joint bars]** The table as grouped bars. **[FIGURE: error by speed bin]** pi, solve and mpc across speed bins, showing pi ahead at the fastest speeds.
+![Left: RMS error per joint on the real arm for pi, solve and mpc. The planners win on pan, lift, elbow and roll, and lose on wrist flex. Right: at the fastest speeds pi has 11.7 mrad against 14.2 for solve and 13.4 for mpc.](/assets/robotics/so101-series/real-arm-joints.png "Real arm, cat motion, 60 Hz. The planners win overall, and pi wins at the fastest speeds.")
 
-The planners win overall, but the picture changes with speed. On the fastest parts of the motions, `pi` does better, 11.7 mrad against 14.2 for `solve` and 13.4 for `mpc`. My guess is that a model that's slightly wrong costs more when the joint moves fast, and I come back to that in part 5. [ROUGH DRAFT: check that the speed bins come from the same runs as the table]
+The planners win overall, but the picture changes with speed. On the fastest parts of the motions, `pi` does better, 11.7 mrad against 14.2 for `solve` and 13.4 for `mpc`. Most of that comes from wrist_flex, with 24.7 and 24.8 mrad for `solve` and `mpc` against 16.0 for `pi`. One possible cause is a step limit that the planners hit on 1 % to 3 % of the steps, but I haven't verified it, and each controller ran only once. I come back to model error at speed in part 5.
 
 ## Adapting during the run: w, mpca, rls, adapt
 
-> **[FIGURE: load step]** Simulated load step: mpc and mpca error over time. mpca recovers faster (2.5 against 3.7 mrad).
-
-> **[FIGURE: family tree, adaptive family highlighted]**
+```so101-widget
+{"type": "family-tree", "fallback": "Family tree of the controllers. Base: direct, then lead, then inv. Feedback and gravity: pi, sag, grav, pisag. Adaptive: adapt, rls. Model-based: solve, mpc, mpca. Repeated paths: ilc, ilcmpc. Each controller starts from an earlier one and adds one part.", "links": {"direct": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "lead": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "inv": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "pi": "/robotics/so101-4-goal-ahead/#feedback-pi", "sag": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "grav": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "pisag": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "adapt": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "rls": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "mpca": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "solve": "/robotics/so101-4-goal-ahead/#planning-solve-and-mpc", "mpc": "/robotics/so101-4-goal-ahead/#planning-solve-and-mpc", "ilc": "/robotics/so101-4-goal-ahead/#repeating-the-same-path-ilc-and-ilcmpc", "ilcmpc": "/robotics/so101-4-goal-ahead/#repeating-the-same-path-ilc-and-ilcmpc"}, "highlight": "adaptive"}
+```
 
 A model is fitted once, and then the arm picks up a tool, warms up, or simply isn't quite the arm the model was fitted on. `solve` and `mpc` already carry the simple disturbance observer $w$ from part 3. It learns slowly, dt / 0.3 s of the way per step, so it needs about 0.3 s to catch a change, and it stays within ±0.08 rad. `mpca` replaces $w$ with a Kalman filter that has a fast part for a load and a slow part for sag. In a simulated load step, `mpca` got 2.5 mrad against 3.7 for `mpc` at 30 Hz.
 
@@ -199,13 +210,11 @@ It's a strong classical baseline of a known type rather than a new method. MPC w
 
 </details>
 
-`rls` and `adapt` learn part of the servo model itself during the run. [ROUGH DRAFT: one line each from the controller cards]
+`adapt` keeps the plain `inv` goal but uses a Kalman filter per joint to estimate a fast load part, a slow sag part and a friction part, and subtracts them. `rls` learns the servo model itself during the run: it starts from the fitted model and updates a small linear model of the last two positions and goals with recursive least squares, forgetting old data slowly.
 
 ## Repeating the same path: ilc and ilcmpc
 
-> **[FIGURE: error per run]** Error of ilc over repeated runs of the same path, falling run after run.
-
-If the arm does the same motion over and over, it can learn from its own past runs. Iterative learning control (`ilc`) stores the error of the last run and uses it to correct the goals of the next one, and `ilcmpc` puts that rule on top of `mpc`. In a stand-in test on fast paths, `ilcmpc` had the lowest error of all. [ROUGH DRAFT: give the numbers with their unit and setting: ilcmpc 1.04, mpc 1.15, mpca 1.28, solve 1.36, pi 4.15, adapt 4.90]
+If the arm does the same motion over and over, it can learn from its own past runs. Iterative learning control (`ilc`) stores the error of the last run and uses it to correct the goals of the next one, and `ilcmpc` puts that rule on top of `mpc`. In a stand-in test on the fast motion sets at 100 Hz, `ilcmpc` had the lowest error: 1.04 mrad, against 1.15 for `mpc`, 1.28 for `mpca`, 1.36 for `solve`, 4.15 for `pi` and 4.90 for `adapt`. The stand-in arm uses the same servo model as the planners, so this test favors them.
 
 ## What's next
 
