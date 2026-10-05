@@ -561,3 +561,24 @@ path.so101-coupling-co { fill: var(--accent); }
 span.so101-coupling-cf { background: var(--so101-partial, #a57a2b); }
 span.so101-coupling-co { background: var(--accent); }
 .so101-coupling-readout p { margin: 0 0 6px; font-size: 13.5px; }
+.llm-timeline-intro { color: var(--muted); font-size: 13px; }
+.llm-timeline-stages { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.llm-timeline-stages button { padding: 6px 10px; font-size: 12px; text-align: left; }
+.llm-timeline-stages button.llm-timeline-current { font-weight: 700; }
+.llm-timeline-panel { margin: 0 0 18px; padding: 12px 14px; border-left: 2px solid var(--accent); background: var(--paper); }
+.llm-timeline-row { margin: 0 0 8px !important; }
+.llm-timeline-note { margin: 0 !important; color: var(--muted); font-style: italic; }
+.llm-timeline-note.is-current { color: var(--accent); font-style: normal; font-weight: 600; }
+.llm-timeline-line { display: grid; grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr); border-top: 1px solid var(--line); }
+.llm-timeline-head { border-top: 0; color: var(--muted); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.llm-timeline-cell { display: flex; flex-wrap: wrap; align-content: center; gap: 5px; min-height: 34px; padding: 6px 4px; }
+.llm-timeline-cell.cell-llm, .llm-timeline-head .llm-timeline-cell:first-child { justify-content: flex-end; text-align: right; }
+.llm-timeline-cell.cell-year { justify-content: center; border-inline: 1px solid var(--line); color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.llm-timeline-head .llm-timeline-cell:nth-child(2) { justify-content: center; }
+.llm-timeline-tag { padding: 2px 7px; border: 1px solid var(--line); background: var(--paper); font-family: var(--mono); font-size: 11px; opacity: .55; transition: opacity .2s; }
+.llm-timeline-tag.lane-robot { border-color: var(--accent); }
+.llm-timeline-tag.is-active { opacity: 1; font-weight: 700; background: var(--white); box-shadow: 0 0 0 1px currentColor; }
+.llm-timeline-tag.lane-robot.is-active { color: var(--accent); }
+.llm-timeline-pointer { flex-basis: 100%; color: var(--muted); font-size: 11px; font-style: italic; }
+.llm-timeline-cell.cell-llm .llm-timeline-pointer { text-align: right; }
+.llm-timeline-pointer.is-here { color: var(--accent); font-size: 13px; font-style: normal; font-weight: 700; }

@@ -1111,6 +1111,112 @@ register('goal-equation', renderGoalEquation);
 register('family-tree', renderFamilyTree);
 register('error-matrix', renderErrorMatrix);
 
+
+const TIMELINE_STAGES = [
+  {id:'architecture', label:'1. One general architecture',
+    llm:'2017: the Transformer. One network design for many language tasks.',
+    robot:'2022 to 2023: RT-1 and ACT. Transformers map camera images to robot actions.',
+    note:'The architecture arrives first. It is necessary, but on its own it is not enough.'},
+  {id:'borrow', label:'2. Borrow knowledge from the web',
+    llm:'2018: GPT-1 and BERT. Pretrain on lots of text, then fine-tune on a small task.',
+    robot:'2022 to 2023: SayCan, RT-2 and Open X-Embodiment. A vision-language model becomes a vision-language-action model (VLA), and labs pool their robot data.',
+    note:'Web knowledge transfers: RT-2 roughly doubled success on unseen scenes compared with RT-1.'},
+  {id:'data', label:'3. Collect data on purpose, at scale', here:true,
+    llm:'2019: GPT-2. A bigger model trained on more data generalizes better. Data-labeling companies grow around that bet.',
+    robot:'2024 to 2026: π0, Helix, π0.5, the Atlas large behavior model, Figure Index. Companies build fleets and apps only to collect robot and human data.',
+    note:'We are here. The bet is clear, but nobody has the robot version of a scaling law yet.'},
+  {id:'scaling', label:'4. Measure what scale buys',
+    llm:'2020: scaling laws and GPT-3. Loss falls predictably with model size, data and compute.',
+    robot:'Not yet. There is no agreed curve that says how much success one more hour of robot data buys.',
+    note:'For LLMs, this turned a bet into an investment plan. Robotics does not have that curve yet.'},
+  {id:'product', label:'5. Reliable enough for everyone',
+    llm:'2022: InstructGPT, then ChatGPT. Human feedback makes the model useful to anyone.',
+    robot:'Open. A robot that finishes a household or factory job without help, at a price people pay.',
+    note:'For robots, the bar is higher: a wrong answer in chat costs a retry, a wrong grasp can break something.'},
+];
+const TIMELINE_EVENTS = [
+  {lane:'llm', t:2017.45, label:'Transformer', stage:'architecture'},
+  {lane:'llm', t:2018.45, label:'GPT-1', stage:'borrow'},
+  {lane:'llm', t:2018.8, label:'BERT', stage:'borrow'},
+  {lane:'llm', t:2019.13, label:'GPT-2', stage:'data'},
+  {lane:'llm', t:2020.05, label:'Scaling laws', stage:'scaling'},
+  {lane:'llm', t:2020.4, label:'GPT-3', stage:'scaling'},
+  {lane:'llm', t:2022.2, label:'InstructGPT', stage:'product'},
+  {lane:'llm', t:2022.9, label:'ChatGPT', stage:'product'},
+  {lane:'robot', t:2022.3, label:'SayCan', stage:'borrow'},
+  {lane:'robot', t:2022.95, label:'RT-1', stage:'architecture'},
+  {lane:'robot', t:2023.3, label:'ACT', stage:'architecture'},
+  {lane:'robot', t:2023.55, label:'RT-2 (VLA)', stage:'borrow'},
+  {lane:'robot', t:2023.8, label:'Open X', stage:'borrow'},
+  {lane:'robot', t:2024.83, label:'π0', stage:'data'},
+  {lane:'robot', t:2025.1, label:'Helix', stage:'data'},
+  {lane:'robot', t:2025.3, label:'π0.5', stage:'data'},
+  {lane:'robot', t:2025.63, label:'Atlas LBM', stage:'data'},
+  {lane:'robot', t:2026.6, label:'Index', stage:'data'},
+];
+
+function renderLlmTimeline(el) {
+  setWidgetRoot(el, 'llm-timeline');
+  const grid = element('div', 'llm-timeline-grid');
+  grid.setAttribute('role', 'table');
+  grid.setAttribute('aria-label', 'Language model and robot learning milestones by year');
+  const head = element('div', 'llm-timeline-line llm-timeline-head');
+  head.setAttribute('role', 'row');
+  for (const text of ['Language models', 'Year', 'Robot learning']) {
+    const cell = element('div', 'llm-timeline-cell', text);
+    cell.setAttribute('role', 'columnheader');
+    head.append(cell);
+  }
+  grid.append(head);
+  const marks = [];
+  const tag = (event) => {
+    const item = element('span', `llm-timeline-tag lane-${event.lane}`, event.label);
+    item.dataset.stage = event.stage;
+    marks.push(item);
+    return item;
+  };
+  for (let year = 2017; year <= 2026; year += 1) {
+    const row = element('div', 'llm-timeline-line');
+    row.setAttribute('role', 'row');
+    const cells = ['llm', 'year', 'robot'].map((lane) => {
+      const cell = element('div', `llm-timeline-cell cell-${lane}`);
+      cell.setAttribute('role', 'cell');
+      if (lane === 'year') cell.textContent = String(year);
+      else TIMELINE_EVENTS.filter((event) => event.lane === lane && Math.floor(event.t) === year).forEach((event) => cell.append(tag(event)));
+      return cell;
+    });
+    if (year === 2019) cells[0].append(element('span', 'llm-timeline-pointer', '→ the stage robots reach in 2026'));
+    if (year === 2026) cells[2].append(element('span', 'llm-timeline-pointer is-here', '▲ we are here: the GPT-2 stage'));
+    row.append(...cells);
+    grid.append(row);
+  }
+  const buttons = element('div', 'llm-timeline-stages');
+  buttons.setAttribute('role', 'group');
+  buttons.setAttribute('aria-label', 'Choose a stage');
+  const panel = element('div', 'llm-timeline-panel');
+  panel.setAttribute('aria-live', 'polite');
+  const stageButtons = new Map();
+  const select = (stage) => {
+    for (const [id, item] of stageButtons) item.setAttribute('aria-pressed', String(id === stage.id));
+    for (const mark of marks) mark.classList.toggle('is-active', mark.dataset.stage === stage.id);
+    const rows = [['Language models', stage.llm], ['Robot learning', stage.robot]].map(([name, text]) => {
+      const row = element('p', 'llm-timeline-row');
+      row.append(element('strong', '', `${name}: `), document.createTextNode(text));
+      return row;
+    });
+    panel.replaceChildren(element('h4', '', stage.label), ...rows, element('p', stage.here ? 'llm-timeline-note is-current' : 'llm-timeline-note', stage.note));
+  };
+  for (const stage of TIMELINE_STAGES) {
+    const item = button(stage.here ? `${stage.label} (we are here)` : stage.label, stage.here ? 'llm-timeline-current' : '');
+    item.addEventListener('click', () => select(stage));
+    stageButtons.set(stage.id, item);
+    buttons.append(item);
+  }
+  el.append(element('p', 'llm-timeline-intro', 'Pick a stage. Its milestones light up in both columns.'), buttons, panel, grid);
+  select(TIMELINE_STAGES.find((stage) => stage.here));
+}
+register('llm-timeline', renderLlmTimeline);
+
 function mount(element, fn) {
   if (element.dataset.so101Ready === 'true' || element.dataset.so101Ready === 'pending') return;
   let config;

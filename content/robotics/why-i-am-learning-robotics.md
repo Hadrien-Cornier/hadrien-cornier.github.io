@@ -1,115 +1,133 @@
 ---
 title: 'Why I am learning robotics'
-description: 'New robot companies, new ways to learn, and unresolved questions about bodies, data, and reliable progress.'
+description: 'The most impressive robots of the last decade stayed in videos because they could not generalize. Language models changed that, and robotics now looks like language models in 2019.'
 date: '2026-09-28'
-updated: '2026-09-29'
+updated: '2026-10-05'
 slug: 'why-i-am-learning-robotics'
 ---
 
-In September 2025, Figure announced [more than $1 billion in committed Series C funding](https://www.figure.ai/news/series-c), at a $39 billion valuation. The company was [founded in 2022](https://www.figure.ai/culture). Three years from starting a company to a round of that size is striking. In August 2026, it announced [Index](https://www.figure.ai/news/introducing-index), an app that pays people to record everyday activities. Figure reported more than **16 million videos** and **44,000 weekly active users**. A humanoid company is building a human-data collection business.
+In 2018, Boston Dynamics posted a video of its Atlas humanoid jumping over a log and running up a set of boxes. A year earlier, Atlas did a backflip. For most of us, those clips were the image of what a robot could be. Then I went looking for where I could see one at work, and I couldn't find many. Spot, the robot dog, [went on sale in 2020](https://venturebeat.com/ai/boston-dynamics-buy-spot-robot-74500) for $74,500, and Boston Dynamics now says it has [more than 1,500 Spots in customer hands](https://bostondynamics.com/products/spot/). Over the same years, Amazon put [one million robots](https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model) into its warehouses, and almost none of them can walk.
 
-The wider industry is already substantial. The International Federation of Robotics counted [944 service-robot producers in its 2025 report](https://ifr.org/img/worldrobotics/Executive_Summary_WR_2025_Service_Robots.pdf), excluding system integrators. Its latest report puts the [industrial robot population at five million in 2025](https://ifr.org/ifr-press-releases/news/five-million-robots-now-operate-in-factories-globally). What feels young is the attempt to make one robot useful across many changing tasks and places.
+So here is the question that pulled me into robotics: **why did the most capable robots in the world stay in the videos, and why does that seem to be changing now?** My short answer is that the problem was never the body. It was the software, and in particular the fact that the software couldn't generalize. Language models are fixing that, and robotics today looks a lot like language models did in 2019.
 
-It reminds me of AI around 2019 and 2020. Alongside better models, companies were building the machinery for creating training data: [Scale, founded in 2016](https://scale.com/about), [Labelbox in 2018](https://labelbox.com/company/about/), and [Snorkel AI in 2019](https://snorkel.ai/company/). Robotics now has its own version of that problem. The internet contains plenty of descriptions of opening a drawer. It contains much less synchronized evidence of what a robot saw, commanded, and felt while doing it.
+## Why the best robots stayed in the videos
 
-That combination makes the field interesting: substantial investment, visible technical progress, and basic choices that remain open. What body should a robot have? What experience should it learn from? How do we know that it is getting better?
+Boston Dynamics explained how the parkour worked in [a 2021 post](https://bostondynamics.com/blog/flipping-the-script-with-atlas/). Atlas used **model predictive control**: a model of its own dynamics predicts how the body will move over the next moments, and an optimizer picks the forces that keep it on track. The jumps and vaults came from a small library of template behaviors that engineers designed offline. The controller adapted them to the terrain on the fly. That is beautiful engineering, and it's also the catch. Each new behavior is a project for a team of experts.
 
-## What changed in robot learning?
+That works when the task is fixed. Spot sells for inspection because inspection is easy to specify: walk this route, read these gauges, take this thermal photo. It doesn't work for "unload this dishwasher" in a stranger's kitchen. Change the cup, the lighting, the table height or the clutter, and the same instruction needs a different movement. The ability to carry a skill into a situation you didn't program for is called **generalization**, and a hand-engineered controller has very little of it.
 
-[Unimate began factory work in 1961](https://www.thehenryford.org/collections/explore/artifact/183434). Robots have been useful for 65 years. The harder ambition is a machine that can take a familiar skill into an unfamiliar situation. Change the cup, lighting, table height, or clutter, and the same instruction can require a different movement. This ability to carry learning into new situations is **generalization**.
+The company's history shows how hard it was to turn the hardware into a business. Boston Dynamics had three owners in eight years: Google bought it in 2013, SoftBank in 2017 and Hyundai in 2021. The robots were never the weak part.
 
-[ACT, Action Chunking with Transformers](https://arxiv.org/html/2304.13705v1), made that problem feel accessible to experiment with. Its 2023 paper trained a transformer to take camera images and joint positions and predict a short sequence of joint targets. That is a **policy**: a rule for choosing actions from what the robot observes. Five of the six real tasks used **50 demonstrations each**; threading Velcro used 100. The recorded motion amounted to 10 to 20 minutes per task. Collecting it took 30 to 60 minutes, including resets and mistakes.
+## Hardware is not the bottleneck
 
-A separate advance brought in knowledge learned from images and text. A **vision-language model**, or VLM, connects what it sees with language. A **vision-language-action model**, or VLA, also produces robot actions. [RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/) trained on web and robot data together. In its 2023 evaluations, success on unseen scenarios rose from RT-1's **32% to 62%**. Objects, backgrounds, and environments were varied to test that transfer.
+There's a simple test for whether a robot's body is good enough for a task: let a person drive it by remote control, which is called **teleoperation**. If a human operator can do the task through the robot, the motors, joints and cameras are sufficient. What's missing is a program that does what the operator did.
 
-Some systems split the work across different levels. In [Gemini Robotics 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/), a reasoning model plans steps and calls tools, then gives instructions to a VLA that controls movement. A request such as "put the groceries away" can become a sequence of smaller goals, with new observations changing the plan. This connects broad knowledge to learned physical skills.
+Cheap robots pass this test surprisingly often. The 2023 [ACT paper](https://arxiv.org/abs/2304.13705) asked directly whether learning lets "low-cost and imprecise hardware" do fine manipulation. Its two-arm ALOHA setup threaded cable ties and slotted a battery from about 50 demonstrations per task. A year later, [Mobile ALOHA](https://arxiv.org/abs/2401.02117) put the same arms on a wheeled base and learned to sauté a shrimp, store heavy pots in a cabinet and call an elevator, again from 50 demonstrations per task. A [Unitree G1 humanoid starts at $13,500](https://www.unitree.com/g1/). One SO-101 arm, the one I use, costs [a little over $100 in parts](https://github.com/TheRobotStudio/SO-ARM100).
 
-The progress is large enough to change what is worth trying. Reliability is still the test. On September 17, 2026, [Figure reported](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) **56% task success across three behaviors in 30 unseen homes**, compared with 9% without Index pretraining. The tasks were tidying toys, folding towels, and making beds. Both models received the same task-specific training data from other locations. That result shows why human data is attractive, and how much room remains before a robot can be trusted to finish a household job.
+This doesn't mean hardware is solved. Hands are still fragile, cables wear out, batteries run down, and a robot that breaks every week isn't useful (more on that in the drawers at the end). But the gap between what the hardware can do under a human's control and what it does on its own is far larger than the gap between the hardware and the task. That gap is software.
 
-## Does the robot need a human body?
+## From language models to robot actions
 
-Amazon offers a useful contrast. By June 2025, it had [deployed its millionth robot across a network of more than 300 facilities](https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model). Its fleet includes mobile machines and arms designed around warehouse work. A machine can be extremely useful without looking like a person.
+Language models crossed this same gap for text. A **large language model**, or LLM, is trained to predict the next piece of text, and in doing so it absorbs a huge amount of general knowledge. Two extensions brought that knowledge to robots:
 
-The humanoid argument starts from the environment: doors, shelves, tools, and workstations were built for human reach and movement. Two arms and legs may let a robot use more of that infrastructure. They also bring balance, power, and mechanical complexity.
+| Model | Input | Output |
+|---|---|---|
+| Large language model (LLM) | Text | Text |
+| Vision-language model (VLM) | Images and text | Text |
+| Vision-language-action model (VLA) | Camera images, a text instruction, the robot's joint state | Robot actions |
 
-There is already measurable work behind some humanoid demonstrations. [BMW reports](https://www.press.bmwgroup.com/global/article/attachment/T0455864EN/644966) that Figure 02 moved **more than 90,000 components in about 1,250 operating hours** during its ten-month Spartanburg deployment. The job was positioning sheet-metal parts for welding. Agility reported [more than 100,000 tote movements](https://www.agilityrobotics.com/content/digit-moves-over-100k-totes) by Digit at a GXO facility in November 2025. Those are repeated industrial jobs with defined conditions.
+A VLA usually starts from a pretrained VLM and is then trained on robot data, so the robot inherits what the VLM learned from the web. [RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/) showed in 2023 that this transfer is real: on scenarios with unseen objects, backgrounds and environments, success rose from RT-1's **32% to 62%**. Systems like [Gemini Robotics 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/) add a reasoning model on top that breaks "put the groceries away" into steps and hands each one to the VLA.
 
-The approaches also differ within humanoids: [Agility's Digit](https://www.agilityrobotics.com/solutions) focuses on logistics, [Apptronik's Apollo](https://apptronik.com/news-collection/apptronik-raises-350-million-in-series-a-funding) on industrial work, [1X's NEO](https://www.1x.tech/discover/neo-home-robot) on homes, and [Unitree's G1](https://www.unitree.com/g1/) is a platform people can buy and develop on. Apptronik announced a **$350 million Series A in February 2025**. Funding gives these designs room to develop; useful work per hour will decide where they fit.
+The clearest sign of the shift is what Boston Dynamics itself did. In August 2025, with Toyota Research Institute, it showed Atlas driven by [a single large behavior model](https://bostondynamics.com/blog/large-behavior-models-atlas-find-new-footing/) that controls the whole body, legs and hands, from demonstrations. Tasks like tying a rope or spreading a tablecloth, which would be miserable to hand-program, use the same training process as stacking blocks. In their words, "if you can demonstrate it, the robot can learn it." In January 2026, the company [unveiled a production Atlas](https://bostondynamics.com/blog/boston-dynamics-unveils-new-atlas-robot-to-revolutionize-industry/) and a partnership with Google DeepMind to put Gemini models inside it, and Hyundai announced a factory that can build **30,000 robots per year**. The company that best represented hand-engineered control is now betting on learned policies.
 
-The interesting comparison is the whole job: how often the robot succeeds, how much human help it needs, how long it runs, and what it costs to maintain. In some places, wheels and a gripper may be enough. In others, a more general body may earn its complexity.
+## A reset button on classical robotics
 
-## Where should the experience come from?
+The classical robot is a pipeline of separate modules, each written by experts: perception finds the objects, state estimation works out where everything is, a planner chooses a path and a controller follows it. Each module has its own equations and its own decades of research. A VLA replaces most of that pipeline with one network that goes from pixels and words to actions.
 
-Several sources can contribute to the same robot. Each supplies different information.
+That's a reset button. A lot of what used to be an equations problem becomes a data problem: which demonstrations to collect, how to cover the situations that matter, and how to test whether the robot got better. It also means someone who arrives late, like me, isn't decades behind. The new questions are new for everybody.
+
+It isn't a full reset, though. Underneath every VLA, a motor still runs a classical feedback loop. The network outputs a target angle, and the joint doesn't land exactly on it: gravity pulls it down, friction holds it back and the servo reacts late. That last mile is where my own research sits. I'm testing whether a controller can be more accurate than the classical ones on my SO-101 arm, and the [series that starts with one equation](/robotics/so101-1-target-and-goal/) is what I've learned so far.
+
+## Robotics is in its 2019
+
+The timeline below puts the two fields side by side. Pick a stage to see what happened in each one.
+
+```so101-widget
+{"type":"llm-timeline","fallback":"Language models: Transformer (2017), GPT-1 and BERT (2018), GPT-2 (2019), scaling laws and GPT-3 (2020), InstructGPT and ChatGPT (2022). Robot learning: SayCan and RT-1 (2022), ACT, RT-2 and Open X-Embodiment (2023), π0 (2024), Helix, π0.5 and the Atlas large behavior model (2025), Figure Index (2026). Robot learning in 2026 is at the stage language models reached with GPT-2 in 2019: collecting data on purpose, at scale."}
+```
+
+The dates come from the papers and announcements: the [Transformer](https://arxiv.org/abs/1706.03762), [GPT-3](https://arxiv.org/abs/2005.14165), the [scaling laws](https://arxiv.org/abs/2001.08361) and [InstructGPT](https://arxiv.org/abs/2203.02155) for language, and [SayCan](https://arxiv.org/abs/2204.01691), [RT-1](https://arxiv.org/abs/2212.06817), [RT-2](https://arxiv.org/abs/2307.15818), [Open X-Embodiment](https://arxiv.org/abs/2310.08864), [π0](https://arxiv.org/abs/2410.24164), [Helix](https://www.figure.ai/news/helix) and [π0.5](https://arxiv.org/abs/2504.16054) for robots.
+
+In 2019, GPT-2 showed that a bigger model trained on more data generalizes better, and a whole industry grew up around producing training data: [Scale](https://scale.com/about), [Labelbox](https://labelbox.com/company/about/) and [Snorkel AI](https://snorkel.ai/company/) all date from that period. Robotics is at that point now. In August 2026, Figure launched [Index](https://www.figure.ai/news/introducing-index), an app that pays people to record everyday activities, and reported more than **16 million videos** from **44,000 weekly users**. A month later it [reported](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) **56% task success in 30 homes the robot had never seen**, compared with 9% without the Index pretraining. That's real generalization, and it's also a long way from a robot you'd trust to finish the job.
+
+The data can come from several places, and each one gives something different:
 
 | Source | What it gives the learner | What remains difficult |
 |---|---|---|
 | Teleoperation: a person controls the robot | Camera views paired with actual robot commands and measured motion | Operator time, scene resets, and collecting enough varied examples |
 | Physics simulation | Repeatable trials, known state, and many experiments running in parallel | Matching real contact, friction, deformable objects, and sensor behavior |
-| Human video, including egocentric views filmed from the person's perspective | Everyday tasks across many people, objects, and places | Recovering motion and contact, then translating them to a different body |
+| Human video, filmed from the person's point of view | Everyday tasks across many people, objects, and places | Recovering motion and contact, then translating them to a different body |
 
-Human video makes the missing information easy to picture. A hand goes behind a mug. The camera loses the fingers just as they make contact. A pose estimator may infer their positions, but it does not directly measure the grip force. Even a perfect human hand trajectory has to become a movement the robot can perform. [EgoMimic](https://egomimic.github.io/), for example, combines tracked human hand movements with robot demonstrations. Other approaches use video to learn useful visual features before training on robot actions.
+### Where the analogy breaks
 
-Simulation offers a different route to scale. NVIDIA's [Isaac Sim and Isaac Lab](https://developer.nvidia.com/isaac/lab) support simulated robots, sensors, and learning experiments. [World Labs' Marble can generate 3D environments that are imported into Isaac Sim](https://developer.nvidia.com/blog/simulate-robotic-environments-faster-with-nvidia-isaac-sim-and-world-labs-marble/). The scene supplies geometry and appearance; the simulator supplies physical interaction. Testing a grasp still depends on the contact and object properties being right.
+The parallel isn't perfect, and the differences matter.
 
-A useful data collection system therefore needs more than hours of footage. It needs coverage of relevant situations, consistent measurements, and a way to connect new data to better performance. Figure is building that system internally through Index. Providers such as [micro1](https://www.micro1.ai/research/robotics-is-entering-a-phase-of-rapid-diversification) are also building robotics data services. The question is which missing experiences actually improve the robot.
+1. **The data wasn't free.** GPT-2 trained on text that already existed on the internet. Nobody wrote down what a robot saw, commanded and felt while opening a drawer. Every hour of robot data has to be produced, usually by a person.
+2. **There's no scaling law yet.** In 2020, language models got a curve that predicts how much better a model gets with more data and compute. That turned a bet into an investment plan. Robotics doesn't have that curve, so it's possible we're really in 2017, not 2019.
+3. **The bar for reliability is higher.** A wrong answer in a chat costs a retry. A wrong grasp can break a glass. And long tasks multiply errors: if a job has 20 steps that each succeed 95% of the time, the robot finishes only $0.95^{20} \approx 36\%$ of the time.
 
-## Should a robot predict actions, or their consequences?
+That third point is also why measurement is so hard. Benchmarks like [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) and [RoboCasa](https://robocasa.ai/leaderboard.html) make it possible to compare policies in simulation, and even there the leading entry on RoboCasa scored **36.7%** on held-out multi-step tasks in September 2026. In the real world, someone has to reset the scene, the lighting shifts and the cup is slightly different every time.
 
-A policy can look at the scene and choose a movement. For control, an **action-conditioned world model** predicts what could happen after a proposed movement. Push here: will the cup slide, tip, or hit something? A planner can compare those predicted futures before choosing an action.
+## Reindustrializing Europe and the United States
 
-The model can predict useful features of a scene instead of drawing every future pixel. This is the idea behind **JEPA**, Joint Embedding Predictive Architecture. Meta's [V-JEPA 2](https://arxiv.org/abs/2506.09985) first learned from over one million hours of internet video without action labels. Its control version then learned from less than **62 hours of robot data** and used predicted outcomes to plan movements. Yann LeCun's new company, [AMI](https://amilabs.xyz/), is pursuing world models that predict in this kind of learned representation space.
+This is the part that excites me most, and it's a vision, not a measurement.
 
-Another choice is how much physical structure to build into the system. Should a model learn the path from camera image to command directly? Or should parts of the system explicitly represent physical constraints and uncertainty? [FieldAI describes its approach](https://www.fieldai.com/news/fieldai-and-nvidia-omniverse-building-the-next-generation-of-industrial-ai) as combining learned models with physics-based reasoning and uncertainty awareness. The useful test is how those choices change behavior when the robot meets unfamiliar terrain or obstacles.
+Factories in Europe and the US already use a lot of robots. The International Federation of Robotics counts [449 robots per 10,000 manufacturing employees in Germany and 307 in the US](https://ifr.org/ifr-press-releases/news/robot-density-surges-in-europe-asia-and-americas), against 1,220 in South Korea. But those robots sit mostly where the task never changes: welding the same car body, placing the same chip. Every new task means an integrator reprogramming the cell, so automation only pays off at high volume. Small-batch work, with many different parts and frequent changes, stayed manual, and manual work moved to wherever labor was cheapest.
 
-Reinforcement learning provides another way to improve behavior: try actions, observe outcomes, and optimize a reward. Bellman's equations connect the value of a decision to its immediate reward and the value of what comes next. Two widely used methods, [PPO](https://arxiv.org/abs/1707.06347) and [SAC](https://arxiv.org/abs/1812.05905), both support continuous actions such as joint commands. PPO learns from recent experience with controlled policy updates. SAC reuses past experience and balances reward with exploration. That reuse matters when each physical trial takes time.
+If a robot can learn a new task from a few dozen demonstrations in an afternoon, that calculation changes. Small-batch production becomes something a robot can do, and labor cost stops being the reason to build a factory far away. With an aging workforce in Europe and a political push in both regions to bring manufacturing back, general-purpose robots could make reindustrialization economically possible rather than a slogan. Hyundai building a factory for 30,000 robots a year is one company placing that bet.
 
-These methods are still being adapted to robot learning. [RL Tokens](https://www.pi.website/research/rlt), for example, uses compact features from a VLA to help reinforcement learning refine precise skills. Demonstrations can teach the rough behavior, while rewards and corrections improve difficult parts. World models, imitation, and reinforcement learning can work together.
+The constraint, again, is software that generalizes and is reliable enough for a production line. That's the problem I want to work on.
 
-## Could a coding agent teach or control the robot?
+## Open questions I keep returning to
 
-[EmbodiedSWE](https://arxiv.org/html/2609.27308v1), released on September 23, 2026, treats simulated robot tasks as programming problems. A coding agent writes a solution, runs it, inspects the outcome, and tries again. Verified programs then generate varied demonstrations for training a policy. Its strongest reported agent solved about **82% of 28 simulated tasks**, with a four-hour budget per task and access to the simulator's full state.
+These are the questions I find most interesting, but they aren't needed for the argument above.
 
-The physical test shows the next hurdle. After fine-tuning a pretrained robot policy on **500 simulated demonstrations**, it completed a four-stage lamp disassembly in **2 of 10 real trials**, compared with 0 of 10 before fine-tuning. Generating a working simulation program and producing a reliable physical skill are two steps that both need testing.
+<details>
+<summary>Does the robot need a human body?</summary>
 
-[Agent as Policy](https://arxiv.org/html/2609.12541v1) tries a different arrangement: the coding agent stays in the loop while a real robot works. It observes, writes code, calls robot tools, and revises its actions. The robot interface handles trajectories and motor control. In three block-manipulation setups, the paper reports **5/5, 5/5, and 4/5 successful trials**; successful runs averaged roughly **21 to 35 minutes**, depending on the setup.
+Amazon's million robots are mostly wheeled machines and arms designed around warehouse work. A machine can be extremely useful without looking like a person.
 
-That is a fascinating possibility. The same kind of agent that edits files and calls software tools can request movements from a robot. The open question is how to turn that flexibility into fast, dependable behavior.
+The humanoid argument starts from the environment: doors, shelves, tools and workstations were built for human reach and movement. [BMW reports](https://www.press.bmwgroup.com/global/article/attachment/T0455864EN/644966) that Figure 02 moved **more than 90,000 components in about 1,250 operating hours** at its Spartanburg plant. Agility reported [more than 100,000 tote movements](https://www.agilityrobotics.com/content/digit-moves-over-100k-totes) by Digit at a GXO facility. Those are repeated industrial jobs with defined conditions. The real comparison is the whole job: how often the robot succeeds, how much human help it needs, how long it runs and what it costs to maintain.
 
-## How do we measure progress?
+</details>
 
-A new algorithm is easy to propose. A convincing comparison needs a fixed task, a clear definition of success, and enough trials to show what happens repeatedly.
+<details>
+<summary>Should a robot predict actions, or their consequences?</summary>
 
-Simulation helps make that possible. [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) provides **130 manipulation tasks** organized around different kinds of knowledge transfer. [RoboCasa365](https://arxiv.org/abs/2603.04356) includes **365 household tasks**, from individual skills to longer sequences. The [DeepMind Control Suite](https://arxiv.org/abs/1801.00690) supplies standardized continuous-control tasks. They let researchers rerun policies under controlled conditions and compare changes.
+A VLA looks at the scene and chooses a movement. An **action-conditioned world model** instead predicts what happens after a proposed movement: push here, and will the cup slide or tip? A planner can compare those futures before acting. Meta's [V-JEPA 2](https://arxiv.org/abs/2506.09985) learned from over a million hours of video without action labels, then from less than **62 hours of robot data**, and used its predictions to plan. Yann LeCun's company [AMI](https://amilabs.xyz/) is pursuing this direction.
 
-The scores show how much remains open even in simulation. In the [RoboCasa leaderboard updated September 23, 2026](https://robocasa.ai/leaderboard.html), the leading entry, Paimon-0, achieved **58.1% average success on the 50-task benchmark**. Its score on 16 held-out multi-step tasks was **36.7%**. Those tests used kitchens present during pretraining; the new challenge was the task.
+</details>
 
-The physical test adds work that software benchmarks can hide. Someone must put the objects back. Lighting shifts, batteries discharge, parts wear, and a slightly different cup changes the grasp. Two labs need to agree on the scene, starting conditions, time limit, permitted human help, and success rule.
+<details>
+<summary>Could a coding agent teach or control the robot?</summary>
 
-Long tasks make reliability especially demanding. If a job requires 20 steps, each succeeds independently with probability 95%, and every step must work, the chance of finishing is $0.95^{20} \approx 36\%$. Recovery matters because one failed grasp need not end the task. An evaluation should count recoveries, interventions, elapsed time, and damage as well as completion.
+[EmbodiedSWE](https://arxiv.org/html/2609.27308v1) treats simulated robot tasks as programming problems: an agent writes a solution, runs it and tries again, and the verified programs generate demonstrations. Its best agent solved about **82% of 28 simulated tasks**, but after fine-tuning on 500 of those demonstrations, a real robot completed a lamp disassembly in **2 of 10 trials**. [Agent as Policy](https://arxiv.org/html/2609.12541v1) keeps the coding agent in the loop on a real robot, with **5/5, 5/5 and 4/5** successes on block tasks, at 21 to 35 minutes per run. Flexible, but far from fast.
 
-This is where datasets and evaluations become central. A dataset determines which situations the robot has a chance to learn. An evaluation tells us whether it learned something that survives a change of scene. Reliable collection, useful coverage, and repeatable testing can become a lasting advantage.
+</details>
 
-## The hardware still has to survive
+<details>
+<summary>The hardware still has to survive</summary>
 
-Hands make the connection between software and hardware concrete. A policy might choose a good grasp, but the mechanism must produce it thousands of times.
+Hands are where software meets hardware. Tendons let designers put the motors in the forearm and pull the fingers through cables, which keeps the hand light. But a cable can only pull, so it needs an opposing cable or spring, and the routing brings friction, wear and tension control. Putting motors in the fingers avoids that but adds mass and heat in a small space. In August 2026, [Figure's founder called its first tendon-based hand his biggest engineering mistake](https://x.com/adcock_brett/status/2087927278458327179), while [Shadow's hand](https://shadow-robot-company-dexterous-hand.readthedocs-hosted.com/en/latest/user_guide/md_motor_unit.html) still uses twenty forearm motors and paired tendons. A useful robot needs a plan for repair: replaceable fingers, accessible cables and parts you can service without rebuilding the arm.
 
-Tendons let designers put motors farther from the fingers and transmit force through cables. That leaves more space in the hand and reduces its mass. But a cable pulls; it cannot push. An opposing cable or spring must provide the return force. Cable routing brings friction, wear, and tension control. Bending the wrist can change the cable path and disturb finger motion unless the design accounts for it. [MM-Hand](https://arxiv.org/abs/2604.17245) studies these transmission problems directly.
-
-Putting motors near the finger joints shortens that transmission, but puts more mass, heat, and machinery into a small space. The hand also has to survive impacts. Its ability to yield under a load depends on the motors, gears, elastic parts, and control working together.
-
-In August 2026, [Figure founder Brett Adcock called its first tendon-based hand his biggest engineering mistake at the company](https://x.com/adcock_brett/status/2087927278458327179). Other teams keep developing the approach. [Shadow's hand](https://shadow-robot-company-dexterous-hand.readthedocs-hosted.com/en/latest/user_guide/md_motor_unit.html) uses twenty forearm motors and paired tendons. There are real design choices here: where to put the motors, how to sense force, and which parts will wear out.
-
-It makes me appreciate the human hand. We get strength, touch, flexibility, and healing in one small structure. A robot needs a plan for repair: replaceable fingers, accessible cables, and parts that can be serviced without rebuilding the arm. Hardware design shapes what the software can learn and how long the result remains useful.
+</details>
 
 ## Learning quickly without skipping the thinking
 
-I have just started learning robotics, and these open questions make it a good time to begin. Papers, simulation tools, affordable arms, and coding agents make it possible to follow a question into an experiment quickly.
+I've just started learning robotics, and the reset makes this a good time to begin. Papers, simulators, cheap arms and coding agents let me follow a question into an experiment in an afternoon.
 
-That speed creates its own problem. If I follow every interesting branch, I can explore for hours without making anything concrete. And when an agent builds the experiment for me, it can skip the design decisions that would have forced me to understand it. A clear answer can arrive before I've done the thinking.
+That speed has its own trap. If I follow every interesting branch, I can explore for hours without making anything concrete. And when an agent builds the experiment for me, it can skip the design decisions that would have forced me to understand it. So I try to keep the parts that change my understanding: predicting a result before I run it, choosing the experiment, explaining a failure, and finding the example that makes an idea click.
 
-I want to keep the speed while making room for the work that changes my understanding: predicting a result, choosing the experiment, explaining a failure, and finding the example that makes an idea click.
+[Jacob Rothschild's writing about robot control](https://x.com/ja_rothschild/article/2100633491432239411) helped inspire these posts. Writing gives the learning a finish line: if I can explain something clearly without the conversation that led there, I have something I can come back to and test.
 
-[Jacob Rothschild's writing about robot control](https://x.com/ja_rothschild/article/2100633491432239411) helped inspire these posts. Writing gives that learning a finish line. Turning scattered notes into an explanation forces me to decide what matters and connect the steps. If I can explain it clearly without the conversation that led there, I have something I can return to and test later.
-
-I will publish articles about the questions I explore, with examples and experiments where they help. The first technical report starts with [joint angles, hand poses, and motor control](/robotics/from-joint-angles-to-a-moving-arm/).
+The first technical post is about [joint angles, hand poses and motor control](/robotics/from-joint-angles-to-a-moving-arm/). The [SO-101 series](/robotics/so101-1-target-and-goal/) is about the last mile: why the arm misses the target the policy asks for, and what each controller does about it.
