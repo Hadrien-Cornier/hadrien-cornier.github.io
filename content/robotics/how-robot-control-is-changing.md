@@ -10,7 +10,13 @@ Ask a robot arm to pick up a small green block and put it in a tray. The camera 
 
 The motors can follow their commands perfectly and still miss. Something has to notice the change and choose a different movement. So the real question of robot control isn't "how do I make the motor follow?" anymore. It's this: **how does the robot choose its next movement?**
 
-![The same arm and table before and after a green block moves. The old location is outlined. A dashed new reach ends at the moved block.](/assets/robotics/modern-control/v2/observe-again.png "Left: the reach fits the observed block. Right: the block moves while the gripper stays in the same place. A fresh observation can change the next reach. The dashed line is a proposed revised reach.")
+<figure class="article-figure">
+<video autoplay loop controls muted playsinline preload="metadata" poster="/assets/robotics/modern-control/v4/observe-again.png" aria-label="Two simulated SO-101 arms reach for a green block that slides about 9 cm while they move. The left arm, which planned once, closes on empty air. The right arm, which looks again every 0.1 s, turns toward the block and puts it in the tray.">
+<source src="/assets/robotics/modern-control/v4/observe-again.mp4" type="video/mp4">
+<a href="/assets/robotics/modern-control/v4/observe-again.mp4">Watch the video</a>
+</video>
+<figcaption>Same block, same move, two ways to choose the next movement. Left: the arm plans once from the first image and closes on empty air. Right: it takes a new image every 0.1 s, so the next targets follow the block. Each tick on the time bar is one new image. Simulated SO-101 in Genesis; the motions are scripted to teach the idea, not a learned policy. <a class="video-link" href="/assets/robotics/modern-control/v4/observe-again.mp4">Open video</a></figcaption>
+</figure>
 
 Here's the short answer. Between 2023 and 2026, that choice moved out of hand-written planners and into one learned network, in five steps:
 
@@ -61,7 +67,7 @@ What's still missing is **memory** and a **cheap way to imagine**. The timeline 
       "summary": "Demonstrations connect camera images to future joint targets.",
       "mechanism": "ACT predicts a chunk of joint targets from images and joint readings, and blends overlapping chunks.",
       "anchor": "section-act-copy-a-person-one-chunk-at-a-time",
-      "visual": {"src": "/assets/robotics/modern-control/v2/action-chunk.png", "alt": "Three top views of an arm reaching, grasping and carrying a block.", "caption": "One chunk: a short sequence of future targets."},
+      "visual": {"src": "/assets/robotics/modern-control/v4/action-chunks.png", "alt": "A simulated SO-101 with ten small spheres in front of the gripper: the targets of one action chunk.", "caption": "One chunk: 10 future targets; the dark ones run first."},
       "stack": [
         {"role": "goal", "text": "The one task shown in the demonstrations", "mode": "designed"},
         {"role": "scene", "text": "Learned image features; joint readings", "mode": "learned"},
@@ -190,7 +196,13 @@ Suppose a person shows the arm how to pick up the block, about 50 times, from di
 
 The method that came with it, **Action Chunking with Transformers (ACT)**, predicts a short sequence of future joint targets from the current images and joint angles. That sequence is an **action chunk**. A controller below tracks the targets. With only **10 minutes of demonstrations**, ACT learned six fine tasks, like slotting a battery, with **80 to 90% success**. [ACT abstract](https://arxiv.org/abs/2304.13705)
 
-![Three top views show the same arm reaching for the block, closing its gripper and carrying it toward the tray. Both links keep their lengths.](/assets/robotics/modern-control/v2/action-chunk.png "Three moments from one action chunk. Each command sets a target for the controller below.")
+<figure class="article-figure">
+<video autoplay loop controls muted playsinline preload="metadata" poster="/assets/robotics/modern-control/v4/action-chunks.png" aria-label="A simulated SO-101 reaches for a green block. Ten small spheres in front of the gripper show the predicted targets of the current action chunk; the first two are dark red. When the block moves, the next chunks bend toward it.">
+<source src="/assets/robotics/modern-control/v4/action-chunks.mp4" type="video/mp4">
+<a href="/assets/robotics/modern-control/v4/action-chunks.mp4">Watch the video</a>
+</video>
+<figcaption>One action chunk, played at 0.4× speed. The spheres are the 10 targets the policy predicts, 0.05 s apart. The robot executes the 2 dark ones, takes a new image and predicts a new chunk. After the block moves, the chunks bend toward it within one tick. Simulated SO-101 in Genesis, scripted motion. <a class="video-link" href="/assets/robotics/modern-control/v4/action-chunks.mp4">Open video</a></figcaption>
+</figure>
 
 Why a chunk and not one action at a time? Copying one step at a time compounds errors: a small mistake puts the arm somewhere the person never was, and the next prediction is worse. Predicting a whole chunk keeps the motion coherent. ACT then predicts a new chunk at every step and averages the overlapping predictions for the same moment, which it calls **temporal ensembling**. [ACT, §IV-A, p. 5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=5)
 
@@ -396,7 +408,13 @@ Two limits stand out to me: the robot forgets, and imagining every pixel is expe
 
 Extend the job: inspect the block, then put it away. The camera image looks the same before and after the inspection. So which step comes next?
 
-![One shared current view of the arm and block branches into two task records. Inspection pending leads to inspect first; inspection done leads to put away.](/assets/robotics/modern-control/v2/history-changes-action.png "The same current image supports different next steps when the history differs.")
+<figure class="article-figure">
+<video autoplay loop controls muted playsinline preload="metadata" poster="/assets/robotics/modern-control/v4/history.png" aria-label="Two simulated SO-101 arms start from the same image of a block on the table. The left one, whose record says inspection pending, carries the block to a dark inspection pad first, then to the tray. The right one, whose record says inspection done, puts the block straight into the tray.">
+<source src="/assets/robotics/modern-control/v4/history.mp4" type="video/mp4">
+<a href="/assets/robotics/modern-control/v4/history.mp4">Watch the video</a>
+</video>
+<figcaption>Same camera image, two task records. Left: the record says the inspection is still pending, so the arm takes the block to the inspection pad first. Right: the record says it is done, so the arm puts the block away. Nothing in the first image tells them apart. Simulated SO-101 in Genesis, scripted motion. <a class="video-link" href="/assets/robotics/modern-control/v4/history.mp4">Open video</a></figcaption>
+</figure>
 
 Every policy in this post, ACT, π0.5 and most VLAs, decides from the current images, maybe the last one or two. That's fine for "pick up the block". It fails for "did I already add salt?", for counting, and for an object the arm itself is hiding.
 
@@ -465,7 +483,7 @@ The loop is the same as in 2010: observe, choose, act, check, revise. What chang
 <details>
 <summary>Sources, licenses and what I didn't verify</summary>
 
-Papers were checked on arXiv on October 5, 2026: ACT, π0, π0.5, π\*0.6, π0.7, RLT, HIL-SERL, EXPO-FT, DreamZero, MEM, RoboMME, Robostral Navigate, OpenVLA and V-JEPA 2. Figures copied from papers are from CC BY 4.0 papers and credited in their captions. For papers under the arXiv non-exclusive license (ACT, π0 to π0.7, RT-2, RLT), I made my own diagrams or used no figure. The three bar charts are mine, drawn from the papers' tables. Videos are embedded from the authors' or companies' own YouTube channels.
+Papers were checked on arXiv on October 5, 2026: ACT, π0, π0.5, π\*0.6, π0.7, RLT, HIL-SERL, EXPO-FT, DreamZero, MEM, RoboMME, Robostral Navigate, OpenVLA and V-JEPA 2. Figures copied from papers are from CC BY 4.0 papers and credited in their captions. For papers under the arXiv non-exclusive license (ACT, π0 to π0.7, RT-2, RLT), I made my own diagrams or used no figure. The three bar charts are mine, drawn from the papers' tables. Videos are embedded from the authors' or companies' own YouTube channels. The three SO-101 clips are my own: scripted motions (MuJoCo inverse kinematics) rendered in the Genesis simulator. They illustrate the ideas; they don't show a trained policy.
 
 The EXPO-FT numbers come from its Table 2. The Dong and Finn post summarizes the same comparison; its "5.5/30" average belongs to HIL-SERL on a subset of four tasks, not to imitation fine-tuning. The RoboArena score is from NVIDIA's June 2026 blog, not from my own check of the leaderboard. The MEM latency and task-progress numbers are read from the paper's figures, so they are approximate. RECAP's advantage example uses made-up numbers. I haven't run any of these systems.
 
