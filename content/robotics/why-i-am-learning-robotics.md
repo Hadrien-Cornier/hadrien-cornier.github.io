@@ -6,29 +6,29 @@ updated: '2026-10-05'
 slug: 'why-i-am-learning-robotics'
 ---
 
-In 2018, Boston Dynamics posted a video of its Atlas humanoid jumping over a log and running up a set of boxes. A year earlier, Atlas did a backflip. For most of us, those clips were the image of what a robot could be. Then I went looking for where I could see one at work, and I couldn't find many. Spot, the robot dog, [went on sale in 2020](https://venturebeat.com/ai/boston-dynamics-buy-spot-robot-74500) for $74,500, and Boston Dynamics now says it has [more than 1,500 Spots in customer hands](https://bostondynamics.com/products/spot/). Over the same years, Amazon put [one million robots](https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model) into its warehouses, and almost none of them can walk.
+In 2018, Boston Dynamics posted a video of its Atlas humanoid jumping over a log and running up a set of boxes. A year earlier, Atlas did a backflip. For a lot of people, me included, those clips were what a robot was supposed to look like. So where are they? I went looking for one at work, and I couldn't find many. Spot, the robot dog, [went on sale in 2020](https://venturebeat.com/ai/boston-dynamics-buy-spot-robot-74500) for $74,500, and Boston Dynamics now says it has [more than 1,500 Spots in customer hands](https://bostondynamics.com/products/spot/). Over the same years, Amazon put [one million robots](https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model) into its warehouses, and almost none of them can walk.
 
-So here is the question that pulled me into robotics: **why did the most capable robots in the world stay in the videos, and why does that seem to be changing now?** My short answer is that the problem was never the body. It was the software, and in particular the fact that the software couldn't generalize. Language models are fixing that, and robotics today looks a lot like language models did in 2019.
+That's the question that pulled me into robotics: **why did the most capable robots in the world stay in the videos, and why does that seem to be changing now?** My short answer is that the problem was never the body. It was the software, and more precisely the fact that the software couldn't generalize. Language models are changing that, and I think robotics today looks a lot like language models did in 2019.
 
 ## Why the best robots stayed in the videos
 
-Boston Dynamics explained how the parkour worked in [a 2021 post](https://bostondynamics.com/blog/flipping-the-script-with-atlas/). Atlas used **model predictive control**: a model of its own dynamics predicts how the body will move over the next moments, and an optimizer picks the forces that keep it on track. The jumps and vaults came from a small library of template behaviors that engineers designed offline. The controller adapted them to the terrain on the fly. That is beautiful engineering, and it's also the catch. Each new behavior is a project for a team of experts.
+Boston Dynamics explained how the parkour worked in [a 2021 post](https://bostondynamics.com/blog/flipping-the-script-with-atlas/). Atlas used **model predictive control**: a model of its own dynamics predicts how the body will move over the next moments, and an optimizer picks the forces that keep it on track. The jumps and vaults came from a small library of template behaviors that engineers designed offline. The controller adapted them to the terrain on the fly. It's great engineering. The catch is that each new behavior is a project for a team of experts.
 
-That works when the task is fixed. Spot sells for inspection because inspection is easy to specify: walk this route, read these gauges, take this thermal photo. It doesn't work for "unload this dishwasher" in a stranger's kitchen. Change the cup, the lighting, the table height or the clutter, and the same instruction needs a different movement. The ability to carry a skill into a situation you didn't program for is called **generalization**, and a hand-engineered controller has very little of it.
+That works when the task is fixed. Spot sells for inspection because inspection is easy to specify: walk this route, read these gauges, take this thermal photo. Now suppose you ask it to unload the dishwasher in a kitchen it has never seen. Who writes that behavior? And the next one? Change the cup, the lighting, the table height or the clutter, and the same instruction needs a different movement. The ability to carry a skill into a situation you didn't program for is called **generalization**, and a hand-engineered controller has very little of it.
 
-The company's history shows how hard it was to turn the hardware into a business. Boston Dynamics had three owners in eight years: Google bought it in 2013, SoftBank in 2017 and Hyundai in 2021. The robots were never the weak part.
+You can see how hard it was to turn that hardware into a business. Boston Dynamics had three owners in eight years: Google bought it in 2013, SoftBank in 2017 and Hyundai in 2021. The robots were never the weak part.
 
 ## Hardware is not the bottleneck
 
-There's a simple test for whether a robot's body is good enough for a task: let a person drive it by remote control, which is called **teleoperation**. If a human operator can do the task through the robot, the motors, joints and cameras are sufficient. What's missing is a program that does what the operator did.
+Here's a simple test for whether a robot's body is good enough for a task. Let a person drive it by remote control, which is called **teleoperation**. Can the operator do the task through the robot? Then the motors, joints and cameras are good enough. What's missing is a program that does what the operator did.
 
-Cheap robots pass this test surprisingly often. The 2023 [ACT paper](https://arxiv.org/abs/2304.13705) asked directly whether learning lets "low-cost and imprecise hardware" do fine manipulation. Its two-arm ALOHA setup threaded cable ties and slotted a battery from about 50 demonstrations per task. A year later, [Mobile ALOHA](https://arxiv.org/abs/2401.02117) put the same arms on a wheeled base and learned to sauté a shrimp, store heavy pots in a cabinet and call an elevator, again from 50 demonstrations per task. A [Unitree G1 humanoid starts at $13,500](https://www.unitree.com/g1/). One SO-101 arm, the one I use, costs [a little over $100 in parts](https://github.com/TheRobotStudio/SO-ARM100).
+Cheap robots pass this test more often than you might expect. The 2023 [ACT paper](https://arxiv.org/abs/2304.13705) asked directly whether learning lets "low-cost and imprecise hardware" do fine manipulation. Its two-arm ALOHA setup threaded cable ties and slotted a battery from about 50 demonstrations per task. A year later, [Mobile ALOHA](https://arxiv.org/abs/2401.02117) put the same arms on a wheeled base and learned to sauté a shrimp, store heavy pots in a cabinet and call an elevator, again from 50 demonstrations per task. A [Unitree G1 humanoid starts at $13,500](https://www.unitree.com/g1/). One SO-101 arm, the one I use, costs [a little over $100 in parts](https://github.com/TheRobotStudio/SO-ARM100).
 
-This doesn't mean hardware is solved. Hands are still fragile, cables wear out, batteries run down, and a robot that breaks every week isn't useful (more on that in the drawers at the end). But the gap between what the hardware can do under a human's control and what it does on its own is far larger than the gap between the hardware and the task. That gap is software.
+This doesn't mean hardware is solved. Hands are still fragile, cables wear out, batteries run down, and a robot that breaks every week isn't useful (more on that in the drawers at the end). But compare two gaps. One is between the hardware and the task. The other is between what the hardware does with a human driving it and what it does on its own. The second gap is much bigger, and it's a software gap.
 
 ## From language models to robot actions
 
-Language models crossed this same gap for text. A **large language model**, or LLM, is trained to predict the next piece of text, and in doing so it absorbs a huge amount of general knowledge. Two extensions brought that knowledge to robots:
+Language models closed this kind of gap for text. A **large language model**, or LLM, is trained to predict the next piece of text, and in doing so it absorbs a huge amount of general knowledge. Two extensions brought that knowledge to robots:
 
 | Model | Input | Output |
 |---|---|---|
@@ -38,15 +38,15 @@ Language models crossed this same gap for text. A **large language model**, or L
 
 A VLA usually starts from a pretrained VLM and is then trained on robot data, so the robot inherits what the VLM learned from the web. [RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/) showed in 2023 that this transfer is real: on scenarios with unseen objects, backgrounds and environments, success rose from RT-1's **32% to 62%**. Systems like [Gemini Robotics 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/) add a reasoning model on top that breaks "put the groceries away" into steps and hands each one to the VLA.
 
-The clearest sign of the shift is what Boston Dynamics itself did. In August 2025, with Toyota Research Institute, it showed Atlas driven by [a single large behavior model](https://bostondynamics.com/blog/large-behavior-models-atlas-find-new-footing/) that controls the whole body, legs and hands, from demonstrations. Tasks like tying a rope or spreading a tablecloth, which would be miserable to hand-program, use the same training process as stacking blocks. In their words, "if you can demonstrate it, the robot can learn it." In January 2026, the company [unveiled a production Atlas](https://bostondynamics.com/blog/boston-dynamics-unveils-new-atlas-robot-to-revolutionize-industry/) and a partnership with Google DeepMind to put Gemini models inside it, and Hyundai announced a factory that can build **30,000 robots per year**. The company that best represented hand-engineered control is now betting on learned policies.
+For me, the clearest sign of the shift is what Boston Dynamics itself did. In August 2025, with Toyota Research Institute, it showed Atlas driven by [a single large behavior model](https://bostondynamics.com/blog/large-behavior-models-atlas-find-new-footing/) that controls the whole body, legs and hands, from demonstrations. Tasks like tying a rope or spreading a tablecloth, which would be miserable to hand-program, use the same training process as stacking blocks. In their words, "if you can demonstrate it, the robot can learn it." In January 2026, the company [unveiled a production Atlas](https://bostondynamics.com/blog/boston-dynamics-unveils-new-atlas-robot-to-revolutionize-industry/) and a partnership with Google DeepMind to put Gemini models inside it, and Hyundai announced a factory that can build **30,000 robots per year**. So the company that best stood for hand-engineered control is now betting on learned policies.
 
 ## A reset button on classical robotics
 
 The classical robot is a pipeline of separate modules, each written by experts: perception finds the objects, state estimation works out where everything is, a planner chooses a path and a controller follows it. Each module has its own equations and its own decades of research. A VLA replaces most of that pipeline with one network that goes from pixels and words to actions.
 
-That's a reset button. A lot of what used to be an equations problem becomes a data problem: which demonstrations to collect, how to cover the situations that matter, and how to test whether the robot got better. It also means someone who arrives late, like me, isn't decades behind. The new questions are new for everybody.
+That's a reset button. A lot of what used to be an equations problem becomes a data problem. Which demonstrations do you collect? How do you cover the situations that matter? How do you know the robot got better? It also means someone who arrives late, like me, isn't decades behind. These questions are new for everybody.
 
-It isn't a full reset, though. Underneath every VLA, a motor still runs a classical feedback loop. The network outputs a target angle, and the joint doesn't land exactly on it: gravity pulls it down, friction holds it back and the servo reacts late. That last mile is where my own research sits. I'm testing whether a controller can be more accurate than the classical ones on my SO-101 arm, and the [series that starts with one equation](/robotics/so101-1-target-and-goal/) is what I've learned so far.
+It isn't a full reset, though, and this is the part I find most interesting. Underneath every VLA, a motor still runs a classical feedback loop. The network outputs a target angle, and the joint doesn't land exactly on it: gravity pulls it down, friction holds it back and the servo reacts late. That last mile is where my own research sits. I'm testing whether a controller can be more accurate than the classical ones on my SO-101 arm, and the [series that starts with one equation](/robotics/so101-1-target-and-goal/) is what I've learned so far.
 
 ## Robotics is in its 2019
 
@@ -58,7 +58,7 @@ The timeline below puts the two fields side by side. Pick a stage to see what ha
 
 The dates come from the papers and announcements: the [Transformer](https://arxiv.org/abs/1706.03762), [GPT-3](https://arxiv.org/abs/2005.14165), the [scaling laws](https://arxiv.org/abs/2001.08361) and [InstructGPT](https://arxiv.org/abs/2203.02155) for language, and [SayCan](https://arxiv.org/abs/2204.01691), [RT-1](https://arxiv.org/abs/2212.06817), [RT-2](https://arxiv.org/abs/2307.15818), [Open X-Embodiment](https://arxiv.org/abs/2310.08864), [π0](https://arxiv.org/abs/2410.24164), [Helix](https://www.figure.ai/news/helix) and [π0.5](https://arxiv.org/abs/2504.16054) for robots.
 
-In 2019, GPT-2 showed that a bigger model trained on more data generalizes better, and a whole industry grew up around producing training data: [Scale](https://scale.com/about), [Labelbox](https://labelbox.com/company/about/) and [Snorkel AI](https://snorkel.ai/company/) all date from that period. Robotics is at that point now. In August 2026, Figure launched [Index](https://www.figure.ai/news/introducing-index), an app that pays people to record everyday activities, and reported more than **16 million videos** from **44,000 weekly users**. A month later it [reported](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) **56% task success in 30 homes the robot had never seen**, compared with 9% without the Index pretraining. That's real generalization, and it's also a long way from a robot you'd trust to finish the job.
+In 2019, GPT-2 showed that a bigger model trained on more data generalizes better, and a whole industry grew up around producing training data: [Scale](https://scale.com/about), [Labelbox](https://labelbox.com/company/about/) and [Snorkel AI](https://snorkel.ai/company/) all date from that period. I think robotics is at that point now. In August 2026, Figure launched [Index](https://www.figure.ai/news/introducing-index), an app that pays people to record everyday activities, and reported more than **16 million videos** from **44,000 weekly users**. A month later it [reported](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) **56% task success in 30 homes the robot had never seen**, compared with 9% without the Index pretraining. That's real generalization. It's also a long way from a robot you'd trust to finish the job.
 
 The data can come from several places, and each one gives something different:
 
@@ -70,7 +70,7 @@ The data can come from several places, and each one gives something different:
 
 ### Where the analogy breaks
 
-The parallel isn't perfect, and the differences matter.
+The parallel isn't perfect, and I want to be honest about where it breaks.
 
 1. **The data wasn't free.** GPT-2 trained on text that already existed on the internet. Nobody wrote down what a robot saw, commanded and felt while opening a drawer. Every hour of robot data has to be produced, usually by a person.
 2. **There's no scaling law yet.** In 2020, language models got a curve that predicts how much better a model gets with more data and compute. That turned a bet into an investment plan. Robotics doesn't have that curve, so it's possible we're really in 2017, not 2019.
@@ -80,17 +80,17 @@ That third point is also why measurement is so hard. Benchmarks like [LIBERO](ht
 
 ## Reindustrializing Europe and the United States
 
-This is the part that excites me most, and it's a vision, not a measurement.
+This is the part that excites me most. It's a vision, not a measurement.
 
 Factories in Europe and the US already use a lot of robots. The International Federation of Robotics counts [449 robots per 10,000 manufacturing employees in Germany and 307 in the US](https://ifr.org/ifr-press-releases/news/robot-density-surges-in-europe-asia-and-americas), against 1,220 in South Korea. But those robots sit mostly where the task never changes: welding the same car body, placing the same chip. Every new task means an integrator reprogramming the cell, so automation only pays off at high volume. Small-batch work, with many different parts and frequent changes, stayed manual, and manual work moved to wherever labor was cheapest.
 
-If a robot can learn a new task from a few dozen demonstrations in an afternoon, that calculation changes. Small-batch production becomes something a robot can do, and labor cost stops being the reason to build a factory far away. With an aging workforce in Europe and a political push in both regions to bring manufacturing back, general-purpose robots could make reindustrialization economically possible rather than a slogan. Hyundai building a factory for 30,000 robots a year is one company placing that bet.
+Now suppose a robot can learn a new task from a few dozen demonstrations in an afternoon. That calculation changes. Small-batch production becomes something a robot can do, and labor cost stops being the reason to build a factory far away. With an aging workforce in Europe and a political push in both regions to bring manufacturing back, general-purpose robots could make reindustrialization economically possible rather than a slogan. Hyundai building a factory for 30,000 robots a year is one company placing that bet.
 
-The constraint, again, is software that generalizes and is reliable enough for a production line. That's the problem I want to work on.
+What's blocking it, again, is software that generalizes and is reliable enough for a production line. That's the problem I want to work on.
 
 ## Open questions I keep returning to
 
-These are the questions I find most interesting, but they aren't needed for the argument above.
+These questions keep pulling me in, but you don't need them for the argument above.
 
 <details>
 <summary>Does the robot need a human body?</summary>
@@ -124,9 +124,9 @@ Hands are where software meets hardware. Tendons let designers put the motors in
 
 ## Learning quickly without skipping the thinking
 
-I've just started learning robotics, and the reset makes this a good time to begin. Papers, simulators, cheap arms and coding agents let me follow a question into an experiment in an afternoon.
+I've just started learning robotics, and the reset makes this a good time to begin. With papers, simulators, cheap arms and coding agents, I can take a question to an experiment in an afternoon.
 
-That speed has its own trap. If I follow every interesting branch, I can explore for hours without making anything concrete. And when an agent builds the experiment for me, it can skip the design decisions that would have forced me to understand it. So I try to keep the parts that change my understanding: predicting a result before I run it, choosing the experiment, explaining a failure, and finding the example that makes an idea click.
+The speed has a trap, though. If I follow every interesting branch, I can explore for hours without making anything concrete. And when an agent builds the experiment for me, it can skip the design decisions that would have forced me to understand it. So I try to keep the parts that change my understanding: predicting a result before I run it, choosing the experiment, explaining a failure, and finding the example that makes an idea click.
 
 [Jacob Rothschild's writing about robot control](https://x.com/ja_rothschild/article/2100633491432239411) helped inspire these posts. Writing gives the learning a finish line: if I can explain something clearly without the conversation that led there, I have something I can come back to and test.
 
