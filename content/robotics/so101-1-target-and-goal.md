@@ -46,6 +46,8 @@ Why would I ever send a goal that isn't the target? The easiest way I found to t
 
 ![Three drawings of one joint as a torsion spring. With no load, the goal and the joint sit on the target. With gravity and the goal on the target, the joint sags below and the spring between goal and joint stretches. With the goal moved up past the target, the stretched spring holds the joint on the target.](/assets/robotics/so101-series/spring-goal.png "The servo acts like a torsion spring between the goal and the joint. Angles are exaggerated.")
 
+As far as I can tell the picture is accurate for the main part of the servo. Its P term follows a spring law: the torque is $k_p$ times the gap, the same way a torsion spring pushes back harder the more you twist it. The real servo adds a few things on top of that spring, like damping, a small dead band where it makes no torque, and a maximum torque, and I come back to each of them later.
+
 That means if I put the goal exactly on the target, the joint can't actually stay on the target. It has to sag until the stretch is large enough to hold the arm up, and the size of that sag is the gravity torque divided by the stiffness of the spring:
 
 $$
@@ -54,7 +56,7 @@ $$
 
 The units are N·m ÷ (N·m/rad) = rad, so a torque divided by a stiffness gives you an angle. On the simulated shoulder at the example hold pose, gravity is 0.391 N·m and the servo stiffness is 13.64 N·m/rad, which gives a sag of 28.7 mrad.
 
-The same reasoning works for every other force on the joint: friction, a tool in the gripper, the force needed to speed the joint up, the damping that resists motion. Each of them needs a bit more gap, and if the goal stays on the target, all of that extra gap shows up as error. The spring picture isn't just a metaphor. The P term of the servo is a spring law: the torque is $k_p$ times the gap, exactly like a torsion spring whose torque grows with how much it's twisted. Where the picture stops being exact is everything around that term. The real servo also has damping, a small dead band where it makes no torque at all, and a maximum torque, and we'll get to each of those.
+The same reasoning works for every other force on the joint: friction, a tool in the gripper, the force needed to speed the joint up, the damping that resists motion. Each of them needs a bit more gap, and if the goal stays on the target, all of that extra gap shows up as error.
 
 So the problem I kept coming back to was really just this one: where should I put the goal? Every controller in the series is a different answer to that question.
 
