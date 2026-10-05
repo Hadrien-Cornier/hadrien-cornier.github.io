@@ -16,12 +16,33 @@ When I send my arm a smooth path to follow, it doesn't quite follow it. It arriv
 <source src="/assets/robotics/so101-series/cat-direct.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/cat-direct.mp4">Watch the video</a>
 </video>
-<figcaption>My real arm on the "cat" motion with the default controller (`direct`, 30 Hz), replayed from the recorded joint angles. The error is drawn 10 times larger, and large errors are compressed so the arm stays clear of the table and the base. The gray shape is the target pose. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the true joint error in mrad, with the same scale in every plot. The numbers cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-direct.mp4">Open video</a></figcaption>
+<figcaption>My real arm on "cat", a recorded test motion, with the default controller (`direct`, 30 Hz), replayed from the recorded joint angles. The error is drawn 10 times larger, and large errors are compressed so the arm stays clear of the table and the base. The gray shape is the target pose. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the true joint error in mrad, with the same scale in every plot. The numbers cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-direct.mp4">Open video</a></figcaption>
 </figure>
 
 So I wanted to understand why the arm misses, and what each of the usual fixes actually buys me. This series goes through it one problem at a time. It starts with the gap between the goal and the joint, because the rest of the series builds on it.
 
 ## The map: fourteen controllers, one motion
+
+Each controller I built has a short lab name. The table gives the meaning of each name. You do not need to remember them now: each part of the series gives the meaning again of the names it uses.
+
+| Name | What it sends to the servo as the goal | What it needs |
+|---|---|---|
+| `direct` | The target itself. This is what LeRobot does by default. | Nothing. |
+| `lead` | The target of the next control step, so the goal is one step early. | Nothing. |
+| `inv` | The target one servo dead time ahead, plus the target speed times the servo lag, plus a small acceleration term. It reverses a simple model of the servo, which is where the name comes from. | The dead time and the lag of the servo, from a step test on the arm. |
+| `pi` | The `inv` goal plus a feedback correction: one part is proportional to the error now (P), and one part is proportional to the sum of past errors (I). The sum removes a steady sag over time. | Nothing more than `inv`. |
+| `sag` | The `inv` goal plus a fixed offset for each pose. The offset comes from the steady error that the real arm showed in earlier holds. | A sag model, fitted on hold data from the arm. |
+| `grav` | The `inv` goal plus the gravity torque at the target pose, divided by the servo stiffness. | A physics model of the arm (MuJoCo) and a stiffness value. |
+| `pisag` | The `sag` goal plus the `pi` correction. | The same as `sag` and `pi`. |
+| `adapt` | The `inv` goal minus an estimate of the disturbance. During the run, a Kalman filter estimates a fast load part, a slow sag part and a friction part from the difference between the predicted and the measured angle. | The servo constants of the arm. |
+| `rls` | The goal that makes a small joint model reach the target. The model starts from the servo constants and continues to learn during the run (recursive least squares). | The servo constants of the arm. |
+| `solve` | A search for each joint. It tries many destination goals, simulates the servo model 0.25 s ahead for each one, and keeps the goal with the smallest predicted error. | The servo constants of the arm. |
+| `mpc` | Model predictive control. It uses the same model and look-ahead as `solve`, but it chooses a different goal for each step of the 0.25 s plan. It sends the first goal and makes a new plan at the next step. | The servo constants of the arm. |
+| `mpca` | `mpc` plus a Kalman filter that estimates a load and a sag during the run. The "a" means adaptive. | The servo constants of the arm. |
+| `ilc` | Iterative learning control. The `inv` goal plus a correction for each step of the motion, learned from the error of the earlier runs of the same motion. | The same motion, played many times. |
+| `ilcmpc` | `ilc` with `mpc` as the base, in place of `inv`. | The same as `ilc` and `mpc`. |
+
+The "servo constants" are a file with the dead time, the lag, the dead band, the stiffness and the sag of each joint, fitted on logs from my arm. A Kalman filter is an estimator: at each step it combines what a model predicts with the new reading. [Part 3](/robotics/so101-3-finer-than-the-sensor/) explains it. [Part 2](/robotics/so101-2-what-pulls-the-joint/#three-kinds-of-delay) explains the dead time and the lag.
 
 Here is the same motion run with each of the controllers I built. Each one starts from an earlier controller and adds a single part to it.
 
@@ -222,7 +243,7 @@ $$
 
 where the first part is the torque divided by the stiffness and the last part is the goal hold, which doesn't care about $k_p$ at all. Fitting the normal and the stiff robots gives about 32.2 mrad for the torque part and 5.0 mrad for the goal hold, and that same fit predicts 40.6 mrad for a robot with a weaker supply ($k_p$ × 0.90). The measured value for that robot was 40.5, so the split also works on a third robot.
 
-![Tracking error against servo stiffness kp. The fitted curve 32.2 times 13.64 over kp plus 5.0 passes through nominal (13.64, 37.2), weak_supply (12.31, 40.5) and stiff_servo (22.1, 24.8), and flattens toward the 5 mrad goal-hold floor.](/assets/robotics/so101-series/error-vs-kp.png "Only the torque part of the error shrinks with stiffness. The goal hold stays. Simulation, out-of-the-box controller.")
+![Tracking error against servo stiffness kp. The fitted curve 32.2 times 13.64 over kp plus 5.0 passes through the normal robot (13.64, 37.2), a robot with a weak power supply (12.31, 40.5) and a robot with a stiff servo (22.1, 24.8), and flattens toward the 5 mrad goal-hold floor.](/assets/robotics/so101-series/error-vs-kp.png "Only the torque part of the error shrinks with stiffness. The goal hold stays. Simulation, out-of-the-box controller.")
 
 So even an infinitely stiff servo would still leave the goal hold, and on the real arm it would also leave the dead time we'll see in part 2. On top of that, a very stiff loop brings its own problems. The servo can't push more than about 5.1 N·m, so with a huge $k_p$ even a tiny gap asks for full torque and the motor ends up switching between pushing as hard as it can one way and the other. The encoder also only reads whole ticks, and every time the reading changes by one tick the torque jumps by $k_p$ times that tick, so the joint chatters between two ticks. And because the information the loop acts on is always a little old, a stiff loop pushes hard on a position that has already changed, overshoots, and then overshoots the other way. In practice, an outer gain of 4 stays stable and a gain of 100 oscillates.
 

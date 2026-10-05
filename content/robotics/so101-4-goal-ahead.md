@@ -9,6 +9,28 @@ part: 4
 
 The first three parts were about the problem: the servo only makes torque from a gap, every force on the joint needs more of that gap, and the arm only sees itself through ticks. This part is about the fixes. Every controller here answers the same question, where should I put the goal, and they mostly differ in what they use to answer it: a fixed rule, the past error, a model of the servo, or the path that's coming.
 
+Each section of this part explains one controller. This table gives a short meaning for each name, so you can come back to it.
+
+| Name | What it sends to the servo as the goal | What it needs |
+|---|---|---|
+| `direct` | The target itself. This is what LeRobot does by default. | Nothing. |
+| `lead` | The target of the next control step, so the goal is one step early. | Nothing. |
+| `inv` | The target one servo dead time ahead, plus the target speed times the servo lag, plus a small acceleration term. It reverses a simple model of the servo, which is where the name comes from. | The dead time and the lag of the servo, from a step test on the arm. |
+| `pi` | The `inv` goal plus a feedback correction: one part is proportional to the error now (P), and one part is proportional to the sum of past errors (I). The sum removes a steady sag over time. | Nothing more than `inv`. |
+| `sag` | The `inv` goal plus a fixed offset for each pose. The offset comes from the steady error that the real arm showed in earlier holds. | A sag model, fitted on hold data from the arm. |
+| `grav` | The `inv` goal plus the gravity torque at the target pose, divided by the servo stiffness. | A physics model of the arm (MuJoCo) and a stiffness value. |
+| `pisag` | The `sag` goal plus the `pi` correction. | The same as `sag` and `pi`. |
+| `adapt` | The `inv` goal minus an estimate of the disturbance. During the run, a Kalman filter estimates a fast load part, a slow sag part and a friction part from the difference between the predicted and the measured angle. | The servo constants of the arm. |
+| `rls` | The goal that makes a small joint model reach the target. The model starts from the servo constants and continues to learn during the run (recursive least squares). | The servo constants of the arm. |
+| `solve` | A search for each joint. It tries many destination goals, simulates the servo model 0.25 s ahead for each one, and keeps the goal with the smallest predicted error. | The servo constants of the arm. |
+| `mpc` | Model predictive control. It uses the same model and look-ahead as `solve`, but it chooses a different goal for each step of the 0.25 s plan. It sends the first goal and makes a new plan at the next step. | The servo constants of the arm. |
+| `mpca` | `mpc` plus a Kalman filter that estimates a load and a sag during the run. The "a" means adaptive. | The servo constants of the arm. |
+| `ilc` | Iterative learning control. The `inv` goal plus a correction for each step of the motion, learned from the error of the earlier runs of the same motion. | The same motion, played many times. |
+| `ilcmpc` | `ilc` with `mpc` as the base, in place of `inv`. | The same as `ilc` and `mpc`. |
+| `preview` | The target one dead time ahead, plus the torque that a MuJoCo model of the arm needs for that motion, divided by the stiffness, plus the `pi` correction. The model does not know the load. I used it only in the shake test. | A physics model of the arm (MuJoCo). |
+
+The "servo constants" are a file with the dead time, the lag, the dead band, the stiffness and the sag of each joint, fitted on logs from my arm. A Kalman filter is an estimator: at each step it combines what a model predicts with the new reading. [Part 3](/robotics/so101-3-finer-than-the-sensor/) explains it.
+
 ```so101-widget
 {"type": "family-tree", "fallback": "Family tree of the controllers. Base: direct, then lead, then inv. Feedback and gravity: pi, sag, grav, pisag. Adaptive: adapt, rls. Model-based: solve, mpc, mpca. Repeated paths: ilc, ilcmpc. Each controller starts from an earlier one and adds one part.", "links": {"direct": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "lead": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "inv": "/robotics/so101-4-goal-ahead/#predicting-the-future-lead-and-inv", "pi": "/robotics/so101-4-goal-ahead/#feedback-pi", "sag": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "grav": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "pisag": "/robotics/so101-4-goal-ahead/#gravity-sag-and-grav", "adapt": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "rls": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "mpca": "/robotics/so101-4-goal-ahead/#adapting-during-the-run-w-mpca-rls-adapt", "solve": "/robotics/so101-4-goal-ahead/#planning-solve-and-mpc", "mpc": "/robotics/so101-4-goal-ahead/#planning-solve-and-mpc", "ilc": "/robotics/so101-4-goal-ahead/#repeating-the-same-path-ilc-and-ilcmpc", "ilcmpc": "/robotics/so101-4-goal-ahead/#repeating-the-same-path-ilc-and-ilcmpc"}}
 ```
@@ -54,7 +76,7 @@ $$
 \text{goal} = \text{goal}_{inv} + 0.2\,e + 2\ \text{s}^{-1}\textstyle\int e\,dt
 $$
 
-On the real arm the gains are small on purpose: 0.2 for the proportional part and 2 per second for the integral, with limits on both. The integral is the part that matters, because it slowly builds up whatever offset the model is missing, like a steady sag, until it's gone. On my "cat" motion at 60 Hz, `pi` gets 8.4 mrad.
+On the real arm the gains are small on purpose: 0.2 for the proportional part and 2 per second for the integral, with limits on both. The integral is the part that matters, because it slowly builds up whatever offset the model is missing, like a steady sag, until it's gone. On "cat", a recorded test motion, at 60 Hz, `pi` gets 8.4 mrad.
 
 The gains are small because of everything from part 2. The arm only covers about 0.15 of a goal change in one 33 ms step, and the dead time means the loop always acts on old information. In the simulation study, the Classical controller used a much larger proportional gain of 4, without any dead time, and that's where I learned the next lesson.
 
@@ -224,7 +246,7 @@ It's a strong classical baseline of a known type rather than a new method. MPC w
 
 ## Repeating the same path: ilc and ilcmpc
 
-If the arm does the same motion over and over, it can learn from its own past runs. Iterative learning control (`ilc`) stores the error of the last run and uses it to correct the goals of the next one, and `ilcmpc` puts that rule on top of `mpc`. In a stand-in test on the fast motion sets at 100 Hz, `ilcmpc` had the lowest error: 1.04 mrad, against 1.15 for `mpc`, 1.28 for `mpca`, 1.36 for `solve`, 4.15 for `pi` and 4.90 for `adapt`. The stand-in arm uses the same servo model as the planners, so this test favors them.
+If the arm does the same motion over and over, it can learn from its own past runs. Iterative learning control (`ilc`) stores the error of the last run and uses it to correct the goals of the next one, and `ilcmpc` puts that rule on top of `mpc`. In a stand-in test (a software copy of the servo, built from the servo model of my arm, which I use for dry runs) on the fast motion sets at 100 Hz, `ilcmpc` had the lowest error: 1.04 mrad, against 1.15 for `mpc`, 1.28 for `mpca`, 1.36 for `solve`, 4.15 for `pi` and 4.90 for `adapt`. The stand-in arm uses the same servo model as the planners, so this test favors them.
 
 ## What's next
 

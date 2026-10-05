@@ -4,7 +4,7 @@
 <title>What pulls the joint off its target | Hadrien Cornier</title><meta name="description" content="Ticks, dead time, friction, heat, gravity, speed coupling and a payload: each effect that makes a cheap servo miss, and how large each one is.">
 <link rel="canonical" href="https://hadrien-cornier.github.io/robotics/so101-2-what-pulls-the-joint/"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="What pulls the joint off its target"><meta property="og:description" content="Ticks, dead time, friction, heat, gravity, speed coupling and a payload: each effect that makes a cheap servo miss, and how large each one is."><meta property="og:type" content="article"><meta property="og:url" content="https://hadrien-cornier.github.io/robotics/so101-2-what-pulls-the-joint/">
-<link rel="stylesheet" href="/assets/site.css?v=c72f6339d447"><link rel="stylesheet" href="/assets/vendor/katex/katex.min.css"><link rel="stylesheet" href="/assets/robotics.css?v=dfff2aa78aef"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"What pulls the joint off its target","description":"Ticks, dead time, friction, heat, gravity, speed coupling and a payload: each effect that makes a cheap servo miss, and how large each one is.","datePublished":"2026-10-05","dateModified":"2026-10-05","author":{"@type":"Person","name":"Hadrien Cornier","url":"https://hadrien-cornier.github.io"},"url":"https://hadrien-cornier.github.io/robotics/so101-2-what-pulls-the-joint/"}</script>
+<link rel="stylesheet" href="/assets/site.css?v=c72f6339d447"><link rel="stylesheet" href="/assets/vendor/katex/katex.min.css"><link rel="stylesheet" href="/assets/robotics.css?v=ea70979c8c7b"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"What pulls the joint off its target","description":"Ticks, dead time, friction, heat, gravity, speed coupling and a payload: each effect that makes a cheap servo miss, and how large each one is.","datePublished":"2026-10-05","dateModified":"2026-10-05","author":{"@type":"Person","name":"Hadrien Cornier","url":"https://hadrien-cornier.github.io"},"url":"https://hadrien-cornier.github.io/robotics/so101-2-what-pulls-the-joint/"}</script>
 <script type="module" src="/assets/so101-widgets.js?v=9ede3cdf9340"></script>
 </head><body class="robotics"><a class="skip" href="#main">Skip to content</a>
 <header class="topbar">
@@ -17,8 +17,91 @@
   <a class="header-github" href="https://github.com/Hadrien-Cornier">GitHub <span aria-hidden="true">↗</span></a>
 </header>
 <main id="main" class="robotics-main">
-<header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>What pulls the joint off its target</h1><p class="post-description">Ticks, dead time, friction, heat, gravity, speed coupling and a payload: each effect that makes a cheap servo miss, and how large each one is.</p><p class="post-meta"><time datetime="2026-10-05">October 5, 2026</time><span>15 min read</span></p></header>
+<header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>What pulls the joint off its target</h1><p class="post-description">Ticks, dead time, friction, heat, gravity, speed coupling and a payload: each effect that makes a cheap servo miss, and how large each one is.</p><p class="post-meta"><time datetime="2026-10-05">October 5, 2026</time><span>17 min read</span></p></header>
 <nav class="series-box" aria-label="Series"><p class="series-box-name">From policy to action: the last mile of robotics control</p><p class="series-box-position">Part 2 of 5</p><ol><li><a href="/robotics/so101-1-target-and-goal/">Target, goal, and the servo in the middle</a></li><li aria-current="page">What pulls the joint off its target</li><li><a href="/robotics/so101-3-finer-than-the-sensor/">Seeing finer than the sensor</a></li><li><a href="/robotics/so101-4-goal-ahead/">Putting the goal ahead: from feedforward to MPC</a></li><li><a href="/robotics/so101-5-offline-lied/">What the network learned, and why the offline tests lied</a></li></ol><div class="series-box-links"><a rel="prev" href="/robotics/so101-1-target-and-goal/">← Previous: Target, goal, and the servo in the middle</a><a rel="next" href="/robotics/so101-3-finer-than-the-sensor/">Next: Seeing finer than the sensor →</a></div></nav><div class="post-layout"><aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol><li class="toc-h2"><a href="#section-ticks-the-arm-doesn-t-know-exactly-where-it-is">Ticks: the arm doesn&#39;t know exactly where it is</a></li><li class="toc-h2"><a href="#section-three-kinds-of-delay">Three kinds of delay</a></li><li class="toc-h3"><a href="#section-dead-time">Dead time</a></li><li class="toc-h3"><a href="#section-goal-hold">Goal hold</a></li><li class="toc-h3"><a href="#section-servo-lag">Servo lag</a></li><li class="toc-h2"><a href="#section-friction-part-by-part">Friction, part by part</a></li><li class="toc-h3"><a href="#section-the-friction-band">The friction band</a></li><li class="toc-h3"><a href="#section-the-same-friction-helps-on-a-hold-and-hurts-in-motion">The same friction helps on a hold and hurts in motion</a></li><li class="toc-h3"><a href="#section-low-speed-is-the-hard-case">Low speed is the hard case</a></li><li class="toc-h2"><a href="#section-heat">Heat</a></li><li class="toc-h2"><a href="#section-gravity-changes-with-the-pose">Gravity changes with the pose</a></li><li class="toc-h2"><a href="#section-speed-coupling">Speed coupling</a></li><li class="toc-h2"><a href="#section-a-payload-and-the-torque-limit">A payload, and the torque limit</a></li><li class="toc-h2"><a href="#section-simulator-against-measured">Simulator against measured</a></li><li class="toc-h2"><a href="#section-what-s-next">What&#39;s next</a></li></ol></nav></details></aside><article class="article-body" aria-label="What pulls the joint off its target"><p>In <a href="/robotics/so101-1-target-and-goal/">part 1</a> I ended on one rule: the servo only makes torque from a gap between the goal and the joint, so every force on the joint needs a bit more gap, and if the goal stays on the target that gap becomes the error. The natural next question is which forces those are, and how large each one is on my arm. In this part I go through them one at a time, and for each one I give an example, the size of the error it causes when a test measured it, and the controller that deals with it.</p>
+<p>The table below uses the short lab names of my controllers. This is what each name means.</p>
+<div class="table-scroll" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>What it sends to the servo as the goal</th>
+<th>What it needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>direct</code></td>
+<td>The target itself. This is what LeRobot does by default.</td>
+<td>Nothing.</td>
+</tr>
+<tr>
+<td><code>lead</code></td>
+<td>The target of the next control step, so the goal is one step early.</td>
+<td>Nothing.</td>
+</tr>
+<tr>
+<td><code>inv</code></td>
+<td>The target one servo dead time ahead, plus the target speed times the servo lag, plus a small acceleration term. It reverses a simple model of the servo, which is where the name comes from.</td>
+<td>The dead time and the lag of the servo, from a step test on the arm.</td>
+</tr>
+<tr>
+<td><code>pi</code></td>
+<td>The <code>inv</code> goal plus a feedback correction: one part is proportional to the error now (P), and one part is proportional to the sum of past errors (I). The sum removes a steady sag over time.</td>
+<td>Nothing more than <code>inv</code>.</td>
+</tr>
+<tr>
+<td><code>sag</code></td>
+<td>The <code>inv</code> goal plus a fixed offset for each pose. The offset comes from the steady error that the real arm showed in earlier holds.</td>
+<td>A sag model, fitted on hold data from the arm.</td>
+</tr>
+<tr>
+<td><code>grav</code></td>
+<td>The <code>inv</code> goal plus the gravity torque at the target pose, divided by the servo stiffness.</td>
+<td>A physics model of the arm (MuJoCo) and a stiffness value.</td>
+</tr>
+<tr>
+<td><code>pisag</code></td>
+<td>The <code>sag</code> goal plus the <code>pi</code> correction.</td>
+<td>The same as <code>sag</code> and <code>pi</code>.</td>
+</tr>
+<tr>
+<td><code>adapt</code></td>
+<td>The <code>inv</code> goal minus an estimate of the disturbance. During the run, a Kalman filter estimates a fast load part, a slow sag part and a friction part from the difference between the predicted and the measured angle.</td>
+<td>The servo constants of the arm.</td>
+</tr>
+<tr>
+<td><code>rls</code></td>
+<td>The goal that makes a small joint model reach the target. The model starts from the servo constants and continues to learn during the run (recursive least squares).</td>
+<td>The servo constants of the arm.</td>
+</tr>
+<tr>
+<td><code>solve</code></td>
+<td>A search for each joint. It tries many destination goals, simulates the servo model 0.25 s ahead for each one, and keeps the goal with the smallest predicted error.</td>
+<td>The servo constants of the arm.</td>
+</tr>
+<tr>
+<td><code>mpc</code></td>
+<td>Model predictive control. It uses the same model and look-ahead as <code>solve</code>, but it chooses a different goal for each step of the 0.25 s plan. It sends the first goal and makes a new plan at the next step.</td>
+<td>The servo constants of the arm.</td>
+</tr>
+<tr>
+<td><code>mpca</code></td>
+<td><code>mpc</code> plus a Kalman filter that estimates a load and a sag during the run. The &quot;a&quot; means adaptive.</td>
+<td>The servo constants of the arm.</td>
+</tr>
+<tr>
+<td><code>ilc</code></td>
+<td>Iterative learning control. The <code>inv</code> goal plus a correction for each step of the motion, learned from the error of the earlier runs of the same motion.</td>
+<td>The same motion, played many times.</td>
+</tr>
+<tr>
+<td><code>ilcmpc</code></td>
+<td><code>ilc</code> with <code>mpc</code> as the base, in place of <code>inv</code>.</td>
+<td>The same as <code>ilc</code> and <code>mpc</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The &quot;servo constants&quot; are a file with the dead time, the lag, the dead band, the stiffness and the sag of each joint, fitted on logs from my arm. A Kalman filter is an estimator: at each step it combines what a model predicts with the new reading. <a href="/robotics/so101-3-finer-than-the-sensor/">Part 3</a> explains it.</p>
 <figure class="so101-widget" data-type="error-matrix" data-config='{&quot;type&quot;:&quot;error-matrix&quot;,&quot;fallback&quot;:&quot;Which error each controller removes. direct: none. lead: part of the delay. inv: the delay. pi, sag, grav, pisag: the gravity sag, pi also part of a load change. solve and mpc: delay, dead band, sag and part of the model error. mpca, adapt, rls: load changes. ilc, ilcmpc: repeated errors. This matrix is a teaching summary, made from the design of each controller and simulated tests. The real arm checked it only for pi on one motion.&quot;,&quot;columnLinks&quot;:{&quot;delay&quot;:&quot;/robotics/so101-2-what-pulls-the-joint/#three-kinds-of-delay&quot;,&quot;band&quot;:&quot;/robotics/so101-2-what-pulls-the-joint/#low-speed-is-the-hard-case&quot;,&quot;sag&quot;:&quot;/robotics/so101-2-what-pulls-the-joint/#gravity-changes-with-the-pose&quot;,&quot;load&quot;:&quot;/robotics/so101-2-what-pulls-the-joint/#a-payload-and-the-torque-limit&quot;,&quot;model&quot;:&quot;/robotics/so101-2-what-pulls-the-joint/#simulator-against-measured&quot;,&quot;rep&quot;:&quot;/robotics/so101-4-goal-ahead/#repeating-the-same-path-ilc-and-ilcmpc&quot;}}'><div class="so101-widget-fallback">Which error each controller removes. direct: none. lead: part of the delay. inv: the delay. pi, sag, grav, pisag: the gravity sag, pi also part of a load change. solve and mpc: delay, dead band, sag and part of the model error. mpca, adapt, rls: load changes. ilc, ilcmpc: repeated errors. This matrix is a teaching summary, made from the design of each controller and simulated tests. The real arm checked it only for pi on one motion.</div></figure><h2 id="section-ticks-the-arm-doesn-t-know-exactly-where-it-is">Ticks: the arm doesn't know exactly where it is</h2>
 <p>The first problem comes before any force. The encoder doesn't give a continuous angle, it gives whole ticks, 4096 per turn, so one tick is 1.534 mrad. If the true angle is anywhere inside a tick, the reading is the same, which means there's a reading error underneath everything else the controller does.</p>
 <p>How big is it on average? If the true angle is equally likely to be anywhere in the tick, the error is spread evenly from −0.5 to +0.5 tick, and its root mean square is</p>
@@ -107,7 +190,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
 </details>
 <figure class="so101-widget" data-type="predict" data-config='{&quot;type&quot;:&quot;predict&quot;,&quot;fallback&quot;:&quot;Predict first. On this hold the measured tracking error is 14.0 mrad at 0.17 s, 17.1 mrad at 1 s and 23.45 mrad at 6 s. The true angle is on the side that gravity pulls. G/kp is 28.7 mrad. Which statements explain these numbers? Select all that apply. Answer: The first and third statements. Friction carries part of the load at first. The soft friction model then lets the joint creep toward G/kp.&quot;,&quot;id&quot;:&quot;S3&quot;}'><div class="so101-widget-fallback">Predict first. On this hold the measured tracking error is 14.0 mrad at 0.17 s, 17.1 mrad at 1 s and 23.45 mrad at 6 s. The true angle is on the side that gravity pulls. G/kp is 28.7 mrad. Which statements explain these numbers? Select all that apply. Answer: The first and third statements. Friction carries part of the load at first. The soft friction model then lets the joint creep toward G/kp.</div></figure><h3 id="section-the-same-friction-helps-on-a-hold-and-hurts-in-motion">The same friction helps on a hold and hurts in motion</h3>
 <p>To see how the different terms interact, I like to look at a worn robot, with friction multiplied by 2.5, so <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.1076em;">f</span></span></span></span> = 0.49 N·m. That's more than the gravity torque at the example hold, 0.391 N·m. On a hold, friction helps: it carries the whole load at first, and the joint sags only 0.7 mrad after 0.17 s, against 14.0 mrad on the healthy robot, before the soft friction slowly creeps to 17.2 mrad at 6 s. In motion it's the opposite. Friction adds 36 mrad of lag, against 14.4 mrad on the healthy robot, and the extra damping at 0.7 rad/s adds 81 mrad, against 54 mrad.</p>
-<p>Since most of the score comes from paths that move, the worn robot ends up much worse overall: 64.8 mrad on a multisine path and 73.4 mrad on a policy-like path.</p>
+<p>Since most of the score comes from paths that move, the worn robot ends up much worse overall: 64.8 mrad on a multisine path (a sum of sine waves) and 73.4 mrad on a path shaped like the output of a robot policy.</p>
 <figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-series/worn-hold-motion.png" aria-label="Open full image: Two panels. On a hold, the sag after 0.17 s is 14 mrad on the healthy robot and 0.7 mrad on the worn robot. In motion at 0.7 rad/s, friction adds 14.4 mrad healthy against 36 worn, and damping adds 54 against 81."><img src="/assets/robotics/so101-series/worn-hold-motion.png" alt="Two panels. On a hold, the sag after 0.17 s is 14 mrad on the healthy robot and 0.7 mrad on the worn robot. In motion at 0.7 rad/s, friction adds 14.4 mrad healthy against 36 worn, and damping adds 54 against 81." width="1600" height="900" loading="lazy" decoding="async"></a><figcaption>More friction helps a hold and hurts motion. Simulation, worn friction 2.5 times the healthy value.</figcaption></figure>
 <h3 id="section-low-speed-is-the-hard-case">Low speed is the hard case</h3>
 <figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-series/friction-models.png" aria-label="Open full image: Four friction models as torque against speed: Coulomb plus viscous, stiction plus Stribeck with a dip after breakaway, LuGre with a different path on a slow reversal, and load-dependent friction that grows with the servo torque."><img src="/assets/robotics/so101-series/friction-models.png" alt="Four friction models as torque against speed: Coulomb plus viscous, stiction plus Stribeck with a dip after breakaway, LuGre with a different path on a slow reversal, and load-dependent friction that grows with the servo torque." width="1600" height="1200" loading="lazy" decoding="async"></a><figcaption>Four ways to describe friction. Teaching curves with simulator-sized numbers.</figcaption></figure>

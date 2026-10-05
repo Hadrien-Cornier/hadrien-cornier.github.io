@@ -9,19 +9,34 @@ part: 5
 
 The question behind this whole series was whether a controller can be more accurate than the classical ones. So once the classical controllers were working, I tried learning the goal with a neural network. This part is about what the network learned, where it did well, and one result that changed how I test everything.
 
+Near the end, this part compares the network with my real-arm controllers from part 4. This is what each name means.
+
+| Name | What it sends to the servo as the goal | What it needs |
+|---|---|---|
+| `inv` | The target one servo dead time ahead, plus the target speed times the servo lag, plus a small acceleration term. It reverses a simple model of the servo, which is where the name comes from. | The dead time and the lag of the servo, from a step test on the arm. |
+| `pi` | The `inv` goal plus a feedback correction: one part is proportional to the error now (P), and one part is proportional to the sum of past errors (I). The sum removes a steady sag over time. | Nothing more than `inv`. |
+| `solve` | A search for each joint. It tries many destination goals, simulates the servo model 0.25 s ahead for each one, and keeps the goal with the smallest predicted error. | The servo constants of the arm. |
+| `mpc` | Model predictive control. It uses the same model and look-ahead as `solve`, but it chooses a different goal for each step of the 0.25 s plan. It sends the first goal and makes a new plan at the next step. | The servo constants of the arm. |
+| `mpca` | `mpc` plus a Kalman filter that estimates a load and a sag during the run. The "a" means adaptive. | The servo constants of the arm. |
+
+The "servo constants" are a file with the dead time, the lag, the dead band, the stiffness and the sag of each joint, fitted on logs from my arm. A Kalman filter is an estimator: at each step it combines what a model predicts with the new reading. [Part 3](/robotics/so101-3-finer-than-the-sensor/) explains it. [Part 2](/robotics/so101-2-what-pulls-the-joint/#three-kinds-of-delay) explains the dead time and the lag.
+
+
 ## The simulation study
 
 I started in simulation, where I know the true robot and can compare against it. I tried five ways of choosing the goal on 96 new test paths of 6 s each:
 
-| Controller | What it uses | Error (mrad) |
-|---|---|---:|
-| Out of the box | goal = target | 37.2 |
-| Classical model + PID | a physics model of the torque, plus PI feedback | 1.117 |
-| Neural network | a learned goal correction | 0.446 |
-| Fitted servo model | a model fitted from 24 s of data, solved step by step | 0.398 |
-| Exact model | the same method with the true robot numbers | 0.398 |
+The table gives the meaning of each name. All five read the same rounded encoder reading.
 
-![Simulation, log scale: out of the box 37.2 mrad, Classical model plus PID 1.117, neural network 0.446, Fitted servo model 0.398 and Exact model 0.398. A dashed line marks the one-reading rounding RMS of 0.443 mrad.](/assets/robotics/so101-series/sim-five.png "Simulation, frozen test of 96 paths. The best controllers land below the RMS of one rounded reading.")
+| Controller | How it chooses the goal | Error (mrad) |
+|---|---|---:|
+| Out of the box | It sends the target as the goal, like `direct`. | 37.2 |
+| Classical model + PID | It adds to the next target the torque that a fixed physics model predicts (inertia, gravity, damping and friction), divided by the servo stiffness. Then it adds PI feedback. The model uses the nominal robot numbers. | 1.117 |
+| Neural network | It adds to the next target an offset that a small neural network learned from simulated runs. | 0.446 |
+| Fitted servo model | It fits a servo model on 24 s of data from the robot. At each step, it simulates the 33 ms step in 8 small substeps and finds the goal that puts the joint on the target at the end of the step (Newton's method). | 0.398 |
+| Exact model | It uses the same method as the Fitted servo model, but with the true robot numbers in place of fitted ones. | 0.398 |
+
+![Simulation, log scale: out of the box 37.2 mrad, Classical model plus PID 1.117, neural network 0.446, Fitted servo model 0.398 and Exact model 0.398. A dashed line marks the one-reading rounding RMS of 0.443 mrad.](/assets/robotics/so101-series/sim-five.png "Simulation, fixed test set of 96 paths that no controller saw during tuning. The best controllers land below the RMS of one rounded reading.")
 
 ```so101-widget
 {"type": "predict", "fallback": "Predict first. Order these four controllers by their frozen-test nominal RMSE, from the largest error to the smallest. The controller cards hide their RMSE until you answer this question. Answer: Out of the box (37.166), Classical model + PID (1.117), Neural network (0.446), Fitted servo model (24 s) (0.398 mrad).", "id": "X1"}
@@ -47,7 +62,7 @@ The result that puzzled me first was that Classical loses to both the network an
 Fitted gets around this by simulating the step in 8 small substeps and solving for the goal that puts the joint on the target at the end of the step. Even with the true robot numbers, Classical's one-instant rule is still 3.4 times worse. A simple test made the cause clearer for me: the same Classical rule gets 4.13 mrad with a 30 Hz goal rate and 0.91 mrad at 240 Hz, so when the steps get shorter, the one-instant mistake mostly goes away.
 
 ```so101-widget
-{"type": "predict", "fallback": "Predict first. Give Classical model + PID the true robot numbers (run label oracle_ff_fb). Its geometric-mean RMSE over the six conditions is 1.312 mrad. The Exact-model reference has the same numbers and gets 0.385 mrad. It simulates the 8 substeps of each step (part 6). Each controller uses its own tuned outer gains. A MuJoCo test (not Genesis) changed one factor at a time. Which cause of the 3.4x gap does it support best? Answer: The quasi-static rule. It treats the 33 ms goal hold as one instant.", "id": "C3"}
+{"type": "predict", "fallback": "Predict first. Give Classical model + PID the true robot numbers. Its geometric-mean RMSE over the six conditions is 1.312 mrad. The Exact-model reference has the same numbers and gets 0.385 mrad. It simulates the 8 substeps of each step. Each controller uses its own tuned outer gains. A MuJoCo test (not Genesis) changed one factor at a time. Which cause of the 3.4x gap does it support best? Answer: The quasi-static rule. It treats the 33 ms goal hold as one instant.", "id": "C3"}
 ```
 
 So I started to think of it as a ladder. Classical looks at one instant, Fitted simulates one step from the inside, and `solve` and `mpc` from part 4 look many steps ahead. A trajectory is continuous, and each rung of the ladder sees more of it.
@@ -148,9 +163,9 @@ Am I reinventing control? Mostly, yes, and I think that's fine for learning it. 
 
 ## What I test next
 
-![Left: a frozen servo model with an observer plus a small GRU that learns the residual give a combined prediction. Right: offline and stand-in closed-loop errors: network only 3.90 and 5.50 mrad, servo model with observer 3.70 and 2.76, residual 3.01 and 3.12.](/assets/robotics/so101-series/residual.png "The residual helps offline, and the physics model alone still wins in the stand-in closed loop.")
+![Left: a frozen servo model with an observer plus a small recurrent network (GRU) that learns the residual give a combined prediction. Right: offline and stand-in closed-loop errors: network only 3.90 and 5.50 mrad, servo model with observer 3.70 and 2.76, residual 3.01 and 3.12.](/assets/robotics/so101-series/residual.png "The residual helps offline, and the physics model alone still wins in the stand-in closed loop.")
 
-My summary of the first round is that a network with no physics didn't work well on the real logs, so the next idea is a residual: a network that only learns what a physics model gets wrong. A first version of that already ran on the real logs, measured offline over 0.2 s and in a stand-in closed loop:
+My summary of the first round is that a network with no physics didn't work well on the real logs, so the next idea is a residual: a network that only learns what a physics model gets wrong. A first version of that already ran on the real logs, measured offline over 0.2 s and in a stand-in closed loop (a software copy of the servo model in place of the real arm):
 
 | Model | Offline (mrad) | Stand-in closed loop (mrad) |
 |---|---:|---:|

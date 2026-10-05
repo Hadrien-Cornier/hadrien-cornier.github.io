@@ -424,7 +424,7 @@
 .so101-sim-widget button { border: 1px solid var(--line); border-radius: .2rem; padding: .35rem .65rem; background: var(--white); color: var(--ink); font: inherit; cursor: pointer; }
 .so101-sim-widget button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--white); }
 .so101-sim-widget button:focus-visible, .so101-sim-widget a:focus-visible, .so101-sim-widget .so101-tree-scroll:focus-visible, .so101-sim-widget .so101-matrix-scroll:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.so101-tree-scroll, .so101-matrix-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--line); background: var(--white); }
+.so101-tree-scroll, .so101-matrix-scroll { position: relative; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--line); background: var(--white); }
 .so101-tree-scroll { padding: .5rem; }
 .so101-tree-svg { display: block; width: 100%; min-width: 600px; height: auto; }
 .so101-tree-svg text { fill: var(--ink); font-family: inherit; }

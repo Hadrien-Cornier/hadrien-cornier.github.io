@@ -9,6 +9,27 @@ part: 2
 
 In [part 1](/robotics/so101-1-target-and-goal/) I ended on one rule: the servo only makes torque from a gap between the goal and the joint, so every force on the joint needs a bit more gap, and if the goal stays on the target that gap becomes the error. The natural next question is which forces those are, and how large each one is on my arm. In this part I go through them one at a time, and for each one I give an example, the size of the error it causes when a test measured it, and the controller that deals with it.
 
+The table below uses the short lab names of my controllers. This is what each name means.
+
+| Name | What it sends to the servo as the goal | What it needs |
+|---|---|---|
+| `direct` | The target itself. This is what LeRobot does by default. | Nothing. |
+| `lead` | The target of the next control step, so the goal is one step early. | Nothing. |
+| `inv` | The target one servo dead time ahead, plus the target speed times the servo lag, plus a small acceleration term. It reverses a simple model of the servo, which is where the name comes from. | The dead time and the lag of the servo, from a step test on the arm. |
+| `pi` | The `inv` goal plus a feedback correction: one part is proportional to the error now (P), and one part is proportional to the sum of past errors (I). The sum removes a steady sag over time. | Nothing more than `inv`. |
+| `sag` | The `inv` goal plus a fixed offset for each pose. The offset comes from the steady error that the real arm showed in earlier holds. | A sag model, fitted on hold data from the arm. |
+| `grav` | The `inv` goal plus the gravity torque at the target pose, divided by the servo stiffness. | A physics model of the arm (MuJoCo) and a stiffness value. |
+| `pisag` | The `sag` goal plus the `pi` correction. | The same as `sag` and `pi`. |
+| `adapt` | The `inv` goal minus an estimate of the disturbance. During the run, a Kalman filter estimates a fast load part, a slow sag part and a friction part from the difference between the predicted and the measured angle. | The servo constants of the arm. |
+| `rls` | The goal that makes a small joint model reach the target. The model starts from the servo constants and continues to learn during the run (recursive least squares). | The servo constants of the arm. |
+| `solve` | A search for each joint. It tries many destination goals, simulates the servo model 0.25 s ahead for each one, and keeps the goal with the smallest predicted error. | The servo constants of the arm. |
+| `mpc` | Model predictive control. It uses the same model and look-ahead as `solve`, but it chooses a different goal for each step of the 0.25 s plan. It sends the first goal and makes a new plan at the next step. | The servo constants of the arm. |
+| `mpca` | `mpc` plus a Kalman filter that estimates a load and a sag during the run. The "a" means adaptive. | The servo constants of the arm. |
+| `ilc` | Iterative learning control. The `inv` goal plus a correction for each step of the motion, learned from the error of the earlier runs of the same motion. | The same motion, played many times. |
+| `ilcmpc` | `ilc` with `mpc` as the base, in place of `inv`. | The same as `ilc` and `mpc`. |
+
+The "servo constants" are a file with the dead time, the lag, the dead band, the stiffness and the sag of each joint, fitted on logs from my arm. A Kalman filter is an estimator: at each step it combines what a model predicts with the new reading. [Part 3](/robotics/so101-3-finer-than-the-sensor/) explains it.
+
 ```so101-widget
 {"type": "error-matrix", "fallback": "Which error each controller removes. direct: none. lead: part of the delay. inv: the delay. pi, sag, grav, pisag: the gravity sag, pi also part of a load change. solve and mpc: delay, dead band, sag and part of the model error. mpca, adapt, rls: load changes. ilc, ilcmpc: repeated errors. This matrix is a teaching summary, made from the design of each controller and simulated tests. The real arm checked it only for pi on one motion.", "columnLinks": {"delay": "/robotics/so101-2-what-pulls-the-joint/#three-kinds-of-delay", "band": "/robotics/so101-2-what-pulls-the-joint/#low-speed-is-the-hard-case", "sag": "/robotics/so101-2-what-pulls-the-joint/#gravity-changes-with-the-pose", "load": "/robotics/so101-2-what-pulls-the-joint/#a-payload-and-the-torque-limit", "model": "/robotics/so101-2-what-pulls-the-joint/#simulator-against-measured", "rep": "/robotics/so101-4-goal-ahead/#repeating-the-same-path-ilc-and-ilcmpc"}}
 ```
@@ -123,7 +144,7 @@ In Genesis, like in MuJoCo, dry friction is a soft constraint. Instead of forcin
 
 To see how the different terms interact, I like to look at a worn robot, with friction multiplied by 2.5, so $f$ = 0.49 N·m. That's more than the gravity torque at the example hold, 0.391 N·m. On a hold, friction helps: it carries the whole load at first, and the joint sags only 0.7 mrad after 0.17 s, against 14.0 mrad on the healthy robot, before the soft friction slowly creeps to 17.2 mrad at 6 s. In motion it's the opposite. Friction adds 36 mrad of lag, against 14.4 mrad on the healthy robot, and the extra damping at 0.7 rad/s adds 81 mrad, against 54 mrad.
 
-Since most of the score comes from paths that move, the worn robot ends up much worse overall: 64.8 mrad on a multisine path and 73.4 mrad on a policy-like path.
+Since most of the score comes from paths that move, the worn robot ends up much worse overall: 64.8 mrad on a multisine path (a sum of sine waves) and 73.4 mrad on a path shaped like the output of a robot policy.
 
 ![Two panels. On a hold, the sag after 0.17 s is 14 mrad on the healthy robot and 0.7 mrad on the worn robot. In motion at 0.7 rad/s, friction adds 14.4 mrad healthy against 36 worn, and damping adds 54 against 81.](/assets/robotics/so101-series/worn-hold-motion.png "More friction helps a hold and hurts motion. Simulation, worn friction 2.5 times the healthy value.")
 

@@ -9,6 +9,18 @@ part: 3
 
 My arm only sees itself through whole encoder ticks of 1.534 mrad, and every controller in this series reads that staircase. Two questions kept coming back while I worked on it. What happens when a controller needs more than the angle, like the speed or the acceleration? And can a controller know the angle better than the sensor tells it?
 
+This part uses four of my controller names. This is what each name means.
+
+| Name | What it sends to the servo as the goal | What it needs |
+|---|---|---|
+| `inv` | The target one servo dead time ahead, plus the target speed times the servo lag, plus a small acceleration term. It reverses a simple model of the servo, which is where the name comes from. | The dead time and the lag of the servo, from a step test on the arm. |
+| `solve` | A search for each joint. It tries many destination goals, simulates the servo model 0.25 s ahead for each one, and keeps the goal with the smallest predicted error. | The servo constants of the arm. |
+| `mpc` | Model predictive control. It uses the same model and look-ahead as `solve`, but it chooses a different goal for each step of the 0.25 s plan. It sends the first goal and makes a new plan at the next step. | The servo constants of the arm. |
+| `mpca` | `mpc` plus a Kalman filter that estimates a load and a sag during the run. The "a" means adaptive. | The servo constants of the arm. |
+
+The "servo constants" are a file with the dead time, the lag, the dead band, the stiffness and the sag of each joint, fitted on logs from my arm. [Part 2](/robotics/so101-2-what-pulls-the-joint/#three-kinds-of-delay) explains the dead time and the lag.
+
+
 ## Two differences make a lot of noise
 
 To push the arm along a path, you need to know how much torque it takes, and the equation of motion from part 2 needs the acceleration $\ddot q$ for that:
