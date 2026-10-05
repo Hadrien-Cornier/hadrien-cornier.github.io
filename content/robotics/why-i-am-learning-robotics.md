@@ -109,13 +109,33 @@ Variety matters as much as volume. [DROID](https://arxiv.org/abs/2403.12945) sen
 
 ![Grid of photos from the DROID dataset: the same Franka robot arm working in bathrooms, kitchens, dining rooms, bedrooms, laboratories, laundry rooms and offices. Center panel: 76k episodes, 564 scenes, 52 buildings, 13 institutions, 86 tasks or verbs.](/assets/robotics/why-robotics/droid-scenes.png "DROID. Figure from Khazatsky et al., DROID (2024), CC BY 4.0.")
 
+### Learning from people's point of view
+
+There's a second way around the data problem: record people instead of robots. **Egocentric** data is video filmed from the person's own point of view, usually with a head-mounted camera, so the hands sit in the frame the way a robot's grippers would. People already do every task we care about, in every kind of place. The question is whether a robot can learn from hands that aren't its own.
+
+In February 2026, NVIDIA's [EgoScale](https://arxiv.org/abs/2602.16710) tried it at a large scale. It pre-trained a VLA on **20,854 hours** of egocentric human video, then trained it on a small set of matched human and robot play data (50 hours of human data, 4 hours of robot data), and finally on the target tasks. On a robot with a 22-degree-of-freedom hand, average success went up by **54%** compared with no pre-training.
+
+![EgoScale pipeline in three panels. Pre-training: 20,854 hours of egocentric human videos with tracked hands. Mid-training: human and robot play data recorded side by side, 50 hours human and 4 hours robot. Post-training: a robot with dexterous hands doing tasks like injecting a syringe, using tongs, unscrewing a bottle and folding a shirt.](/assets/robotics/why-robotics/egoscale-pipeline.png "EgoScale: human video first, a little matched robot data second, the target task last. Figure from EgoScale (2026), CC BY 4.0.")
+
+The matched human data comes from a light capture rig: a camera on the head, cameras on the wrists and tracked gloves, so each frame comes with the hand's motion.
+
+![A person wearing a head-mounted camera, wrist cameras and tracked gloves folds a towel at a desk. On the right, the head camera view and the two wrist camera views of the same moment.](/assets/robotics/why-robotics/egoscale-capture.png "EgoScale's capture setup for the matched human data. Figure from EgoScale (2026), CC BY 4.0.")
+
+But why would this work at all, when a human hand looks nothing like a gripper? A paper from Physical Intelligence, with Stanford's Chelsea Finn among the authors ([Kareer et al., 2025](https://arxiv.org/abs/2512.22414)), gives an answer I like. They co-trained π0.5 on robot data plus 3 to 5 hours of head-camera human video per task, with no special step to align humans and robots. Then they looked inside the model with a **t-SNE** plot. t-SNE squashes the model's high-dimensional internal vectors into two dimensions, so that points close together are inputs the model treats as similar.
+
+Without robot pre-training, human and robot inputs form two separate clouds: the model learned them as two different worlds. With more diverse robot pre-training, the clouds merge, and the same task done by a human or by a robot lands in the same place. That's also when the transfer shows up. On scenes the robot only saw through human video, performance nearly doubles.
+
+![Three scatter plots, a schematic. With no robot pre-training, human points and robot points form two separate clusters. With some pre-training, they start to overlap. With large, diverse pre-training, human and robot points are mixed along the same shape.](/assets/robotics/why-robotics/human-robot-tsne-schematic.png "A schematic of the trend in Kareer et al. (2025). I drew it to show the idea; the real t-SNE plot is in the paper.")
+
 ### Where the analogy breaks
 
 The parallel isn't perfect, and I want to be honest about where it breaks.
 
 1. **The data wasn't free.** GPT-2 trained on text that already existed on the internet. Nobody wrote down what a robot saw, commanded and felt while opening a drawer. Every hour of robot data has to be produced, usually by a person.
-2. **There's no scaling law yet.** In 2020, language models got a curve that predicts how much better a model gets with more data and compute. That turned a bet into an investment plan. Robotics doesn't have that curve, so it's possible we're really in 2017, not 2019.
+2. **The scaling law is only starting to appear.** In 2020, language models got a curve that predicts how much better a model gets with more data and compute. That turned a bet into an investment plan. Robotics is just getting its first curves. EgoScale found that the validation loss falls in a straight line against the log of the hours of human video, and robot success rose with it, from 0.30 at 1,000 hours to 0.71 at 20,000 hours (average task completion). That's one recipe, one robot and five points, not a general law. So it's still possible we're really in 2017, not 2019.
 3. **The bar for reliability is higher.** A wrong answer in a chat costs a retry. A wrong grasp can break a glass. And long tasks multiply errors: if a job has 20 steps that each succeed 95% of the time, the robot finishes only $0.95^{20} \approx 36\%$ of the time.
+
+![Three panels from EgoScale. Left: validation loss during training for 1k, 2k, 4k, 10k and 20k hours of human video; small datasets overfit. Center: the best loss against data on a log scale falls on a straight line, L = 0.024 - 0.003 ln(D). Right: average robot task completion rises from 0.30 at 1k hours to 0.71 at 20k hours.](/assets/robotics/why-robotics/egoscale-scaling.png "Point 2: the first robot scaling curve I know of, for human video. Figure from EgoScale (2026), CC BY 4.0.")
 
 ![Line chart of the chance to finish a task against the number of steps, for 99%, 95% and 90% success per step. At 20 steps and 95% per step, 36% of jobs finish.](/assets/robotics/why-robotics/long-task-reliability.png "Chance to finish = (success per step) to the power of the number of steps, assuming no recovery. My chart.")
 
@@ -129,6 +149,37 @@ Mobile ALOHA's authors published their failures too, and they show what those lo
 That third point is also why measurement is so hard. Benchmarks like [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) and [RoboCasa](https://robocasa.ai/leaderboard.html) make it possible to compare policies in simulation, and even there the leading entry on RoboCasa scored **36.7%** on held-out multi-step tasks in September 2026. In the real world, someone has to reset the scene, the lighting shifts and the cup is slightly different every time.
 
 ![Overview of RoboCasa365: diverse simulated kitchen scenes, a large object library, interactive fixtures, 365 everyday tasks, 2,500 kitchen scenes, 3,200+ objects, 2,200+ hours of data and 500K+ trajectories, with examples of skills, long-horizon tasks and semantic reasoning.](/assets/robotics/why-robotics/robocasa365.png "RoboCasa365, a simulated benchmark of household tasks. Figure from the RoboCasa365 paper (2026), CC BY 4.0.")
+
+## Waymo: a robot that tries not to touch the world
+
+One robot already works at scale, and it's worth asking why. Waymo's cars drove more than **270 million** fully autonomous miles through June 2026. Against human drivers in the same cities, [Waymo reports](https://waymo.com/safety/impact/) **82% fewer** injury crashes and **95% fewer** crashes with a serious injury or worse.
+
+So why does driving work before manipulation? My reading is that a car's job is to not touch anything. Every contact is a failure. The car has to predict where everything will be and stay away from it. A kitchen robot is the opposite. Its whole job is contact: push, grasp, squeeze, pour. And contact is exactly where physics gets hard to predict, with friction, slipping and soft objects that change shape.
+
+How did Waymo get the extra nines of reliability? Simulation is a big part of the answer. Waymo runs closed-loop simulation, where the other cars and pedestrians react to what the Waymo does. In its [10 AI lessons](https://waymo.com/blog/2026/08/10ailessons/), it describes an automated Critic that reviews the millions of road miles driven each week "and tens of billions in simulation." The simulator finds rare events before the car meets them on the road. But Waymo is also clear that simulation isn't enough: in the same post, it says a driving system only truly matures when it's solely responsible for the driving. So it's simulation plus hundreds of millions of real driverless miles, not simulation instead of them.
+
+The other thing I find interesting is how much explicit structure Waymo keeps. Its foundation model doesn't just output a path. It also outputs [structured representations](https://waymo.com/blog/2025/12/demonstrably-safe-ai-for-autonomous-driving/): objects, their attributes and the road graph. And a separate onboard validation layer checks each planned trajectory against physics-based constraints and traffic laws before the car follows it. FieldAI, which builds autonomy for robots in unstructured environments, makes a similar choice: its Field Foundation Models [combine learned models with physics-based reasoning and uncertainty awareness](https://www.fieldai.com/news/fieldai-and-nvidia-omniverse-building-the-next-generation-of-industrial-ai). That's the question my SO-101 series asks at a much smaller scale: where should physics stay inside a learned system?
+
+## World models: imagining the future before acting
+
+A VLA maps what the robot sees to an action. A **world model** answers a different question: given what the robot sees now and an action, what will it see next? With one, a robot can try actions in its head, a company can generate training data, and you can test a policy without a real robot.
+
+Waymo uses one for driving. The [Waymo World Model](https://waymo.com/blog/2026/02/the-waymo-world-model-a-new-frontier-for-autonomous-driving-simulation), built on Google DeepMind's Genie 3, generates both camera and lidar data for scenes that are hard to film for real, like extreme weather or strange objects on the road. You can steer it with driving actions, a scene layout or a text prompt.
+
+For robots, the clearest picture puts the real camera frame next to the imagined ones. NVIDIA's [DreamGen](https://arxiv.org/abs/2505.12705) starts from one real image from the robot's camera, asks a video model adapted to that robot to imagine the rest of the task, and then recovers the actions from the imagined video. With teleoperation data from only one pick-and-place task in one environment, a humanoid learned **22 new behaviors**.
+
+![DreamGen overview. Top: a real initial camera frame of a robot facing a pink cup and sunflowers, outlined in red, then a video world model generates a sequence of frames where the robot hand picks up the cup and pours, with pseudo-actions extracted from the generated frames. Bottom: generated examples for towel folding and hammer use, new behaviors like opening a laptop, and new environments like a kitchen.](/assets/robotics/why-robotics/dreamgen-imagined.png "Left, in red: the real camera frame. Right: video imagined by the world model, from which the actions are extracted. Figure from DreamGen (2025), CC BY 4.0.")
+
+1X does this live on its NEO humanoid. With its world model, [announced in January 2026](https://www.globenewswire.com/news-release/2026/01/12/3217155/0/en/1X-Unveils-Paradigm-Shift-In-Humanoid-AI-NEO-s-Starting-to-Learn-On-Its-Own.html), you give NEO a voice or text prompt, it generates a video of the future from what its camera sees, and an inverse dynamics model turns the imagined frames into movements.
+
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/lS_z60kjVEk" title="NEO is Starting to Learn on Its Own, 1X, 2026" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>1X, "NEO is Starting to Learn on Its Own" (January 2026). <a href="https://www.youtube.com/watch?v=lS_z60kjVEk">Watch on YouTube</a></figcaption>
+</figure>
+
+Not every world model draws pixels. Meta's [V-JEPA 2](https://arxiv.org/abs/2506.09985) predicts the *features* of the next frame instead of the frame itself. It first learned from over a million hours of video without action labels, then from less than **62 hours of robot data**, and used its predictions to plan movements. Yann LeCun's company [AMI](https://amilabs.xyz/) is pursuing this direction.
+
+![Diagram of V-JEPA 2-AC: previous video frames pass through a frozen encoder into a predictor that also receives robot actions and poses; the prediction is compared with the frozen encoding of the future frame using an L1 loss.](/assets/robotics/why-robotics/vjepa2-ac.png "V-JEPA 2-AC predicts the next frame's features from past frames and the robot's action. Figure from Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
 
 ## Reindustrializing Europe and the United States
 
@@ -157,15 +208,6 @@ These questions keep pulling me in, but you don't need them for the argument abo
 Amazon's million robots are mostly wheeled machines and arms designed around warehouse work. A machine can be extremely useful without looking like a person.
 
 The humanoid argument starts from the environment: doors, shelves, tools and workstations were built for human reach and movement. [BMW reports](https://www.press.bmwgroup.com/global/article/attachment/T0455864EN/644966) that Figure 02 moved **more than 90,000 components in about 1,250 operating hours** at its Spartanburg plant. Agility reported [more than 100,000 tote movements](https://www.agilityrobotics.com/content/digit-moves-over-100k-totes) by Digit at a GXO facility. Those are repeated industrial jobs with defined conditions. The real comparison is the whole job: how often the robot succeeds, how much human help it needs, how long it runs and what it costs to maintain.
-
-</details>
-
-<details>
-<summary>Should a robot predict actions, or their consequences?</summary>
-
-A VLA looks at the scene and chooses a movement. An **action-conditioned world model** instead predicts what happens after a proposed movement: push here, and will the cup slide or tip? A planner can compare those futures before acting. Meta's [V-JEPA 2](https://arxiv.org/abs/2506.09985) learned from over a million hours of video without action labels, then from less than **62 hours of robot data**, and used its predictions to plan. Yann LeCun's company [AMI](https://amilabs.xyz/) is pursuing this direction.
-
-![Diagram of V-JEPA 2-AC: previous video frames pass through a frozen encoder into a predictor that also receives robot actions and poses; the prediction is compared with the frozen encoding of the future frame using an L1 loss.](/assets/robotics/why-robotics/vjepa2-ac.png "V-JEPA 2-AC predicts the next frame's features from past frames and the robot's action. Figure from Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
 
 </details>
 

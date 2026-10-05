@@ -1124,11 +1124,11 @@ const TIMELINE_STAGES = [
   {id:'data', label:'3. Collect data on purpose, at scale', here:true,
     llm:'2019: GPT-2. A bigger model trained on more data generalizes better. Data-labeling companies grow around that bet.',
     robot:'2024 to 2026: π0, Helix, π0.5, the Atlas large behavior model, Figure Index. Companies build fleets and apps only to collect robot and human data.',
-    note:'We are here. The bet is clear, but nobody has the robot version of a scaling law yet.'},
+    note:'We are here. The bet is clear, and the first scaling curves are only starting to appear.'},
   {id:'scaling', label:'4. Measure what scale buys',
     llm:'2020: scaling laws and GPT-3. Loss falls predictably with model size, data and compute.',
-    robot:'Not yet. There is no agreed curve that says how much success one more hour of robot data buys.',
-    note:'For LLMs, this turned a bet into an investment plan. Robotics does not have that curve yet.'},
+    robot:'Starting. EgoScale (2026) finds that loss falls log-linearly with hours of human video, and robot success rises with it. No general law yet.',
+    note:'For LLMs, this turned a bet into an investment plan. Robotics has one early curve, for one recipe and one robot.'},
   {id:'product', label:'5. Reliable enough for everyone',
     llm:'2022: InstructGPT, then ChatGPT. Human feedback makes the model useful to anyone.',
     robot:'Open. A robot that finishes a household or factory job without help, at a price people pay.',
@@ -1152,6 +1152,7 @@ const TIMELINE_EVENTS = [
   {lane:'robot', t:2025.1, label:'Helix', stage:'data'},
   {lane:'robot', t:2025.3, label:'π0.5', stage:'data'},
   {lane:'robot', t:2025.63, label:'Atlas LBM', stage:'data'},
+  {lane:'robot', t:2026.1, label:'EgoScale', stage:'scaling'},
   {lane:'robot', t:2026.6, label:'Index', stage:'data'},
 ];
 
