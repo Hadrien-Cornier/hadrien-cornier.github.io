@@ -414,6 +414,93 @@ register('lag-vs-error', lagVsError);
 register('error-budget', errorBudget);
 register('predict', predict);
 
+// Speed coupling: a two-link arm seen from above (no gravity), with the centrifugal and Coriolis forces on the forearm.
+function speedCoupling(el) {
+  const L1 = 0.116, LC2 = 0.10, M2 = 0.25, KP = 13.64;  // teaching model with SO-101-sized numbers
+  const H = M2 * L1 * LC2;  // the coupling coefficient m2 l1 lc2 (kg·m²)
+  const wrap = node('div', undefined, 'so101-coupling');
+  const W = 420, HH = 340, CX = 210, CY = 175, S = 900;  // S: pixels per metre
+  const svgEl = svg(W, HH);
+  svgEl.classList.add('so101-coupling-svg');
+  svgEl.setAttribute('aria-label', 'Top view of a two-link arm that turns. Arrows show the centrifugal force and the Coriolis force on the forearm.');
+  const make = (name, attrs) => { const n = document.createElementNS(svgNamespace, name); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v)); return n; };
+  const defs = make('defs', {});
+  for (const [id, cls] of [['cf', 'so101-coupling-cf'], ['co', 'so101-coupling-co']]) {
+    const marker = make('marker', {id:`so101-arrow-${id}`, viewBox:'0 0 10 10', refX:8, refY:5, markerWidth:6, markerHeight:6, orient:'auto-start-reverse'});
+    marker.append(make('path', {d:'M0,0 L10,5 L0,10 z', class:cls}));
+    defs.append(marker);
+  }
+  const trail = make('circle', {cx:CX, cy:CY, r:L1 * S, class:'so101-coupling-trail'});
+  const link1 = make('line', {class:'so101-coupling-link'});
+  const link2 = make('line', {class:'so101-coupling-link'});
+  const base = make('circle', {cx:CX, cy:CY, r:9, class:'so101-coupling-joint'});
+  const elbow = make('circle', {r:7, class:'so101-coupling-joint'});
+  const com = make('circle', {r:6, class:'so101-coupling-com'});
+  const cf = make('line', {class:'so101-coupling-cf-line', 'marker-end':'url(#so101-arrow-cf)'});
+  const co = make('line', {class:'so101-coupling-co-line', 'marker-end':'url(#so101-arrow-co)'});
+  svgEl.append(defs, trail, link1, link2, base, elbow, com, cf, co);
+  const legend = node('p', undefined, 'so101-coupling-legend');
+  legend.innerHTML = '<span class="so101-coupling-key so101-coupling-cf"></span> centrifugal force: pushes the forearm out from the shoulder <span class="so101-coupling-key so101-coupling-co"></span> Coriolis force: sideways, only when the elbow moves too';
+  const controls = node('div', undefined, 'so101-controls');
+  let w1 = 1.1, w2 = 0, q2 = 1.2, q1 = 0, playing = true;
+  slider(controls, {label:'Shoulder speed', min:0, max:6, step:0.1, value:w1, unit:'rad/s', onInput:(v) => { w1 = v; draw(); }});
+  slider(controls, {label:'Elbow speed', min:0, max:6, step:0.1, value:w2, unit:'rad/s', onInput:(v) => { w2 = Math.sign(w2 || 1) * v; draw(); }});
+  const pause = button('Pause', 'so101-button-secondary');
+  pause.addEventListener('click', () => { playing = !playing; pause.textContent = playing ? 'Pause' : 'Play'; if (playing) last = null, requestAnimationFrame(step); });
+  controls.append(pause);
+  const readout = node('div', undefined, 'so101-coupling-readout');
+  readout.setAttribute('aria-live', 'polite');
+  const rows = ['elbow', 'shoulder'].map((name) => { const p = node('p'); readout.append(p); return [name, p]; });
+  wrap.append(svgEl, legend, controls, readout);
+  el.append(wrap);
+  const arrow = (line, x, y, fx, fy, scale) => {
+    const len = Math.hypot(fx, fy) * scale;
+    const k = len > 110 ? 110 / len : 1;  // long arrows are capped
+    line.setAttribute('x1', x); line.setAttribute('y1', y);
+    line.setAttribute('x2', x + fx * scale * k); line.setAttribute('y2', y - fy * scale * k);
+    line.style.display = len < 2 ? 'none' : '';
+  };
+  function draw() {
+    const ex = L1 * Math.cos(q1), ey = L1 * Math.sin(q1);
+    const a = q1 + q2;
+    const cx = ex + LC2 * Math.cos(a), cy = ey + LC2 * Math.sin(a);
+    const px = (x) => CX + x * S, py = (y) => CY - y * S;
+    link1.setAttribute('x1', CX); link1.setAttribute('y1', CY); link1.setAttribute('x2', px(ex)); link1.setAttribute('y2', py(ey));
+    const tx = ex + 0.2 * Math.cos(a), ty = ey + 0.2 * Math.sin(a);
+    link2.setAttribute('x1', px(ex)); link2.setAttribute('y1', py(ey)); link2.setAttribute('x2', px(tx)); link2.setAttribute('y2', py(ty));
+    elbow.setAttribute('cx', px(ex)); elbow.setAttribute('cy', py(ey));
+    com.setAttribute('cx', px(cx)); com.setAttribute('cy', py(cy));
+    // forces seen by an observer who turns with the upper arm (rotation rate w1)
+    const fcf = [M2 * w1 * w1 * cx, M2 * w1 * w1 * cy];  // centrifugal: m w1² r, out from the shoulder
+    const vrel = [-w2 * LC2 * Math.sin(a), w2 * LC2 * Math.cos(a)];  // forearm centre speed from the elbow motion
+    const fco = [2 * M2 * w1 * vrel[1], -2 * M2 * w1 * vrel[0]];  // Coriolis: -2 m w1 z × v_rel
+    arrow(cf, px(cx), py(cy), fcf[0], fcf[1], 220);
+    arrow(co, px(cx), py(cy), fco[0], fco[1], 220);
+    const tauElbow = -H * Math.sin(q2) * w1 * w1;  // centrifugal torque on the elbow joint
+    const tauShoulder = H * Math.sin(q2) * (2 * w1 * w2 + w2 * w2);  // Coriolis torque on the shoulder joint
+    const text = (name, tau) => `${name}: ${Math.abs(tau * 1000).toFixed(1)} mN·m to add. If no one adds it, the joint misses by ${Math.abs(tau / KP * 1000).toFixed(2)} mrad (${(Math.abs(tau / KP * 1000) / 1.534).toFixed(2)} tick).`;
+    rows[0][1].textContent = text('Elbow, centrifugal: h·sin(q₂)·ω₁²', tauElbow);
+    rows[1][1].textContent = text('Shoulder, Coriolis and centrifugal: h·sin(q₂)·(2ω₁ω₂ + ω₂²)', tauShoulder);
+  }
+  let last = null;
+  function step(now) {
+    if (!playing) return;
+    if (last !== null) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      q1 += w1 * dt * 0.5;  // the drawing turns at half speed so the eye can follow it
+      q2 += w2 * dt * 0.5;
+      if (q2 > 2.6 || q2 < 0.3) { w2 = -w2; q2 = Math.min(2.6, Math.max(0.3, q2)); }
+    }
+    last = now;
+    draw();
+    requestAnimationFrame(step);
+  }
+  draw();
+  requestAnimationFrame(step);
+}
+register('speed-coupling', speedCoupling);
+
+
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const MATRIX_COLUMNS = [
@@ -589,7 +676,7 @@ function renderFamilyTree(target, options) {
   const {root, config} = resolveInvocation(target, options);
   if (!root) return null;
   const showLearned = config.learned === true || config.showLearned === true;
-  const families = showLearned ? [...FAMILIES, {id:'learned', label:'Part 5'}] : FAMILIES;
+  const families = showLearned ? [...FAMILIES, {id:'learned', label:'Part 4'}] : FAMILIES;
   const instance = ++treeSequence;
   const arrowId = `so101-tree-arrow-${instance}`;
   setWidgetRoot(root, 'family-tree');
@@ -606,7 +693,7 @@ function renderFamilyTree(target, options) {
   });
   const title = svgElement('title', {id:`so101-tree-title-${instance}`}, 'SO-101 controller family tree');
   const description = svgElement('desc', {id:`so101-tree-description-${instance}`},
-    'Direct leads to lead, then inv. From inv, branches show feedback and gravity, adaptive, model-based, and repeated-path controllers. The optional learned branch links to Part 5.');
+    'Direct leads to lead, then inv. From inv, branches show feedback and gravity, adaptive, model-based, and repeated-path controllers. The optional learned branch links to Part 4.');
   const defs = svgElement('defs');
   addArrowMarker(defs, arrowId);
   svg.append(title, description, defs);
@@ -685,11 +772,11 @@ function renderFamilyTree(target, options) {
   addNode(repeated, {id:'ilcmpc', label:'ilcmpc', family:'rep', x:645, y:300}, config);
 
   addSvgText(svg, 20, 370, showLearned
-    ? 'The learned controllers come in part 5.'
-    : 'Learned controllers (Fitted, the network) come in part 5.', 'edge-label muted');
+    ? 'The learned controllers come in part 4.'
+    : 'Learned controllers (Fitted, the network) come in part 4.', 'edge-label muted');
   if (showLearned) {
     const learned = svgElement('g', {class:'family-learned', 'data-family':'learned'});
-    addSvgText(learned, 410, 398, 'Part 5', 'small-label family-name', {'text-anchor':'middle'});
+    addSvgText(learned, 410, 398, 'Part 4', 'small-label family-name', {'text-anchor':'middle'});
     addLine(learned, 90, 410, 730, 410, 'learned-line');
     const learnedNodes = [
       {id:'fitted', label:'Fitted', x:35},
@@ -833,7 +920,7 @@ const EQ_PROBLEMS = [
   {id:'dry', term:'dry', group:'force', name:'Dry friction makes a band, not a point', size:'14.3 to 43.0 mrad band; stiction and stick-slip at low speed'},
   {id:'coupling', term:'coupling', group:'force', name:'One joint pushes another', size:'0.38 to 1.5 mrad at 1.1 rad/s, against 43 mrad of gravity'},
   {id:'inertia', term:'mass', group:'mass', name:'Inertia', size:'2.1 mrad in the example step'},
-  {id:'payload', term:'mass', also:['gravity'], group:'mass', name:'A payload adds mass and weight', size:'200 g: sag from 40 to 83 mrad (simulator)'},
+  {id:'payload', term:'mass', also:['gravity'], group:'mass', name:'A payload adds mass and weight', size:'200 g: about 40 mrad more sag (simulator)'},
   {id:'deadtime', term:'servo', group:'servo', name:'Dead time D', size:'31 to 36 ms before any motion (real arm)'},
   {id:'hold', term:'servo', group:'servo', name:'Goal hold', size:'half a step: 16.7 ms at 30 Hz'},
   {id:'deadband', term:'servo', group:'servo', name:'Dead band: no torque from a small gap', size:'8.1 to 21.0 mrad (real arm)'},
@@ -941,10 +1028,11 @@ const GOAL_METHODS = [
   {id:'Fitted', family:'plan', on:['T', 'M', 'C', 'G', 'd', 'f', 'I'], search:'one goal for the next 33 ms step, simulated in 8 substeps', values:'A fitted MuJoCo copy of the arm, inverted with Newton’s method. K_I = 3.', result:'Simulation: 0.398 mrad.'},
   {id:'ilc', family:'learn', on:['T', 'M', 'd', 'u'], values:'inv + u_k. After each run, u_k adds half of the error that step k caused one servo delay later, then a 2 Hz smoothing filter.', result:'This series reports no number for it.'},
   {id:'ilcmpc', family:'learn', on:['T', 'M', 'd', 'G', 'w', 'u'], search:'one goal for each step of a 0.25 s plan', values:'mpc that tracks the target plus u_k.', result:'Stand-in test: 1.04 mrad, the lowest.'},
+  {id:'PhysR', family:'learn', on:['T', 'M', 'C', 'G', 'd', 'f'], learned:['w'], search:'goals compared through the full physical model of the 5 joints', values:'phys: a full physical model fitted on the real arm, with an EKF estimate of the missing torque in the ŵ slot. PhysR adds a small recurrent network (GRU) that learns a torque residual in the same slot.', result:'Offline, real windows: 2 to 12 % lower 6-tick error than phys alone. No closed-loop result yet.'},
   {id:'network', family:'learn', on:['T', 'P', 'I'], learned:['M', 'C', 'G', 'd', 'f'], values:'T = one step. A small network learns the whole τ̂/kp part from data. K_P = −0.25 (from its step rule) and K_I = 3.', result:'Simulation: 0.446 mrad.'},
 ];
 
-function renderGoalEquation(el) {
+function renderGoalEquation(el, config = {}) {
   setWidgetRoot(el, 'goal-equation');
   const wrap = element('div', 'so101-goal');
   const familyRow = element('div', 'so101-goal-families');
@@ -970,7 +1058,7 @@ function renderGoalEquation(el) {
   const panel = element('div', 'so101-goal-panel');
   panel.setAttribute('aria-live', 'polite');
   const familyButtons = new Map();
-  let method = 'inv';
+  let method = GOAL_METHODS.some((item) => item.id === config.method) ? config.method : 'inv';
   const show = () => {
     const current = GOAL_METHODS.find((item) => item.id === method);
     const family = GOAL_FAMILIES.find((item) => item.id === current.family);

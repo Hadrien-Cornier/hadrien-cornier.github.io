@@ -2,5 +2,5 @@
   "so101-2-what-pulls-the-joint": "/robotics/so101-1-target-and-goal/#section-one-equation-for-the-joint",
   "so101-3-finer-than-the-sensor": "/robotics/so101-2-finer-than-the-sensor/",
   "so101-4-goal-ahead": "/robotics/so101-3-choosing-the-goal/",
-  "so101-5-offline-lied": "/robotics/so101-3-choosing-the-goal/#section-family-6-learn-from-repeats-or-data"
+  "so101-5-offline-lied": "/robotics/so101-4-learning-what-physics-misses/#section-offline-against-closed-loop"
 }

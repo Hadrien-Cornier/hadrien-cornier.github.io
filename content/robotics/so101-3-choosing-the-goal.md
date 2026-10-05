@@ -1,6 +1,6 @@
 ---
 title: 'Six ways to choose the goal'
-description: 'One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC and a neural network, is that formula with some terms set to zero.'
+description: 'One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC, is that formula with some terms set to zero.'
 date: '2026-10-05'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
@@ -188,7 +188,7 @@ The gains are small because of everything from part 1. The arm only covers about
 ![The servo gap split into three parts: e from the servo spring, 4e from the outer loop, and the model offset, adding up to 5e plus the offset.](/assets/robotics/so101-series/pi-five.png "With an outer gain of 4, the joint feels 5 times the servo stiffness against a missing torque.")
 
 ```so101-widget
-{"type": "predict", "id": "C1", "fallback": "Exam question C1: with an outer gain of 4, how much stiffer does the joint get against a missing torque?"}
+{"type": "predict", "id": "C1", "fallback": "Predict first. A 150 g tool in the gripper needs 0.378 N·m of torque on shoulder_lift that the controller's model does not know. The controller adds an outer P term: it moves the goal by 4 × e, where e is the error (target minus reading). The servo stiffness is kp = 13.64 N·m/rad. Ignore friction and any integral term. What error stays? Pick the answer and its reasoning. (A) 27.7 mrad. 0.378 / 13.64. The outer P term does not change the servo. (B) 6.9 mrad. 0.378 / (4 × 13.64) = 0.378 / 54.6. The outer gain of 4 makes the joint 4 times stiffer. (C) 5.5 mrad. The gap is e + 4 × e = 5 × e, so the stiffness is 5 × 13.64 = 68.2 N·m/rad, and 0.378 / 68.2 = 5.5 mrad. (D) 0 mrad. Feedback removes any steady error. Answer: 5.5 mrad. The gap is e + 4 × e = 5 × e, so the stiffness is 5 × 13.64 = 68.2 N·m/rad, and 0.378 / 68.2 = 5.5 mrad."}
 ```
 
 I assumed an outer gain of 4 would make the joint 4 times stiffer. It's 5 times. The servo gap is the goal minus the joint, which works out to
@@ -264,7 +264,7 @@ The result that puzzled me first in the simulation study was that Classical lose
 Fitted gets around this by simulating the step in 8 small substeps and solving for the goal that puts the joint on the target at the end of the step, with Newton's method. Even with the true robot numbers, Classical's one-instant rule is still 3.4 times worse. A simple test made the cause clearer for me: the same Classical rule gets 4.13 mrad with a 30 Hz goal rate and 0.91 mrad at 240 Hz, so when the steps get shorter, the one-instant mistake mostly goes away.
 
 ```so101-widget
-{"type": "predict", "fallback": "Predict first. Give Classical model + PID the true robot numbers. Its geometric-mean RMSE over the six conditions is 1.312 mrad. The Exact-model reference has the same numbers and gets 0.385 mrad. It simulates the 8 substeps of each step. Each controller uses its own tuned outer gains. A MuJoCo test (not Genesis) changed one factor at a time. Which cause of the 3.4x gap does it support best? Answer: The quasi-static rule. It treats the 33 ms goal hold as one instant.", "id": "C3"}
+{"type": "predict", "fallback": "Predict first. Give Classical model + PID the true robot numbers. Its error, averaged over six simulated robots, is 1.312 mrad. The Exact model has the same numbers and gets 0.385 mrad: it simulates the 8 substeps of each 33 ms step. Each controller uses its own tuned gains. A MuJoCo test changed one factor at a time. Which cause of the 3.4 times gap does it support best? (A) Its tanh friction model is wrong. (B) Its physics numbers are wrong. (C) It has no D term, so it cannot damp the arm. (D) Its rule treats the 33 ms goal hold as one instant. Answer: Its rule treats the 33 ms goal hold as one instant.", "id": "C3"}
 ```
 
 So I started to think of it as a ladder. Classical looks at one instant, Fitted simulates one step from the inside, and `solve` and `mpc` look many steps ahead. A trajectory is continuous, and each rung of the ladder sees more of it.
@@ -395,80 +395,7 @@ It's a strong classical baseline of a known type rather than a new method. MPC w
 
 **Terms:** $u_k$, or the whole $\hat\tau/k_p$ part learned by a network.
 
-### Repeating the same path: ilc and ilcmpc
-
-If the arm does the same motion over and over, it can learn from its own past runs. Iterative learning control (`ilc`) stores the error of the last run and uses it to correct the goals of the next one: after each run, $u_k$ adds half of the error that step $k$ caused one servo delay later, then goes through a smoothing filter. `ilcmpc` puts that rule on top of `mpc`. In a stand-in test (a software copy of the servo, built from the servo model of my arm, which I use for dry runs) on the fast motion sets at 100 Hz, `ilcmpc` had the lowest error: 1.04 mrad, against 1.15 for `mpc`, 1.28 for `mpca`, 1.36 for `solve`, 4.15 for `pi` and 4.90 for `adapt`. The stand-in arm uses the same servo model as the planners, so this test favors them.
-
-### A network for the force terms
-
-The question behind this whole series was whether a controller can be more accurate than the classical ones, so I also tried learning the goal with a neural network. In the general formula, the network fills the $\hat\tau/k_p$ slot: it doesn't output a goal from scratch, it outputs a correction on top of a simple rule,
-
-$$
-\text{goal} = q + \text{step}^* + \text{offset}_{NN} + 3I
-$$
-
-where $\text{step}^*$ is the move the controller wants this step: the target move, plus 0.75 of the distance the joint is behind.
-
-![Number line in ticks: reading 100, next reading 110, goal sent 150. The joint moved 10 and the label, the goal minus the next reading, is 40.](/assets/robotics/so101-series/hindsight-label.png "The hindsight label: how far past the landing point the goal had to be.")
-
-![Block diagram: the reading q, the targets r_k and r_k+1 and the past goal go into a small network, which outputs an offset. The goal is q plus step star plus the offset plus 3 I.](/assets/robotics/so101-series/network-io.png "The network only learns an offset on top of a simple rule.")
-
-Its label comes from hindsight. Suppose a logged step where the reading was 100, the goal sent was 150 and the next reading was 110. The joint moved 10, and the goal sat 40 past where it ended up, so the label is 40. In words, the row teaches the network that from this state, to move 10, the goal has to go 40 past the end point.
-
-<details>
-<summary>The network has the same shape as Classical</summary>
-
-$q + \text{step}^* = r_{k+1} - 0.25\,e$. So Classical is $r_{k+1} + \tau/k_p + 4e + 10I$, and the network is $r_{k+1} - 0.25e + \text{NN} + 3I$. The network learns the part that Classical computes from physics, $\tau/k_p$, and it learns it with the 33 ms step built in.
-
-</details>
-
-In the simulation study the network got 0.446 mrad, against 1.117 for Classical. That's because it learns the right lead for a goal that's held for a whole step, which is exactly what Classical's one-instant rule gets wrong. I first thought it was about knowing gravity in advance, but Classical knows gravity too.
-
-### Offline against closed loop
-
-This is the result that changed how I test everything. There are two ways to test a network. Offline, you feed it recorded data and compare its output with the label, and its outputs never move anything. In closed loop, you let it drive the arm, so its goals move the arm and its next inputs come from that motion, including its own past goals.
-
-```so101-widget
-{"type": "predict", "fallback": "Predict first. Two ways to test a network. Offline: feed it recorded data and compare its output with the label; its outputs never move the arm. Closed loop: let it drive the simulated arm; its goals move the arm, and its next inputs come from that motion, including its own past goals. Nominal = the default robot, with no change. An earlier network got 4 past readings and 4 past goals as extra inputs. It trained on smooth wiggle data only. Its offline label error fell from 6.19 to 3.03 mrad. In closed loop on nominal validation paths, the same network with no history had 0.552x the tracking error of Classical model + PID. Predict the closed-loop error of the network with history on nominal, as a multiple of the error of Classical model + PID. Answer: About 80x: 81.3x Classical model + PID, with 77% of steps saturated.", "id": "N3"}
-```
-
-The answer was 81.3 times worse than Classical, with 77 % of the steps hitting the torque clamp. The history had halved the network's offline error, and in closed loop it was a disaster.
-
-```so101-widget
-{"type": "closed-loop-drift", "fallback": "Offline, the network sees recorded inputs and its outputs sit close to the labels. In closed loop, its own past goal is an input, so each small error changes the next input and the errors build on each other. Illustration, not the measured network."}
-```
-
-The reason is that one of its inputs is its own past goal. In the training data, the past goals came from a different controller, so the network never saw its own goals. Once it drives, a small mistake changes its next input, that input is a bit outside the data it learned from, so the next output is a bit more wrong, and the errors build on each other. The data the network sees in closed loop isn't the data it was trained on, which is called distribution shift. There's also a second suspect from part 2: the past readings give the network a noisy acceleration estimate, which the loop can amplify. I didn't test that one.
-
-What I took from this is that a model has to be chosen by its closed-loop error. Offline training is simpler to run and simpler to think about, but only the closed loop actually tests the controller. From then on, every model choice in the project used closed-loop runs on validation paths.
-
-Memory wasn't useless, by the way. With broadband training data, a wiggle from 0.2 to 14 Hz, a network with memory had 0.834 of the error of the old no-memory network, while the same network without memory had 1.45. The final network keeps one past step.
-
-<details>
-<summary>Where I was wrong: Classical doesn't look ahead</summary>
-
-I said Classical doesn't look ahead. It does look one step ahead, since it uses the next target, so its $T$ is one step. Its weakness is treating the 33 ms step as a single instant.
-
-</details>
-
-### Where the network wins and loses
-
-![Network error divided by Fitted error: 0.83 to 0.99 on holds, below 1, and 1.05 to 1.70 on moving paths, above 1.](/assets/robotics/so101-series/nn-vs-fitted.png "The network wins on holds and loses on moving paths. Simulation.")
-
-Compared with Fitted, the network wins on holds, with 0.83 to 0.99 of Fitted's error, and loses on moving paths, with 1.05 to 1.70. At a hold, the right goal is simple: the target plus a steady offset for gravity and friction. On a moving path, the goal has to sit far ahead of the joint, and the right lead depends on the speed, the acceleration and the 33 ms step. A model with the right structure gets that from physics, while the network has to learn it from data.
-
-<details>
-<summary>Is this overfitting?</summary>
-
-![Tracking error with the right lag and with a 30 percent wrong lag: solve 2.3 then 4.1 mrad, 1.78 times worse; pi 6.7 then 7.9, 1.18 times worse.](/assets/robotics/so101-series/sensitivity.png "A controller that trusts its model more loses more when the model is wrong, and still wins here.")
-
-I wondered whether a more complex physics model is simply more likely to be wrong, like overfitting. It's related, but the better name for it is sensitivity to model error. A controller that trusts its model more does better when the model is right and loses more when it's wrong. If I give `solve` a lag that's 30 % off, its error goes from 2.3 to 4.1 mrad, which is 1.78 times worse, while the same error only moves `pi` from 6.7 to 7.9, 1.18 times worse. Even with the wrong lag, though, `solve` is still better than `pi`. More terms aren't the problem in themselves, wrong terms are.
-
-Real overfitting did show up once, with a physics model fitted on too little data. With 1 to 2 minutes of real data, the fitted servo model had 30.6 and 19.0 mrad of error on new motions, while a network with no physics had 12.0 and 11.0. The model's gain, offset and sag didn't transfer to new poses.
-
-![Offline error against minutes of real data, from 1 to 16 minutes. The servo model alone has 30.6 mrad at 1 minute and 19.0 at 2, falling to 7.4 at 16. With the observer it has 4.7 at 2 minutes and 3.7 at 16. The network alone falls from 12.0 to 3.9, and the residual from 10.7 to 3.0.](/assets/robotics/so101-series/data-curves.png "With 1 to 2 minutes of data the physics model alone overfits. The observer fixes most of it, and the residual is best with all the data.")
-
-</details>
+This family is where learning enters, and it gets its own article. [Part 4](/robotics/so101-4-learning-what-physics-misses/) covers `ilc` and `ilcmpc`, the network of the simulation study, the result that changed how I test everything, and the idea I find most promising: a network that only learns what the physics misses.
 
 ## Known territory
 
@@ -476,22 +403,6 @@ Real overfitting did show up once, with a physics model fitted on too little dat
 
 Am I reinventing control? Mostly, yes, and I think that's fine for learning it. Each family has a name in the textbooks. Family 3 with feedback, Classical model + PID, is computed-torque control, inverse-dynamics feedforward plus feedback, from the 1980s. Estimating a payload during the run, family 4, is adaptive control, and since robot dynamics are linear in the mass parameters, a payload can be estimated online with a stability proof (Slotine and Li, 1987). `mpca` is offset-free MPC: a planner with a disturbance state estimated by a Kalman filter. And `ilc` is iterative learning control. What's still open for me is the real arm, and conditions that change during a task.
 
-## What I test next
+## What's next
 
-![Left: a frozen servo model with an observer plus a small recurrent network (GRU) that learns the residual give a combined prediction. Right: offline and stand-in closed-loop errors: network only 3.90 and 5.50 mrad, servo model with observer 3.70 and 2.76, residual 3.01 and 3.12.](/assets/robotics/so101-series/residual.png "The residual helps offline, and the physics model alone still wins in the stand-in closed loop.")
-
-My summary of the first round is that a network with no physics didn't work well on the real logs, so the next idea is a residual: a network that only learns what a physics model gets wrong. In the formula, that keeps the model terms and adds a learned term on top, rather than replacing $\hat\tau/k_p$. A first version of that already ran on the real logs, measured offline over 0.2 s and in a stand-in closed loop (a software copy of the servo model in place of the real arm):
-
-| Model | Offline (mrad) | Stand-in closed loop (mrad) |
-|---|---:|---:|
-| Network, no physics | 3.90 | 5.50 |
-| Servo model + observer | 3.70 | 2.76 |
-| Network residual on servo model + observer | 3.01 | 3.12 |
-
-Most of the gain is classical: the observer alone halves the servo model's error, from 7.37 to 3.70 mrad, and the residual adds another 19 % to 23 % offline. In the stand-in closed loop, though, the physics model alone still wins. The stand-in has the same structure as the servo model, so it favors it, and it doesn't tell me which one wins on the real arm.
-
-So the next steps are to test the residual in closed loop on the real arm, to train it on data from its own closed loop rather than on another controller's logs, and to keep choosing models by their closed-loop error. That last rule is the one I'll keep from this whole series.
-
-## Looking back
-
-When I started, I thought the arm missed because it was cheap. Now I'd say it misses because the servo can only make torque from a gap, and every term of the joint equation, from gravity to damping to a tool in the gripper, needs a bit more of that gap. Every controller in this series is a guess at that gap, written as the same formula with different terms switched on. The best ones look ahead: they know the path, they know the servo, and they put the goal where the joint will need it, before it needs it.
+Every controller in families 1 to 5 uses a model that I either wrote down or fitted. [Part 4](/robotics/so101-4-learning-what-physics-misses/) is about learning: from repeats of the same motion, from data with a network, and from both physics and a network together.

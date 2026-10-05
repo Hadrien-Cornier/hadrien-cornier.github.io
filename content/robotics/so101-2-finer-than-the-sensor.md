@@ -65,7 +65,7 @@ which is about the same size as the real accelerations of a fast motion. What su
 
 ![Two ways to get an acceleration. From the encoder: ticks, then two differences, then a noisy acceleration, 1.4 rad/s² per tick at 30 Hz. From the planned target path: an exact derivative and a clean acceleration, which inv, solve and mpc use.](/assets/robotics/so101-series/accel-pipelines.png "My model-based controllers take the acceleration from the planned path, not from the encoder.")
 
-Partly. The model-based controllers avoid it, because `inv`, `solve` and `mpc` take the acceleration from the target path, which I know exactly and which has no sensor noise. One of my networks probably did run into it, though. It had 4 past readings as inputs, which in effect gave it a noisy acceleration estimate, and it did terribly in closed loop, as I describe in [part 3](/robotics/so101-3-choosing-the-goal/#section-offline-against-closed-loop). The study listed this as a likely cause, but I never tested it directly. Fitting a model from logs has the same problem, and the usual answer in the literature is to fit smooth periodic motions instead of differentiating raw readings (Swevers and colleagues, 1997).
+Partly. The model-based controllers avoid it, because `inv`, `solve` and `mpc` take the acceleration from the target path, which I know exactly and which has no sensor noise. One of my networks probably did run into it, though. It had 4 past readings as inputs, which in effect gave it a noisy acceleration estimate, and it did terribly in closed loop, as I describe in [part 3](/robotics/so101-4-learning-what-physics-misses/#section-offline-against-closed-loop). The study listed this as a likely cause, but I never tested it directly. Fitting a model from logs has the same problem, and the usual answer in the literature is to fit smooth periodic motions instead of differentiating raw readings (Swevers and colleagues, 1997).
 
 ### A second amplifier: the one-step inverse
 
@@ -101,14 +101,61 @@ This is called an observer. The simplest one is the alpha-beta filter, which est
 Does it actually help a controller? In the simulation study, the best model-based controller, Fitted, had an error of 0.398 mrad. With an alpha-beta observer feeding it (α = 0.4), the error went down to 0.268 mrad, and with a perfect sensor it would have been 0.228. The goal also stopped jittering: it changed by 39.1 mrad per step before the observer and by 5.9 after.
 
 ```so101-widget
-{"type": "predict", "fallback": "Predict first. The Fitted servo model has the same error as the Exact-model reference (paired ratio 0.992 to 1.014). A 1152 s fit is no better than the 24 s fit. Explain why more data and better numbers cannot lower its error of about 0.4 mrad. Answer: The 24 s fit is already almost exact, so its remaining error is not model error. Tick rounding in the reading makes 82% to 92% of it, and the one-step solve changes each tick jump into goal motion. Better numbers cannot change this. A filter on the reading can.", "id": "F4"}
+{"type": "predict", "fallback": "Predict first. The Fitted servo model fits 4 numbers of a simulated arm on 24 s of data. Its error is about 0.4 mrad, the same as the Exact model, which uses the true numbers. A fit on 1152 s of data is no better. The RMS of the rounding error of one reading is 1.534 / √12 = 0.443 mrad. Why can more data not lower the error? (A) 24 s is too short. A longer fit finds better numbers. (B) The model has the wrong form, so better numbers cannot help. (C) The fit is already nearly exact. Most of the 0.4 mrad comes from the tick rounding of the reading, which is about the same size, 0.443 mrad. (D) The simulated servo has a dead band that the model does not know. Answer: The fit is already nearly exact. Most of the 0.4 mrad comes from the tick rounding of the reading, which is about the same size, 0.443 mrad.", "id": "F4"}
 ```
 
 ## The Kalman filter
 
-The obvious question is how to choose α, and that's where the Kalman filter comes in. A Kalman filter runs the same predict, compare and correct loop, but it computes the fraction from two noise sizes: the noise of the reading, which here is the tick rounding of $1/\sqrt{12}$ tick, and the error of the model, which is how wrong a one-step prediction can be. If the sensor is noisy and the model is good, the gain comes out small and the filter mostly trusts the model. If the model is poor and the sensor is good, the gain comes out large and the filter mostly trusts the reading.
+The obvious question is how to choose α, and that's where the Kalman filter comes in. The whole idea fits in one small calculation, and it's the one that made the filter stop looking like magic to me.
 
-When both noise sizes stay constant, the Kalman gain settles to a fixed value, and at that point the Kalman filter is an alpha-beta filter with the right α. So the way I think about it now is that the alpha-beta filter is a Kalman filter where you picked the gain by hand and froze it.
+### Two guesses are better than one
+
+At each tick I have two guesses of the angle. The model predicts $q^-$, and its error has a variance $P$. The encoder reads $q_\text{read}$, and its error has a variance $R$. Neither is exact. So take a blend: start from the prediction and move a fraction $K$ of the way toward the reading.
+
+$$
+\hat q = q^- + K\,(q_\text{read} - q^-) = (1-K)\,q^- + K\,q_\text{read}
+$$
+
+The two errors are independent, so the variance of the blend is $(1-K)^2 P + K^2 R$. It's a parabola in $K$, and its lowest point is where the slope $-2(1-K)P + 2KR$ is zero:
+
+$$
+K = \frac{P}{P+R}, \qquad \text{variance of the blend} = \frac{P\,R}{P+R}
+$$
+
+That last fraction is the part I like. $\frac{PR}{P+R}$ is smaller than $P$ and smaller than $R$, always. So the blend is better than the model alone and better than the sensor alone. That's how an estimate can get finer than one tick.
+
+The two limits match intuition. If the prediction is bad ($P \gg R$), $K$ goes to 1 and the filter believes the reading. If the reading is noisy ($P \ll R$), $K$ goes to 0 and the filter believes the model.
+
+Here is a number for my encoder. The rounding error is spread evenly over one tick, so $R = (1.534/\sqrt{12})^2 = 0.196\ \text{mrad}^2$, an RMS of 0.443 mrad. Suppose the model is just as uncertain, $P = R$. Then $K = 0.5$, and the variance halves: the blend has an RMS of $0.443/\sqrt 2 = 0.31$ mrad, already below the rounding of a single reading.
+
+### The loop, with the gain in it
+
+The Kalman filter is that blend, done at every tick, plus a rule for how $P$ changes. Between two ticks the prediction gets less certain, because the model isn't perfect: it adds a model noise $Q$. After each reading it gets more certain, because the blend is better than either guess. For one joint and the angle alone, the four lines are:
+
+$$
+\begin{aligned}
+\text{predict:}\quad & q^- = f(\hat q), && P^- = P + Q\\
+\text{gain:}\quad & K = \frac{P^-}{P^- + R}\\
+\text{correct:}\quad & \hat q = q^- + K\,(q_\text{read} - q^-), && P = (1-K)\,P^-
+\end{aligned}
+$$
+
+$f$ is the model step, and $q_\text{read} - q^-$ is the innovation from the observer section. Compare it with the alpha-beta filter: the correct line is the same, with $K$ in place of α. The only new part is that $K$ comes from $P$, $Q$ and $R$ instead of from my hand.
+
+When $Q$ and $R$ stay constant, $P$ and $K$ settle to fixed values after a few ticks. At that point the Kalman filter is an alpha-beta filter with the right α. So the way I think about it now is that the alpha-beta filter is a Kalman filter where you picked the gain by hand and froze it.
+
+<details>
+<summary>The same loop with more than one number</summary>
+
+A real filter keeps several numbers per joint, for example the angle $q$ and the speed $w$, in a state vector $x$. $P$ becomes a table (a matrix) of the uncertainty of each number and of how their errors move together. The model step is a matrix $F$, and the encoder only reads the angle, which a row $H = [1\ 0]$ picks out:
+
+$$
+x^- = F x, \quad P^- = F P F^\top + Q, \quad K = \frac{P^- H^\top}{H P^- H^\top + R}, \quad x = x^- + K\,(q_\text{read} - H x^-), \quad P = (I - K H)\,P^-
+$$
+
+$K$ now has one row for each number in the state. The encoder never measures the speed, but the filter still corrects it, because the speed error and the angle error are linked through $F$: a wrong speed today makes a wrong angle tomorrow. The "extended" Kalman filter does the same with a model that isn't linear, and computes $F$ again at each tick as the slope of the model.
+
+</details>
 
 ```so101-widget
 {"type": "observer", "fallback": "Kalman mode: with a reading noise of 0.443 mrad and a small model noise, the Kalman gain settles to a fixed value, which is an alpha-beta filter with a computed α. More model noise gives a larger α; more reading noise gives a smaller α.", "mode": "kalman"}
@@ -118,7 +165,13 @@ When both noise sizes stay constant, the Kalman gain settles to a fixed value, a
 
 ![Two observers with the same predict, compare and correct loop. The state observer estimates the true angle and speed, like the alpha-beta filter. The disturbance observer estimates a missing force, like ŵ in solve and mpc or the Kalman filter in mpca.](/assets/robotics/so101-series/two-observers.png "The same loop can estimate the state of the joint or the force the model is missing.")
 
-The same idea can estimate two quite different things, which confused me for a while. A state observer estimates the true position and speed, and the alpha-beta filter above is one. A disturbance observer estimates what the model is missing, like a tool in the gripper or a sag the model didn't expect.
+The same idea can estimate two quite different things, which confused me for a while. A state observer estimates the true position and speed, and the alpha-beta filter above is one. A disturbance observer estimates what the model is missing, like a tool in the gripper or a sag the model didn't expect. It works by adding the missing torque $d$ to the state, as one more number that the model expects to stay constant:
+
+$$
+J\,\dot w = \tau_\text{servo} - (\text{the forces the model knows}) + d, \qquad d_{k+1} = d_k + \text{a small random step}
+$$
+
+The encoder never sees $d$. The filter can still learn it, for the same reason as the speed: $d$ changes the speed, and the speed changes the angle. So when the joint lands lower than the prediction at tick after tick, the innovation keeps the same sign, and $d$ moves a little in the same direction at each tick until the prediction matches the readings again. The gain of $d$ is the slope of that link, how much $d$ is probably wrong when the angle is wrong by one radian. Nothing in the filter knows the cause: $d$ takes any steady torque the model misses.
 
 My `solve` and `mpc` controllers already keep a simple disturbance observer called $\hat w$. At each step the model predicts the next reading, the prediction error tells the controller that something is missing, and $\hat w$ moves a small part of the way toward explaining it, dt / 0.3 s of the way each step. `mpca` replaces that with a Kalman filter that has a fast part for a load and a slow part for sag. I go through both in [part 3](/robotics/so101-3-choosing-the-goal/#section-family-4-estimate-what-you-don-t-know).
 
@@ -145,4 +198,4 @@ Yes. The observer's position is smoother than the reading, so the goal flips bet
 
 ## What's next
 
-With a model, a controller can see the joint more finely than one tick. [Part 3](/robotics/so101-3-choosing-the-goal/) puts the whole equation to work: it writes one general formula for the goal, and shows where the observers of this part plug into it.
+With a model, a controller can see the joint more finely than one tick. [Part 3](/robotics/so101-3-choosing-the-goal/) puts the whole equation to work: it writes one general formula for the goal, and shows where the observers of this part plug into it. [Part 4](/robotics/so101-4-learning-what-physics-misses/) shows that a network can do the job of the disturbance observer, with more freedom.

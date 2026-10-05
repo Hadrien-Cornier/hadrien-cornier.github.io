@@ -50,7 +50,7 @@ The same reasoning works for every other force on the joint: friction, a tool in
 So the problem I kept coming back to was really just this one: where should I put the goal? Every controller in the series is a different answer to that question.
 
 ```so101-widget
-{"type": "predict", "fallback": "Predict first. First, suppose that friction is zero. The target and the goal both stay at -0.321 rad. G = 0.391 N m and kp = 13.64 N m/rad. How far from the target (-0.321 rad) does the true angle q stop? Give the answer in mrad (1 mrad = 0.001 rad = 0.057 degree). Answer: At rest, kp (goal - q) = G. So |goal - q| = 0.391 / 13.64 = 0.0287 rad = 28.7 mrad. That is 18.7 ticks.", "id": "S1"}
+{"type": "predict", "fallback": "Predict first. Friction is zero. The target and the goal both stay at -0.321 rad. Gravity pulls the joint with G = 0.391 N·m, and the servo stiffness is kp = 13.64 N·m/rad. How far from the target does the joint stop? Pick the answer and its reasoning. (A) 0 mrad. The goal is on the target, so the servo holds the joint on the target. (B) 0.0287 mrad. Gap = G / kp = 0.391 / 13.64 = 0.0287. (C) 28.7 mrad. At rest kp × gap = G, so gap = 0.391 / 13.64 = 0.0287 rad = 28.7 mrad. (D) 34.9 mrad. Gap = kp / G = 13.64 / 0.391 = 34.9. Answer: 28.7 mrad. At rest kp × gap = G, so gap = 0.391 / 13.64 = 0.0287 rad = 28.7 mrad.", "id": "S1"}
 ```
 
 <details>
@@ -113,7 +113,7 @@ $$
 The derivatives come from the target path, which I know exactly, not from the readings. Every term I leave out or get wrong comes back as error. The figure shows the problems that come out of each term and their size on my arm. Select a term to keep only its problems; the names link to their sections.
 
 ```so101-widget
-{"type": "equation-tree", "fallback": "The joint equation: kp (goal(t - D) - q̂) = M(q) q̈ + G(q) + d q̇ + f sign(q̇) + C(q, q̇) q̇. Servo side: dead time 31 to 36 ms, goal hold 16.7 ms at 30 Hz, dead band 8.1 to 21.0 mrad, torque limit 5.107 N·m, heat (about -0.4 % per °C, not measured). Sensor side: ticks of 1.534 mrad (rounding RMS 0.443 mrad), and differences of ticks (1 tick gives 1.4 rad/s² of acceleration error at 30 Hz). Mass term: inertia (2.1 mrad in the example step), a payload (200 g: sag from 40 to 83 mrad in simulation). Force terms: gravity changes with the pose (-3.8 mrad tucked in, +42 mrad reaching out on the real arm), wet friction becomes a lag (d / kp = 78 ms in simulation, 87 to 105 ms on the real arm), dry friction makes a band of 14.3 to 43.0 mrad, speed coupling 0.38 to 1.5 mrad at 1.1 rad/s.", "links": {"deadtime": "#section-dead-time", "hold": "#section-goal-hold", "deadband": "#section-dead-band", "limit": "#section-torque-limit", "heat": "#section-heat", "ticks": "/robotics/so101-2-finer-than-the-sensor/#section-ticks-the-reading-is-rounded", "derivative": "/robotics/so101-2-finer-than-the-sensor/#section-two-differences-make-a-lot-of-noise", "inertia": "#section-the-mass-term-inertia-and-a-payload", "payload": "#section-the-mass-term-inertia-and-a-payload", "gravity": "#section-gravity-changes-with-the-pose", "wet": "#section-wet-friction-becomes-a-lag", "dry": "#section-dry-friction-makes-a-band", "coupling": "#section-speed-coupling"}}
+{"type": "equation-tree", "fallback": "The joint equation: kp (goal(t - D) - q̂) = M(q) q̈ + G(q) + d q̇ + f sign(q̇) + C(q, q̇) q̇. Servo side: dead time 31 to 36 ms, goal hold 16.7 ms at 30 Hz, dead band 8.1 to 21.0 mrad, torque limit 5.107 N·m, heat (about -0.4 % per °C, not measured). Sensor side: ticks of 1.534 mrad (rounding RMS 0.443 mrad), and differences of ticks (1 tick gives 1.4 rad/s² of acceleration error at 30 Hz). Mass term: inertia (2.1 mrad in the example step), a payload (200 g: about 40 mrad of extra sag on shoulder_lift in simulation). Force terms: gravity changes with the pose (-3.8 mrad tucked in, +42 mrad reaching out on the real arm), wet friction becomes a lag (d / kp = 78 ms in simulation, 87 to 105 ms on the real arm), dry friction makes a band of 14.3 to 43.0 mrad, speed coupling 0.38 to 1.5 mrad at 1.1 rad/s.", "links": {"deadtime": "#section-dead-time", "hold": "#section-goal-hold", "deadband": "#section-dead-band", "limit": "#section-torque-limit", "heat": "#section-heat", "ticks": "/robotics/so101-2-finer-than-the-sensor/#section-ticks-the-reading-is-rounded", "derivative": "/robotics/so101-2-finer-than-the-sensor/#section-two-differences-make-a-lot-of-noise", "inertia": "#section-the-mass-term-inertia-and-a-payload", "payload": "#section-the-mass-term-inertia-and-a-payload", "gravity": "#section-gravity-changes-with-the-pose", "wet": "#section-wet-friction-becomes-a-lag", "dry": "#section-dry-friction-makes-a-band", "coupling": "#section-speed-coupling"}}
 ```
 
 Two kinds of problem in the figure aren't forces at all. The dead band, the torque limit and the dead time change the servo torque itself: they decide how much torque a goal gives, and when. The ticks change what the controller reads, so they also spoil every speed or acceleration computed from the readings. That's why I kept them on the left side of the equation.
@@ -217,11 +217,11 @@ The first term on the right is $M(q)\,\ddot q$, the torque to speed the joint up
 A payload changes $M$, and it also adds weight, so it changes $G$ too.
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/payload-pickup.png" aria-label="Simulated arm holding a pose when a 200 gram load appears in the gripper, with the lift and elbow error plotted under it">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/payload-pickup.png" aria-label="Simulated arm on its target until a 200 gram load appears in the gripper, then sagging, with the lift and elbow error plotted under it">
 <source src="/assets/robotics/so101-series/payload-pickup.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/payload-pickup.mp4">Watch the video</a>
 </video>
-<figcaption>Simulated SO-101 (MuJoCo physics) with `direct`, holding the reach pose of my real arm. The error is drawn 10 times larger, with large errors compressed so the gripper stays above the table; the plot gives the true error. Before the load, gravity already pulls shoulder_lift 40 mrad below its target. At 2 s a 200 g load appears in the gripper and the sag grows to 83 mrad. <a class="video-link" href="/assets/robotics/so101-series/payload-pickup.mp4">Open video</a></figcaption>
+<figcaption>Simulated SO-101 (MuJoCo physics), holding the reach pose of my real arm. The goal sits above the target by just enough to hold the arm's own weight, so before the load the arm is on its target. At 2 s a 200 g load appears in the gripper. The goal doesn't know about the load, so shoulder_lift sags by about 40 mrad and the elbow by about 33 mrad. The error is drawn 10 times larger, with large errors compressed so the gripper stays above the table; the plot gives the true error. <a class="video-link" href="/assets/robotics/so101-series/payload-pickup.mp4">Open video</a></figcaption>
 </figure>
 
 When the arm picks up a tool, it needs more torque to hold it against gravity. In the simulator, a 150 g tool at the home pose adds about 0.38 N·m on the shoulder lift joint, and a 200 g tool adds about 0.50 N·m. On a hold, the weight is the part that matters. In a fast motion, the extra mass also has to be accelerated and stopped, and part 3 has a test of that.
@@ -247,7 +247,7 @@ The gravity torque on a joint depends on how far the links beyond it stick out h
 <figcaption>My real arm with `direct` at 60 Hz, making small shoulder_lift steps in two poses. The error is drawn 10 times larger, with large errors compressed, and the gray shape is the target pose. The plots give the true error. Tucked in, the lift error averages -3.8 mrad and the servo reports about 1 % load. Reaching out, the error averages +42 mrad and the load is about 11 %. The spread inside each plot is the friction band from the dry friction section below. <a class="video-link" href="/assets/robotics/so101-series/gravity-real.mp4">Open video</a></figcaption>
 </figure>
 
-One thing in the clip I can't explain yet: the elbow sits about 70 mrad off its target in both poses, and it does so in all my single-joint sweep recordings, even when the elbow target does not move.
+The clip also shows an error I can't explain yet. Only the shoulder moves in this test, and the elbow target stays still. But the elbow stays about 70 mrad (4°) away from its target in both poses. If gravity caused it, the error would change between the tucked and the reaching pose, and it doesn't. I see the same 70 mrad in every recording where I moved one joint at a time. My guess is a fixed offset in the elbow calibration, but I haven't checked it.
 
 The servo models I fitted capture this through the angle of each link from vertical, which is the shoulder angle, then shoulder plus elbow, then shoulder plus elbow plus wrist. The sines and cosines of those angles have the same shape as the gravity torque of a chain of links.
 
@@ -276,7 +276,7 @@ The last conversion closes the loop. If the joint runs $\Delta t$ behind and mov
 ```
 
 ```so101-widget
-{"type": "predict", "fallback": "Predict first. The target moves at a constant speed v. The servo must supply the damping torque d v. How long after the target does the joint arrive? Use d = 1.058 N m s/rad, kp = 13.64 N m/rad and the 33.3 ms goal hold. Give the answer in ms. Answer: 1.058 / 13.64 = 77.6 ms, plus 33.3 / 2 = 16.7 ms from the goal hold, which gives about 94 ms.", "id": "D2"}
+{"type": "predict", "fallback": "Predict first. The target moves at a constant speed v. To move, the joint needs the damping torque d × v, and the servo gives torque only from a gap. Use d = 1.058 N·m·s/rad and kp = 13.64 N·m/rad. The controller sends a new goal every 33.3 ms and holds it in between. How long after the target does the joint arrive? Pick the answer and its reasoning. (A) 33.3 ms. The joint is one control step late. (B) 77.6 ms. The gap is d × v / kp, which is the distance the target moves in d / kp = 1.058 / 13.64 = 77.6 ms. (C) 94 ms. d / kp = 1.058 / 13.64 = 77.6 ms of damping lag, plus half of the 33.3 ms goal hold, 16.7 ms. (D) 111 ms. d / kp = 77.6 ms, plus the full 33.3 ms goal hold. Answer: 94 ms. d / kp = 1.058 / 13.64 = 77.6 ms of damping lag, plus half of the 33.3 ms goal hold, 16.7 ms.", "id": "D2"}
 ```
 
 The measured lag on the simulated robot was 105.5 to 108.4 ms, so the simple estimate is about 12 % low, but it gets the size right. On the real arm the servo fit gives 87 to 105 ms.
@@ -301,30 +301,56 @@ I thought dry friction turned into wet friction as the joint sped up. It doesn't
 
 </details>
 
-The part I found most surprising is that dry friction can either help the servo or work against it, depending on where the joint comes from. Friction always opposes the last motion. Suppose the joint arrives from below: it's moving up against gravity, so friction adds to gravity and the servo has to provide $G + f$. Now suppose it arrives from above: gravity pulls it down, friction holds it back, and so friction carries part of the load and the servo only has to provide $G - f$.
-
-That means there isn't one rest point. There's a whole band of gaps where the spring plus friction can balance gravity:
+The part I found most surprising is what dry friction does to a joint at rest. Write the torques on a joint that holds still under gravity. The servo pushes up with $k_p \cdot \text{gap}$, gravity pulls down with $G$, and friction adds a torque $F$ of its own:
 
 $$
-\frac{G - f}{k_p} = 14.3\ \text{mrad} \quad\text{to}\quad \frac{G + f}{k_p} = 43.0\ \text{mrad}
+k_p \cdot \text{gap} + F = G
 $$
 
-Without friction, the sag would be $G/k_p$ = 28.7 mrad, right in the middle of that band. With friction, the joint stops at the edge of the side it comes from. In the simulated hold, the arm starts at rest on the target and sags down into the band, so it stops near the low edge.
+At rest, dry friction isn't a fixed number. It takes any value between $-f$ and $+f$ that keeps the joint still. So the servo doesn't need one exact gap. Any gap works if friction can make up the rest:
+
+$$
+\frac{G - f}{k_p} \;\le\; \text{gap} \;\le\; \frac{G + f}{k_p}
+$$
+
+With the simulator numbers, $G$ = 0.391 N·m, $f$ = 0.196 N·m and $k_p$ = 13.64 N·m/rad, that's any gap from 14.3 to 43.0 mrad. Without friction there would be one answer, $G/k_p$ = 28.7 mrad, in the middle of the band.
+
+Where in the band does the joint stop? Friction always pushes against the motion, so it depends on where the joint comes from:
+
+- **The joint falls into place** (gravity wins, the joint moves down): friction pushes up and helps the servo. The joint stops as soon as $k_p \cdot \text{gap} = G - f$, at the low edge.
+- **The joint is pushed up into place** (the servo wins, the joint moves up): friction pushes down, against the servo. The joint stops at $k_p \cdot \text{gap} = G + f$, at the high edge.
 
 ```so101-widget
 {"type": "friction-curve", "fallback": "The friction band. Coming from below, the joint stops at a gap of (G + f) / kp = 43.0 mrad because friction adds to gravity. Coming from above, it stops at (G - f) / kp = 14.3 mrad because friction carries part of the load. Without friction it would stop at 28.7 mrad.", "mode": "band"}
 ```
 
-![The band of possible hold gaps from 14.3 to 43.0 mrad, with G over kp at 28.7 mrad in the middle. Approaching from below, friction adds to gravity and the joint stops at the top edge. Approaching from above, friction carries part of the load and the joint stops at the bottom edge.](/assets/robotics/so101-series/friction-band.png "Dry friction turns one rest point into a band. Simulation numbers: G = 0.391 N·m, f = 0.196 N·m, kp = 13.64 N·m/rad.")
+The clip below tests the first case. The arm holds still, on its target, and a 200 g load grows slowly in the gripper, like sand that fills a cup. The load pulls shoulder_lift with $G_L$ = 0.614 N·m. Without friction, the joint should sag by $G_L/k_p$ = 45 mrad. With friction, it should stop at $(G_L - f)/k_p$ = 31 mrad, because friction carries $f$ of the load. I ran the same test three times, with three friction models.
 
-For control, this means the same target can give two different errors depending on the direction the joint came from, so a fixed goal offset can't fix both.
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/friction-hold.png" aria-label="Three simulated arms with a load that grows in the gripper: no friction, hard friction and the simulator's soft friction, with the shoulder_lift error plotted under each">
+<source src="/assets/robotics/so101-series/friction-hold.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/friction-hold.mp4">Watch the video</a>
+</video>
+<figcaption>Simulated SO-101 (MuJoCo physics). The goal holds the arm's own weight, so each arm starts on its target. From 1 s to 3 s a 200 g load grows in the gripper. Left: no friction. Middle: hard friction, an exact stick-or-slip rule. Right: the simulator's own soft friction. The dashed lines mark $G_L/k_p$ = 45 mrad and $(G_L - f)/k_p$ = 31 mrad. The error is drawn 10 times larger, with large errors compressed; the plots give the true shoulder_lift error. <a class="video-link" href="/assets/robotics/so101-series/friction-hold.mp4">Open video</a></figcaption>
+</figure>
 
-<details>
-<summary>Is the creep real?</summary>
+| Friction model | shoulder_lift error at 4 s | at 12 s |
+|---|---:|---:|
+| None | 44.8 mrad | 44.8 mrad |
+| Hard: stick or slip | 31.3 mrad | 31.3 mrad |
+| Simulator: soft | 33.9 mrad | 43.4 mrad |
 
-In Genesis, like in MuJoCo, dry friction is a soft constraint. Instead of forcing the speed to be exactly zero, friction grows very steeply from a tiny speed. That keeps the simulation stable, but it means a loaded joint slides slowly: after 6 s the error is 23.45 mrad, which is still less than 28.7. A real geared servo usually sticks instead. I haven't measured this on my arm.
+Without friction, the arm sags the full 45 mrad. With hard friction, it stops at 31 mrad, the low edge of the band, and stays there: friction carries 0.196 N·m of the load for as long as the arm holds still. With the simulator's own friction, the arm first stops near 31 mrad too, and then it slowly creeps down, 38 mrad at 6 s and 43 mrad at 12 s, toward the frictionless 45 mrad. The creep isn't physics. A joint at rest has no reason to start moving again.
 
-</details>
+### Why the simulator creeps
+
+The creep comes from how the simulator solves friction. Exact dry friction is awkward for a solver. When the joint is stuck, the friction force isn't given by a formula, only by a limit: any value between $-f$ and $+f$. The solver has to decide, at every step and for every joint and contact, which ones stick and which ones slip. That is a switching problem with no smooth solution, and it gets slow and fragile with many contacts.
+
+MuJoCo, which made this clip, avoids the switching. It makes friction a soft constraint: instead of forcing the speed of a stuck joint to be exactly zero, it lets friction grow very steeply with a tiny speed, like a very stiff damper (its time constant here is `solref` = 0.02 s). Each step then becomes a smooth optimization with one answer, which is fast and stable. The price is that a joint that friction holds against a load always slides a little, so it creeps. Genesis uses the same kind of soft constraint, which is where my first creep numbers came from.
+
+The hard version in the middle panel is mine, and writing it showed me why simulators avoid it. At each step, the rule checks every joint: if it's stopped and friction can hold it with at most $f$, it stays stuck; if not, it slides with friction $f$ against its motion. My first version almost never saw a speed of exactly zero, because in discrete steps the speed jumps across zero. So friction flipped sign every step and pushed the arm past the band edge to 37 mrad. It needed one more rule, "a speed that changes sign counts as stopped", before it stopped at 31 mrad. A real geared servo usually sticks like the middle panel. I haven't measured that on my arm.
+
+For control, the band means the same target can give two different errors, depending on the direction the joint came from. A fixed goal offset can't fix both.
 
 ```so101-widget
 {"type": "predict", "fallback": "Predict first. On this hold the measured tracking error is 14.0 mrad at 0.17 s, 17.1 mrad at 1 s and 23.45 mrad at 6 s. The true angle is on the side that gravity pulls. G/kp is 28.7 mrad. Which statements explain these numbers? Select all that apply. Answer: The first and third statements. Friction carries part of the load at first. The soft friction model then lets the joint creep toward G/kp.", "id": "S3"}
@@ -366,9 +392,21 @@ Friction also decides where a stuck joint stops: at the first point where the dr
 
 This one is even weirder: the speed of one joint creates a torque on another joint. The picture I have in mind is a trebuchet. When the arm swings fast, the sling flies outward. On the SO-101, when the base pan spins quickly, the elbow has to hold the forearm in, which is the centrifugal part. When two joints move at the same time, each one also feels a torque that depends on the product of the two speeds, which is the Coriolis part. Both are in the $C(q,\dot q)\,\dot q$ term.
 
-![Error on shoulder_lift caused by speed coupling against joint speed, on a log scale. At the 1.1 rad/s of my fastest real recordings, a spinning base causes 0.38 mrad and the lift and elbow moving together cause 1.5 mrad, against 43 mrad of gravity sag.](/assets/robotics/so101-series/speed-coupling.png "Simulated SO-101 reaching out. Speed coupling grows with the square of the speed, but at the speeds I record it stays near or below one encoder tick.")
+```so101-widget
+{"type": "speed-coupling", "fallback": "A two-link arm seen from above, with no gravity. When the shoulder turns at speed ω₁, the forearm feels a centrifugal force m ω₁² r out from the shoulder, and the elbow must add h sin(q₂) ω₁² of torque to keep its angle (h = m₂ l₁ l_c2). When the elbow also moves at ω₂, the forearm feels a sideways Coriolis force 2 m ω₁ v, and the shoulder must add h sin(q₂)(2ω₁ω₂ + ω₂²). With SO-101-sized numbers at 1.1 rad/s, each torque is a few mN·m, below one encoder tick of error."}
+```
+
+The widget shows a teaching model: two links seen from above, with SO-101-sized lengths and masses, and no gravity. The arrows are the two forces that the forearm feels when you watch it from the turning upper arm. The centrifugal force pushes the forearm out from the shoulder, and it grows with the square of the shoulder speed. The Coriolis force pushes sideways, and it appears only when the elbow moves while the shoulder turns. Each force puts a torque on a joint that no single-joint model expects.
+
 
 On this arm, the effect is small. With the arm reaching out, a base that spins at 1.1 rad/s (about the fastest speed in my real recordings) pushes shoulder_lift by 0.38 mrad, a quarter of one encoder tick. Lift and elbow moving together at that speed cost 1.5 mrad, about one tick. Gravity at the same pose costs 43 mrad. The coupling grows with the square of the speed, so it matters for a fast or heavy arm, but on a slow $100 arm it is near the bottom of the list.
+
+<details>
+<summary>The same effect, measured on the full simulated arm</summary>
+
+![Error on shoulder_lift caused by speed coupling against joint speed, on a log scale. At the 1.1 rad/s of my fastest real recordings, a spinning base causes 0.38 mrad and the lift and elbow moving together cause 1.5 mrad, against 43 mrad of gravity sag.](/assets/robotics/so101-series/speed-coupling.png "Simulated SO-101 reaching out. Speed coupling grows with the square of the speed, but at the speeds I record it stays near or below one encoder tick.")
+
+</details>
 
 ## The sensor side
 
@@ -437,4 +475,4 @@ The real servo is stiffer, more damped and later than the simulated one, which i
 
 ## What's next
 
-So the arm misses because the servo needs a gap to make torque, every term of the equation needs a bit more of it, and the servo adds delays and limits of its own. [Part 2](/robotics/so101-2-finer-than-the-sensor/) is about the sensor side: what the ticks do to a controller, and how to see the joint more finely than one tick. [Part 3](/robotics/so101-3-choosing-the-goal/) writes one general formula for the goal, and shows that each controller I built is that formula with some terms switched off.
+So the arm misses because the servo needs a gap to make torque, every term of the equation needs a bit more of it, and the servo adds delays and limits of its own. [Part 2](/robotics/so101-2-finer-than-the-sensor/) is about the sensor side: what the ticks do to a controller, and how to see the joint more finely than one tick. [Part 3](/robotics/so101-3-choosing-the-goal/) writes one general formula for the goal, and shows that each controller I built is that formula with some terms switched off. [Part 4](/robotics/so101-4-learning-what-physics-misses/) is about learning: where a neural network fits, and why it should learn only what the physics misses.

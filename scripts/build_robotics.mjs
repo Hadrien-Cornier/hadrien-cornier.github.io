@@ -221,10 +221,15 @@ function articleUnits(articles) {
   });
 }
 function articleCard(article) {
-  return `<a class="report-card" href="/robotics/${article.slug}/"><span class="report-date"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
+  const part = article.series ? `<span class="report-part">Part ${article.part}</span>` : '';
+  return `<a class="report-card" href="/robotics/${article.slug}/"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
 }
 function seriesBlock(unit, renderArticle, className = '') {
-  return `<section class="series-block${className ? ` ${className}` : ''}"><h2>${escape(unit.series)}</h2><div class="series-block-parts">${unit.articles.map(renderArticle).join('')}</div></section>`;
+  const count = `${unit.articles.length} ${unit.articles.length === 1 ? 'part' : 'parts'}`;
+  return `<section class="series-block${className ? ` ${className}` : ''}"><p class="series-block-eyebrow">Series / ${count}</p><h2>${escape(unit.series)}</h2><div class="series-block-parts">${unit.articles.map(renderArticle).join('')}</div></section>`;
+}
+function otherEssaysHeading(units) {
+  return units.some((unit) => unit.series) && units.some((unit) => !unit.series) ? '<p class="other-essays-heading">Other essays</p>' : '';
 }
 function attachSeries(articles) {
   const groups = new Map();
@@ -294,16 +299,16 @@ function homePage(articles, root) {
   let rowNumber = latestUnit?.series ? 1 : 2;
   const renderRow = (article) => {
     const image = previewImage(article, root);
-    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}" href="/robotics/${article.slug}/"><span class="writing-row-number">${String(rowNumber++).padStart(2, '0')}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
+    const label = article.series ? `Part ${article.part}` : String(rowNumber++).padStart(2, '0');
+    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}" href="/robotics/${article.slug}/"><span class="writing-row-number">${label}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
   };
   const feature = latestUnit?.series
     ? seriesBlock(latestUnit, renderRow, 'series-block-home')
     : latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest essay</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the essay <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">${featureImageLabel}</span></div>` : ''}</a>`
     : '<p class="writing-empty">The first essay is on its way.</p>';
-  const rows = restUnits.map((unit) => {
-    if (unit.series) return seriesBlock(unit, renderRow, 'series-block-home');
-    return renderRow(unit.article);
-  }).join('');
+  const restSeries = restUnits.filter((unit) => unit.series).map((unit) => seriesBlock(unit, renderRow, 'series-block-home')).join('');
+  const restEssays = restUnits.filter((unit) => !unit.series).map((unit) => renderRow(unit.article)).join('');
+  const rows = `${restSeries}${restEssays ? `${otherEssaysHeading(units)}${restEssays}` : ''}`;
   return shell({title:'Robotics, learning, and systems', description:'Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them.', pathname:'/', root, interactive:true, content:`
 <section class="home-hero" aria-labelledby="home-title"><div class="home-hero-copy"><p class="eyebrow">Hadrien Cornier / Personal notes</p><h1 id="home-title">Robotics, learning,<br>and the systems<br>behind them.</h1><p class="home-intro">I build data infrastructure and production ML. Here I write about robot learning, the math behind it, and what I learn by building.</p><div class="home-hero-links"><a href="#writing">Explore the writing <span aria-hidden="true">↓</span></a><a href="/about.html">More about me <span aria-hidden="true">↗</span></a></div></div>${controlDemo}</section>
 <section class="home-writing" id="writing" aria-labelledby="writing-title"><div class="home-section-heading"><div><p class="eyebrow">Essays &amp; explorations</p><h2 id="writing-title">Writing</h2></div><p class="home-count">${String(articles.length).padStart(2, '0')} ${articles.length === 1 ? 'essay' : 'essays'}</p></div>${feature}<div class="writing-rows">${rows}</div></section>

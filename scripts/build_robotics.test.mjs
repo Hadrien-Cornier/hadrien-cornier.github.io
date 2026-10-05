@@ -212,6 +212,9 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
     const homeBlock = home.match(/<section class="series-block series-block-home">[\s\S]*?<\/section>/)?.[0];
     assert.ok(homeBlock);
     assert.ok(homeBlock.indexOf('series-one') < homeBlock.indexOf('series-two'));
+    assert.match(homeBlock, /Series \/ 2 parts/);
+    assert.match(homeBlock, /writing-row-number">Part 1</);
+    assert.match(listingBlock, /report-part">Part 2</);
     assert.doesNotMatch(listing + home, /Unpublished part/);
     assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\n---\nBody.`), /part is required/);
     assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\npart: 0\n---\nBody.`), /positive integer/);
