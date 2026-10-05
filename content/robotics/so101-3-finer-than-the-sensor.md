@@ -21,7 +21,7 @@ $$
 \tau = M(q)\,\ddot q + C(q,\dot q)\,\dot q + G(q)
 $$
 
-A friend who works on robots told me that taking the acceleration from noisy encoder readings is a classic trap. [ROUGH DRAFT: name Olivier only with Hadrien's approval; check his exact claim] Let's see why with numbers.
+A friend who works on robots told me that taking the acceleration from noisy encoder readings is a classic trap. [ROUGH DRAFT: check the claim against a source] Let's see why with numbers.
 
 Speed from two readings: $v \approx (q_k - q_{k-1})/\Delta t$. Acceleration from three: $a \approx (q_k - 2q_{k-1} + q_{k-2})/\Delta t^2$.
 
