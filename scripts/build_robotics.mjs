@@ -310,6 +310,31 @@ function homePage(articles, root) {
 ${homeNotes(root)}
 <section class="home-about" aria-labelledby="home-about-title"><div><p class="eyebrow">A little context</p><h2 id="home-about-title">About me.</h2></div><div><p>Engineering manager at Talroo, based in Austin. I work on data infrastructure, production ML, and teams. Outside work, I’m learning robotics through experiments with simulation and an SO-101 arm.</p><div class="home-about-links"><a href="/about.html">Full experience <span aria-hidden="true">↗</span></a><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a></div><nav class="home-profile-sections" aria-label="Profile sections"><a id="experience" href="/about.html#experience">Experience</a><a id="management" href="/about.html#management">Management</a><a id="education" href="/about.html#education">Education</a></nav></div></section>`});
 }
+// Old article URLs that moved. content/robotics/redirects.json maps an old slug to a published article path.
+function readRedirects(sourceDir, published) {
+  const file = path.join(sourceDir, 'redirects.json');
+  if (!fs.existsSync(file)) return [];
+  let data;
+  try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (error) { throw new Error(`redirects.json must be valid JSON: ${error.message}`); }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('redirects.json must be an object');
+  return Object.entries(data).map(([slug, target]) => {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error(`Invalid redirect slug: ${slug}`);
+    if (published.has(slug)) throw new Error(`Redirect ${slug} has the same slug as a published article`);
+    const match = typeof target === 'string' && target.match(/^\/robotics\/([a-z0-9]+(?:-[a-z0-9]+)*)\/(#[a-z0-9-]+)?$/);
+    if (!match) throw new Error(`Redirect ${slug} needs a target like /robotics/<slug>/#<anchor>`);
+    if (!published.has(match[1])) throw new Error(`Redirect ${slug} points to an unpublished article: ${match[1]}`);
+    return {slug, target};
+  });
+}
+function redirectPage(target) {
+  const url = escape(`${ORIGIN}${target}`);
+  return `<!doctype html>
+${GENERATED_MARKER}
+<html lang="en"><head><meta charset="utf-8"><title>Moved</title><meta name="robots" content="noindex"><link rel="canonical" href="${url}"><meta http-equiv="refresh" content="0; url=${escape(target)}">
+<script>location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')});</script></head>
+<body><p>This article moved to <a href="${escape(target)}">${url}</a>.</p></body></html>
+`;
+}
 export function build(root = ROOT) {
   const sourceDir = path.join(root, 'content/robotics');
   if (!fs.existsSync(sourceDir)) return;
@@ -326,6 +351,8 @@ export function build(root = ROOT) {
   attachSeries(articles);
   // Render everything first. A malformed article cannot leave a half-built series.
   const pages = articles.map((article) => [path.join(root, 'robotics', article.slug, 'index.html'), articlePage(article, root)]);
+  const redirects = readRedirects(sourceDir, new Set(articles.map((article) => article.slug)));
+  for (const {slug, target} of redirects) pages.push([path.join(root, 'robotics', slug, 'index.html'), redirectPage(target)]);
   pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);
   pages.push([path.join(root, 'index.html'), homePage(articles, root)]);
   for (const [filename, page] of pages) { fs.mkdirSync(path.dirname(filename), {recursive:true}); fs.writeFileSync(filename, page); }
@@ -347,7 +374,7 @@ export function build(root = ROOT) {
   fs.writeFileSync(sitemapFile, preserved.replace('</urlset>', `${entries}</urlset>`));
   // Remove only obsolete HTML bearing this builder's ownership marker.
   // Other files inside an old report directory belong to their author and stay intact.
-  const published = new Set(articles.map((article) => article.slug));
+  const published = new Set([...articles.map((article) => article.slug), ...redirects.map((item) => item.slug)]);
   const outputDir = path.join(root, 'robotics');
   for (const entry of fs.readdirSync(outputDir, {withFileTypes:true})) {
     if (!entry.isDirectory() || published.has(entry.name)) continue;

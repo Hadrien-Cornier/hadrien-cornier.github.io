@@ -812,6 +812,214 @@ function renderErrorMatrix(target, options) {
   return root;
 }
 
+// Equation tree: the joint equation, with the problems that come out of each term.
+const EQ_TERMS = [
+  {id:'servo', group:'servo', html:'k<sub>p</sub>·(goal(t − D) − q̂)', name:'Servo torque', note:'what the servo gives, from a reading q̂'},
+  {id:'mass', group:'mass', html:'M(q)·q̈', name:'Mass × acceleration', note:'inertia and payload'},
+  {id:'gravity', group:'force', html:'G(q)', name:'Gravity', note:'changes with the pose'},
+  {id:'wet', group:'force', html:'d·q̇', name:'Wet friction', note:'grows with speed'},
+  {id:'dry', group:'force', html:'f·sign(q̇)', name:'Dry friction', note:'fixed size, flips with direction'},
+  {id:'coupling', group:'force', html:'C(q, q̇)·q̇', name:'Speed coupling', note:'Coriolis and centrifugal'},
+];
+const EQ_GROUPS = [
+  {id:'servo', title:'Servo side', lead:'The servo decides when the torque comes and how much it can be.'},
+  {id:'sensor', title:'Sensor side', lead:'The controller reads q̂, not q, so its speed and acceleration are worse still.'},
+  {id:'mass', title:'Mass term', lead:'The mass that the joint moves is not one fixed number.'},
+  {id:'force', title:'Force terms', lead:'Forces that a plain τ = J·q̈ does not include, largest first.'},
+];
+const EQ_PROBLEMS = [
+  {id:'gravity', term:'gravity', group:'force', name:'Gravity changes with the pose', size:'−3.8 mrad tucked in, +42 mrad reaching out (real arm, direct)'},
+  {id:'wet', term:'wet', group:'force', name:'Wet friction becomes a lag', size:'d / kp = 78 ms (simulator), 87 to 105 ms (real arm); 54.6 mrad at 0.70 rad/s'},
+  {id:'dry', term:'dry', group:'force', name:'Dry friction makes a band, not a point', size:'14.3 to 43.0 mrad band; stiction and stick-slip at low speed'},
+  {id:'coupling', term:'coupling', group:'force', name:'One joint pushes another', size:'0.38 to 1.5 mrad at 1.1 rad/s, against 43 mrad of gravity'},
+  {id:'inertia', term:'mass', group:'mass', name:'Inertia', size:'2.1 mrad in the example step'},
+  {id:'payload', term:'mass', also:['gravity'], group:'mass', name:'A payload adds mass and weight', size:'200 g: sag from 40 to 83 mrad (simulator)'},
+  {id:'deadtime', term:'servo', group:'servo', name:'Dead time D', size:'31 to 36 ms before any motion (real arm)'},
+  {id:'hold', term:'servo', group:'servo', name:'Goal hold', size:'half a step: 16.7 ms at 30 Hz'},
+  {id:'deadband', term:'servo', group:'servo', name:'Dead band: no torque from a small gap', size:'8.1 to 21.0 mrad (real arm)'},
+  {id:'limit', term:'servo', group:'servo', name:'Torque limit', size:'5.107 N·m (simulator)'},
+  {id:'heat', term:'servo', group:'servo', name:'Heat makes kp weaker', size:'about −0.4 % per °C (not measured)'},
+  {id:'ticks', term:'servo', group:'sensor', name:'Ticks', size:'1 tick = 1.534 mrad; rounding RMS 0.443 mrad'},
+  {id:'derivative', term:'servo', group:'sensor', name:'Differences of ticks', size:'1 tick → 1.4 rad/s² of acceleration error at 30 Hz'},
+];
+
+function renderEquationTree(el, config) {
+  const root = el;
+  setWidgetRoot(root, 'equation-tree');
+  const wrap = element('div', 'so101-eqtree');
+  const equation = element('div', 'so101-eqtree-equation');
+  equation.setAttribute('role', 'group');
+  equation.setAttribute('aria-label', 'Equation of one joint. Select a term to show its problems.');
+  const chips = new Map();
+  const status = element('p', 'so101-eqtree-status');
+  status.setAttribute('aria-live', 'polite');
+  const groupsBox = element('div', 'so101-eqtree-groups');
+  const rows = new Map();
+  let selected = null;
+  const select = (id) => {
+    selected = selected === id ? null : id;
+    for (const [termId, chip] of chips) chip.setAttribute('aria-pressed', String(termId === selected));
+    for (const [problemId, row] of rows) {
+      const problem = EQ_PROBLEMS.find((item) => item.id === problemId);
+      const match = !selected || problem.term === selected || problem.also?.includes(selected)
+        || (selected === 'servo' && problem.group === 'sensor');
+      row.classList.toggle('is-dim', !match);
+    }
+    const term = EQ_TERMS.find((item) => item.id === selected);
+    status.textContent = term ? `${term.name}: ${term.note}. The problems of this term stay bright.` : 'Select a term to show the problems that come out of it.';
+  };
+  EQ_TERMS.forEach((term, index) => {
+    if (index === 1) equation.append(element('span', 'so101-eqtree-op', '='));
+    else if (index > 1) equation.append(element('span', 'so101-eqtree-op', '+'));
+    const chip = element('button', `so101-eqtree-chip so101-eqtree-${term.group}`);
+    chip.type = 'button';
+    chip.setAttribute('aria-pressed', 'false');
+    const math = element('span', 'so101-eqtree-math');
+    math.innerHTML = term.html;
+    chip.append(math, element('span', 'so101-eqtree-name', term.name));
+    chip.addEventListener('click', () => select(term.id));
+    chips.set(term.id, chip);
+    equation.append(chip);
+  });
+  for (const group of EQ_GROUPS) {
+    const card = element('section', `so101-eqtree-group so101-eqtree-${group.id}`);
+    card.append(element('h4', '', group.title), element('p', 'so101-eqtree-lead', group.lead));
+    const list = element('ul');
+    for (const problem of EQ_PROBLEMS.filter((item) => item.group === group.id)) {
+      const item = element('li');
+      const href = safeSameSitePath(config?.links?.[problem.id]);
+      const name = href ? element('a', 'so101-eqtree-problem', problem.name) : element('span', 'so101-eqtree-problem', problem.name);
+      if (href) name.href = href;
+      item.append(name, element('span', 'so101-eqtree-size', problem.size));
+      rows.set(problem.id, item);
+      list.append(item);
+    }
+    card.append(list);
+    groupsBox.append(card);
+  }
+  wrap.append(equation, status, groupsBox);
+  root.append(wrap);
+  select(null);
+  return root;
+}
+
+// General goal equation: every controller is this equation with some coefficients set to zero.
+const GOAL_SLOTS = [
+  {id:'T', html:'q*(t + <b>T</b>)', name:'Look ahead', fixes:'dead time, goal hold, lag'},
+  {id:'M', html:'<b>M̂</b>q̈*', name:'Inertia', fixes:'mass and payload', tau:true},
+  {id:'C', html:'<b>Ĉ</b>q̇*', name:'Speed coupling', fixes:'Coriolis', tau:true},
+  {id:'G', html:'<b>Ĝ</b>(q*)', name:'Gravity', fixes:'sag', tau:true},
+  {id:'d', html:'<b>d̂</b>q̇*', name:'Wet friction', fixes:'lag', tau:true},
+  {id:'f', html:'<b>f̂</b>·sign(q̇*)', name:'Dry friction', fixes:'friction band', tau:true},
+  {id:'w', html:'<b>ŵ</b>', name:'Disturbance estimate', fixes:'unknown load, model error'},
+  {id:'P', html:'<b>K<sub>P</sub></b>·e', name:'Proportional feedback', fixes:'error now'},
+  {id:'I', html:'<b>K<sub>I</sub></b>·∫e', name:'Integral feedback', fixes:'steady error'},
+  {id:'u', html:'<b>u<sub>k</sub></b>', name:'Learned per step', fixes:'repeated error'},
+];
+const GOAL_FAMILIES = [
+  {id:'none', title:'1. Do nothing', problem:'Nothing. This is the baseline that shows every problem.'},
+  {id:'time', title:'2. Look ahead in time', problem:'The goal arrives late: dead time, goal hold and the lag of wet friction.'},
+  {id:'known', title:'3. Add the forces you know', problem:'Forces you can compute before the run: gravity, inertia, friction.'},
+  {id:'unknown', title:'4. Estimate what you don\'t know', problem:'Forces you cannot compute before the run: a payload, wear, model error.'},
+  {id:'plan', title:'5. Plan with a servo model', problem:'Parts with no formula inverse: dead band, ticks, goal hold, torque limit.'},
+  {id:'learn', title:'6. Learn from repeats or data', problem:'Errors that repeat on the same path, or that the model form misses.'},
+];
+const GOAL_METHODS = [
+  {id:'direct', family:'none', on:[], values:'Every coefficient is 0: goal = q*(t).', result:'Real arm: 22.5 mrad (cat, 30 Hz).'},
+  {id:'lead', family:'time', on:['T'], values:'T = one step (33 ms at 30 Hz).', result:'Real arm: 23.7 mrad (signature motion), against 28.3 for direct.'},
+  {id:'inv', family:'time', on:['T', 'M', 'd'], values:'T = 33 ms, d̂/kp = 0.106 s (the lag), M̂/kp = 0.0023 s². The last two are fitted on a step test of the real arm, not computed from the masses.', result:'Real arm: 13.4 mrad (signature motion).'},
+  {id:'sag', family:'known', on:['T', 'M', 'd', 'G'], values:'inv + Ĝ/kp fitted on holds of the real arm. On my logs it is almost a constant for each joint.', result:'This series reports no number for it.'},
+  {id:'grav', family:'known', on:['T', 'M', 'd', 'G'], values:'inv + Ĝ from the MuJoCo model at the target pose, divided by kp.', result:'This series reports no number for it.'},
+  {id:'Classical', family:'known', on:['T', 'M', 'G', 'd', 'f', 'P', 'I'], values:'T = one step. τ̂ from a fixed physics model with nominal numbers. K_P = 4, K_I = 10 s⁻¹.', result:'Simulation: 1.117 mrad, against 37.2 for the out-of-the-box controller.'},
+  {id:'pi', family:'unknown', on:['T', 'M', 'd', 'P', 'I'], values:'inv + K_P = 0.2 and K_I = 2 s⁻¹, with an integral limit of 0.08 rad.', result:'Real arm: 8.4 mrad (cat, 60 Hz).'},
+  {id:'pisag', family:'unknown', on:['T', 'M', 'd', 'G', 'P', 'I'], values:'sag + the pi correction.', result:'This series reports no number for it.'},
+  {id:'adapt', family:'unknown', on:['T', 'M', 'd', 'w'], values:'inv − ŵ. A Kalman filter estimates ŵ in three parts: a fast load, a slow sag and friction.', result:'Stand-in test: 4.90 mrad.'},
+  {id:'rls', family:'unknown', on:['T', 'M', 'd'], learnedOnline:true, values:'The coefficients themselves change during the run (recursive least squares).', result:'This series reports no number for it.'},
+  {id:'solve', family:'plan', on:['T', 'M', 'd', 'G', 'w'], search:'one destination goal for each joint, 0.25 s ahead', values:'The servo model has the dead time, lag, dead band, gain and sag. The search handles the dead band and the ticks.', result:'Real arm: 6.2 mrad (cat, 60 Hz).'},
+  {id:'mpc', family:'plan', on:['T', 'M', 'd', 'G', 'w'], search:'one goal for each step of a 0.25 s plan', values:'The same model as solve, with a free goal at each step.', result:'Real arm: 6.0 mrad (cat, 60 Hz).'},
+  {id:'mpca', family:'plan', on:['T', 'M', 'd', 'G', 'w'], search:'one goal for each step of a 0.25 s plan', values:'mpc with the Kalman estimate of adapt in place of its own ŵ.', result:'Real arm: 10.3 mrad on shoulder_lift, against 87.6 for direct (120 s, 60 Hz).'},
+  {id:'Fitted', family:'plan', on:['T', 'M', 'C', 'G', 'd', 'f', 'I'], search:'one goal for the next 33 ms step, simulated in 8 substeps', values:'A fitted MuJoCo copy of the arm, inverted with Newton’s method. K_I = 3.', result:'Simulation: 0.398 mrad.'},
+  {id:'ilc', family:'learn', on:['T', 'M', 'd', 'u'], values:'inv + u_k. After each run, u_k adds half of the error that step k caused one servo delay later, then a 2 Hz smoothing filter.', result:'This series reports no number for it.'},
+  {id:'ilcmpc', family:'learn', on:['T', 'M', 'd', 'G', 'w', 'u'], search:'one goal for each step of a 0.25 s plan', values:'mpc that tracks the target plus u_k.', result:'Stand-in test: 1.04 mrad, the lowest.'},
+  {id:'network', family:'learn', on:['T', 'P', 'I'], learned:['M', 'C', 'G', 'd', 'f'], values:'T = one step. A small network learns the whole τ̂/kp part from data. K_P = −0.25 (from its step rule) and K_I = 3.', result:'Simulation: 0.446 mrad.'},
+];
+
+function renderGoalEquation(el) {
+  setWidgetRoot(el, 'goal-equation');
+  const wrap = element('div', 'so101-goal');
+  const familyRow = element('div', 'so101-goal-families');
+  familyRow.setAttribute('role', 'group');
+  familyRow.setAttribute('aria-label', 'Family');
+  const methodRow = element('div', 'so101-goal-methods');
+  methodRow.setAttribute('role', 'group');
+  methodRow.setAttribute('aria-label', 'Controller');
+  const equation = element('div', 'so101-goal-equation');
+  equation.append(element('span', 'so101-goal-lhs', 'goal(t) ='));
+  const slotNodes = new Map();
+  GOAL_SLOTS.forEach((slot, index) => {
+    if (slot.id === 'M') equation.append(element('span', 'so101-goal-paren', '+ ( '));
+    else if (index > 0 && slot.id !== 'M') equation.append(element('span', 'so101-goal-op', slot.id === 'w' ? ' ) / kp +' : '+'));
+    const box = element('span', 'so101-goal-slot');
+    const math = element('span', 'so101-goal-math');
+    math.innerHTML = slot.html;
+    box.append(math, element('span', 'so101-goal-slot-name', slot.name));
+    slotNodes.set(slot.id, box);
+    equation.append(box);
+  });
+  const searchNote = element('p', 'so101-goal-search');
+  const panel = element('div', 'so101-goal-panel');
+  panel.setAttribute('aria-live', 'polite');
+  const familyButtons = new Map();
+  let method = 'inv';
+  const show = () => {
+    const current = GOAL_METHODS.find((item) => item.id === method);
+    const family = GOAL_FAMILIES.find((item) => item.id === current.family);
+    for (const [id, buttonNode] of familyButtons) buttonNode.setAttribute('aria-pressed', String(id === family.id));
+    methodRow.replaceChildren();
+    for (const item of GOAL_METHODS.filter((entry) => entry.family === family.id)) {
+      const choice = element('button', 'so101-goal-method', item.id);
+      choice.type = 'button';
+      choice.setAttribute('aria-pressed', String(item.id === method));
+      choice.addEventListener('click', () => { method = item.id; show(); });
+      methodRow.append(choice);
+    }
+    const off = [];
+    for (const slot of GOAL_SLOTS) {
+      const node = slotNodes.get(slot.id);
+      const state = current.on.includes(slot.id) ? 'on' : current.learned?.includes(slot.id) ? 'learned' : 'off';
+      node.dataset.state = state;
+      node.title = state === 'off' ? `${slot.name}: 0` : `${slot.name}: on`;
+      if (state === 'off') off.push(slot.name.toLowerCase());
+    }
+    equation.dataset.online = String(Boolean(current.learnedOnline));
+    searchNote.textContent = current.search
+      ? `Inverted by search: ${current.search}. No formula gives this goal, so a model of the servo is simulated for each candidate.`
+      : current.learnedOnline ? 'The bright coefficients are not fixed: the controller re-fits them at each step.' : 'Inverted by formula: the goal is the sum of the bright terms.';
+    panel.replaceChildren(
+      element('p', 'so101-goal-problem', `Problem this family solves: ${family.problem}`),
+      element('p', '', current.values),
+      element('p', 'so101-goal-off', off.length ? `Set to 0: ${off.join(', ')}.` : 'No term is 0.'),
+      element('p', 'so101-goal-result', current.result));
+  };
+  for (const family of GOAL_FAMILIES) {
+    const choice = element('button', 'so101-goal-family', family.title);
+    choice.type = 'button';
+    choice.addEventListener('click', () => { method = GOAL_METHODS.find((item) => item.family === family.id).id; show(); });
+    familyButtons.set(family.id, choice);
+    familyRow.append(choice);
+  }
+  const legend = element('p', 'so101-goal-legend');
+  legend.innerHTML = '<span class="so101-goal-key" data-state="on"></span> on <span class="so101-goal-key" data-state="learned"></span> learned by a network <span class="so101-goal-key" data-state="off"></span> 0';
+  wrap.append(familyRow, methodRow, element('div', 'so101-goal-scroll'), searchNote, legend, panel);
+  wrap.querySelector('.so101-goal-scroll').append(equation);
+  el.append(wrap);
+  show();
+  return el;
+}
+
+register('equation-tree', renderEquationTree);
+register('goal-equation', renderGoalEquation);
+
 register('family-tree', renderFamilyTree);
 register('error-matrix', renderErrorMatrix);
 

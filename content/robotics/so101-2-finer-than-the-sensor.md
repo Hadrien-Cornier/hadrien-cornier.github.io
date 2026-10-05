@@ -1,29 +1,49 @@
 ---
 title: 'Seeing finer than the sensor'
-description: 'Why differentiating encoder ticks explodes the noise, and how an observer or a Kalman filter can estimate an angle finer than one tick.'
+description: 'The sensor side of the joint equation: why differences of encoder ticks explode the noise, and how an observer or a Kalman filter can estimate an angle finer than one tick.'
 date: '2026-10-05'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
-part: 3
+part: 2
 ---
 
-My arm only sees itself through whole encoder ticks of 1.534 mrad, and every controller in this series reads that staircase. Two questions kept coming back while I worked on it. What happens when a controller needs more than the angle, like the speed or the acceleration? And can a controller know the angle better than the sensor tells it?
+[Part 1](/robotics/so101-1-target-and-goal/) wrote one joint of my arm as an equation, and every term in it uses the true angle $q$. My controllers never see $q$. They see the reading $\hat q$, in whole encoder ticks of 1.534 mrad. Two questions kept coming back while I worked on this side of the equation. What happens when a controller needs more than the angle, like the speed or the acceleration? And can a controller know the angle better than the sensor tells it?
 
-This part uses four of my controller names. This is what each name means.
+[Part 3](/robotics/so101-3-choosing-the-goal/) groups my controllers into six families. This part uses four of their names. This is what each name means.
 
-| Name | What it sends to the servo as the goal | What it needs |
-|---|---|---|
-| `inv` | The target one servo dead time ahead, plus the target speed times the servo lag, plus a small acceleration term. It reverses a simple model of the servo, which is where the name comes from. | The dead time and the lag of the servo, from a step test on the arm. |
-| `solve` | A search for each joint. It tries many destination goals, simulates the servo model 0.25 s ahead for each one, and keeps the goal with the smallest predicted error. | The servo constants of the arm. |
-| `mpc` | Model predictive control. It uses the same model and look-ahead as `solve`, but it chooses a different goal for each step of the 0.25 s plan. It sends the first goal and makes a new plan at the next step. | The servo constants of the arm. |
-| `mpca` | `mpc` plus a Kalman filter that estimates a load and a sag during the run. The "a" means adaptive. | The servo constants of the arm. |
+| Name | Family | What it sends to the servo as the goal | What it needs |
+|---|---|---|---|
+| `inv` | Look ahead in time | The target one servo dead time ahead, plus the target speed times the servo lag, plus a small acceleration term. It reverses a simple model of the servo, which is where the name comes from. | The dead time and the lag of the servo, from a step test on the arm. |
+| `solve` | Plan with a servo model | A search for each joint. It tries many destination goals, simulates the servo model 0.25 s ahead for each one, and keeps the goal with the smallest predicted error. | The servo constants of the arm. |
+| `mpc` | Plan with a servo model | Model predictive control. It uses the same model and look-ahead as `solve`, but it chooses a different goal for each step of the 0.25 s plan. It sends the first goal and makes a new plan at the next step. | The servo constants of the arm. |
+| `mpca` | Plan with a servo model | `mpc` plus a Kalman filter that estimates a load and a sag during the run. The "a" means adaptive. | The servo constants of the arm. |
 
-The "servo constants" are a file with the dead time, the lag, the dead band, the stiffness and the sag of each joint, fitted on logs from my arm. [Part 2](/robotics/so101-2-what-pulls-the-joint/#three-kinds-of-delay) explains the dead time and the lag.
+The "servo constants" are a file with the dead time, the lag, the dead band, the stiffness and the sag of each joint, fitted on logs from my arm. [Part 1](/robotics/so101-1-target-and-goal/#section-dead-time) explains the dead time and the lag.
 
+## Ticks: the reading is rounded
+
+The encoder doesn't give a continuous angle, it gives whole ticks, 4096 per turn, so one tick is 1.534 mrad. If the true angle is anywhere inside a tick, the reading is the same, which means there's a reading error underneath everything else the controller does.
+
+How big is it on average? If the true angle is equally likely to be anywhere in the tick, the error is spread evenly from −0.5 to +0.5 tick, and its root mean square is
+
+$$
+\sqrt{\int_{-1/2}^{1/2} e^2\,de} = \frac{1}{\sqrt{12}} \approx 0.289\ \text{tick} = 0.443\ \text{mrad}
+$$
+
+![Top: a ramp of true angles and the staircase of readings rounded to the nearest tick. Bottom: the reading error, a sawtooth between minus and plus half a tick, with an RMS of 1 over the square root of 12 tick, 0.443 mrad.](/assets/robotics/so101-series/tick-rounding.png "Rounding to whole ticks leaves a sawtooth error with an RMS of 0.289 tick.")
+
+<details>
+<summary>Where I was wrong (half): the sqrt(1/3) step</summary>
+
+When I tried this for an error spread from −1 to +1, I only got $\sqrt{1/3}$ after a hint to divide by the width of 2. Once I saw that, the same calculation over a width of 1 gave $1/\sqrt{12}$.
+
+</details>
+
+I assumed this meant no controller could do better than about half a tick, but that's not quite right. The score measures the true angle, not the reading, and the joint doesn't jump between ticks: the spring, the damping and the inertia smooth its motion between two readings. Many readings together also carry more information than one, so a controller that uses them well can land closer than the tick suggests. That's what the rest of this part is about.
 
 ## Two differences make a lot of noise
 
-To push the arm along a path, you need to know how much torque it takes, and the equation of motion from part 2 needs the acceleration $\ddot q$ for that:
+To push the arm along a path, you need to know how much torque it takes, and the equation of motion from [part 1](/robotics/so101-1-target-and-goal/#section-one-equation-for-the-joint) needs the acceleration $\ddot q$ for that:
 
 $$
 \tau = M(q)\,\ddot q + C(q,\dot q)\,\dot q + G(q)
@@ -45,7 +65,7 @@ which is about the same size as the real accelerations of a fast motion. What su
 
 ![Two ways to get an acceleration. From the encoder: ticks, then two differences, then a noisy acceleration, 1.4 rad/s² per tick at 30 Hz. From the planned target path: an exact derivative and a clean acceleration, which inv, solve and mpc use.](/assets/robotics/so101-series/accel-pipelines.png "My model-based controllers take the acceleration from the planned path, not from the encoder.")
 
-Partly. The model-based controllers avoid it, because `inv`, `solve` and `mpc` take the acceleration from the target path, which I know exactly and which has no sensor noise. One of my networks probably did run into it, though. It had 4 past readings as inputs, which in effect gave it a noisy acceleration estimate, and it did terribly in closed loop, as I describe in part 5. The study listed this as a likely cause, but I never tested it directly. Fitting a model from logs has the same problem, and the usual answer in the literature is to fit smooth periodic motions instead of differentiating raw readings (Swevers and colleagues, 1997).
+Partly. The model-based controllers avoid it, because `inv`, `solve` and `mpc` take the acceleration from the target path, which I know exactly and which has no sensor noise. One of my networks probably did run into it, though. It had 4 past readings as inputs, which in effect gave it a noisy acceleration estimate, and it did terribly in closed loop, as I describe in [part 3](/robotics/so101-3-choosing-the-goal/#section-offline-against-closed-loop). The study listed this as a likely cause, but I never tested it directly. Fitting a model from logs has the same problem, and the usual answer in the literature is to fit smooth periodic motions instead of differentiating raw readings (Swevers and colleagues, 1997).
 
 ### A second amplifier: the one-step inverse
 
@@ -96,11 +116,11 @@ When both noise sizes stay constant, the Kalman gain settles to a fixed value, a
 
 ## Two things you can observe
 
-![Two observers with the same predict, compare and correct loop. The state observer estimates the true angle and speed, like the alpha-beta filter. The disturbance observer estimates a missing force, like w in solve and mpc or the Kalman filter in mpca.](/assets/robotics/so101-series/two-observers.png "The same loop can estimate the state of the joint or the force the model is missing.")
+![Two observers with the same predict, compare and correct loop. The state observer estimates the true angle and speed, like the alpha-beta filter. The disturbance observer estimates a missing force, like ŵ in solve and mpc or the Kalman filter in mpca.](/assets/robotics/so101-series/two-observers.png "The same loop can estimate the state of the joint or the force the model is missing.")
 
 The same idea can estimate two quite different things, which confused me for a while. A state observer estimates the true position and speed, and the alpha-beta filter above is one. A disturbance observer estimates what the model is missing, like a tool in the gripper or a sag the model didn't expect.
 
-My `solve` and `mpc` controllers already keep a simple disturbance observer called $w$. At each step the model predicts the next reading, the prediction error tells the controller that something is missing, and $w$ moves a small part of the way toward explaining it, dt / 0.3 s of the way each step. `mpca` replaces that with a Kalman filter that has a fast part for a load and a slow part for sag. I go through both in part 4.
+My `solve` and `mpc` controllers already keep a simple disturbance observer called $\hat w$. At each step the model predicts the next reading, the prediction error tells the controller that something is missing, and $\hat w$ moves a small part of the way toward explaining it, dt / 0.3 s of the way each step. `mpca` replaces that with a Kalman filter that has a fast part for a load and a slow part for sag. I go through both in [part 3](/robotics/so101-3-choosing-the-goal/#section-family-4-estimate-what-you-don-t-know).
 
 <details>
 <summary>Where I was wrong: is mpca the observer?</summary>
@@ -110,19 +130,19 @@ When I first learned about observers, I thought that was exactly what mpca adds.
 </details>
 
 <details>
-<summary>Where I was wrong: is w a Kalman parameter?</summary>
+<summary>Where I was wrong: is ŵ a Kalman parameter?</summary>
 
-I thought $w$ was a setting. It's actually an estimate that changes during the run. For each joint, it's the steady part of the error that the model doesn't explain, in goal units, and the controller subtracts it from the goal.
+I thought $\hat w$ was a setting. It's actually an estimate that changes during the run. For each joint, it's the steady part of the error that the model doesn't explain, in goal units, and the controller subtracts it from the goal.
 
 </details>
 
 <details>
 <summary>A prediction I got right: would mpc chatter less with an observer?</summary>
 
-Yes. The observer's position is smoother than the reading, so the goal flips between two ticks less often, which removes one cause of chatter. The reversal gate in part 4 handles another cause, which is plans that keep crossing the dead band back and forth.
+Yes. The observer's position is smoother than the reading, so the goal flips between two ticks less often, which removes one cause of chatter. The reversal gate in part 3 handles another cause, which is plans that keep crossing the dead band back and forth.
 
 </details>
 
 ## What's next
 
-With a model, a controller can see the joint more finely than one tick. In [part 4](/robotics/so101-4-goal-ahead/) I put that to work and go through where each controller puts the goal.
+With a model, a controller can see the joint more finely than one tick. [Part 3](/robotics/so101-3-choosing-the-goal/) puts the whole equation to work: it writes one general formula for the goal, and shows where the observers of this part plug into it.

@@ -254,3 +254,28 @@ test('SO-101 fences parse, escape their output, and load scripts only where used
     assert.doesNotMatch(plainPage, /so101-widgets\.js/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
+
+test('redirects write small moved pages, survive cleanup, and reject bad targets', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-redirect-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    fs.writeFileSync(path.join(sourceDir, 'new-home.md'), frontmatter + '## Moved section\n\nText.');
+    fs.writeFileSync(path.join(sourceDir, 'redirects.json'), JSON.stringify({'old-home':'/robotics/new-home/#moved-section'}));
+    build(root);
+    const page = fs.readFileSync(path.join(root, 'robotics/old-home/index.html'), 'utf8');
+    assert.match(page, /http-equiv="refresh" content="0; url=\/robotics\/new-home\/#moved-section"/);
+    assert.match(page, /rel="canonical" href="https:\/\/hadrien-cornier\.github\.io\/robotics\/new-home\/#moved-section"/);
+    assert.doesNotMatch(fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8'), /old-home/);
+    build(root);
+    assert.ok(fs.existsSync(path.join(root, 'robotics/old-home/index.html')), 'a second build must keep the redirect');
+    for (const bad of [{'new-home':'/robotics/new-home/'}, {'old-home':'https://example.com/'}, {'old-home':'/robotics/missing/'}]) {
+      fs.writeFileSync(path.join(sourceDir, 'redirects.json'), JSON.stringify(bad));
+      assert.throws(() => build(root), /Redirect/);
+    }
+    fs.unlinkSync(path.join(sourceDir, 'redirects.json'));
+    build(root);
+    assert.ok(!fs.existsSync(path.join(root, 'robotics/old-home/index.html')), 'a removed redirect must disappear');
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});

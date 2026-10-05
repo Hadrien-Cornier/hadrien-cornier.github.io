@@ -38,22 +38,12 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/robotics/so101-2-what-pulls-the-joint/</loc>
+    <loc>https://hadrien-cornier.github.io/robotics/so101-2-finer-than-the-sensor/</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/robotics/so101-3-finer-than-the-sensor/</loc>
-    <lastmod>2026-10-05</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/robotics/so101-4-goal-ahead/</loc>
-    <lastmod>2026-10-05</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/robotics/so101-5-offline-lied/</loc>
+    <loc>https://hadrien-cornier.github.io/robotics/so101-3-choosing-the-goal/</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
   </url>
