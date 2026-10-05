@@ -22,6 +22,11 @@ export function dateValue(value, field) {
   }
   return result;
 }
+function validateSeriesMetadata(data) {
+  if (data.series !== undefined && (typeof data.series !== 'string' || !data.series.trim())) throw new Error('series must be a non-empty string');
+  if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 1)) throw new Error('part must be a positive integer');
+  if (data.series && data.part === undefined) throw new Error('part is required when series is set');
+}
 const displayDate = (value) => new Intl.DateTimeFormat('en', {year:'numeric', month:'long', day:'numeric', timeZone:'UTC'}).format(new Date(value));
 
 export function renderArticle(source, root = ROOT) {
@@ -32,13 +37,14 @@ export function renderArticle(source, root = ROOT) {
   const date = dateValue(data.date, 'date');
   const updated = data.updated ? dateValue(data.updated, 'updated') : date;
   if (data.draft !== undefined && typeof data.draft !== 'boolean') throw new Error('draft must be true or false');
+  validateSeriesMetadata(data);
   if (updated < date) throw new Error('updated cannot be earlier than date');
   const md = new MarkdownIt({html:true, linkify:true, typographer:false}).use(katex, {
     delimiters:'dollars', throwOnError:true, trust:false, output:'htmlAndMathml',
   });
   const headings = [];
   const ids = new Set();
-  const components = {timeline:false, geometry:false};
+  const components = {timeline:false, geometry:false, so101:false};
   md.core.ruler.push('article-structure', (state) => {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];
@@ -82,6 +88,15 @@ export function renderArticle(source, root = ROOT) {
         headings.push({id:`${timeline.id}-heading`, title:timeline.heading, level:'h2'});
         components.timeline = true;
       }
+      if (token.type === 'fence' && token.info.trim() === 'so101-widget') {
+        let config;
+        try { config = JSON.parse(token.content); } catch (error) { throw new Error(`so101-widget must contain valid JSON: ${error.message}`); }
+        if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('so101-widget must contain a JSON object');
+        if (typeof config.type !== 'string' || !config.type.trim()) throw new Error('so101-widget requires a type');
+        if (typeof config.fallback !== 'string' || !config.fallback.trim()) throw new Error('so101-widget requires a fallback');
+        token.meta = {...token.meta, so101:config};
+        components.so101 = true;
+      }
     }
   });
   const renderFence = md.renderer.rules.fence;
@@ -91,6 +106,10 @@ export function renderArticle(source, root = ROOT) {
       arm_article_href:`#${tokens[index].meta.geometryAnchor || 'main'}`,
       arm_article_label:tokens[index].meta.geometryAnchor ? 'Back to the section' : 'Back to the essay',
     });
+    if (tokens[index].meta?.so101) {
+      const config = tokens[index].meta.so101;
+      return `<figure class="so101-widget" data-type="${escape(config.type)}" data-config='${escape(JSON.stringify(config))}'><div class="so101-widget-fallback">${escape(config.fallback)}</div></figure>`;
+    }
     return renderFence(tokens, index, options, environment, renderer);
   };
   md.renderer.rules.image = (tokens, index) => {
@@ -167,23 +186,72 @@ ${GENERATED_MARKER}
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}
+<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js')}"></script>` : ''}
 </head><body class="${pathname === '/' ? 'home-page' : 'robotics'}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
 ${footer}</main></body></html>\n`;
 }
+function seriesBox(article) {
+  if (!article.seriesArticles) return '';
+  const parts = article.seriesArticles.map((part) => part.slug === article.slug
+    ? `<li aria-current="page">Part ${part.part}: ${escape(part.title)}</li>`
+    : `<li><a href="/robotics/${part.slug}/">Part ${part.part}: ${escape(part.title)}</a></li>`).join('');
+  const previous = article.seriesPrevious ? `<a rel="prev" href="/robotics/${article.seriesPrevious.slug}/">← Previous: ${escape(article.seriesPrevious.title)}</a>` : '';
+  const next = article.seriesNext ? `<a rel="next" href="/robotics/${article.seriesNext.slug}/">Next: ${escape(article.seriesNext.title)} →</a>` : '';
+  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+}
 function articlePage(article, root) {
   const toc = article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
 <header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p></header>
-<div class="post-layout${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
+${seriesBox(article)}<div class="post-layout${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
+}
+function articleUnits(articles) {
+  const groups = new Map();
+  for (const article of articles) {
+    if (article.series && !groups.has(article.series)) groups.set(article.series, articles.filter((item) => item.series === article.series).sort((a, b) => a.part - b.part));
+  }
+  const seen = new Set();
+  return articles.flatMap((article) => {
+    if (!article.series) return [{article}];
+    if (seen.has(article.series)) return [];
+    seen.add(article.series);
+    return [{series:article.series, articles:groups.get(article.series)}];
+  });
+}
+function articleCard(article) {
+  return `<a class="report-card" href="/robotics/${article.slug}/"><span class="report-date"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
+}
+function seriesBlock(unit, renderArticle, className = '') {
+  return `<section class="series-block${className ? ` ${className}` : ''}"><h2>${escape(unit.series)}</h2><div class="series-block-parts">${unit.articles.map(renderArticle).join('')}</div></section>`;
+}
+function attachSeries(articles) {
+  const groups = new Map();
+  for (const article of articles) {
+    if (!article.series) continue;
+    const group = groups.get(article.series) || [];
+    if (group.some((part) => part.part === article.part)) throw new Error(`Duplicate part ${article.part} in series ${article.series}`);
+    group.push(article);
+    groups.set(article.series, group);
+  }
+  for (const group of groups.values()) {
+    group.sort((a, b) => a.part - b.part);
+    group.forEach((article, index) => {
+      article.seriesArticles = group;
+      article.seriesPrevious = group[index - 1] || null;
+      article.seriesNext = group[index + 1] || null;
+    });
+  }
 }
 function landingPage(articles, root) {
-  const cards = articles.map((article) => `<a class="report-card" href="/robotics/${article.slug}/"><span class="report-date"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`).join('\n');
+  const units = articleUnits(articles);
+  const content = units.map((unit) => unit.series
+    ? seriesBlock(unit, articleCard)
+    : articleCard(unit.article)).join('\n');
   return shell({title:'Robotics', description:'Essays on robot learning, geometry, and control, with experiments and diagrams.', pathname:'/robotics/', root, content:`
 <header class="robotics-header"><p class="eyebrow">Essays &amp; explorations / ${articles.length} ${articles.length === 1 ? 'essay' : 'essays'}</p><h1>Learning robotics.</h1><p class="series-intro">Experiments, diagrams, and questions from learning how robots move, learn, and make decisions.</p></header>
-<section class="report-list" aria-label="Robotics reports">${cards || '<p>The first report is on its way.</p>'}</section>`});
+<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
 }
 function previewImage(article, root) {
   if (article.slug === 'how-robot-control-is-changing') {
@@ -213,18 +281,28 @@ function homeNotes(root) {
   return `<section class="home-notes" aria-labelledby="home-notes-title"><div><p class="eyebrow">Beyond robotics</p><h2 id="home-notes-title">Notes on the work.</h2><p>Short notes on engineering, hiring, and building things that matter.</p><a class="home-text-link" href="/notes.html">All notes <span aria-hidden="true">↗</span></a></div><div class="home-note-list">${links}</div></section>`;
 }
 function homePage(articles, root) {
-  const [latest, ...rest] = articles;
+  const units = articleUnits(articles);
+  const [latestUnit, ...restUnits] = units;
   const hasControlArticle = articles.some((article) => article.slug === 'how-robot-control-is-changing');
   const controlDemo = template('control-playground.html', root, {
     control_article_href:hasControlArticle ? '/robotics/how-robot-control-is-changing/' : '/#writing',
     control_article_label:hasControlArticle ? 'How control is changing' : 'Explore the writing',
   });
+  const latest = latestUnit?.series ? articles.find((article) => article.series === latestUnit.series) : latestUnit?.article;
   const featureImage = latest ? previewImage(latest, root) : '';
   const featureImageLabel = latest?.slug === 'how-robot-control-is-changing' ? 'Illustration: a moved target' : 'Figure from the essay';
-  const feature = latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest essay</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the essay <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">${featureImageLabel}</span></div>` : ''}</a>` : '<p class="writing-empty">The first essay is on its way.</p>';
-  const rows = rest.map((article, index) => {
+  let rowNumber = latestUnit?.series ? 1 : 2;
+  const renderRow = (article) => {
     const image = previewImage(article, root);
-    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}" href="/robotics/${article.slug}/"><span class="writing-row-number">${String(index + 2).padStart(2, '0')}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
+    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}" href="/robotics/${article.slug}/"><span class="writing-row-number">${String(rowNumber++).padStart(2, '0')}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
+  };
+  const feature = latestUnit?.series
+    ? seriesBlock(latestUnit, renderRow, 'series-block-home')
+    : latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest essay</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the essay <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">${featureImageLabel}</span></div>` : ''}</a>`
+    : '<p class="writing-empty">The first essay is on its way.</p>';
+  const rows = restUnits.map((unit) => {
+    if (unit.series) return seriesBlock(unit, renderRow, 'series-block-home');
+    return renderRow(unit.article);
   }).join('');
   return shell({title:'Robotics, learning, and systems', description:'Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them.', pathname:'/', root, interactive:true, content:`
 <section class="home-hero" aria-labelledby="home-title"><div class="home-hero-copy"><p class="eyebrow">Hadrien Cornier / Personal notes</p><h1 id="home-title">Robotics, learning,<br>and the systems<br>behind them.</h1><p class="home-intro">I build data infrastructure and production ML. Here I write about robot learning, the math behind it, and what I learn by building.</p><div class="home-hero-links"><a href="#writing">Explore the writing <span aria-hidden="true">↓</span></a><a href="/about.html">More about me <span aria-hidden="true">↗</span></a></div></div>${controlDemo}</section>
@@ -235,13 +313,17 @@ ${homeNotes(root)}
 export function build(root = ROOT) {
   const sourceDir = path.join(root, 'content/robotics');
   if (!fs.existsSync(sourceDir)) return;
-  const articles = fs.readdirSync(sourceDir).filter((name) => name.endsWith('.md')).sort().map((name) => {
+  const allArticles = fs.readdirSync(sourceDir).filter((name) => name.endsWith('.md')).sort().map((name) => {
     const slug = name.slice(0, -3);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error(`Invalid article filename: ${name}`);
     const source = fs.readFileSync(path.join(sourceDir, name), 'utf8');
-    if (matter(source).data.draft === true) return null;
-    return {...renderArticle(source, root), slug};
-  }).filter(Boolean).sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
+    const metadata = matter(source).data;
+    validateSeriesMetadata(metadata);
+    return {...metadata, slug, source};
+  });
+  const articles = allArticles.filter((article) => article.draft !== true).map(({source, slug}) => ({...renderArticle(source, root), slug}))
+    .sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
+  attachSeries(articles);
   // Render everything first. A malformed article cannot leave a half-built series.
   const pages = articles.map((article) => [path.join(root, 'robotics', article.slug, 'index.html'), articlePage(article, root)]);
   pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);

@@ -1,0 +1,461 @@
+{
+  "questions": [
+    {
+      "id": "S1",
+      "part": "setup",
+      "type": "numeric",
+      "skill": "predict",
+      "concept": "P-only servo: static sag G/kp",
+      "prompt": "First, suppose that friction is zero. The target and the goal both stay at -0.321 rad. G = 0.391 N m and kp = 13.64 N m/rad. How far from the target (-0.321 rad) does the true angle q stop? Give the answer in mrad (1 mrad = 0.001 rad = 0.057 degree).",
+      "numeric": {
+        "value": 28.7,
+        "tolerance": 0.5,
+        "unit": "mrad",
+        "magnitude": true
+      },
+      "hint": "Here the goal is the target: -0.321 rad. At rest, the servo torque must equal G. Before the clamp, the servo torque is kp x (goal - q).",
+      "model_answer": "At rest, kp (goal - q) = G. So |goal - q| = 0.391 / 13.64 = 0.0287 rad = 28.7 mrad. That is 18.7 ticks.",
+      "explanation": "kp comes from the BAM model of the STS3215 at LeRobot's P = 16. BAM is a fit of other STS3215 units, not of Hadrien's servos. At rest, the servo torque kp (goal - q) must carry the gravity torque G. With goal = target, the tracking error is G/kp = 0.391 / 13.64 = 28.7 mrad. One tick is 2 pi / 4096 = 1.534 mrad, so this is 18.7 ticks. On validation seed 40, the mean shoulder_lift sag was 25.7 mrad, against a prediction of about 29 mrad.",
+      "source": "src/robot_calibration/so101/servo.py:86-95,138-162 (kp 13.640); studies/so101-error-anatomy-01/results.md:185 (mean sag 25.7 mrad against about 29 mrad); scratchpad/directfacts/hold_sag.py on runs/so101-final-test-01-nominal/trace.npz (hold path 6, G = -0.391 N m)",
+      "situation": "The policy gives a new target angle for each arm joint every 33 ms. Each controller then sends one goal position to the simulated STS3215 servo. The servo keeps that goal for 8 substeps of 4.17 ms. At each substep, it makes a torque from the servo gap: the goal minus the true angle. Now the policy wants shoulder_lift to stay still. So the target is -0.321 rad at every step for 6 s. Out of the box sends goal = target, so the goal is also -0.321 rad. The true angle q is where the joint really is. Gravity pulls this joint with 0.391 N m at this pose. Predict where the joint stops."
+    },
+    {
+      "id": "S3",
+      "part": "setup",
+      "type": "multi",
+      "skill": "reason",
+      "concept": "Soft friction: stop band and creep",
+      "prompt": "On this hold the measured tracking error is 14.0 mrad at 0.17 s, 17.1 mrad at 1 s and 23.45 mrad at 6 s. The true angle is on the side that gravity pulls. G/kp is 28.7 mrad. Which statements explain these numbers? Select all that apply.",
+      "options": [
+        {
+          "text": "Dry friction (0.196 N m) carries part of the load at first, so the joint stops near (G - f)/kp = 14.3 mrad.",
+          "correct": true,
+          "feedback": "Correct. The early value of 14.0 mrad sits at the low edge of the friction band."
+        },
+        {
+          "text": "The damping (1.058 N m s/rad) slows the sag, so the joint needs about 6 s to settle.",
+          "correct": false,
+          "feedback": "The damping time constant is d/kp = 1.058 / 13.64 = 78 ms. That is far shorter than 6 s."
+        },
+        {
+          "text": "Genesis models dry friction as a soft constraint, so the joint creeps slowly toward G/kp.",
+          "correct": true,
+          "feedback": "Correct. The joint creeps at 1.8 mrad/s after 1 s and 0.85 mrad/s after 6 s. A real geared servo can stick instead. Nobody measured this on the real arm."
+        },
+        {
+          "text": "The score uses the rounded reading, so the error looks smaller than it is.",
+          "correct": false,
+          "feedback": "The score uses the true angle from the simulator, not the reading."
+        },
+        {
+          "text": "The servo becomes hot and loses torque, so the error grows.",
+          "correct": false,
+          "feedback": "The sim has no temperature model. The servo numbers stay constant during a run."
+        }
+      ],
+      "hint": "Compare 14.0 mrad with (G - f)/kp. Then ask what the simulator does with friction over time.",
+      "model_answer": "The first and third statements. Friction carries part of the load at first. The soft friction model then lets the joint creep toward G/kp.",
+      "explanation": "Ideal dry friction gives a stop band from (G - f)/kp = 14.3 mrad to (G + f)/kp = 43.0 mrad. The arm starts at rest on the target and sags into the band, so it stops near the low edge. Genesis friction is a soft constraint, so a loaded joint creeps. After 6 s the error is 23.45 mrad, still less than 28.7 mrad.",
+      "source": "scratchpad/directfacts/hold_sag.py and creep.py (errors 14.04, 17.14, 23.45 mrad at steps 5, 30, 180; creep 1.80 and 0.85 mrad/s); docs/so101-benchmark.md:429-435 (soft friction, creep 1.6e-3 rad/s)",
+      "situation": "The policy gives a new target angle for each arm joint every 33 ms. Each controller then sends one goal position to the simulated STS3215 servo. The servo keeps that goal for 8 substeps of 4.17 ms. At each substep, it makes a torque from the servo gap: the goal minus the true angle. Now the policy wants shoulder_lift to stay still. So the target is -0.321 rad at every step for 6 s. Out of the box sends goal = target, so the goal is also -0.321 rad. The true angle q is where the joint really is. Gravity pulls this joint with 0.391 N m at this pose. Predict where the joint stops."
+    },
+    {
+      "id": "S4",
+      "part": "setup",
+      "type": "single",
+      "skill": "predict",
+      "concept": "Speed lag: damping dominates on moving paths",
+      "prompt": "Now the target moves. At one moment of a simulated path, shoulder_lift moves at 0.70 rad/s against gravity. The measured tracking error is 115.2 mrad. Use G = 0.442 N m, d = 1.058 N m s/rad and f = 0.196 N m. The inertia torque is J a = 0.028 N m, and kp = 13.64 N m/rad. Which part of the error is the largest?",
+      "options": [
+        {
+          "text": "Gravity",
+          "correct": false,
+          "feedback": "Gravity gives 0.442 / 13.64 = 32.4 mrad. That is large, but it is not the largest part."
+        },
+        {
+          "text": "Damping",
+          "correct": true,
+          "feedback": "Correct. At 0.70 rad/s the damping torque is 1.058 x 0.70 = 0.744 N m. That is more than the gravity torque of 0.442 N m. The servo needs a gap of 0.744 / 13.64 = 54.6 mrad for it."
+        },
+        {
+          "text": "Dry friction",
+          "correct": false,
+          "feedback": "Friction gives f/kp = 0.196 / 13.64 = 14.4 mrad at any speed."
+        },
+        {
+          "text": "Inertia",
+          "correct": false,
+          "feedback": "The target acceleration is small at this step. Inertia gives only 0.028 / 13.64 = 2.0 mrad."
+        },
+        {
+          "text": "Goal hold (the servo keeps the goal from the start of the 33 ms step)",
+          "correct": false,
+          "feedback": "The goal is the target from the start of the step, 23.7 mrad behind the new target. The torque balance applies at the middle of the step, so subtract half a step of arm motion (11.7 mrad). The net part is 12.0 mrad."
+        }
+      ],
+      "hint": "Change each torque into a servo gap: divide it by kp. Then compare the goal-hold part.",
+      "model_answer": "Damping: 1.058 x 0.7035 = 0.744 N m, so 54.6 mrad.",
+      "explanation": "Torque need = gravity 0.442 + damping 0.744 + friction 0.196 + inertia 0.028 = 1.410 N m. The servo gap is 1.410 / 13.64 = 103.3 mrad. The goal hold adds 23.7 - 11.7 = 12.0 mrad. The sum is 115.3 mrad, and the measured value is 115.2 mrad. At this fast step, speed costs more error than load. In the error-anatomy study (seed 40), velocity and its sign explain most of the change over time in the Out of the box error. Their shares are 0.43 to 0.62 and 0.22 to 0.31. Gravity mostly adds a steady sag on the loaded joints. On nominal it is 37% of the shoulder_lift mean square error and 52% of the elbow_flex mean square error.",
+      "source": "scratchpad/directfacts/moving_tick.py on runs/so101-final-test-01-nominal/trace.npz (path 80, step 165); studies/so101-error-anatomy-01/results.md section 4 (load-proportional part) and section 6 (variance shares); analysis.json load_part.nominal.servo.direct (lift 0.374, elbow 0.517)",
+      "situation": "The policy gives a new target angle for each arm joint every 33 ms. Each controller then sends one goal position to the simulated STS3215 servo. The servo keeps that goal for 8 substeps of 4.17 ms. At each substep, it makes a torque from the servo gap: the goal minus the true angle. Now the policy wants shoulder_lift to stay still. So the target is -0.321 rad at every step for 6 s. Out of the box sends goal = target, so the goal is also -0.321 rad. The true angle q is where the joint really is. Gravity pulls this joint with 0.391 N m at this pose. Predict where the joint stops."
+    },
+    {
+      "id": "D1",
+      "part": "out_of_the_box",
+      "type": "single",
+      "skill": "recall",
+      "concept": "LeRobot calibration: zero and limits only",
+      "prompt": "Hadrien's file hadrien_follower.json holds the LeRobot calibration of his arm. What does it store for each motor?",
+      "options": [
+        {
+          "text": "P, I and D gains that LeRobot tuned for his arm.",
+          "correct": false,
+          "feedback": "At each connect, LeRobot writes the same fixed values to every arm: P 16, I 0, D 32. They do not come from the calibration file."
+        },
+        {
+          "text": "A gravity model of the arm, so that the servo can add a torque against gravity.",
+          "correct": false,
+          "feedback": "Neither LeRobot nor the servo firmware uses a gravity model. That is why Out of the box sags by about G/kp."
+        },
+        {
+          "text": "The friction and damping of each joint, measured during calibration.",
+          "correct": false,
+          "feedback": "Calibration measures no dynamics. The sim friction and damping come from a BAM fit of other STS3215 units, not from Hadrien's arm."
+        },
+        {
+          "text": "Five integers: id, drive_mode, homing_offset, range_min and range_max.",
+          "correct": true,
+          "feedback": "Correct. id is the bus address, and drive_mode sets the turn direction. homing_offset, range_min and range_max set the zero and the position limits. For example, shoulder_lift has homing_offset 941 and a range of 844 to 3214."
+        }
+      ],
+      "hint": "What do you need to change a tick count into an angle, and to keep each joint inside safe limits?",
+      "model_answer": "Five integers per motor: id, drive_mode, homing_offset, range_min, range_max.",
+      "explanation": "LeRobot MotorCalibration has 5 fields. At each connect, configure() writes position mode, P 16, I 0 and D 32 to every motor. The gripper also gets a 50% torque cap. So the out-of-the-box control loop is the same on every SO-101.",
+      "source": "robot-self-calibration/assets/so101/calibration/hadrien_follower.json:1-44; lerobot/src/lerobot/motors/motors_bus.py:176-181; lerobot/src/lerobot/robots/so_follower/so_follower.py:159-171; config_so_follower.py:44-47",
+      "situation": "Hadrien's real SO-101 uses this method today. LeRobot changes each target angle to ticks and writes it to Goal_Position every 33 ms. In the sim, the worn_joints robot has friction x2.5 and damping x1.5 on all 5 arm joints. On hold paths, its RMSE falls from 14.2 to 8.2 mrad. On the full frozen test, its RMSE rises from 37.2 to 53.3 mrad. Why can more friction make one number smaller and the other number larger?"
+    },
+    {
+      "id": "D2",
+      "part": "out_of_the_box",
+      "type": "numeric",
+      "skill": "predict",
+      "concept": "Speed lag as a time delay d/kp + dt/2",
+      "prompt": "The target moves at a constant speed v. The servo must supply the damping torque d v. How long after the target does the joint arrive? Use d = 1.058 N m s/rad, kp = 13.64 N m/rad and the 33.3 ms goal hold. Give the answer in ms.",
+      "numeric": {
+        "value": 94,
+        "tolerance": 3,
+        "unit": "ms"
+      },
+      "hint": "The servo gap for damping is d v / kp. Divide the gap by v to get a time. Then add the effect of the goal hold.",
+      "model_answer": "1.058 / 13.64 = 77.6 ms, plus 33.3 / 2 = 16.7 ms from the goal hold, which gives about 94 ms.",
+      "explanation": "At a constant speed v, damping needs a servo gap of d v / kp. That gap equals the distance that the target moves in d/kp = 77.6 ms, so it acts as a time lag. The goal hold adds about half a step, 16.7 ms. The measured lag on nominal is 105.5, 107.6 and 108.4 ms on shoulder_pan, shoulder_lift and elbow_flex. The simple estimate is about 12% low.",
+      "source": "src/robot_calibration/so101/servo.py derived values (damping 1.0578, kp 13.640); studies/so101-error-anatomy-01/analysis.json lag.nominal.servo.direct; results.md:17 (70 to 153 ms)",
+      "situation": "Hadrien's real SO-101 uses this method today. LeRobot changes each target angle to ticks and writes it to Goal_Position every 33 ms. In the sim, the worn_joints robot has friction x2.5 and damping x1.5 on all 5 arm joints. On hold paths, its RMSE falls from 14.2 to 8.2 mrad. On the full frozen test, its RMSE rises from 37.2 to 53.3 mrad. Why can more friction make one number smaller and the other number larger?"
+    },
+    {
+      "id": "D4",
+      "part": "out_of_the_box",
+      "type": "free",
+      "skill": "reason",
+      "concept": "Error parts: torque part scales 1/kp, goal hold does not",
+      "prompt": "Explain why Out of the box has about 37 mrad of error on the nominal robot. Then explain why the stiff_servo robot (kp x1.62, 22.1 N m/rad) cuts it only to 24.8 mrad.",
+      "rubric": [
+        "The error is the torque need divided by kp (gravity, damping x speed, friction, inertia). Out of the box adds no correction, and the servo loop has P only (I = 0).",
+        "In motion the damping part is the largest (54.6 of 115 mrad in the worked step). So the joint lags by about d/kp + dt/2 = 94 ms.",
+        "If all of the error scaled as 1/kp, it would fall to 37.2 / 1.62 = 23 mrad. Only the torque part scales: about 32 mrad falls to about 20 mrad.",
+        "The goal-hold part (about v dt/2: 0.27 rad/s x 16.7 ms = 4.5 mrad RMS) does not change with kp. So the error falls less than 1/kp, to 24.8 mrad."
+      ],
+      "hint": "Write the error as (G + d v + f + J a)/kp + v dt/2. Which parts change when kp grows?",
+      "model_answer": "Out of the box sends goal = target. The servo P loop then needs a servo gap equal to the torque need divided by kp. On paths that move, damping times speed is the largest need, so the joint lags by about 94 ms. Gravity adds a sag on the loaded joints. With kp x1.62, the torque part falls by 1.62, from about 32 to about 20 mrad. The goal hold adds about 5 mrad, which does not depend on kp. So the measured value is 24.8 mrad, not 23 mrad.",
+      "explanation": "Out of the box has no model, no data and no outer loop. Each part of its error comes from the servo P loop or from the goal hold. The torque parts scale as 1/kp, and the goal-hold part does not. Check: write RMSE = A x (13.64 / kp) + B. Nominal and stiff_servo give A = 32.2 mrad and B = 5.0 mrad. For weak_supply (kp x0.90), this predicts 40.6 mrad, and the measured value is 40.5 mrad. This check is approximate, because RMS values do not add exactly. To remove the error, a controller must aim the goal past the target.",
+      "source": "studies/so101-final-test-01/results.md:11,153,206 (37.166, 40.478, 24.826); scratchpad/directfacts/moving_tick.py; scratchpad/mff_static.py (stiff_servo kp 22.12, weak_supply kp 12.31); two-point check computed in scratchpad/tutorfinal/build_bank.py notes",
+      "situation": "Hadrien's real SO-101 uses this method today. LeRobot changes each target angle to ticks and writes it to Goal_Position every 33 ms. In the sim, the worn_joints robot has friction x2.5 and damping x1.5 on all 5 arm joints. On hold paths, its RMSE falls from 14.2 to 8.2 mrad. On the full frozen test, its RMSE rises from 37.2 to 53.3 mrad. Why can more friction make one number smaller and the other number larger?"
+    },
+    {
+      "id": "C1",
+      "part": "classical",
+      "type": "numeric",
+      "skill": "predict",
+      "concept": "Outer P term: stiffness x5 against a model error",
+      "prompt": "The model lacks 0.378 N m on shoulder_lift (150 g tool, home pose). Ignore the integral and friction. Only the outer P term reacts. Its gain is 4 rad of goal for each rad of error (target minus reading). What size of static error stays? Give the magnitude in mrad.",
+      "numeric": {
+        "value": 5.5,
+        "tolerance": 0.3,
+        "unit": "mrad",
+        "magnitude": true
+      },
+      "hint": "Write the servo gap as a function of the error e. The outer P term adds to it.",
+      "model_answer": "goal - q = 5 e + offset, so the stiffness against the missing torque is 13.64 x 5 = 68.2 N m/rad. 0.378 / 68.2 = 5.5 mrad.",
+      "explanation": "The servo gap is goal - q = (target - q) + offset + 4 e = 5 e + offset. The offset covers the nominal 0.421 N m, so 68.2 e must supply the missing 0.378 N m. Thus e = 5.5 mrad (3.6 ticks). In a MuJoCo toy (not Genesis), the true angle was 4.0 mrad from the target, on the gravity side, over steps 3 to 10. This is less than 5.5 mrad, because friction carries part of the load and the integral starts to act. The error was 1.4 mrad at 1 s and -0.4 mrad (a small overshoot) at 2 s. The integral term ended at -27.9 mrad of goal, near the -27.7 mrad that the model lacks.",
+      "source": "scratchpad/mff_static.py (deficit 0.3778 N m, P-only error 5.54 mrad); scratchpad/mff_loop.py (MuJoCo toy, rerun; the script prints target minus true angle); src/robot_calibration/so101/controllers.py:116-136",
+      "situation": "A 150 g tool sits in the gripper at the home pose. Classical model + PID does not know about the tool. Its nominal physics model says that shoulder_lift needs 0.421 N m of gravity torque. The true need is 0.799 N m. Predict the error that stays, and which part of the controller removes it."
+    },
+    {
+      "id": "C3",
+      "part": "classical",
+      "type": "single",
+      "skill": "reason",
+      "concept": "Quasi-static rule ignores the 33 ms goal hold",
+      "prompt": "Give Classical model + PID the true robot numbers (run label oracle_ff_fb). Its geometric-mean RMSE over the six conditions is 1.312 mrad. The Exact-model reference has the same numbers and gets 0.385 mrad. It simulates the 8 substeps of each step (part 6). Each controller uses its own tuned outer gains. A MuJoCo test (not Genesis) changed one factor at a time. Which cause of the 3.4x gap does it support best?",
+      "options": [
+        {
+          "text": "Its tanh friction model is wrong.",
+          "correct": false,
+          "feedback": "The toy removed dry friction from the plant and the model. The error changed only from 2.553 to 2.611 mrad."
+        },
+        {
+          "text": "Its physics numbers are wrong.",
+          "correct": false,
+          "feedback": "This run uses the true numbers. On nominal, oracle_ff_fb and model_ff_fb both get 1.117 mrad."
+        },
+        {
+          "text": "It has no D term, so it cannot damp the arm.",
+          "correct": false,
+          "feedback": "kd is 0. But in the toy the error falls from 4.13 to 0.91 mrad when only the goal rate changes. The D term did not change."
+        },
+        {
+          "text": "Its rule treats the 33 ms goal hold as one instant.",
+          "correct": true,
+          "feedback": "Correct. In the toy, the same open-loop rule gets 4.13 mrad at a 30 Hz goal rate. It gets 0.91 mrad at 240 Hz and 0.23 mrad at 960 Hz. The error falls with the hold time."
+        }
+      ],
+      "hint": "Both controllers use the true numbers. What does a rule for one instant leave out that a model of the 8 substeps includes?",
+      "model_answer": "The quasi-static rule. It treats the 33 ms goal hold as one instant.",
+      "explanation": "The inverse simulates the 8 substeps of the goal hold and aims at where the arm lands at step k+1. The quasi-static rule assumes that the target state lasts for the whole step. Over the six conditions, model_ff_fb / oracle_ff_fb is 0.79 to 2.28. So the true numbers help by up to 2.28x, but on weak_supply they make the error larger. oracle_ff_fb / oracle_inv_rt is 2.77 to 5.13. The method matters more than the numbers. Caution: nobody isolated this cause in Genesis. The two controllers also differ in their gains and their inputs. With kp 4 and ki 10, the exact inverse got 2.03 mrad on nominal (validation seed 1), worse than Classical model + PID (1.12 mrad).",
+      "source": "runs/so101-final-test-01-*/metrics.json (model_ff_fb, oracle_ff_fb, oracle_inv_rt; geometric means 1.312 and 0.385 recomputed); studies/so101-final-test-01/controllers-nominal.json (gains); studies/so101-classical-fit/results.md:239-240 (oracle_inv kp 4 ki 10: 2.032); scratchpad/mff_zoh.py and mff_parts.py (MuJoCo toy, one sine path, rerun)",
+      "situation": "A 150 g tool sits in the gripper at the home pose. Classical model + PID does not know about the tool. Its nominal physics model says that shoulder_lift needs 0.421 N m of gravity torque. The true need is 0.799 N m. Predict the error that stays, and which part of the controller removes it."
+    },
+    {
+      "id": "N3",
+      "part": "neural_network",
+      "type": "single",
+      "skill": "predict",
+      "concept": "Offline loss can mislead closed-loop control",
+      "prompt": "Two ways to test a network. Offline: feed it recorded data and compare its output with the label; its outputs never move the arm. Closed loop: let it drive the simulated arm; its goals move the arm, and its next inputs come from that motion, including its own past goals. Nominal = the default robot, with no change. An earlier network got 4 past readings and 4 past goals as extra inputs. It trained on smooth wiggle data only. Its offline label error fell from 6.19 to 3.03 mrad. In closed loop on nominal validation paths, the same network with no history had 0.552x the tracking error of Classical model + PID. Predict the closed-loop error of the network with history on nominal, as a multiple of the error of Classical model + PID.",
+      "options": [
+        {
+          "text": "About 0.3x: the label error halved, so the tracking error falls too.",
+          "correct": false,
+          "feedback": "Offline error measures how well the network copies the data. In closed loop, the past-goal input is the network's own output. The data never had this input."
+        },
+        {
+          "text": "About 0.55x: the closed loop hides a change in label error.",
+          "correct": false,
+          "feedback": "The closed loop did not hide the change. It made it far larger, in the opposite direction."
+        },
+        {
+          "text": "About 0.6x: more inputs need more data, so the change is small.",
+          "correct": false,
+          "feedback": "The change was not small. A data-size effect cannot explain a change of more than 100x."
+        },
+        {
+          "text": "About 80x: the closed loop is very different from the data.",
+          "correct": true,
+          "feedback": "Correct: 81.3x, with 77% of steps saturated. The log gives a likely reason (not tested): from smooth data, the network learned to repeat the last goal. In closed loop, this makes a new feedback loop with the servo."
+        }
+      ],
+      "hint": "In closed loop, the past-goal input is the network's own output. In the data, it was the output of a different controller.",
+      "model_answer": "About 80x: 81.3x Classical model + PID, with 77% of steps saturated.",
+      "explanation": "Item 25: with no history the network had 0.552x the error of Classical model + PID. With 4 past readings and goals it had 81.3x. Lower offline error does not mean better control, so every model choice uses closed-loop runs on validation seeds. Memory helped only with broadband data (a 0.2 to 14 Hz wiggle). With that data, the network with memory had 0.834 of the error of the old no-memory network. The same network without memory had 1.45 of it. The final network keeps one past step.",
+      "source": "research/log.md:193 (item 25); studies/so101-broadband-01/results.md (ratio to old_inv_h0: bb_inv_h1_qu 0.834, bb_inv_h0 1.45)",
+      "situation": "Nominal test path, quintic family, step 64, shoulder_lift. The reading is -33 ticks, which is -50.62 mrad. The target now is -51.17 mrad, and the next target is -44.24 mrad. The network gives an offset of -30.07 mrad. Compute the goal that the controller sends."
+    },
+    {
+      "id": "F2",
+      "part": "fitted",
+      "type": "single",
+      "skill": "reason",
+      "concept": "One-step gain: small slope, large goal moves",
+      "prompt": "Facts for this question. One goal tick is 1.534 mrad, so it adds 13.64 x 0.001534 = 0.021 N m of servo torque. That torque must first accelerate the arm, and the damping slows it: the servo time constant is d / kp = 1.058 / 13.64 = 78 ms, longer than one 33 ms step. In the MuJoCo copy, with the arm at 0.3 rad/s, a goal 1 tick higher puts the joint only 0.14 to 0.17 tick higher at the end of the step. The Fitted servo model chooses the goal that puts the joint on the next target at the end of ONE step. Now one reading jumps by +1 tick only because of rounding. The model then moves its next goal by about 5.6 ticks. Why so much?",
+      "options": [
+        {
+          "text": "The fitted numbers are about 1% wrong, and the solve amplifies that error.",
+          "correct": false,
+          "feedback": "The Exact-model reference does the same with the true numbers: a +1 tick reading moves its goal by 5.87 ticks."
+        },
+        {
+          "text": "A goal tick moves the joint only about 0.15 tick in one step. To undo 1 tick of apparent error in one step, the goal must move about 1 / 0.15, so several ticks.",
+          "correct": true,
+          "feedback": "Correct. 1 / 0.143 = 7 goal ticks for 1 tick of position. The +1 tick also adds 46 mrad/s to the speed estimate. In the toy, a position-only solve moves the goal 9.0 ticks. The speed term in the cost cuts this to 5.6 ticks."
+        },
+        {
+          "text": "The integral (ki 3) grows large after the jump.",
+          "correct": false,
+          "feedback": "For a 1-tick error the integral adds only 3 x 1.534 mrad x 0.033 s = 0.15 mrad of goal. That is 0.1 tick."
+        },
+        {
+          "text": "The servo torque reaches its clamp, so the solve pushes the goal to its limit.",
+          "correct": false,
+          "feedback": "No nominal step saturated in the frozen test. The goal box is 0.393 rad, far larger than 5.6 ticks (8.6 mrad)."
+        }
+      ],
+      "hint": "The model wants all of the correction within one step. How many goal ticks give 1 tick of motion in one step?",
+      "model_answer": "The one-step gain from goal to landing point is only about 0.14, so the solve multiplies any apparent error by about 1 / 0.14.",
+      "explanation": "So the inverse acts on any error that it sees with a gain of about 1 / 0.15. A tick jump in the reading looks like a real error. Over 4 steps the goal moves -5.6, +9.5, -5.7 and +1.1 ticks. The +9.5 is the answer at the next step, when the reading is correct again. This is the goal chatter (fast up-and-down goal motion). The Exact-model reference chatters the same way. Goal slew is 0.69 rad/s RMS for the Fitted servo model, against 0.31 for Classical model + PID and 0.43 for the Neural network. On a real arm this goal motion can add servo wear and noise. Nobody measured this.",
+      "source": "scratchpad/fitsheet/slope.py (0.141 to 0.172 tick per tick at 0.3 rad/s, rerun); scratchpad/fitsheet/kick.py (MuJoCo copy, rerun: -5.63, +9.47, -5.65, +1.09; weight 0: -8.96); scratchpad/oracle/replay.py (-5.87 ticks); studies/so101-final-test-01/results.md:19 (0.0% saturated)",
+      "situation": "Record 24 s of motion: one 6 s path from each of the 4 path families. Replay each path in a MuJoCo copy of the arm with the recorded goals. Change 4 numbers until the copy matches the 720 readings. On nominal the fit gives 1.0111, 1.0106, 1.0162 and 1.6 g. The true values are 1, 1, 1 and 0 g. The fit residual is 0.4498 mrad. The RMS of a uniform rounding error of one tick is 1.534 / sqrt(12) = 0.443 mrad. Compare the two values. What do they tell you about the model?"
+    },
+    {
+      "id": "F4",
+      "part": "fitted",
+      "type": "free",
+      "skill": "reason",
+      "concept": "Rounding floor: why more data cannot help",
+      "prompt": "The Fitted servo model has the same error as the Exact-model reference (paired ratio 0.992 to 1.014). A 1152 s fit is no better than the 24 s fit. Explain why more data and better numbers cannot lower its error of about 0.4 mrad.",
+      "rubric": [
+        "The 4 numbers are already within about 1% of the truth, and the fit residual (0.4498 mrad) equals the rounding floor (0.443 mrad).",
+        "Tick rounding is 82% to 92% of its mean square error, and model error is -0.3% to 2.1%. So better numbers can remove at most a few percent.",
+        "The goal of the Fitted servo model differs from the exact-model goal by about 0.05 tick. One reading tick moves the goal by about 5.9 ticks. So rounding matters about 100x more.",
+        "To go lower you must clean the reading or use a better sensor, not refit. An observer (a filter that predicts each reading with the model and trusts the reading only in part) gets 0.268 mrad."
+      ],
+      "hint": "Split the error into parts: rounding, model error and the speed-weight trade. Which part can more data change?",
+      "model_answer": "The 24 s fit is already almost exact, so its remaining error is not model error. Tick rounding in the reading makes 82% to 92% of it, and the one-step solve changes each tick jump into goal motion. Better numbers cannot change this. A filter on the reading can.",
+      "explanation": "Example, seed 25, step 90, shoulder_lift: the goal of the Fitted servo model differs from the exact-model goal by 0.082 mrad (0.05 tick). A reading 1 tick higher moves the exact-model goal by 8.997 mrad (5.87 ticks), which is 110 times more. So the 24 s fit is as good as the method allows with rounded readings.",
+      "source": "studies/so101-classical-fit/fits/nominal-n1-output_error-genesis.json; studies/so101-classical-fit/results.md (data budget n1 / n48 0.994 to 1.006); studies/so101-error-anatomy-01/results.md section 2; scratchpad/oracle/replay.py (rerun); studies/so101-goal-chatter-01/results.md:16-23",
+      "situation": "Record 24 s of motion: one 6 s path from each of the 4 path families. Replay each path in a MuJoCo copy of the arm with the recorded goals. Change 4 numbers until the copy matches the 720 readings. On nominal the fit gives 1.0111, 1.0106, 1.0162 and 1.6 g. The true values are 1, 1, 1 and 0 g. The fit residual is 0.4498 mrad. The RMS of a uniform rounding error of one tick is 1.534 / sqrt(12) = 0.443 mrad. Compare the two values. What do they tell you about the model?"
+    },
+    {
+      "id": "O1",
+      "part": "exact_model",
+      "type": "single",
+      "skill": "recall",
+      "concept": "What the exact model gets: true numbers only",
+      "prompt": "What does the Exact-model reference get that the Fitted servo model does not get?",
+      "options": [
+        {
+          "text": "The true simulator angle and speed at each step.",
+          "correct": false,
+          "feedback": "It reads the same rounded reading and backward-difference speed as every controller."
+        },
+        {
+          "text": "The full future path, so it can plan many steps ahead.",
+          "correct": false,
+          "feedback": "Like every controller, it sees the target only at steps k and k+1. It plans one step."
+        },
+        {
+          "text": "The command delay and any load change during the run.",
+          "correct": false,
+          "feedback": "It knows neither. A separate delayed test uses the variant oracle_inv_dk for the delay. After a load change it is a stale model."
+        },
+        {
+          "text": "The true plant numbers of the condition, one time, when the runner builds it.",
+          "correct": true,
+          "feedback": "Correct. That is the only difference. Code, gains and inputs are the same."
+        }
+      ],
+      "hint": "Look at what the runner passes into command() for every controller. Then look at what the constructor gets.",
+      "model_answer": "Only the true plant numbers, given one time at build.",
+      "explanation": "resolve_theta(condition=...) returns the true numbers. reset() builds the MuJoCo model from them one time. At each step, the observation holds only the sensor output, the previous goal and the targets.",
+      "source": "src/robot_calibration/so101/fitted_controllers.py:74-95,186-198; src/robot_calibration/so101/runner.py:316,335-341; src/robot_calibration/so101/contracts.py:13-15; studies/so101-final-test-01/controllers-nominal.json",
+      "situation": "About the name: \"exact\" means an exact MODEL of the robot (the true physics numbers), not an exact STATE. This controller reads the same rounded ticks and the same speed estimate as every other controller. Validation seed 25, multisine path, step 90, shoulder_lift. The arm must move about 27.9 mrad in the next 33 ms. The Exact-model reference knows the true robot numbers. It sends a goal 89.3 mrad past the next target. The solve gives 89.5 mrad, and the integral takes back 0.2 mrad. The arm then lands 0.072 mrad from the target. Why must the goal sit so far past the target?"
+    },
+    {
+      "id": "X1",
+      "part": "compare",
+      "type": "order",
+      "skill": "recall",
+      "concept": "Ranking on the frozen test",
+      "prompt": "Order these four controllers by their frozen-test nominal RMSE, from the largest error to the smallest. The controller cards hide their RMSE until you answer this question.",
+      "order_items": [
+        "Out of the box",
+        "Classical model + PID",
+        "Neural network",
+        "Fitted servo model (24 s)"
+      ],
+      "hint": "Ask which controllers aim the goal past the target, and which one simulates the 33 ms hold.",
+      "model_answer": "Out of the box (37.166), Classical model + PID (1.117), Neural network (0.446), Fitted servo model (24 s) (0.398 mrad).",
+      "explanation": "The steps are not equal: 33x from Out of the box to Classical model + PID, then 2.5x, then 1.12x. The Exact-model reference also gets 0.398 mrad, the same as the Fitted servo model (paired ratio 1.0009). Over the six conditions the geometric means are 39.76, 1.662, 0.472, 0.386 and 0.385 mrad.",
+      "source": "studies/so101-final-test-01/results.md:11-35; runs/so101-final-test-01-*/metrics.json (geometric means recomputed)",
+      "situation": "Put all five controllers on the frozen test: seed 20261002, 96 new paths of 6 s, six robot conditions. Nobody looked at these paths before the freeze. Then change the robot in ways that the 4-number fit cannot describe, and send the goals late. Which controller keeps its rank, and which does not?"
+    },
+    {
+      "id": "L1",
+      "part": "lab_io",
+      "type": "single",
+      "skill": "recall",
+      "concept": "What solve chooses each tick",
+      "prompt": "At each tick, what does solve choose for one joint?",
+      "options": [
+        {
+          "text": "One destination goal on whole encoder ticks. The future goals follow a fixed rule toward it.",
+          "correct": true,
+          "feedback": "Correct. One number per joint, so it can test every value near the last goal."
+        },
+        {
+          "text": "One goal for each tick of the next 0.25 s, chosen freely.",
+          "correct": false,
+          "feedback": "That is mpc. solve has only one number per joint."
+        },
+        {
+          "text": "The servo gains P and D for the next tick.",
+          "correct": false,
+          "feedback": "No controller changes P 16 / D 32. They change only the goal."
+        },
+        {
+          "text": "A torque for the motor.",
+          "correct": false,
+          "feedback": "The servo takes only a position goal. It makes the torque itself."
+        }
+      ],
+      "hint": "Look at the 'solve chooses' row of the card.",
+      "model_answer": "One destination goal per joint, on whole encoder ticks.",
+      "explanation": "solve tries the whole-tick goals near the last goal (each tick within max(step, 2h) + 4 ticks, then every 4 ticks). For each candidate, the model gets the goals that the tool would send toward it, and solve keeps the candidate with the smallest predicted RMS error over 0.25 s.",
+      "source": "docs/so101-real-arm-controllers.md (sections solve and mpc), branch hw-ready",
+      "situation": "You play your cat motion on the real arm at 60 Hz with mpc. At each tick (16.7 ms), the replay tool reads the 5 joints, calls the controller, checks the goal with clamp_goal and sends it. The servo then runs its own P 16 / D 32 loop. mpc may use 20 % of the tick (3.3 ms at 60 Hz) for its work. What does it read, what does it know, and what does it send?"
+    },
+    {
+      "id": "L5",
+      "part": "lab_io",
+      "type": "single",
+      "skill": "reason",
+      "concept": "Why mpc needs 50 starts",
+      "prompt": "Why does mpc test 49 'inv goal + constant offset' plans before its Gauss-Newton steps?",
+      "options": [
+        {
+          "text": "Inside the dead band the cost is flat, so the gradient is 0. A gradient method that starts there does not move. Some offsets land past the band, where the slope is not 0.",
+          "correct": true,
+          "feedback": "Correct. The 49 simple plans are a small solve inside mpc."
+        },
+        {
+          "text": "Gauss-Newton needs 50 points to calculate a derivative.",
+          "correct": false,
+          "feedback": "It uses the exact derivative of the model on the present piece of the band."
+        },
+        {
+          "text": "To average the 50 plans and remove read noise.",
+          "correct": false,
+          "feedback": "It keeps the best plan. It does not average them."
+        },
+        {
+          "text": "Because the servo needs 50 goals to start.",
+          "correct": false,
+          "feedback": "The servo gets one goal per tick."
+        }
+      ],
+      "hint": "What is the slope of the cost on a flat part?",
+      "model_answer": "The flat cost in the dead band stops a gradient method. The 49 plans find the correct side of the band first.",
+      "explanation": "Then 2 projected Gauss-Newton steps shape the plan tick by tick. A step-size search (1, 0.5, 0.25) keeps a step only if the cost falls.",
+      "source": "docs/so101-real-arm-controllers.md (sections solve and mpc), branch hw-ready",
+      "situation": "You play your cat motion on the real arm at 60 Hz with mpc. At each tick (16.7 ms), the replay tool reads the 5 joints, calls the controller, checks the goal with clamp_goal and sends it. The servo then runs its own P 16 / D 32 loop. mpc may use 20 % of the tick (3.3 ms at 60 Hz) for its work. What does it read, what does it know, and what does it send?"
+    },
+    {
+      "id": "L10",
+      "part": "lab_limits",
+      "type": "order",
+      "skill": "recall",
+      "concept": "First real-arm numbers",
+      "prompt": "Order these runs on your cat motion from the largest to the smallest total RMS (measured).",
+      "order_items": [
+        "direct, 30 Hz",
+        "pi, 60 Hz",
+        "solve, 60 Hz",
+        "mpc, 60 Hz"
+      ],
+      "hint": "One of the model controllers is 0.2 mrad better than the other.",
+      "model_answer": "direct 22.5 > pi 8.4 > solve 6.2 > mpc 6.0.",
+      "explanation": "Each controller ran once, and direct ran at another rate. So the order of solve and mpc (0.2 mrad apart) is not reliable. The gap to pi (about 2.3 mrad) is larger.",
+      "source": "runs/so101-replay/20261004-000024-live, 20261004-004530-live, 20261004-150713-live, 20261004-150941-live (session.json)",
+      "situation": "Before you trust mpc on the arm, you want to know how it fails. The agents tested it on two software plants. The servo_fit plant is the model of constants.json, with one constant changed on purpose (for example the lag x 1.3). The stand-in is a simpler first-order arm, with or without a dead band. Then you played solve and mpc once on the real arm (cat, 60 Hz): 6.2 and 6.0 mrad, against 8.4 for pi. The stand-in tune had predicted about 1 mrad."
+    }
+  ]
+}

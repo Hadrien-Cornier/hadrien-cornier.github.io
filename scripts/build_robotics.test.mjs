@@ -183,3 +183,74 @@ test('published reports disappear when drafted or deleted; unrelated files survi
     assert.doesNotMatch(fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8'), /\/robotics\/example\//);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
+
+test('series validates metadata, orders parts, and omits draft parts', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\n${metadata}---\n\n${title} body.`;
+    fs.writeFileSync(path.join(sourceDir, 'series-one.md'), report('Series part one', '2026-09-26', 'series: Arm series\npart: 1\n'));
+    fs.writeFileSync(path.join(sourceDir, 'series-two.md'), report('Series part two', '2026-09-28', 'series: Arm series\npart: 2\n'));
+    fs.writeFileSync(path.join(sourceDir, 'series-draft.md'), report('Unpublished part', '2026-09-29', 'draft: true\nseries: Arm series\npart: 3\n'));
+    fs.writeFileSync(path.join(sourceDir, 'standalone.md'), report('Latest standalone', '2026-10-01'));
+    build(root);
+    const first = fs.readFileSync(path.join(root, 'robotics/series-one/index.html'), 'utf8');
+    const second = fs.readFileSync(path.join(root, 'robotics/series-two/index.html'), 'utf8');
+    const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
+    const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(first, /<nav class="series-box" aria-label="Series">[\s\S]*Part 1 of 2/);
+    assert.match(first, /aria-current="page">Part 1: Series part one/);
+    assert.match(first, /rel="next" href="\/robotics\/series-two\/"/);
+    assert.match(second, /rel="prev" href="\/robotics\/series-one\/"/);
+    assert.doesNotMatch(first, /Unpublished part/);
+    const listingBlock = listing.match(/<section class="series-block">[\s\S]*?<\/section>/)?.[0];
+    assert.ok(listingBlock);
+    assert.ok(listingBlock.indexOf('series-one') < listingBlock.indexOf('series-two'));
+    assert.ok(listing.indexOf('Latest standalone') < listing.indexOf('Arm series'));
+    const homeBlock = home.match(/<section class="series-block series-block-home">[\s\S]*?<\/section>/)?.[0];
+    assert.ok(homeBlock);
+    assert.ok(homeBlock.indexOf('series-one') < homeBlock.indexOf('series-two'));
+    assert.doesNotMatch(listing + home, /Unpublished part/);
+    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\n---\nBody.`), /part is required/);
+    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\npart: 0\n---\nBody.`), /positive integer/);
+  } finally { fs.rmSync(root, {recursive:true,force:true}); }
+});
+
+test('published series reject duplicate part numbers', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-duplicate-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const report = (title) => `---\ntitle: ${title}\ndescription: Duplicate part.\ndate: 2026-09-26\nseries: Arm series\npart: 1\n---\nBody.`;
+    fs.writeFileSync(path.join(sourceDir, 'one.md'), report('One'));
+    fs.writeFileSync(path.join(sourceDir, 'two.md'), report('Two'));
+    assert.throws(() => build(root), /Duplicate part 1 in series Arm series/);
+  } finally { fs.rmSync(root, {recursive:true,force:true}); }
+});
+
+test('SO-101 fences parse, escape their output, and load scripts only where used', () => {
+  const widget = frontmatter + '\n```so101-widget\n{"type":"predict","fallback":"Try <quiz>","id":"D2"}\n```\n';
+  const parsed = renderArticle(widget);
+  assert.equal(parsed.components.so101, true);
+  assert.match(parsed.body, /<figure class="so101-widget" data-type="predict" data-config='/);
+  assert.match(parsed.body, /&quot;id&quot;:&quot;D2&quot;/);
+  assert.match(parsed.body, /Try &lt;quiz&gt;/);
+  assert.throws(() => renderArticle(frontmatter + '\n```so101-widget\nnot JSON\n```'), /valid JSON/);
+  assert.throws(() => renderArticle(frontmatter + '\n```so101-widget\n{"fallback":"Try it"}\n```'), /requires a type/);
+  assert.throws(() => renderArticle(frontmatter + '\n```so101-widget\n{"type":"predict"}\n```'), /requires a fallback/);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-widget-build-'));
+  try {
+    fs.mkdirSync(path.join(root, 'content/robotics'), {recursive:true});
+    fs.writeFileSync(path.join(root, 'content/robotics/widget.md'), widget);
+    fs.writeFileSync(path.join(root, 'content/robotics/plain.md'), frontmatter + 'A plain article.');
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    build(root);
+    const widgetPage = fs.readFileSync(path.join(root, 'robotics/widget/index.html'), 'utf8');
+    const plainPage = fs.readFileSync(path.join(root, 'robotics/plain/index.html'), 'utf8');
+    assert.match(widgetPage, /<script type="module" src="\/assets\/so101-widgets\.js\?v=[a-f0-9]+"><\/script>/);
+    assert.doesNotMatch(plainPage, /so101-widgets\.js/);
+  } finally { fs.rmSync(root, {recursive:true,force:true}); }
+});
