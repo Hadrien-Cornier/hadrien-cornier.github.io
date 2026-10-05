@@ -588,3 +588,13 @@ span.so101-coupling-co { background: var(--accent); }
 .article-body .video-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .article-body .video-pair figcaption, .article-body .video-embed figcaption { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 @media (max-width: 640px) { .article-body .video-pair { grid-template-columns: minmax(0, 1fr); } }
+.ca-plot { display: block; width: 100%; height: auto; margin: 8px 0; }
+.ca-curve { fill: none; stroke: var(--ink); stroke-width: 2.2; }
+.ca-best { stroke: var(--muted); stroke-dasharray: 4 4; }
+.ca-label { font-size: 12px; fill: var(--muted); }
+.ca-bin { fill: var(--line); stroke: var(--white); }
+.ca-trail { fill: var(--muted); }
+.ca-edit { stroke: var(--accent); stroke-width: 2; }
+.ca-pick { fill: var(--accent); stroke: var(--white); stroke-width: 1.5; }
+.ca-note, .ca-intro { margin: 8px 0; }
+.ca-readout { margin: 6px 0 0; font-variant-numeric: tabular-nums; color: var(--muted); }

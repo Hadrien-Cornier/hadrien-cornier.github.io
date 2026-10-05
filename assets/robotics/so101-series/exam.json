@@ -555,6 +555,138 @@
           "feedback": "The question asks for shoulder_lift. The elbow gain is real, but it belongs to the elbow."
         }
       ]
+    },
+    {
+      "id": "RC1",
+      "part": "robot_control",
+      "type": "single",
+      "skill": "predict",
+      "concept": "Action chunk length against reaction time",
+      "prompt": "A policy predicts a chunk of H = 10 joint targets. The robot sends f = 20 targets per second. It executes 2 targets, then takes a new image and predicts a new chunk. Ignore the computing time. The block moves just after a new chunk starts. How long, at most, does the arm keep following the old chunk?",
+      "options": [
+        {
+          "text": "0.5 s. The chunk lasts H / f = 10 / 20 = 0.5 s.",
+          "correct": false,
+          "feedback": "That is the length of the chunk, but the robot does not play the whole chunk. It replans after 2 targets."
+        },
+        {
+          "text": "0.1 s. It executes 2 targets of 1/20 s each, so 2 / 20 = 0.1 s, then it looks again.",
+          "correct": true,
+          "feedback": "Right. The reaction time comes from the number of executed targets, not from the chunk length."
+        },
+        {
+          "text": "0.05 s. One target lasts 1 / 20 s.",
+          "correct": false,
+          "feedback": "That would be true if the robot replanned after every target. Here it executes 2 targets first."
+        },
+        {
+          "text": "2 s. f / H = 20 / 10 = 2.",
+          "correct": false,
+          "feedback": "Dividing the rate by the number of targets gives 'chunks per second', not a time. The unit check fails."
+        }
+      ],
+      "model_answer": "2 executed targets × 1/20 s = 0.1 s. The chunk length (0.5 s) does not set the reaction time.",
+      "explanation": "The prediction horizon and the execution horizon are separate choices. A long chunk gives a smooth plan; a short execution horizon keeps the robot reactive. Real systems add the computing time and the age of the image.",
+      "source": "Diffusion Policy, RSS 2023, pp. 3-4; ACT, RSS 2023, p. 5"
+    },
+    {
+      "id": "RC2",
+      "part": "robot_control",
+      "type": "single",
+      "skill": "predict",
+      "concept": "Why a continuous action cannot be scored by enumeration",
+      "prompt": "A critic gives a value Q to each action. A DQN-style agent picks the action with the highest Q by scoring every action. The arm has 7 joints. You cut the range of each joint into 20 bins. How many Q scores does the agent need at each control step?",
+      "options": [
+        {
+          "text": "140. 20 bins × 7 joints.",
+          "correct": false,
+          "feedback": "Adding the joints counts each joint alone. An action sets all 7 joints at once, so the choices multiply."
+        },
+        {
+          "text": "1.28 billion. 20^7 = 1,280,000,000 combinations.",
+          "correct": true,
+          "feedback": "Right. Each joint multiplies the count by 20. This is why continuous-control RL uses an actor network or sampled candidates instead."
+        },
+        {
+          "text": "About 8 × 10^25. 7^20.",
+          "correct": false,
+          "feedback": "This swaps the base and the exponent. There are 20 choices for each of 7 joints, so the count is 20^7."
+        },
+        {
+          "text": "20. The agent scores one joint at a time.",
+          "correct": false,
+          "feedback": "Scoring one joint at a time ignores how the joints work together. Q depends on the whole action."
+        }
+      ],
+      "model_answer": "20^7 = 1.28 billion Q scores per step, at 50 steps per second.",
+      "explanation": "This is the curse of dimensionality. Actor-critic methods (DDPG, TD3, SAC) train an actor to move toward high Q instead. EXPO-FT samples a few actions from the base policy, edits them slightly, and scores only those.",
+      "source": "Arithmetic; DQN, Mnih et al. 2015; EXPO-FT, arXiv 2605.25477, section 3"
+    },
+    {
+      "id": "RC3",
+      "part": "robot_control",
+      "type": "single",
+      "skill": "predict",
+      "concept": "RECAP advantage labels",
+      "prompt": "RECAP trains a robot policy from recorded attempts. A value model scores each segment. A segment inside a FAILED attempt has an estimated advantage of +5. The threshold for the 'positive' label is +2. What does the policy learn from this segment?",
+      "options": [
+        {
+          "text": "Nothing. RECAP throws away failed attempts.",
+          "correct": false,
+          "feedback": "RECAP keeps failed attempts. A failed attempt can still contain a good recovery."
+        },
+        {
+          "text": "To avoid these actions, because the attempt failed.",
+          "correct": false,
+          "feedback": "The label comes from the segment's advantage, not from the final result of the episode. And RECAP never uses a negative loss weight."
+        },
+        {
+          "text": "To reproduce these actions when the input says 'Advantage: positive', because +5 > +2.",
+          "correct": true,
+          "feedback": "Right. At run time, PI asks for the positive label, so the policy reproduces the behavior of positive segments."
+        },
+        {
+          "text": "To reproduce these actions when the input says 'Advantage: negative', because the attempt failed.",
+          "correct": false,
+          "feedback": "The final failure does not set the label. The segment improved on what the value model expected, so it gets the positive label."
+        }
+      ],
+      "model_answer": "+5 is above the +2 threshold, so the segment is trained under the positive label, even inside a failed attempt.",
+      "explanation": "RECAP changes RL into supervised learning with an extra input. This avoids the probability ratios that PPO needs, which flow-matching policies do not give easily.",
+      "source": "π*0.6 paper, arXiv 2511.14759, sections IV-A and IV-B"
+    },
+    {
+      "id": "RC4",
+      "part": "robot_control",
+      "type": "single",
+      "skill": "predict",
+      "concept": "Raw frame history against compressed memory",
+      "prompt": "A policy keeps every past camera frame in its input. In the MEM paper, a VLA without a video encoder needs about 0.35 s for 4 frames and about 3.5 s for 16 frames. The real-time limit is 0.3 s. A kitchen task lasts 15 minutes, and you keep one frame per second. Which statement is correct?",
+      "options": [
+        {
+          "text": "Keeping every frame works. The model only needs a faster GPU.",
+          "correct": false,
+          "feedback": "900 frames is 56 times more than 16 frames, and the time grows faster than the frame count. A faster GPU does not close that gap."
+        },
+        {
+          "text": "Keeping every frame is too slow. 15 × 60 = 900 frames, far beyond the 16 frames that already take 3.5 s. The memory must be compressed: a video encoder for recent frames and text for old events.",
+          "correct": true,
+          "feedback": "Right. This is the MEM design: short video memory plus a language summary."
+        },
+        {
+          "text": "Memory is not necessary. The current image shows what is done.",
+          "correct": false,
+          "feedback": "The same image can come before or after a step, for example before or after an inspection. Only memory tells them apart."
+        },
+        {
+          "text": "Keep only the first frame. It shows the task.",
+          "correct": false,
+          "feedback": "The first frame shows the start, not what happened since."
+        }
+      ],
+      "model_answer": "900 frames cannot fit a real-time budget when 16 frames already take 3.5 s. Compress the history.",
+      "explanation": "Robostral Navigate keeps all frames of a navigation episode in its context. That works for shorter episodes. Long manipulation tasks need a compressed memory, which is the MEM approach.",
+      "source": "MEM, arXiv 2603.03596, inference-speed figure and section III; Robostral Navigate, arXiv 2607.20785, section 3"
     }
   ]
 }

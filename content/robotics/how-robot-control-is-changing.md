@@ -1,628 +1,472 @@
 ---
 title: 'How robot control is changing'
-description: 'What changed in how a robot chooses its next movement, and what is still missing?'
+description: 'From copying a person to practicing and imagining: how a robot chooses its next movement in 2026, and what is still missing.'
 date: '2026-09-30'
-updated: '2026-10-01'
+updated: '2026-10-05'
 draft: false
 ---
 
-Ask a robot arm to pick up a small green block and put it in a tray. The camera sees the block. The arm starts reaching. Then someone moves it a few centimetres to the right.
+Ask a robot arm to pick up a small green block and put it in a tray. The camera sees the block. The arm starts reaching. Then someone moves the block a few centimetres to the right.
 
-The motors can still follow their commands perfectly and miss the block. Something has to notice the change and choose a different movement.
-
-This small task gives us a way to follow robot control from around 2010 to today. What changed in how a robot chooses its next movement, and what is still missing when the first attempt fails?
-
-We'll keep the arm, block and tray fixed. What changes is the information used to choose a movement, how that choice is made, and the command sent to the body.
+The motors can follow their commands perfectly and still miss. Something has to notice the change and choose a different movement. So the real question of robot control isn't "how do I make the motor follow?" anymore. It's this: **how does the robot choose its next movement?**
 
 ![The same arm and table before and after a green block moves. The old location is outlined. A dashed new reach ends at the moved block.](/assets/robotics/modern-control/v2/observe-again.png "Left: the reach fits the observed block. Right: the block moves while the gripper stays in the same place. A fresh observation can change the next reach. The dashed line is a proposed revised reach.")
+
+Here's the short answer. Between 2023 and 2026, that choice moved out of hand-written planners and into one learned network, in five steps:
+
+1. **Copy a person** (ACT, 2023): learn from about 50 demonstrations and predict a short chunk of future movements.
+2. **Borrow the web** (VLA, 2023 to 2024): start from a model that already knows objects and words.
+3. **Train one model for many robots** (π0 to π0.7, 2024 to 2026): one generalist policy, many bodies, many tasks.
+4. **Practice** (reinforcement learning, 2024 to 2026): improve the generalist on the real robot until it stops failing.
+5. **Imagine** (world action models, 2026): predict the future video and the action together.
+
+What's still missing is **memory** and a **cheap way to imagine**. The timeline below shows which part of the loop each step changed. The rest of the post goes through them one at a time.
 
 ```robotics-timeline
 {
   "id": "control-evolution",
   "heading": "What changes inside action choice?",
-  "intro": "Follow the moved block. Each stage shows how supplied observations become a movement command.",
-  "caption": "Badges describe processing: Designed rules or search; Learned encoders, predictors or policies; Persistent motor control and feedback. Sensor values are supplied inputs. Approaches overlap.",
+  "intro": "Follow the moved block. Each stage shows how the observations become a movement command, and which parts are designed by hand or learned.",
+  "caption": "Designed: written by engineers (rules, planners, search). Learned: trained from data. Persists: motor control and fresh sensor feedback stay in every stage. Approaches overlap in time.",
   "roles": [
-    {
-      "id": "goal",
-      "label": "Goal and task selection"
-    },
-    {
-      "id": "scene",
-      "label": "Scene processing"
-    },
-    {
-      "id": "choice",
-      "label": "Movement choice"
-    },
-    {
-      "id": "output",
-      "label": "Action output processing"
-    },
-    {
-      "id": "motor",
-      "label": "Motor control",
-      "persistent": true
-    },
-    {
-      "id": "feedback",
-      "label": "Fresh feedback",
-      "persistent": true
-    }
+    {"id": "goal", "label": "Goal and task selection"},
+    {"id": "scene", "label": "Scene processing"},
+    {"id": "choice", "label": "Movement choice"},
+    {"id": "output", "label": "Action output"},
+    {"id": "motor", "label": "Motor control", "persistent": true},
+    {"id": "feedback", "label": "Fresh feedback", "persistent": true}
   ],
   "stages": [
     {
       "id": "planned-loop",
-      "year": "Around 2010",
-      "title": "Plan from estimated positions",
-      "summary": "The moved block changes the estimate and reach.",
-      "mechanism": "Perception and state estimates feed task and motion planning. Fresh measurements can trigger replanning.",
-      "anchor": "section-around-2010-build-the-loop",
+      "year": "Before 2023",
+      "title": "Plan, then track",
+      "summary": "The moved block changes the estimate, then the plan.",
+      "mechanism": "Perception estimates where things are. A task planner picks the step. A motion planner finds a path. A controller tracks it.",
+      "anchor": "section-before-2023-plan-then-track",
       "stack": [
-        {
-          "role": "goal",
-          "text": "Task planner selects the pickup",
-          "mode": "designed"
-        },
-        {
-          "role": "scene",
-          "text": "Designed estimates from supplied images and joint readings",
-          "mode": "designed"
-        },
-        {
-          "role": "choice",
-          "text": "Motion planner finds a feasible reach",
-          "mode": "designed"
-        },
-        {
-          "role": "output",
-          "text": "Path or timed joint targets",
-          "mode": "designed"
-        },
-        {
-          "role": "motor",
-          "text": "Body-specific command execution",
-          "mode": "persistent"
-        },
-        {
-          "role": "feedback",
-          "text": "New sensor measurements",
-          "mode": "persistent"
-        }
+        {"role": "goal", "text": "Task planner selects the pickup", "mode": "designed"},
+        {"role": "scene", "text": "Designed estimates of block, obstacles and joints", "mode": "designed"},
+        {"role": "choice", "text": "Motion planner finds a feasible reach", "mode": "designed"},
+        {"role": "output", "text": "Path or timed joint targets", "mode": "designed"},
+        {"role": "motor", "text": "Body-specific command execution", "mode": "persistent"},
+        {"role": "feedback", "text": "New sensor measurements", "mode": "persistent"}
       ],
-      "sources": [
-        {
-          "label": "PR2 architecture, 2009",
-          "href": "https://www.kavrakilab.org/publications/rusu-sucan2009real-time-perception-guided-motion.pdf#page=2"
-        }
-      ]
-    },
-    {
-      "id": "early-learning",
-      "year": "2011 to 2016",
-      "title": "Learn a policy or dynamics",
-      "summary": "Learning enters action choice and prediction.",
-      "mechanism": "A policy maps observations to commands. Uncertain learned dynamics can help improve that policy.",
-      "anchor": "section-the-2010s-learn-movements-and-dynamics",
-      "stack": [
-        {
-          "role": "goal",
-          "text": "Supplied manipulation objective",
-          "mode": "designed"
-        },
-        {
-          "role": "scene",
-          "text": "Learned image encoding; measured robot state supplied",
-          "mode": "learned"
-        },
-        {
-          "role": "choice",
-          "text": "Learned policy; model-assisted training",
-          "mode": "learned"
-        },
-        {
-          "role": "output",
-          "text": "Levine: nominal torque commands",
-          "mode": "learned"
-        },
-        {
-          "role": "motor",
-          "text": "Body-specific command execution",
-          "mode": "persistent"
-        },
-        {
-          "role": "feedback",
-          "text": "New sensor measurements",
-          "mode": "persistent"
-        }
-      ],
-      "sources": [
-        {
-          "label": "PILCO, 2011",
-          "href": "https://icml.cc/2011/papers/323_icmlpaper.pdf"
-        },
-        {
-          "label": "Levine v5: actual PR2 interface",
-          "href": "https://www.alphaxiv.org/pdf/1504.00702v5?page=33"
-        }
-      ]
+      "sources": [{"label": "PR2 architecture, 2009", "href": "https://www.kavrakilab.org/publications/rusu-sucan2009real-time-perception-guided-motion.pdf#page=2"}]
     },
     {
       "id": "demonstration-chunks",
       "year": "2023",
-      "title": "Learn future targets",
-      "summary": "Demonstrations connect observations to action chunks.",
-      "mechanism": "ACT predicts joint targets. Temporal ensembling combines predictions for the same execution moment.",
-      "anchor": "section-2023-learn-from-demonstrations",
+      "title": "Copy a person, one chunk at a time",
+      "summary": "Demonstrations connect camera images to future joint targets.",
+      "mechanism": "ACT predicts a chunk of joint targets from images and joint readings, and blends overlapping chunks.",
+      "anchor": "section-act-copy-a-person-one-chunk-at-a-time",
+      "visual": {"src": "/assets/robotics/modern-control/v2/action-chunk.png", "alt": "Three top views of an arm reaching, grasping and carrying a block.", "caption": "One chunk: a short sequence of future targets."},
       "stack": [
-        {
-          "role": "goal",
-          "text": "The task taught by demonstrations",
-          "mode": "designed"
-        },
-        {
-          "role": "scene",
-          "text": "Learned image features; measured joint positions supplied",
-          "mode": "learned"
-        },
-        {
-          "role": "choice",
-          "text": "ACT predicts overlapping target chunks",
-          "mode": "learned"
-        },
-        {
-          "role": "output",
-          "text": "Joint-position targets",
-          "mode": "learned"
-        },
-        {
-          "role": "motor",
-          "text": "Body-specific command execution",
-          "mode": "persistent"
-        },
-        {
-          "role": "feedback",
-          "text": "New sensor measurements",
-          "mode": "persistent"
-        }
+        {"role": "goal", "text": "The one task shown in the demonstrations", "mode": "designed"},
+        {"role": "scene", "text": "Learned image features; joint readings", "mode": "learned"},
+        {"role": "choice", "text": "ACT predicts overlapping target chunks", "mode": "learned"},
+        {"role": "output", "text": "Joint-position targets", "mode": "learned"},
+        {"role": "motor", "text": "Body-specific command execution", "mode": "persistent"},
+        {"role": "feedback", "text": "New sensor measurements", "mode": "persistent"}
       ],
-      "sources": [
-        {
-          "label": "ACT: collection and execution",
-          "href": "https://www.roboticsproceedings.org/rss19/p016.pdf#page=5"
-        }
-      ]
-    },
-    {
-      "id": "action-distribution",
-      "year": "2023",
-      "title": "Keep several valid routes",
-      "summary": "Different successful paths can remain distinct.",
-      "mechanism": "Diffusion refines a numerical action sample using observations. Execute a portion, then update.",
-      "anchor": "section-2023-choose-among-several-valid-movements",
-      "stack": [
-        {
-          "role": "goal",
-          "text": "The demonstrated task",
-          "mode": "designed"
-        },
-        {
-          "role": "scene",
-          "text": "Learned encoding of supplied recent observations",
-          "mode": "learned"
-        },
-        {
-          "role": "choice",
-          "text": "Sample a coherent action sequence",
-          "mode": "learned"
-        },
-        {
-          "role": "output",
-          "text": "Chosen position or velocity commands",
-          "mode": "learned"
-        },
-        {
-          "role": "motor",
-          "text": "Body-specific command execution",
-          "mode": "persistent"
-        },
-        {
-          "role": "feedback",
-          "text": "New sensor measurements",
-          "mode": "persistent"
-        }
-      ],
-      "sources": [
-        {
-          "label": "Diffusion Policy, 2023",
-          "href": "https://www.roboticsproceedings.org/rss19/p026.pdf#page=3"
-        }
-      ]
+      "sources": [{"label": "ACT, RSS 2023", "href": "https://www.roboticsproceedings.org/rss19/p016.pdf#page=5"}]
     },
     {
       "id": "language-actions",
-      "year": "2023 to 2025",
-      "title": "Connect language to action",
-      "summary": "Broad semantic knowledge meets robot action data.",
-      "mechanism": "RT-2 encodes actions as tokens. The pi family generates continuous chunks; pi0.5 also predicts subtasks.",
-      "anchor": "section-2023-to-2025-add-images-and-language",
+      "year": "2023 to 2024",
+      "title": "Borrow what the web knows",
+      "summary": "A vision-language model learns to output robot actions.",
+      "mechanism": "RT-2 and OpenVLA turn actions into tokens, so a model pretrained on images and text can predict them.",
+      "anchor": "section-from-vlm-to-vla-borrow-what-the-web-knows",
+      "visual": {"src": "/assets/robotics/why-robotics/openvla-architecture.png", "alt": "OpenVLA architecture: image encoders, a 7B language model, and an action de-tokenizer.", "caption": "OpenVLA (Kim et al., 2024), CC BY 4.0."},
       "stack": [
-        {
-          "role": "goal",
-          "text": "π0.5: subtask prediction from supplied language and images",
-          "mode": "learned"
-        },
-        {
-          "role": "scene",
-          "text": "Learned encoding of supplied images, language and robot state",
-          "mode": "learned"
-        },
-        {
-          "role": "choice",
-          "text": "Vision-language-action policy",
-          "mode": "learned"
-        },
-        {
-          "role": "output",
-          "text": "Tokens or continuous action chunks",
-          "mode": "learned"
-        },
-        {
-          "role": "motor",
-          "text": "Body-specific command execution",
-          "mode": "persistent"
-        },
-        {
-          "role": "feedback",
-          "text": "New sensor measurements",
-          "mode": "persistent"
-        }
+        {"role": "goal", "text": "A language instruction", "mode": "designed"},
+        {"role": "scene", "text": "Pretrained vision-language features", "mode": "learned"},
+        {"role": "choice", "text": "Vision-language-action model", "mode": "learned"},
+        {"role": "output", "text": "Action tokens, decoded into gripper moves", "mode": "learned"},
+        {"role": "motor", "text": "Body-specific command execution", "mode": "persistent"},
+        {"role": "feedback", "text": "New sensor measurements", "mode": "persistent"}
       ],
-      "sources": [
-        {
-          "label": "RT-2 v1",
-          "href": "https://www.alphaxiv.org/pdf/2307.15818v1?page=5"
-        },
-        {
-          "label": "pi0.5 v1",
-          "href": "https://www.alphaxiv.org/pdf/2504.16054v1?page=5"
-        }
-      ]
+      "sources": [{"label": "RT-2", "href": "https://arxiv.org/abs/2307.15818"}, {"label": "OpenVLA", "href": "https://arxiv.org/abs/2406.09246"}]
     },
     {
-      "id": "predicted-futures",
-      "year": "2023 to 2025",
-      "title": "Use predicted consequences",
-      "summary": "Prediction can serve execution, data or planning.",
-      "mechanism": "V-JEPA 2-AC uses designed candidate sampling and refinement with a learned predictor. It compares future features with a supplied goal image, executes one action and replans.",
-      "anchor": "section-2023-to-2025-use-possible-futures",
+      "id": "generalist",
+      "year": "2024 to 2026",
+      "title": "One policy for many robots",
+      "summary": "A generalist predicts subtasks and continuous action chunks.",
+      "mechanism": "π0 adds a flow-matching action expert to a VLM. π0.5 predicts the subtask first. π0.7 also reads how to do the task: speed, quality, subgoal images.",
+      "anchor": "section-generalist-models-one-policy-for-many-robots",
       "stack": [
-        {
-          "role": "goal",
-          "text": "V-JEPA: supplied goal image",
-          "mode": "designed"
-        },
-        {
-          "role": "scene",
-          "text": "Learned image features; measured end-effector state supplied",
-          "mode": "learned"
-        },
-        {
-          "role": "choice",
-          "text": "Candidate sampling and refinement with a learned predictor",
-          "mode": "designed"
-        },
-        {
-          "role": "output",
-          "text": "Convert selected end-effector change into a command",
-          "mode": "designed"
-        },
-        {
-          "role": "motor",
-          "text": "Body-specific command execution",
-          "mode": "persistent"
-        },
-        {
-          "role": "feedback",
-          "text": "New sensor measurements",
-          "mode": "persistent"
-        }
+        {"role": "goal", "text": "Learned subtask prediction from the instruction", "mode": "learned"},
+        {"role": "scene", "text": "Images, language and robot state", "mode": "learned"},
+        {"role": "choice", "text": "Flow-matching action expert", "mode": "learned"},
+        {"role": "output", "text": "Continuous action chunks (joint or pose targets)", "mode": "learned"},
+        {"role": "motor", "text": "PD control of the targets", "mode": "persistent"},
+        {"role": "feedback", "text": "New sensor measurements", "mode": "persistent"}
       ],
-      "sources": [
-        {
-          "label": "V-JEPA 2 v1",
-          "href": "https://www.alphaxiv.org/pdf/2506.09985v1?page=10"
-        },
-        {
-          "label": "UniPi v1",
-          "href": "https://www.alphaxiv.org/pdf/2302.00111v1?page=4"
-        },
-        {
-          "label": "DreamGen v1",
-          "href": "https://www.alphaxiv.org/pdf/2505.12705v1?page=3"
-        }
-      ]
+      "sources": [{"label": "π0", "href": "https://arxiv.org/abs/2410.24164"}, {"label": "π0.5", "href": "https://arxiv.org/abs/2504.16054"}, {"label": "π0.7", "href": "https://arxiv.org/abs/2604.15483"}]
     },
     {
-      "id": "physical-information",
-      "year": "2025 to 2026",
-      "title": "Add structure and checks",
-      "summary": "Computed inputs and enforcing constraints have different jobs.",
-      "mechanism": "Agha describes geometry and uncertainty inputs. Waymo describes explicit scene structure and separate trajectory validation.",
-      "anchor": "section-2025-to-2026-add-physical-structure",
+      "id": "practice",
+      "year": "2024 to 2026",
+      "title": "Practice on the real robot",
+      "summary": "Reinforcement learning turns a policy that sometimes works into one that rarely fails.",
+      "mechanism": "A critic scores actions. HIL-SERL, RECAP, RLT and EXPO-FT use those scores in different ways to improve the policy from real attempts.",
+      "anchor": "section-practice-reinforcement-learning-on-real-robots",
+      "visual": {"src": "/assets/robotics/modern-control/v3/expo-ft-architecture.png", "alt": "EXPO-FT: a VLA proposes action chunks, an edit actor adjusts them, and a critic picks the best.", "caption": "EXPO-FT (Dong et al., 2026), CC BY 4.0."},
       "stack": [
-        {
-          "role": "goal",
-          "text": "Supplied task or destination",
-          "mode": "designed"
-        },
-        {
-          "role": "scene",
-          "text": "Learned features plus computed geometry and uncertainty inputs",
-          "mode": "learned"
-        },
-        {
-          "role": "choice",
-          "text": "Use structure and uncertainty in action choice",
-          "mode": "learned"
-        },
-        {
-          "role": "output",
-          "text": "Waymo: designed validation of learned commands",
-          "mode": "designed"
-        },
-        {
-          "role": "motor",
-          "text": "Body-specific command execution",
-          "mode": "persistent"
-        },
-        {
-          "role": "feedback",
-          "text": "New sensor measurements",
-          "mode": "persistent"
-        }
+        {"role": "goal", "text": "A task with a success detector", "mode": "designed"},
+        {"role": "scene", "text": "The generalist's learned features", "mode": "learned"},
+        {"role": "choice", "text": "Policy improved by a learned critic", "mode": "learned"},
+        {"role": "output", "text": "Continuous action chunks", "mode": "learned"},
+        {"role": "motor", "text": "Body-specific command execution", "mode": "persistent"},
+        {"role": "feedback", "text": "Rewards, corrections and new measurements", "mode": "persistent"}
       ],
-      "sources": [
-        {
-          "label": "Agha official transcript",
-          "href": "https://www.automate.org/automated-podcast/episodes/automated-podcast-episode-ali-agha"
-        },
-        {
-          "label": "Waymo architecture, December 2025",
-          "href": "https://waymo.com/blog/2025/12/demonstrably-safe-ai-for-autonomous-driving/"
-        }
-      ]
+      "sources": [{"label": "HIL-SERL", "href": "https://arxiv.org/abs/2410.21845"}, {"label": "π*0.6 (RECAP)", "href": "https://arxiv.org/abs/2511.14759"}, {"label": "EXPO-FT", "href": "https://arxiv.org/abs/2605.25477"}]
+    },
+    {
+      "id": "world-action",
+      "year": "2026",
+      "title": "Imagine the future and the action together",
+      "summary": "One model predicts the next video frames and the next actions.",
+      "mechanism": "DreamZero starts from a 14B video model and denoises future video and action chunks together, at 7 Hz on the robot.",
+      "anchor": "section-world-action-models-imagine-the-video-and-the-action-together",
+      "visual": {"src": "/assets/robotics/modern-control/v3/dreamzero-architecture.png", "alt": "DreamZero: past frames, language and robot state go into a causal video transformer that outputs future frames and an action chunk.", "caption": "DreamZero (Ye et al., 2026), CC BY 4.0."},
+      "stack": [
+        {"role": "goal", "text": "A language instruction", "mode": "designed"},
+        {"role": "scene", "text": "Video latents of past frames", "mode": "learned"},
+        {"role": "choice", "text": "Joint video and action prediction", "mode": "learned"},
+        {"role": "output", "text": "Action chunk, aligned with imagined frames", "mode": "learned"},
+        {"role": "motor", "text": "Body-specific command execution", "mode": "persistent"},
+        {"role": "feedback", "text": "Real frames replace imagined ones", "mode": "persistent"}
+      ],
+      "sources": [{"label": "DreamZero", "href": "https://arxiv.org/abs/2602.15922"}]
     },
     {
       "id": "retained-history",
-      "year": "2026",
+      "year": "2026 and next",
       "title": "Remember what changes the next move",
-      "summary": "The same view can require a different subtask.",
-      "mechanism": "MEM retains recent visual history and longer text records for task selection and movement generation.",
-      "anchor": "section-2026-keep-the-history-that-changes-the-next-move",
+      "summary": "The same image can need a different next step.",
+      "mechanism": "MEM keeps recent video in a compact encoder and older events as a text summary.",
+      "anchor": "section-memory-the-same-image-a-different-next-step",
+      "visual": {"src": "/assets/robotics/modern-control/v3/mem-architecture.png", "alt": "MEM: a high-level policy updates a language memory and picks a subtask; a low-level policy with a video memory encoder outputs actions.", "caption": "MEM (Torne et al., 2026), CC BY 4.0."},
       "stack": [
-        {
-          "role": "goal",
-          "text": "Learned subtask selection from task, observations and record",
-          "mode": "learned"
-        },
-        {
-          "role": "scene",
-          "text": "Learned visual encoding and text-summary updates",
-          "mode": "learned"
-        },
-        {
-          "role": "choice",
-          "text": "History-conditioned action policy",
-          "mode": "learned"
-        },
-        {
-          "role": "output",
-          "text": "Continuous action chunks",
-          "mode": "learned"
-        },
-        {
-          "role": "motor",
-          "text": "Body-specific command execution",
-          "mode": "persistent"
-        },
-        {
-          "role": "feedback",
-          "text": "New sensor measurements",
-          "mode": "persistent"
-        }
+        {"role": "goal", "text": "Subtask chosen from the task and a text memory", "mode": "learned"},
+        {"role": "scene", "text": "Compressed video of recent frames", "mode": "learned"},
+        {"role": "choice", "text": "History-conditioned action policy", "mode": "learned"},
+        {"role": "output", "text": "Continuous action chunks", "mode": "learned"},
+        {"role": "motor", "text": "Body-specific command execution", "mode": "persistent"},
+        {"role": "feedback", "text": "New sensor measurements", "mode": "persistent"}
       ],
-      "sources": [
-        {
-          "label": "MEM v2",
-          "href": "https://www.alphaxiv.org/pdf/2603.03596v2?page=3"
-        }
-      ]
+      "sources": [{"label": "MEM", "href": "https://arxiv.org/abs/2603.03596"}, {"label": "RoboMME", "href": "https://arxiv.org/abs/2603.04639"}]
     }
   ]
 }
 ```
 
-## Around 2010: build the loop
+## Before 2023: plan, then track
 
-A camera supplies pixels. Joint sensors supply measurements of the arm. A conventional system turns them into several useful answers before asking the motors to move.
+The classical answer splits the choice into separate programs. **Perception** finds the block and the obstacles. **State estimation** says where the block is relative to the arm. A **task planner** picks the step ("pick up the block"), a **motion planner** finds a path that doesn't hit the table, and a **controller** makes the joints follow that path. When the camera sees the block move, the estimate changes and the planner plans again.
 
-**Perception** identifies the block, estimates its shape and builds a picture of obstacles. **State and position estimation** relates those measurements to the robot. Where is the block relative to the arm? Where are the joints now? How certain are those estimates?
-
-**Task planning** receives the goal and scene information. It selects a step such as “pick up the block”, then “place it in the tray”. A task executive tracks progress and can request another attempt.
-
-**Motion planning** receives the target, estimated arm state, obstacles and movement limits. It returns a path or a timed trajectory. The trajectory tells the arm how to approach the block without crossing the table or another object.
-
-**Motor control** receives the selected targets and measured joint state. It adjusts actuation to follow the requested movement. New camera and joint measurements return to the system. A changed block position can trigger a new plan.
-
-This was already a feedback loop. Rusu and colleagues' 2009 PR2 system combined three-dimensional perception, an obstacle map, motion replanning and a higher-level executive. Its tested grasp approach was simplified: it approached horizontally and left the object in a graspable state. A general partial-view grasp planner remained planned work. [Rusu et al., pp. 2, 7–8](https://www.kavrakilab.org/publications/rusu-sucan2009real-time-perception-guided-motion.pdf#page=7)
-
-A presentation illustrates a narrower case with a toy alligator. An arm replays a fixed movement and misses when the toy moves. The presenter also points to visual servoing, which uses visual error to guide corrections. Blind replay shows what happens when observations don't change the action choice. Classical robotics also includes methods that make those corrections.
-
-## The 2010s: learn movements and dynamics
-
-Writing a rule for every object and approach becomes difficult. One response is to learn a **policy**, a rule that chooses an action from available information.
-
-In work first released in 2015, Levine and colleagues learned manipulation policies from camera images and robot measurements. Their nominal outputs were joint torques, turning forces at the joints. On the PR2, the effort interface implemented these through feedforward motor voltages roughly proportional to torque, without measured torque feedback. [Levine et al. v5, p. 13](https://www.alphaxiv.org/pdf/1504.00702v5?page=13), [p. 33](https://www.alphaxiv.org/pdf/1504.00702v5?page=33)
-
-For our block, a learned policy could connect its appearance and the arm's state directly to a movement command. The action interface determines what the rest of the robot must do with that output.
-
-Learning consequences was another branch. **PILCO**, published in 2011, learned uncertain dynamics: how the state changes after a control input. It used those predictions to evaluate and improve a policy. The paper says: “Second, model uncertainty must be incorporated into planning and policy evaluation.” [PILCO, p. 1](https://icml.cc/2011/papers/323_icmlpaper.pdf)
-
-A policy asks which push to make. A dynamics model asks how that push would move the block. Learning movements, predicting consequences and handling uncertainty already overlapped here.
-
-## 2023: learn from demonstrations
-
-Now let a person show the arm how to pick up the block from different positions. Record what the cameras see, what the robot measures and which commands the person supplies. Training can use these examples to learn the next movement.
-
-**ALOHA** made this process concrete with paired leader and follower arms. A person moves the leaders. The followers mirror them. The recorded leader joint positions supply action targets; follower joint measurements and camera images supply observations. [ALOHA, pp. 3–5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=4)
-
-Collection and execution are different phases. During collection, a person supplies the movement. During training, a model learns from the records. During autonomous execution, the model receives observations and produces targets without the person moving the leader.
-
-The accompanying method, **Action Chunking with Transformers**, or ACT, predicts a sequence of future joint targets from current images and measured joint positions. This is an **action chunk**. A lower-level controller tracks the targets. [ACT, p. 5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=5)
-
-![Three top views show the same arm reaching for the block, closing its gripper and carrying it toward the tray. Both links keep their lengths.](/assets/robotics/modern-control/v2/action-chunk.png "Three selected moments from a possible command sequence. Each command sets a target for the controller. The two arm links keep their lengths as the joints turn.")
-
-Predicting ten targets doesn't require blindly executing all ten. ACT's temporal ensembling queries the policy every timestep. Several predictions then refer to the same future moment. It combines those predictions to choose that moment's target. The released code also supports sequential chunks when temporal aggregation is disabled. [ACT, §IV-A, p. 5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=5), [official execution code](https://github.com/tonyzhaozh/act/blob/742c753c0d4a5d87076c8f69e5628c79a8cc5488/imitate_episodes.py#L191)
-
-Three rates matter: how often the camera captures an image, how often the policy computes new actions, and how often the motor controller corrects the movement. They needn't be equal. Faster motor correction cannot compensate for an action choice based on an old block position.
-
-## 2023: choose among several valid movements
-
-Suppose an obstacle sits between the gripper and block. A person can approach from either side. Both paths work. Averaging their positions could produce a path straight through the obstacle.
-
-**Diffusion Policy** learns a conditional distribution of action sequences. A distribution can represent several possible answers for the same observations. It can produce one coherent route instead of averaging incompatible routes together. [Diffusion Policy, §§II-C, IV-A, pp. 3–4](https://www.roboticsproceedings.org/rss19/p026.pdf#page=3)
-
-At runtime, it starts with a random numerical action sample. It repeatedly refines that sample using the observations until it obtains an action sequence. These denoising steps happen inside the computation. The arm moves when the resulting commands are executed.
-
-The original method predicts a sequence, executes a selected portion, then receives new observations and predicts again. The prediction horizon and execution horizon are separate choices. Its action representation can also vary, including position or velocity commands. [Diffusion Policy, pp. 3–4](https://www.roboticsproceedings.org/rss19/p026.pdf#page=3)
-
-For a simple schedule, let $T$ be the nominal horizon covered by $H$ predicted targets, sent at a uniform rate $f$ in targets per second. Each target occupies $1/f$ seconds. Ten targets at twenty per second cover:
-
-$$
-T=\frac{H}{f}=\frac{10}{20}=0.5\ \mathrm{s}.
-$$
-
-Executing two targets before updating gives a nominal $2/f=0.1\ \mathrm{s}$ interval, assuming a fresh observation and the next prediction are ready at that boundary. Waiting or stale queued commands can extend the actual reaction time. A chunk's length alone doesn't tell us how quickly the robot reacts when the block moves.
-
-## 2023 to 2025: add images and language
-
-Demonstrations connect observations to movements. A broader question is whether the robot can also use knowledge of objects and instructions learned elsewhere.
-
-A **vision-language model**, or VLM, receives images and language. It might answer a question or suggest “put the green block in the tray”. A robot system must turn that sentence into an executable movement.
-
-A **vision-language-action model**, or VLA, also produces robot actions. **RT-2**, published in 2023, trained image-language models with robot trajectories alongside web tasks. Broad image-language training supplies semantic knowledge. Robot action data connects that knowledge to movements the body can perform. [RT-2 v1, §§3.1–3.2](https://www.alphaxiv.org/pdf/2307.15818v1?page=4)
-
-RT-2 encoded gripper position and orientation changes, gripper opening and a discrete termination command as tokens, discrete symbols the model predicts. Each continuous action dimension used 256 bins, or ranges, each encoded as a token. The system converts predicted tokens back into numerical robot commands. [RT-2 v1, pp. 5–6](https://www.alphaxiv.org/pdf/2307.15818v1?page=5)
-
-Physical Intelligence's **π0**, introduced in 2024, combines a pretrained VLM with an action expert that generates continuous action chunks. It receives images, language and robot state. Its flow-matching process turns a random numerical sample into actions conditioned on those inputs. As with diffusion, that computation happens before the commands move the arm. [π0, RSS 2025, §IV, pp. 4–5](https://www.roboticsproceedings.org/rss21/p010.pdf#page=4)
-
-**π0.5**, introduced in April 2025, changes the training recipe and task-level inference. It combines data from different robots with web tasks, object localization, semantic subtask labels and human language instructions. Broad training uses discrete action tokens. Later training adds continuous action generation. At runtime, the same model first predicts a subtask, then generates actions conditioned on it. [π0.5 v1, §§IV-A–D, pp. 5–7](https://www.alphaxiv.org/pdf/2504.16054v1?page=5)
-
-For our task, that could mean selecting “pick up the block”, then choosing its movements. The command still has to match the body. In the π0.5 study, targets for arms, grippers and lift, plus base velocities, were tracked by lower-level controllers. [π0.5 v1, §IV-E, p. 7](https://www.alphaxiv.org/pdf/2504.16054v1?page=7)
-
-Joint targets, gripper poses and torques are different interfaces. A gripper pose specifies position and orientation. An execution system must translate it into joint movement. Adding language changes the information available for choosing an action; the body still needs a usable command.
-
-## 2023 to 2025: use possible futures
-
-The arm now has several candidate movements. Which one will reach the block without striking the obstacle? A **world model** predicts how a situation might change. The useful output could be video, numerical state or learned features.
-
-![Two identical top views of an arm, block, tray and obstacle. One dashed path goes around the obstacle. The other passes through it, with the conflict circled.](/assets/robotics/modern-control/v2/candidate-paths.png "Top view. The start, goal and obstacle stay fixed. Left: a candidate goes around the obstacle. Right: a candidate crosses it. A predictive planner needs to distinguish their consequences. Dashed paths are hypothetical gripper paths.")
-
-Predictions can serve three different jobs.
-
-**UniPi**, from 2023, generates a proposed future video from a current image and language goal. A separately trained inverse dynamics model infers actions between frames. The generated video supplies a plan; the inferred actions supply commands. Its original experiments used open-loop execution: the robot executed the plan without replanning from fresh observations, to reduce computation. [UniPi v1, §3.2, p. 4](https://www.alphaxiv.org/pdf/2302.00111v1?page=4)
-
-**DreamGen**, published in 2025, uses generated video to train another policy. It adapts a video model to the robot, generates videos from starting images and instructions, and infers pseudo-action labels. The resulting examples train a separate visuomotor policy. Video generation happens in the data pipeline, rather than being required for each movement of the deployed policy. [DreamGen v1, §§2.1–2.4, pp. 3–4](https://www.alphaxiv.org/pdf/2505.12705v1?page=3)
-
-**V-JEPA 2-AC**, also from 2025, predicts consequences in feature space and uses them for planning. Features are learned numerical descriptions of images. Its action-conditioned model learned from video and measured end-effector state in the DROID robot dataset. Here, end-effector state means position, orientation and gripper opening. Movement information came from changes in that state. [V-JEPA 2 v1, §3.1, p. 9](https://www.alphaxiv.org/pdf/2506.09985v1?page=9)
-
-At runtime, it receives the current image, end-effector state and candidate action sequences. It predicts future features. A goal image supplies the desired result. The planner samples and refines candidate actions to bring their predicted final features closer to the goal's features. It executes the first action, observes again and replans. This is **receding-horizon control**. [V-JEPA 2 v1, §3.2, p. 10](https://www.alphaxiv.org/pdf/2506.09985v1?page=10)
-
-The authors tested image-goal reaching and manipulation on Franka arms in two labs. Pick-and-place used supplied intermediate goal images, switched after fixed numbers of steps. A lower-level controller completed each selected gripper command before the next was sent. Camera placement and prediction errors affected the reported behavior. [V-JEPA 2 v1, §§4.1–4.3, pp. 12–15](https://www.alphaxiv.org/pdf/2506.09985v1?page=12)
-
-For our block, useful prediction means distinguishing the route around the obstacle from the route through it. Visual detail matters when it changes that choice. Training data generation, video-based action extraction and feature-based planning give predictions different jobs within the stack.
+This works, and it's still how most factory robots run. The trouble is that every piece is written by hand for a known world. Who writes the rule for a block that's half hidden, or slippery, or a sock instead of a block? Each new object asks for new code. That's the wall learning tries to get through.
 
 <details>
-<summary>Prediction methods, original planning figure and execution details</summary>
+<summary>Deep dive: the classical loop and the first learned policies</summary>
 
-![Original V-JEPA 2 planning diagram showing observations, candidate actions and a goal-image comparison](/assets/robotics/modern-control/vjepa-planning.png "V-JEPA 2, original Figure 7, PDF p. 11. Candidate actions are rolled forward in feature space and compared with goal features.")
+Rusu and colleagues' 2009 PR2 system already closed the loop: 3D perception, an obstacle map, motion replanning and a higher-level executive. Its tested grasp was simple: it approached horizontally, and a general grasp planner for partial views was left for later work. [Rusu et al., pp. 2, 7–8](https://www.kavrakilab.org/publications/rusu-sucan2009real-time-perception-guided-motion.pdf#page=7)
 
-Figure 7 from Assran et al., *V-JEPA 2*, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Cropped from PDF page 11; original labels preserved. [Full image](/assets/robotics/modern-control/vjepa-planning.png), [paper, p. 11](https://www.alphaxiv.org/pdf/2506.09985v1?page=11).
+Learning entered in the 2010s from two directions. A **policy** is a rule that maps what the robot sees to an action. In work first released in 2015, Levine and colleagues learned policies straight from camera images to joint torques on a PR2. [Levine et al. v5, p. 13](https://www.alphaxiv.org/pdf/1504.00702v5?page=13) A **dynamics model** predicts how the state changes after an action. PILCO (2011) learned an uncertain dynamics model and used it to improve a policy. [PILCO, p. 1](https://icml.cc/2011/papers/323_icmlpaper.pdf)
 
-Here, $E$ encodes an image as features, $P$ predicts future features, and $L_1$ measures their distance from goal features. Table 3 reports a 16-second single-step planning computation on one RTX 4090, with 800 sampled action sequences and ten refinement rounds. That setting describes this reported test. [V-JEPA 2 v1, p. 15](https://www.alphaxiv.org/pdf/2506.09985v1?page=15)
-
-The cross-entropy method here is a designed search procedure: sample action sequences, retain useful candidates and refine the sampling distribution. The learned predictor supplies the future features. [V-JEPA 2 v1, p. 11](https://www.alphaxiv.org/pdf/2506.09985v1?page=11)
-
-Pick-and-place followed supplied images of the object grasped, near its destination and at the goal for four, ten and four steps respectively. [Appendix B.2, p. 37](https://www.alphaxiv.org/pdf/2506.09985v1?page=37)
-
-UniPi's v1 describes both open-loop and closed-loop possibilities, but uses open-loop action execution in its experiments. Its real-robot-video transfer section evaluates generated videos, rather than establishing that every generated plan was physically executed. An inverse dynamics model requires a suitable action interface and training data. [UniPi v1, §3.2, p. 4](https://www.alphaxiv.org/pdf/2302.00111v1?page=4), [§4.3, pp. 7–8](https://www.alphaxiv.org/pdf/2302.00111v1?page=7)
-
-DreamGen offers inverse-dynamics pseudo-labels and latent action labels. Latent actions summarize visual change; they are not automatically calibrated motor commands. Its downstream policy recipe depends on which labels are used. [DreamGen v1, §§2.3–2.4, p. 4](https://www.alphaxiv.org/pdf/2505.12705v1?page=4)
-
-Predictions can also improve a policy during training. PILCO used uncertain dynamics for policy search. [DreamerV3 v2](https://www.alphaxiv.org/pdf/2301.04104v2?page=2) trains behavior with imagined trajectories. A VLA can use predictive training or work with a planner. These choices overlap.
-
-ACT's original hardware account separates 50 Hz target transmission from a motor controller operating above 1 kHz. That number does not establish camera capture or inference latency for another robot. Temporal ensembling is implemented as repeated chunk prediction and aggregation for the same execution timestep. [ACT, pp. 4–5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=4)
+The two ideas, "learn what to do" and "learn what will happen", come back at the end of this post as VLAs and world models.
 
 </details>
 
-## 2025 to 2026: add physical structure
+## ACT: copy a person, one chunk at a time
 
-The block has a shape. The arm has a reach limit. The obstacle occupies space. A learned model can infer some of this, and the system can also compute useful physical information explicitly.
+Suppose a person shows the arm how to pick up the block, about 50 times, from different positions. You record what the cameras see, the joint angles, and the commands the person gave. Can a network learn the next movement from that?
 
-In Brian Heater's A3 interview, **Ali Agha, Field AI's founder**, describes supplying computed geometry and uncertainty alongside raw measurements. Shapes, elevation, traversability and localizability become representations the network can use. Traversability concerns where a robot can move. Localizability concerns how well it can determine its position. [A3 transcript, 28:01–30:09](https://www.automate.org/automated-podcast/episodes/automated-podcast-episode-ali-agha)
+**ALOHA** made this cheap. A person moves two small "leader" arms, and two "follower" arms copy them. The leader joint angles become the action labels; the follower cameras and joint readings become the observations. [ALOHA, pp. 3–5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=4)
 
-From 32:04, Agha describes calculated confidence in sensing channels. He says: “You do all of that calculation, and that's just a suggestion to the network.” [A3 transcript](https://www.automate.org/automated-podcast/episodes/automated-podcast-episode-ali-agha), [architecture explanation, 30:09](https://www.youtube.com/watch?v=twIy5ZSGU8U&t=1809s).
+The method that came with it, **Action Chunking with Transformers (ACT)**, predicts a short sequence of future joint targets from the current images and joint angles. That sequence is an **action chunk**. A controller below tracks the targets. With only **10 minutes of demonstrations**, ACT learned six fine tasks, like slotting a battery, with **80 to 90% success**. [ACT abstract](https://arxiv.org/abs/2304.13705)
 
-**Waymo's December 2025 architecture account** combines learned representations with explicit objects, semantic attributes and road structure. It also describes a separate layer that validates generated trajectories. **Dmitri Dolgov** argues for useful explicit structure alongside learning in his YC talk. [Waymo architecture](https://waymo.com/blog/2025/12/demonstrably-safe-ai-for-autonomous-driving/), [Dolgov's transcript, lesson 4](https://www.ycrootaccess.com/p/dmitri-dolgov-seven-lessons-from), [talk, 30:09](https://www.youtube.com/watch?v=Gp4zrV3-6N8&t=1809s).
+![Three top views show the same arm reaching for the block, closing its gripper and carrying it toward the tray. Both links keep their lengths.](/assets/robotics/modern-control/v2/action-chunk.png "Three moments from one action chunk. Each command sets a target for the controller below.")
 
-For our arm, an estimated obstacle shape is an input to action choice. A rule that rejects movements through that shape constrains execution. Supplying information and enforcing a constraint are different mechanisms. Both depend on useful measurements.
+Why a chunk and not one action at a time? Copying one step at a time compounds errors: a small mistake puts the arm somewhere the person never was, and the next prediction is worse. Predicting a whole chunk keeps the motion coherent. ACT then predicts a new chunk at every step and averages the overlapping predictions for the same moment, which it calls **temporal ensembling**. [ACT, §IV-A, p. 5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=5)
 
-If the block's edge is hidden, uncertainty could make the robot seek a better view before reaching. The important connection is from weak information to a different next action.
+A chunk's length doesn't set how fast the robot reacts. Say a chunk holds $H$ targets sent at $f$ targets per second, and the robot executes $k$ of them before it looks again:
 
-## 2026: keep the history that changes the next move
+$$
+\begin{aligned}
+T_\text{chunk}&=\frac{H}{f}=\frac{10}{20}=0.5\ \mathrm{s},\\
+T_\text{react}&=\frac{k}{f}=\frac{2}{20}=0.1\ \mathrm{s}.
+\end{aligned}
+$$
 
-Extend the job slightly: inspect the block before putting it away. The current image may look the same before and after inspection. The next subtask depends on what has already happened.
+Units: targets ÷ (targets/s) = s. The plan looks half a second ahead, but the arm sees the moved block after a tenth of a second, plus the computing time.
 
-![One shared current view of the arm and block branches into two task records. Inspection pending leads to inspect first; inspection done leads to put away.](/assets/robotics/modern-control/v2/history-changes-action.png "The same current image supports different next subtasks when the recorded history differs. A longer language record keeps inspection status; recent visual history can keep details of the latest grasp.")
+```so101-widget
+{"type": "predict", "id": "RC1", "fallback": "Predict first. A policy predicts a chunk of H = 10 joint targets. The robot sends f = 20 targets per second. It executes 2 targets, then takes a new image and predicts a new chunk. Ignore the computing time. How long, at most, does the arm keep following the old chunk? (A) 0.5 s: H / f. (B) 0.1 s: 2 / 20. (C) 0.05 s: 1 / 20. (D) 2 s: f / H. Answer: 0.1 s. It executes 2 targets of 1/20 s each, then it looks again."}
+```
 
-Robots have long retained maps, tracked objects and task state. Modern policies also differ in the history they receive. **MEM, Multi-Scale Embodied Memory**, combines recent visual history with longer text records in a VLA system. [MEM v2, §III, pp. 3–5](https://www.alphaxiv.org/pdf/2603.03596v2?page=3)
+Mobile ALOHA used the same recipe on a robot that drives around a house. Its authors trained with about 50 demonstrations per task, mixed with data from the static ALOHA tasks.
 
-Recent images preserve details such as a slipped grasp or an object briefly hidden by the arm. Text summaries keep events useful after those images disappear. MEM's higher-level policy uses observations, the task and the earlier summary to choose a subtask and update the summary. Its lower-level policy uses recent observations and instructions to produce continuous action chunks. [MEM v2, §§III-A–D](https://www.alphaxiv.org/pdf/2603.03596v2?page=3)
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/zMNumQ45pJ8" title="Mobile ALOHA, compilation of autonomous skills" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Mobile ALOHA, autonomous skills learned by imitation (Zipeng Fu, co-author, 2024). <a href="https://www.youtube.com/watch?v=zMNumQ45pJ8">Watch on YouTube</a></figcaption>
+</figure>
 
-The authors report kitchen tasks lasting up to fifteen minutes and compare visual memory, text memory and their combination. [MEM v2, §IV-A, p. 6](https://www.alphaxiv.org/pdf/2603.03596v2?page=6), [Marcel Torne's explanation, 7:59](https://www.youtube.com/watch?v=myDCd0hNqQU&t=479s), [mechanisms, 11:10](https://www.youtube.com/watch?v=myDCd0hNqQU&t=670s).
-
-Recent versus longer memory describes what information is retained. A fast movement policy and a slower task-level planner describe how decisions are organized, sometimes called a System 1/System 2 hierarchy. These are separate design choices. A fast policy can use history. A slower planner can still forget.
-
-## What is still missing?
-
-Our arm now has several ways to choose its next movement. Demonstrations can teach a policy. Language can identify the job and subtask. Prediction can compare consequences. Physical information can inform a choice or constrain execution. Memory can supply facts missing from the current image.
-
-The complete loop must connect them. Current observations and retained history should inform task selection and movement choice. Selected commands must match the body. Fresh feedback must update both the next action and the record of progress.
-
-Suppose the gripper closes beside the block. The command finished, but the pickup failed. A summary saying “block put away” would corrupt the next decision. A prediction that keeps promising the same successful grasp could trap the arm in repeated attempts.
-
-Recovery needs evidence of what happened, a corrected task record and a useful alternative movement. Prediction must preserve important contact effects. Constraints must remain meaningful when estimates weaken. Memory must distinguish an attempted step from a completed one.
-
-The next research checks follow those connections. Does prediction rank candidate movements correctly around contact? Can memory repair a false completion record? Does uncertainty lead to better inspection or recovery? Controlled comparisons should count complete jobs, retries, interventions, time and damage.
-
-Since 2010, more of action choice has become learnable. Broader knowledge and richer history can enter that choice. Picking up our moved block still requires the same discipline: observe, choose, execute, check the outcome and revise.
+The limit shows up as soon as you change the task. An ACT policy knows one task, in one setup, on one robot. It has no idea what a "tray" is. It only knows the motions it saw.
 
 <details>
-<summary>Sources, presentation boundaries and proposed checks</summary>
+<summary>Side path: when two routes are both right (Diffusion Policy)</summary>
 
-The original source archive was checked on September 30, 2026. New primary checks for this revision were read on October 1. ACT and Diffusion Policy use their RSS 2023 papers and pinned official runtime code. π0 uses its original RSS 2025 paper; the model was introduced in October 2024. π0.5 uses the April 2025 v1 paper. UniPi uses January 2023 v1, and DreamGen uses May 2025 v1. V-JEPA 2 v1, MEM v2, RT-2 v1, Levine v5 and PILCO retain the checked source versions.
+Put an obstacle between the gripper and the block. A person goes around it on the left half the time and on the right half the time. A network trained to predict the average path goes straight through the obstacle.
 
-The supplied presentation motivates the repeated pickup example and the three video roles. Its transcript does not establish an event date, reliable timestamps or externally verified speaker names. The alligator replay and policy demonstrations are teaching cases. Their outcomes do not measure a general success rate, establish a ranking, or identify why a trial failed. The later French conversation is separate from the presentation. The final demo's “fast WAM” identity remains unresolved, so no model-specific explanation is assigned to it.
+**Diffusion Policy** (2023) learns the whole distribution of action sequences instead of their average. At run time it starts from random numbers and refines them, step by step, into one coherent route, left or right, never the average. [Diffusion Policy, §§II-C, IV-A, pp. 3–4](https://www.roboticsproceedings.org/rss19/p026.pdf#page=3) The π models below use a close relative, **flow matching**, for the same reason. It matters again in the RL section: this kind of policy has no simple formula for the probability of an action, which breaks some classic RL methods.
 
-The four new tabletop scenes and timing calculation are original teaching examples. The V-JEPA figure is the credited original. The main comparison holds a teaching arm fixed to expose roles; the cited systems use different bodies, commands and evaluation settings.
+![Two identical top views of an arm, block, tray and obstacle. One dashed path goes around the obstacle. The other passes through it, with the conflict circled.](/assets/robotics/modern-control/v2/candidate-paths.png "Two candidate paths with the same start and goal. Averaging the left and right detours gives the path through the obstacle.")
 
-Three source-linked research proposals remain open:
+</details>
 
-- **Contact-sensitive prediction.** Following [V-JEPA 2's prediction limits](https://www.alphaxiv.org/pdf/2506.09985v1?page=14), compare candidate-action ranking and recovery with the same controller and observations. Reject the proposed benefit if adding prediction does not improve either.
-- **Memory correction.** Following [MEM's update mechanism](https://www.alphaxiv.org/pdf/2603.03596v2?page=3), check whether a false completion record is detected and repaired after a failed grasp or interruption. Preserve the distinction between historical completion and what remains true now.
-- **Uncertain sensing.** Following [Agha's uncertainty account](https://www.automate.org/automated-podcast/episodes/automated-podcast-episode-ali-agha), compare recovery under the same sensing degradation, with and without the added uncertainty inputs. Evaluate any enforcing constraint separately.
+## From VLM to VLA: borrow what the web knows
 
-These questions need a prior-work check and controlled tests. The best first source follow-up is MEM's handling of incorrect summaries and outcome evidence. Field AI's exact interfaces, uncertainty calibration and independent safety or data-efficiency measurements also remain unchecked. No experiments were run for this article.
+A person knows what a tray is without a single robot demonstration. Could a robot borrow that knowledge?
+
+A **vision-language model (VLM)** reads images and text and answers in text. It learned from billions of web images, so it knows objects, colors and words. A **vision-language-action model (VLA)** is a VLM that is trained further on robot data, so that it also outputs robot actions. The table compares the three.
+
+| Model | Input | Output | Learns from |
+|---|---|---|---|
+| LLM | text | text | web text |
+| VLM | images + text | text | web images and text |
+| VLA | camera images + instruction (+ robot state) | robot actions | web data, then robot demonstrations |
+
+**RT-2** (2023) showed that the transfer is real. It wrote each action as tokens, the same discrete symbols the model uses for words: each action dimension was cut into 256 bins. [RT-2 v1, pp. 5–6](https://www.alphaxiv.org/pdf/2307.15818v1?page=5) On scenes with unseen objects, backgrounds and environments, success rose from 32% for RT-1 to 62%. [DeepMind, RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/)
+
+**OpenVLA** (2024) shows the recipe with open weights: two image encoders, a 7-billion-parameter language model, and a de-tokenizer that turns output tokens back into a small move of the gripper.
+
+![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture.png "OpenVLA architecture. Figure from Kim et al., OpenVLA (2024), CC BY 4.0.")
+
+For our block, this means the instruction "put the green block in the tray" now means something to the model, even for a block color it never saw in the robot data. The cost is the action format: 256 bins per dimension, predicted one token at a time, is coarse and slow for a fast, precise arm.
+
+## Generalist models: one policy for many robots
+
+Physical Intelligence (PI) took the next step: one model, trained on many robots and many tasks, that you can prompt or fine-tune.
+
+**π0** (October 2024) keeps a pretrained VLM but adds an **action expert**, a smaller network that outputs continuous action chunks by flow matching instead of tokens. It trained on data from single arms, two-arm robots and mobile manipulators, and it can fold laundry, bus a table and assemble a box. [π0 abstract](https://arxiv.org/abs/2410.24164), [π0, RSS 2025, §IV](https://www.roboticsproceedings.org/rss21/p010.pdf#page=4)
+
+<figure class="video-embed video-pair">
+<div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/a6Ix6Vzuk0c" title="π0: Our First Generalist Robotic Policy" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div>
+<div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/Zn8yMaepzVk" title="π0.5: a VLA with Open-World Generalization" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div>
+<figcaption>Left: π0 (November 2024). Right: π0.5 cleaning kitchens and bedrooms it never saw in training (April 2025). Both from Physical Intelligence. <a href="https://www.youtube.com/watch?v=a6Ix6Vzuk0c">π0 on YouTube</a>, <a href="https://www.youtube.com/watch?v=Zn8yMaepzVk">π0.5 on YouTube</a></figcaption>
+</figure>
+
+**π0.5** (April 2025) adds a step before the motion: the same model first predicts a subtask in words ("pick up the block"), then generates the actions for that subtask. It trains on many robots plus web data, which helps it work in homes it never saw. [π0.5 v1, §§IV-A–D](https://www.alphaxiv.org/pdf/2504.16054v1?page=5)
+
+**π0.7** (April 2026) changes what the prompt can say. It reads not only *what* to do but *how*: metadata such as speed, quality and mistakes, and optional subgoal images. That lets it train on mixed data, including failed and slow attempts, because the labels tell good runs from bad ones. PI reports that π0.7 makes espresso out of the box about as well as specialist models fine-tuned with RL. [π0.7 abstract](https://arxiv.org/abs/2604.15483)
+
+What does the generalist actually send to the robot? Still targets. In π*0.6, the output is joint angles and gripper commands at 50 Hz; in π0.7, joint targets or gripper poses, with inverse kinematics for poses, and a **proportional-derivative (PD) controller** that turns the targets into motor effort. [π*0.6, §V-A](https://arxiv.org/html/2511.14759v1#S5.SS1), [π0.7, §VIII](https://arxiv.org/html/2604.15483v2#S8) The learned part chooses where the joints should go. A classical loop still makes them get there. I spent a whole [series on that bottom loop on my $100 arm](/robotics/so101-1-target-and-goal/), and it's not a solved detail.
+
+## Practice: reinforcement learning on real robots
+
+A generalist that succeeds 80% of the time is impressive in a video. In a home, it's a broken glass every few days. Perry Dong and Chelsea Finn put it this way in [Towards Universal Post-Training for Robotics](https://pd-perry.github.io/posts/post-training.html) (September 2026): robot models today are where language models were around GPT-2 and GPT-3. They're capable enough for demos, not reliable enough to trust. Language models closed that gap with a standard **post-training** recipe, more training after the big pretraining: instruction tuning, then reinforcement learning from feedback. Their argument is that robots need the same thing.
+
+Why not just collect more demonstrations? Because copying has a ceiling. The demonstrations never show how to recover from the robot's own mistakes, and the robot can't get better than the people who demonstrated. **Reinforcement learning (RL)** learns from the robot's own attempts and a score of how they went.
+
+### Why RL is hard on a robot
+
+Dong and Finn list the differences with RL on language models:
+
+- **Data is expensive.** A language model can try a thousand answers in parallel in a second. A robot tries once, in real time, and someone may have to reset the scene.
+- **Horizons are long.** Picking up a glass is about 500 decisions, each a 7-number action every 20 ms. The reward ("success") comes at the end. Which of the 500 decisions deserves the credit?
+- **The world is random.** The same command doesn't give the same result twice.
+- **The actions are continuous.** This one is the most technical, so here it is with a picture.
+
+RL usually trains a **critic**: a network $Q(s,a)$ that predicts how good action $a$ is in situation $s$. Then the policy should pick the best action:
+
+$$
+a^\star=\arg\max_a\ Q(s,a).
+$$
+
+In a game with four buttons, you score the four buttons and pick the best. That's what DQN does. A robot action is 7 real numbers. Cut each into 20 bins and you get $20^7 \approx 1.28$ billion actions to score, 50 times per second. You can't enumerate them.
+
+```so101-widget
+{"type": "continuous-action", "fallback": "Interactive: the value Q of each action for a one-number action, with two hills: a wide one on the left (value 0.67) and a narrow, higher one on the right (value 1.00). Discretizing with 6 bins picks an action on the left hill at 65% of the best value. An actor that climbs the slope from a = -0.6 stops on the left hill. Sampling 16 actions from the base policy, editing each slightly uphill, and picking the best finds the right hill."}
+```
+
+Classic continuous-control RL answers this with an **actor-critic**: a second network, the actor, learns to output the action that the critic scores high, by following the slope of $Q$. DDPG, TD3 and **SAC** (soft actor-critic) all work this way. Play with the widget: the actor climbs the nearest hill. It's fast, but it can get stuck on a lower one.
+
+```so101-widget
+{"type": "predict", "id": "RC2", "fallback": "Predict first. A DQN-style agent picks the action with the highest Q by scoring every action. The arm has 7 joints. You cut each joint range into 20 bins. How many Q scores per control step? (A) 140. (B) 1.28 billion, 20^7. (C) 7^20. (D) 20. Answer: 20^7 = 1.28 billion. The choices multiply across joints."}
+```
+
+Modern VLAs add a second problem. Their action expert is a flow or diffusion model: great at keeping the left and right detours separate, but it has no simple formula for the probability of an action. PPO, the RL workhorse of language models, needs exactly that probability ratio. So the field had to find other ways to plug a critic into a VLA.
+
+### Four ways to practice
+
+These are the four methods I find most instructive. Each uses the critic differently.
+
+| Method | Starts from | How the critic changes behavior | Reported result |
+|---|---|---|---|
+| **HIL-SERL** (Berkeley, 2024) | A few demonstrations, small policy from scratch | Actor-critic (SAC-style); a person takes over with a joystick when the robot gets stuck, and those corrections go into training | Near-perfect success in 1 to 2.5 hours of training per task; 2× success and 1.8× faster than imitation on average |
+| **RECAP / π\*0.6** (PI, 2025) | The π0.6 generalist | The critic labels each recorded segment "good" or "bad"; the policy learns with that label as an input, and at run time PI asks for "good" | On some of the hardest tasks, more than 2× throughput and about half the failures |
+| **RLT** (PI, 2026) | A frozen VLA | The VLA exposes a compact "RL token"; a small actor-critic head on it refines the action chunk, anchored near the VLA's own proposal | Up to 3× faster on the hardest part of the task, within minutes to a few hours |
+| **EXPO-FT** (Stanford, 2026) | π0.5 | The VLA proposes several chunks; a small edit policy nudges each one; the critic picks the best | 30/30 on all 8 tasks, with 19.1 minutes of robot data on average |
+
+Sources: [HIL-SERL](https://arxiv.org/abs/2410.21845), [π\*0.6](https://arxiv.org/abs/2511.14759), [RLT](https://arxiv.org/abs/2604.23073), [EXPO-FT](https://arxiv.org/abs/2605.25477).
+
+<figure class="video-embed video-pair">
+<div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/GoJSW8e2qbI" title="HIL-SERL: Precise and Dexterous Robotic Manipulation via Human-in-the-Loop Reinforcement Learning" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div>
+<div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/d1obFDstuVQ" title="π*0.6: four hours of robotic box assembling" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div></div>
+<figcaption>Left: HIL-SERL learns dynamic and precise tasks, like whipping a Jenga block out of a tower, directly on the robot (Berkeley RAIL, 2024). Right: π*0.6 after RECAP, assembling boxes for four hours (Physical Intelligence, 2025). <a href="https://www.youtube.com/watch?v=GoJSW8e2qbI">HIL-SERL on YouTube</a>, <a href="https://www.youtube.com/watch?v=d1obFDstuVQ">π*0.6 on YouTube</a></figcaption>
+</figure>
+
+**RECAP's trick** is the one I found most surprising, because it turns RL back into supervised learning. A value model $V$ predicts the future reward from an observation. For a segment of $N$ steps, the **advantage** says whether the segment did better than expected:
+
+$$
+\hat A_t=\sum_{k=t}^{t+N-1}r_k+V(o_{t+N})-V(o_t).
+$$
+
+A worked example with made-up numbers. Each step costs $-1$, so a 10-step segment has rewards summing to $-10$. Before the segment, $V$ predicts $-40$; after, $-25$. Then $\hat A=-10+(-25)-(-40)=+5$: the segment moved the robot 15 units closer to done for a cost of 10. If $+5$ is above the threshold, the segment gets the label "Advantage: positive", even if the whole attempt failed later. The policy learns every segment *under its label*, and at run time you ask for "positive". [π\*0.6, §§IV-A–B](https://arxiv.org/html/2511.14759v1#S4)
+
+```so101-widget
+{"type": "predict", "id": "RC3", "fallback": "Predict first. A segment inside a FAILED attempt has an estimated advantage of +5. The threshold for the positive label is +2. What does RECAP's policy learn from it? (A) Nothing: failed attempts are dropped. (B) To avoid these actions. (C) To reproduce them under the label 'Advantage: positive'. (D) To reproduce them under 'negative' because the attempt failed. Answer: (C). The label comes from the segment's advantage, not from the episode's final result."}
+```
+
+**EXPO-FT** is the method behind Dong and Finn's post, and its picture is the widget's third button. The big VLA proposes $N$ chunks $a^1,\dots,a^N$. A small edit policy proposes a bounded change $\hat a^i$ for each one. The robot runs whichever candidate the critic likes best:
+
+$$
+a^\star=\arg\max_{a\,\in\,\{a^i,\ a^i+\hat a^i\}}\ Q(s,a),\qquad \|\hat a^i\|\le\varepsilon .
+$$
+
+The VLA keeps the candidates in good regions. The edits stay small, so a wrong critic can't drag the robot far. Then the improvements are trained back into the VLA.
+
+![EXPO-FT diagram. Left: offline pretraining, then online fine-tuning with a replay buffer, a success detector and human interventions. Right: the VLA proposes N action chunks, an edit actor adjusts each, and the chunk with the highest Q is executed.](/assets/robotics/modern-control/v3/expo-ft-architecture.png "EXPO-FT system. Figure 1 from Dong et al., EXPO-FT (2026), CC BY 4.0.")
+
+The comparison I care about is controlled: same base model, same tasks, same 30 trials. More copying, even with a person correcting the robot (HG-DAgger), stays around 20 to 22 out of 30. Practice reaches 30 out of 30.
+
+![Grouped bar chart over 8 tasks: imitation fine-tuning averages 20.5 of 30, imitation with human corrections 22.1 of 30, EXPO-FT 30 of 30 on every task, with 14 to 35 minutes of online data per task.](/assets/robotics/modern-control/v3/rl-finetune-results.png "My chart of Table 2 of EXPO-FT. The tasks include egg flipping, a pool shot and inserting a flower into a bottle.")
+
+Two cautions before this sounds solved. First, 30/30 is 30 trials in the authors' lab, not a deployment. Second, Dong and Finn are clear that the algorithm is only half of the recipe. Nobody has a standard answer yet for the other half:
+
+1. **Reward:** who decides that the egg flip succeeded? Today, a trained success detector or a person.
+2. **Reset:** who puts the egg back?
+3. **Human help:** when should the person step in, and how much?
+4. **Defaults:** RL on robots is still sensitive to settings, with no agreed defaults.
+
+That's the difference with language models, where "check the answer" and "run it again" are almost free. RL also works when the robot practices in simulation instead: Mistral trained Robostral Navigate on simulated buildings, then ran online RL there and gained 4 points of success (more on it below).
+
+## World action models: imagine the video and the action together
+
+A VLA maps an image to an action. It never has to say what the world will look like next. Does that matter?
+
+NVIDIA's argument is yes. VLAs are good at semantics ("which object is the tray?") but weak at motions they never saw. A video model, trained on a huge amount of video, has seen how things fall, slide, open and pour. A **world action model (WAM)** is a policy built on such a video model: it predicts how the scene will change *and* the action that goes with it. [NVIDIA, The rise of world action models](https://developer.nvidia.com/blog/pretrained-to-imagine-fine-tuned-to-act-the-rise-of-world-action-models/)
+
+**DreamZero** (February 2026) is the clearest example. It starts from a 14-billion-parameter video model. During training, it adds noise to both the future video frames and the future action chunk, and learns to remove the noise from both together. On the robot, it imagines the next frames and the next actions, executes the actions, and then replaces its imagined frames with the real camera frames, so its errors don't pile up. [DreamZero abstract](https://arxiv.org/abs/2602.15922)
+
+![DreamZero architecture. Training: video and actions are encoded, noised, and denoised jointly by a causal video transformer. Inference: past frames, language and state go in; future frames and a future action chunk come out; real observations replace the imagined frames at each step.](/assets/robotics/modern-control/v3/dreamzero-architecture.png "DreamZero: joint video and action prediction. Figure from Ye et al., World Action Models are Zero-shot Policies (2026), CC BY 4.0.")
+
+Here's what that looks like on tasks the model never trained on. The top row is what really happened; the bottom row is what the model imagined from the robot's cameras before acting.
+
+![Two tasks, hit the cymbal and fry vegetables with a spatula. Top row: real-world execution frames. Bottom row: the frames DreamZero generated from the robot's cameras, which match the real motion.](/assets/robotics/modern-control/v3/dreamzero-real-vs-generated.png "Real execution (top) and imagined video (bottom) on unseen tasks. Figure from Ye et al. (2026), CC BY 4.0.")
+
+The reported results:
+
+- **More than 2× better generalization** to new tasks and environments than state-of-the-art VLAs, in real-robot tests.
+- **Learning from video only:** 10 to 20 minutes of video of another robot or a person doing a task gave more than 42% relative improvement on that unseen task. No actions were needed for that data.
+- **A new robot in 30 minutes** of play data, while keeping its zero-shot skills.
+- On the public **RoboArena** ranking (April 2026 snapshot, reported by NVIDIA), DreamZero scored 1750 against 1622 for π0.5.
+
+The price is compute. A 14B video model is slow: one action step first took **5.7 s**. With system work and a trick called DreamZero-Flash, the authors brought it to **150 ms**, 38× faster on NVIDIA's GB200 chips, enough for **7 Hz** closed-loop control. [DreamZero, real-time section](https://arxiv.org/html/2602.15922v1)
+
+<details>
+<summary>How this differs from "generate a video, then copy it"</summary>
+
+Earlier systems split the two steps. **UniPi** (2023) generated a video of the plan, then a separate inverse dynamics model guessed the actions between frames, and the robot executed the plan without replanning. [UniPi v1, §3.2](https://www.alphaxiv.org/pdf/2302.00111v1?page=4) **DreamGen** (2025) generated videos to make training data for a separate policy. [DreamGen v1](https://www.alphaxiv.org/pdf/2505.12705v1?page=3) I wrote about DreamGen and the 1X world model in [why I'm learning robotics](/robotics/why-i-am-learning-robotics/).
+
+A WAM does both in one network, at every control step, and corrects itself with real frames. The video isn't a separate plan to copy. It's the model's way of thinking about the next half second.
+
+</details>
+
+## Limits and what comes next
+
+Two limits stand out to me: the robot forgets, and imagining every pixel is expensive.
+
+### Memory: the same image, a different next step
+
+Extend the job: inspect the block, then put it away. The camera image looks the same before and after the inspection. So which step comes next?
+
+![One shared current view of the arm and block branches into two task records. Inspection pending leads to inspect first; inspection done leads to put away.](/assets/robotics/modern-control/v2/history-changes-action.png "The same current image supports different next steps when the history differs.")
+
+Every policy in this post, ACT, π0.5 and most VLAs, decides from the current images, maybe the last one or two. That's fine for "pick up the block". It fails for "did I already add salt?", for counting, and for an object the arm itself is hiding.
+
+**RoboMME** (2026) measured this on 16 simulated memory tasks with the same π0.5 policy. With the current view only, it averages **17.9%**. Giving it past actions barely helps (19.7%). Feeding it a sample of past frames reaches **44.5%**. The authors' main finding is that the best kind of memory depends on the task. [RoboMME abstract](https://arxiv.org/abs/2603.04639)
+
+![Bar chart of average success over 16 RoboMME memory tasks: π0.5 with the current view only 17.9%, with past actions 19.7%, best recurrent memory 22.4%, language subgoals 42.4%, best sampled past frames 44.5%.](/assets/robotics/modern-control/v3/robomme-memory.png "My chart of the RoboMME main table. Simulation benchmark, same π0.5 backbone in every row.")
+
+Then there's **Robostral Navigate**, Mistral's first robotics model (July 2026). It's an 8-billion-parameter navigation model, not a manipulation one: it drives a robot through buildings it never saw, from a spoken instruction and **one ordinary camera**, with no map, no depth sensor and no special memory module. It simply keeps every frame of the trip in its input. It was trained only in simulation, and it's first on the standard R2R-CE benchmark: **77.4%** success, ahead of systems that use depth sensors or several cameras. [Robostral Navigate, §§2.1, 4.1](https://arxiv.org/html/2607.20785v1)
+
+![Robostral Navigate system: a stack of past camera frames and an instruction go to a VLM at 0.5 Hz, which outputs a waypoint such as go to pixel (48, 64) and move 4.5 m forward. A diffusion policy at 10 Hz turns the waypoint and the current frame into a short path, and a motion-tracking controller runs at 100 Hz.](/assets/robotics/modern-control/v3/robostral-architecture.png "Three loops at three rates: the VLM reads all past frames every 2 s, a diffusion policy plans at 10 Hz, a classical tracker runs at 100 Hz. Figure from Bounhar et al., Robostral Navigate (2026), CC BY 4.0.")
+
+![Bar chart of R2R-CE success on unseen buildings: StreamVLN 56.9%, Qwen-RobotNav-4B 66.9%, OmniNav with depth 69.5%, Qwen-RobotNav-8B with depth 72.1%, Robostral before RL 73.4%, Robostral after RL 77.4%.](/assets/robotics/modern-control/v3/robostral-r2r.png "My chart of Table 1 of Robostral Navigate. The last two bars show the gain from online RL in simulation.")
+
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/7dpLB9NoY1A" title="Introducing Robostral Navigate" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Mistral, "Introducing Robostral Navigate" (July 2026). <a href="https://www.youtube.com/watch?v=7dpLB9NoY1A">Watch on YouTube</a></figcaption>
+</figure>
+
+I find that striking: the simplest possible memory, "keep everything", wins a benchmark that used to need maps and depth. But it's a lucky case. A navigation episode is short, and the model only looks at its frames every 2 seconds. A 15-minute kitchen task at one frame per second is 900 frames. In the MEM paper, a VLA that reads raw frames already needs about **3.5 s for 16 frames**, against a real-time limit of 0.3 s.
+
+![Line chart: inference time against number of frames. Without a video encoder it rises from about 0.07 s at 1 frame to about 3.5 s at 16 frames, crossing the 300 ms real-time barrier at 4 frames. With MEM's video encoder it stays near 0.2 s at 16 frames.](/assets/robotics/modern-control/v3/mem-latency.png "Inference time against the number of frames, for a VLA with and without a video encoder. Figure from Torne et al., MEM (2026), CC BY 4.0.")
+
+**MEM** (Physical Intelligence, 2026) splits memory in two, like people do. Recent seconds go through a compact video encoder, so the arm remembers the object it's now hiding. Older events become a short text summary that a higher-level policy rewrites as it goes ("I opened the drawer with the masher"). On recipe setup and kitchen cleanup tasks lasting up to 15 minutes, π0.6 without memory reaches about a third of the task; with MEM, about 70%. [MEM abstract](https://arxiv.org/abs/2603.03596)
+
+![MEM architecture: a high-level policy reads the task, recent images and its language memory, then writes an updated memory and a subtask; a low-level policy with a video memory encoder outputs continuous actions for that subtask.](/assets/robotics/modern-control/v3/mem-architecture.png "MEM: text memory for long-term events, video memory for the last seconds. Figure from Torne et al. (2026), CC BY 4.0.")
+
+![Bar chart of task progress on Recipe Set Up and Clean Kitchen: π0.6 without memory about 35% on average, video-only, text-only and naive text plus video memory between about 30% and 37%, π0.6-MEM about 70%.](/assets/robotics/modern-control/v3/mem-results.png "Task progress with and without memory. Only the combination of text and compressed video memory works. Figure from Torne et al. (2026), CC BY 4.0.")
+
+```so101-widget
+{"type": "predict", "id": "RC4", "fallback": "Predict first. A VLA without a video encoder needs about 0.35 s for 4 frames and about 3.5 s for 16 frames; the real-time limit is 0.3 s. A kitchen task lasts 15 minutes, at one frame per second. Can the policy keep every frame? Answer: No. 15 x 60 = 900 frames, far beyond the 16 that already take 3.5 s. The memory must be compressed: video for recent frames, text for old events."}
+```
+
+Memory has its own failure mode, and it's the one I'd test first. Suppose the gripper closes beside the block. The command finished, but the pickup failed. If the text memory now says "block put away", every later decision builds on a false record. A memory that can't tell "I tried" from "it worked" is worse than no memory.
+
+### World models without all the pixels
+
+DreamZero imagines every pixel of the next frames. That's what makes it slow and big. And sometimes it's what makes it wrong: when the imagined video goes off, the robot follows it.
+
+![Two tasks where the video prediction failed. Draw a line on the whiteboard: the generated video does not show the drawing, and the robot does not draw. Bake the croissant: the generated video drifts, and the robot follows the failed plan.](/assets/robotics/modern-control/v3/dreamzero-failed-plan.png "Imagined video (top) and execution (bottom) when the imagination fails. Figure from Ye et al. (2026), CC BY 4.0.")
+
+Does the robot need the pixels at all? To choose between the detour and the collision, it needs to know where the gripper and the block will be, not the texture of the table.
+
+**V-JEPA 2** (Meta, 2025) predicts the future in **features**, learned numerical summaries of an image, not in pixels. To plan, it tries many candidate action sequences, predicts their final features, and keeps the one whose features are closest to the features of a goal image. Then it executes the first action and plans again. [V-JEPA 2 v1, §3.2](https://www.alphaxiv.org/pdf/2506.09985v1?page=10)
+
+![Original V-JEPA 2 planning diagram showing observations, candidate actions and a goal-image comparison](/assets/robotics/modern-control/vjepa-planning.png "V-JEPA 2 planning in feature space. Figure 7 from Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
+
+It isn't free either. In the paper, one planning step took 16 seconds on one GPU, with 800 sampled action sequences and ten rounds of refinement. [V-JEPA 2 v1, p. 15](https://www.alphaxiv.org/pdf/2506.09985v1?page=15) The pixels are gone, but the search is expensive.
+
+DreamZero's own speed-up points the same way, which I didn't expect. DreamZero-Flash trains the model to predict clean actions from *very noisy* video, so at run time one denoising step is enough. The actions stay good while the imagined video stays rough. The authors also note that dropping the video and generating only actions barely saved time at this size: the number of denoising steps and layers sets the cost, not the pixels. [DreamZero, real-time section](https://arxiv.org/html/2602.15922v1) My reading: the useful part of imagining is the rough shape of the future, and the open question is how little of it you can predict and still choose well.
+
+<details>
+<summary>Side path: physical structure and safety checks</summary>
+
+A different way to make a learned policy more reliable is to give it explicit physics: shapes, free space, uncertainty. Waymo combines learned models with explicit objects and road structure, and checks each planned path in a separate layer. Field AI feeds computed geometry and uncertainty to its networks. I wrote about both in [why I'm learning robotics](/robotics/why-i-am-learning-robotics/), and the previous version of this post quoted Ali Agha's [A3 interview](https://www.automate.org/automated-podcast/episodes/automated-podcast-episode-ali-agha). Giving the network information and enforcing a constraint are different mechanisms: the first can be ignored, the second can't.
+
+</details>
+
+### What I'd test next
+
+The loop is the same as in 2010: observe, choose, act, check, revise. What changed is how much of "choose" is learned, and how many robots, tasks and minutes of practice feed it. Three checks would tell me whether the next steps are real:
+
+1. **Memory under failure.** After a failed grasp, does a MEM-style text memory notice and correct a false "done"? Count complete jobs, retries and human interventions.
+2. **Imagination at contact.** Does a world model rank the right action higher when contact matters, for example a grasp that slips, compared with the same policy without the imagined video?
+3. **Practice without a person.** How much of RL's reliability gain survives when a learned success detector replaces the human judge and the robot resets its own scene?
+
+<details>
+<summary>Sources, licenses and what I didn't verify</summary>
+
+Papers were checked on arXiv on October 5, 2026: ACT, π0, π0.5, π\*0.6, π0.7, RLT, HIL-SERL, EXPO-FT, DreamZero, MEM, RoboMME, Robostral Navigate, OpenVLA and V-JEPA 2. Figures copied from papers are from CC BY 4.0 papers and credited in their captions. For papers under the arXiv non-exclusive license (ACT, π0 to π0.7, RT-2, RLT), I made my own diagrams or used no figure. The three bar charts are mine, drawn from the papers' tables. Videos are embedded from the authors' or companies' own YouTube channels.
+
+The EXPO-FT numbers come from its Table 2. The Dong and Finn post summarizes the same comparison; its "5.5/30" average belongs to HIL-SERL on a subset of four tasks, not to imitation fine-tuning. The RoboArena score is from NVIDIA's June 2026 blog, not from my own check of the leaderboard. The MEM latency and task-progress numbers are read from the paper's figures, so they are approximate. RECAP's advantage example uses made-up numbers. I haven't run any of these systems.
 
 </details>

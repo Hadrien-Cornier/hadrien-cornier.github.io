@@ -1218,6 +1218,102 @@ function renderLlmTimeline(el) {
 }
 register('llm-timeline', renderLlmTimeline);
 
+// Continuous-action RL: three ways to pick the action with the highest value Q(a).
+const CA_PEAKS = [{c:-0.55, w:0.22, h:0.62}, {c:0.42, w:0.07, h:0.95}];
+const caQ = (a) => CA_PEAKS.reduce((sum, p) => sum + p.h * Math.exp(-((a - p.c) ** 2) / (2 * p.w ** 2)), 0.05);
+const caSlope = (a) => (caQ(a + 1e-3) - caQ(a - 1e-3)) / 2e-3;
+const CA_BEST = (() => { let best = -1; for (let a = -1; a <= 1; a += 1e-4) if (caQ(a) > caQ(best)) best = a; return best; })();
+// Base-policy samples: fixed, so the widget is reproducible. Most demonstrations used the wide left approach.
+const CA_SAMPLES = [-0.71, -0.48, 0.29, -0.62, -0.38, 0.51, -0.83, -0.55, 0.36, -0.44, -0.67, 0.24, -0.59, -0.3, 0.47, -0.75];
+const CA_MODES = [
+  {id:'grid', label:'Discretize (DQN)', text:'Cut the action range into bins and score every bin. This works for one number. A 7-joint arm with 20 bins per joint has 20^7 = 1.28 billion bins to score at every step.'},
+  {id:'actor', label:'Climb the slope (actor-critic)', text:'Start from one action and move it uphill along the slope of Q. DDPG, TD3 and SAC train an actor network to do this. It is fast, but it climbs the nearest hill, which may not be the highest.'},
+  {id:'edit', label:'Sample, edit, pick (EXPO-FT)', text:'Ask the base policy for several actions, move each one a small bounded step uphill, then keep the one with the highest Q. The base policy supplies good starting points; the edits stay small, so learning stays stable.'},
+];
+function renderContinuousAction(el) {
+  setWidgetRoot(el, 'continuous-action');
+  const W = 640, H = 270, m = {l:46, r:14, t:16, b:40};
+  const x = (a) => m.l + (a + 1) / 2 * (W - m.l - m.r);
+  const y = (q) => m.t + (1 - q / 1.1) * (H - m.t - m.b);
+  const plot = svgElement('svg', {viewBox:`0 0 ${W} ${H}`, role:'img', class:'ca-plot'});
+  const title = svgElement('title', {}, 'Value Q of each action, with the action each method picks');
+  const modeBar = element('div', 'so101-family-controls');
+  modeBar.setAttribute('role', 'group');
+  modeBar.setAttribute('aria-label', 'Choose a method');
+  const note = element('p', 'ca-note');
+  const controls = element('div', 'so101-controls');
+  const readout = element('p', 'ca-readout');
+  readout.setAttribute('aria-live', 'polite');
+  let mode = 'grid', bins = 6, start = -0.6, steps = 0, samples = 4, edit = 0.06;
+  const buttons = new Map();
+  const draw = () => {
+    plot.replaceChildren(title);
+    for (const q of [0, 0.5, 1]) {
+      plot.append(svgElement('line', {x1:m.l, x2:W - m.r, y1:y(q), y2:y(q), class:'so101-plot-grid'}));
+      plot.append(svgElement('text', {x:m.l - 8, y:y(q) + 4, 'text-anchor':'end', class:'so101-plot-tick'}, String(q)));
+    }
+    plot.append(svgElement('text', {x:(m.l + W - m.r) / 2, y:H - 6, 'text-anchor':'middle', class:'so101-plot-label'}, 'Action a (for example, the approach angle of the gripper)'));
+    plot.append(svgElement('text', {x:12, y:(m.t + H - m.b) / 2, 'text-anchor':'middle', class:'so101-plot-label', transform:`rotate(-90 12 ${(m.t + H - m.b) / 2})`}, 'Value Q(a)'));
+    const pts = [];
+    for (let a = -1; a <= 1.0001; a += 0.01) pts.push(`${x(a)},${y(caQ(a))}`);
+    plot.append(svgElement('polyline', {points:pts.join(' '), class:'ca-curve'}));
+    plot.append(svgElement('line', {x1:x(CA_BEST), x2:x(CA_BEST), y1:y(caQ(CA_BEST)) - 4, y2:y(0), class:'ca-best'}));
+    plot.append(svgElement('text', {x:x(CA_BEST) + 6, y:y(caQ(CA_BEST)) + 2, class:'ca-label'}, 'best action'));
+    let chosen, evaluations;
+    if (mode === 'grid') {
+      const centers = Array.from({length:bins}, (_, i) => -1 + (2 * i + 1) / bins);
+      const bw = (W - m.l - m.r) / bins;
+      centers.forEach((c) => plot.append(svgElement('rect', {x:x(c) - bw / 2 + 1, width:bw - 2, y:y(caQ(c)), height:y(0) - y(caQ(c)), class:'ca-bin'})));
+      chosen = centers.reduce((b, c) => caQ(c) > caQ(b) ? c : b, centers[0]);
+      evaluations = `${bins} for one number; ${bins}^7 = ${(bins ** 7).toLocaleString('en-US')} for 7 joints`;
+    } else if (mode === 'actor') {
+      let a = start;
+      const path = [a];
+      for (let i = 0; i < steps; i++) { a = Math.max(-1, Math.min(1, a + Math.max(-0.05, Math.min(0.05, 0.02 * caSlope(a))))); path.push(a); }
+      path.forEach((p, i) => plot.append(svgElement('circle', {cx:x(p), cy:y(caQ(p)), r:i === path.length - 1 ? 6 : 2.5, class:i === path.length - 1 ? 'ca-pick' : 'ca-trail'})));
+      chosen = a;
+      evaluations = `${steps} slope steps`;
+    } else {
+      const picks = CA_SAMPLES.slice(0, samples).map((s) => {
+        const moved = Math.max(-1, Math.min(1, s + Math.sign(caSlope(s)) * Math.min(edit, Math.abs(caSlope(s)) * 0.05)));
+        plot.append(svgElement('line', {x1:x(s), x2:x(moved), y1:y(caQ(s)), y2:y(caQ(moved)), class:'ca-edit'}));
+        plot.append(svgElement('circle', {cx:x(s), cy:y(caQ(s)), r:3, class:'ca-trail'}));
+        return moved;
+      });
+      chosen = picks.reduce((b, c) => caQ(c) > caQ(b) ? c : b, picks[0]);
+      evaluations = `${samples} samples, ${2 * samples} Q scores`;
+    }
+    plot.append(svgElement('circle', {cx:x(chosen), cy:y(caQ(chosen)), r:6, class:'ca-pick'}));
+    const share = caQ(chosen) / caQ(CA_BEST) * 100;
+    readout.textContent = `Picked a = ${chosen.toFixed(2)}, Q = ${caQ(chosen).toFixed(2)} (${share.toFixed(0)}% of the best Q = ${caQ(CA_BEST).toFixed(2)}). Cost: ${evaluations}.`;
+  };
+  const setMode = (id) => {
+    mode = id;
+    for (const [key, b] of buttons) b.setAttribute('aria-pressed', String(key === id));
+    note.textContent = CA_MODES.find((item) => item.id === id).text;
+    controls.replaceChildren();
+    if (id === 'grid') slider(controls, {label:'Bins', min:3, max:40, step:1, value:bins, onInput:(v) => { bins = v; draw(); }});
+    if (id === 'actor') {
+      slider(controls, {label:'Start action', min:-1, max:1, step:0.01, value:start, onInput:(v) => { start = v; draw(); }});
+      slider(controls, {label:'Slope steps', min:0, max:60, step:1, value:steps, onInput:(v) => { steps = v; draw(); }});
+    }
+    if (id === 'edit') {
+      slider(controls, {label:'Samples from the base policy', min:1, max:16, step:1, value:samples, onInput:(v) => { samples = v; draw(); }});
+      slider(controls, {label:'Largest edit', min:0, max:0.2, step:0.01, value:edit, onInput:(v) => { edit = v; draw(); }});
+    }
+    draw();
+  };
+  for (const item of CA_MODES) {
+    const b = button(item.label);
+    b.addEventListener('click', () => setMode(item.id));
+    buttons.set(item.id, b);
+    modeBar.append(b);
+  }
+  el.append(element('p', 'ca-intro', 'The critic gives a value Q to each action. Here the action is one number, so you can see the whole curve. A real robot never sees this curve: it must find the peak without scoring every action.'), modeBar, note, plot, controls, readout);
+  setMode('grid');
+}
+register('continuous-action', renderContinuousAction);
+
 function mount(element, fn) {
   if (element.dataset.so101Ready === 'true' || element.dataset.so101Ready === 'pending') return;
   let config;
