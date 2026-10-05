@@ -3,7 +3,7 @@ title: 'Seeing finer than the sensor'
 description: 'Why differentiating encoder ticks explodes the noise, and how an observer or a Kalman filter can estimate an angle finer than one tick.'
 date: '2026-10-05'
 draft: false
-series: 'Where to put the goal'
+series: 'From policy to action: the last mile of robotics control'
 part: 3
 ---
 

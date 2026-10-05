@@ -3,7 +3,7 @@ title: 'What the network learned, and why the offline tests lied'
 description: 'A network that halved its offline error made the arm 81 times worse in closed loop. What it learned, why it failed, and what I test next.'
 date: '2026-10-05'
 draft: false
-series: 'Where to put the goal'
+series: 'From policy to action: the last mile of robotics control'
 part: 5
 ---
 

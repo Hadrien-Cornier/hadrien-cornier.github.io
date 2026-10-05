@@ -1280,6 +1280,64 @@ def known_timeline():
     save_figure(fig, "known-timeline.png")
 
 
+def speed_coupling():
+    """Speed coupling against gravity on shoulder_lift, MuJoCo SO-101 at the real reach pose (inverse dynamics)."""
+    import sys
+
+    import mujoco
+
+    sys.path.insert(0, str(DATA_ROOT / "blog-renders" / "src"))
+    from robot_calibration.so101 import robot as so101_robot
+
+    model = so101_robot.build_spec(so101_robot.plant_for("nominal")).compile()
+    data = mujoco.MjData(model)
+    kp = float(model.actuator_gainprm[1][0])
+    reach = np.array([0.0, 0.1, 0.23, 0.0, 0.0])  # real reach-out hold, collection F25, pan and roll at 0
+
+    def bias(velocity):
+        # qfrc_bias = C(q, qdot) qdot + G(q): no damping, friction or acceleration
+        data.qpos[:] = 0
+        data.qvel[:] = 0
+        data.qpos[:5] = reach
+        data.qvel[:5] = velocity
+        mujoco.mj_forward(model, data)
+        return data.qfrc_bias[:5].copy()
+
+    gravity = bias(np.zeros(5))
+    speeds = np.linspace(0.02, 4.5, 200)
+    pan = np.array([abs(bias(np.array([w, 0, 0, 0, 0]))[1] - gravity[1]) for w in speeds]) / kp * 1000
+    pair = np.array([abs(bias(np.array([0, w, w, 0, 0]))[1] - gravity[1]) for w in speeds]) / kp * 1000
+    sag = abs(gravity[1]) / kp * 1000
+    tick = 1.534
+    fig, ax = plt.subplots(figsize=(8, 4.8))
+    ax.axvspan(0, 1.1, color=PALE, zorder=0)
+    ax.text(0.55, 150, "speeds in my\nreal recordings", ha="center", va="top", fontsize=10, color=MUTED)
+    ax.axhline(sag, color=ORANGE, lw=2.2)
+    ax.text(4.45, sag * 1.15, f"gravity sag {sag:.0f} mrad", ha="right", va="bottom", fontsize=10.5, color=ORANGE)
+    ax.axhline(tick, color=MUTED, lw=1.2, ls="--")
+    ax.text(4.45, tick * 1.15, "1 encoder tick", ha="right", va="bottom", fontsize=10, color=MUTED)
+    ax.plot(speeds, pan, color=BLUE, lw=2.4, label="base (pan) spins")
+    ax.plot(speeds, pair, color=TEAL, lw=2.2, ls="-.", label="lift and elbow move together")
+    at = float(np.interp(1.1, speeds, pan))
+    ax.scatter([1.1], [at], color=BLUE, zorder=4)
+    ax.annotate(f"{at:.2f} mrad at 1.1 rad/s", (1.1, at), xytext=(14, -4), textcoords="offset points",
+                fontsize=10, color=BLUE, va="top")
+    ax.set_yscale("log")
+    ax.set_ylim(0.01, 200)
+    ax.set_xlim(0, 4.5)
+    ax.set_xlabel("joint speed (rad/s)")
+    ax.set_ylabel("shoulder_lift error it causes (mrad)")
+    ax.set_title("Speed coupling is real, but small on this arm", loc="left", pad=12, weight="bold")
+    ax.legend(loc="lower right", fontsize=9.6)
+    clean_axis(ax, "y")
+    fig.text(0.13, 0.015, f"Simulated SO-101 (MuJoCo), arm reaching out. Torque converted to mrad by kp = {kp:.2f} N m/rad.",
+             fontsize=9.2, color=MUTED)
+    fig.subplots_adjust(left=0.12, right=0.97, top=0.88, bottom=0.17)
+    save_figure(fig, "speed-coupling.png")
+    print(f"speed coupling: sag {sag:.1f} mrad, pan {at:.2f} mrad and lift+elbow "
+          f"{float(np.interp(1.1, speeds, pair)):.2f} mrad at 1.1 rad/s; at 4.5 rad/s {pan[-1]:.1f} and {pair[-1]:.1f}")
+
+
 def main():
     set_style()
     figures = [
@@ -1289,7 +1347,7 @@ def main():
         torque_limit, constants_dumbbell, accel_pipelines, one_step_gain,
         observer_step, two_observers, inv_goal, pi_five, deadband_cost,
         real_arm_joints, sim_five, hold_torque, hindsight_label, network_io,
-        nn_vs_fitted, sensitivity, data_curves, residual, known_timeline,
+        nn_vs_fitted, sensitivity, data_curves, residual, known_timeline, speed_coupling,
     ]
     for make_figure in figures:
         make_figure()

@@ -3,7 +3,7 @@ title: 'Target, goal, and the servo in the middle'
 description: 'Why a cheap robot arm misses the angle you ask for, and why every fix comes down to one question: where do I put the goal?'
 date: '2026-10-05'
 draft: false
-series: 'Where to put the goal'
+series: 'From policy to action: the last mile of robotics control'
 part: 1
 ---
 
@@ -12,11 +12,11 @@ I've been trying to find out whether a robot controller can be more accurate tha
 When I send my arm a smooth path to follow, it doesn't quite follow it. It arrives a little late, it stops a little short, and when it's supposed to hold still it sags slightly below the angle I asked for. With the default LeRobot setup running at 30 Hz, the joints end up 22.5 mrad away from the path on average, which is about 1.3 degrees. That doesn't sound like a lot until you remember the gripper sits 30 cm out at the end of the arm, and that I'd like it to pick up something as small as a screw.
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-direct.png" aria-label="The real SO-101 arm following a recorded motion with the default controller, with its error drawn ten times larger">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-direct.png" aria-label="The real SO-101 arm following a recorded motion with the default controller, with its joint error plotted under it">
 <source src="/assets/robotics/so101-series/cat-direct.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/cat-direct.mp4">Watch the video</a>
 </video>
-<figcaption>My real arm on the "cat" motion with the default controller (`direct`, 30 Hz), replayed from the recorded joint angles. The gray ghost is the target. The yellow arm is where the joint really was, with the error drawn 10 times larger, and it turns red where it misses most. The error numbers under the arm cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-direct.mp4">Open video</a></figcaption>
+<figcaption>My real arm on the "cat" motion with the default controller (`direct`, 30 Hz), replayed from the recorded joint angles. The arm is drawn where it really was, and the gray shape is the target pose where the arm misses it. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the joint error in mrad, with the same scale in every plot. The numbers cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-direct.mp4">Open video</a></figcaption>
 </figure>
 
 So I wanted to understand why the arm misses, and what each of the usual fixes actually buys me. This series goes through it one problem at a time. It starts with the gap between the goal and the joint, because the rest of the series builds on it.
@@ -26,11 +26,11 @@ So I wanted to understand why the arm misses, and what each of the usual fixes a
 Here is the same motion run with each of the controllers I built. Each one starts from an earlier controller and adds a single part to it.
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-four.png" aria-label="The same real motion with four controllers side by side: direct, pi, solve and mpc, error drawn ten times larger">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-four.png" aria-label="The same real motion with four controllers side by side: direct, pi, solve and mpc, each with its joint error plotted under it">
 <source src="/assets/robotics/so101-series/cat-four.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/cat-four.mp4">Watch the video</a>
 </video>
-<figcaption>The same motion on the real arm with four controllers, error drawn 10 times larger. `direct` ran at 30 Hz and the other three at 60 Hz, so the loop rate is part of the difference. The numbers under each arm cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-four.mp4">Open video</a></figcaption>
+<figcaption>The same motion on the real arm with four controllers. The arm is drawn where it really was, and the gray shape is the target pose where the arm misses it. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the joint error in mrad, with the same scale in every plot. `direct` ran at 30 Hz and the other three at 60 Hz, so the loop rate is part of the difference. The numbers cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-four.mp4">Open video</a></figcaption>
 </figure>
 
 ![Bar chart of the real-arm tracking error. Cat motion: direct 22.5 mrad at 30 Hz, pi 8.4, solve 6.2 and mpc 6.0 at 60 Hz. Signature motion: direct 28.3, lead 23.7 and inv 13.4 mrad.](/assets/robotics/so101-series/map-errors.png "Real arm, RMS error over all five joints and the whole motion. The two motions are different, so compare bars within a motion.")

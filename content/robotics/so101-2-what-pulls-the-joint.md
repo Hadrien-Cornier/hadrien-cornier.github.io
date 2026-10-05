@@ -3,7 +3,7 @@ title: 'What pulls the joint off its target'
 description: 'Ticks, dead time, friction, heat, gravity, speed coupling and a payload: each effect that makes a cheap servo miss, and how large each one is.'
 date: '2026-10-05'
 draft: false
-series: 'Where to put the goal'
+series: 'From policy to action: the last mile of robotics control'
 part: 2
 ---
 
@@ -163,12 +163,14 @@ A hot servo is weaker. The resistance of the copper rises by about 0.4 % per °C
 The gravity torque on a joint depends on how far the links beyond it stick out horizontally. With the arm stretched out flat, the shoulder carries the largest torque, and with the arm pointing straight up it carries none.
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/gravity-poses.png" aria-label="Simulated arm with direct control, first folded up and then reaching out flat, with the error drawn four times larger">
-<source src="/assets/robotics/so101-series/gravity-poses.mp4" type="video/mp4">
-<a href="/assets/robotics/so101-series/gravity-poses.mp4">Watch the video</a>
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/gravity-real.png" aria-label="Two recordings of the real arm with direct control making the same small lift steps, one tucked in and one reaching out, with the lift error plotted under each">
+<source src="/assets/robotics/so101-series/gravity-real.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/gravity-real.mp4">Watch the video</a>
 </video>
-<figcaption>Simulated SO-101 with `direct` control, folded up and then reaching out. The sag grows when the arm reaches out, because gravity has a longer lever arm. Error drawn 4 times larger. <a class="video-link" href="/assets/robotics/so101-series/gravity-poses.mp4">Open video</a></figcaption>
+<figcaption>My real arm with `direct` at 60 Hz, making small shoulder_lift steps in two poses. The arm is drawn where it really was, and the gray shape is the target pose. Tucked in, the lift error averages -3.8 mrad and the servo reports about 1 % load. Reaching out, the error averages +42 mrad and the load is about 11 %. The spread inside each plot is the friction band from the section above. <a class="video-link" href="/assets/robotics/so101-series/gravity-real.mp4">Open video</a></figcaption>
 </figure>
+
+One thing in the clip I can't explain yet: the elbow sits about 70 mrad off its target in both poses, and it does so in all my single-joint sweep recordings, even when the elbow target does not move.
 
 The servo models I fitted capture this through the angle of each link from vertical, which is the shoulder angle, then shoulder plus elbow, then shoulder plus elbow plus wrist. The sines and cosines of those angles have the same shape as the gravity torque of a chain of links.
 
@@ -184,22 +186,18 @@ $$
 
 where $M\ddot q$ is the inertia, $C\dot q$ is the speed coupling and $G$ is gravity.
 
-<figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/pan-swing.png" aria-label="Simulated arm swinging its base fast while the other joints try to hold still, with their error drawn ten times larger">
-<source src="/assets/robotics/so101-series/pan-swing.mp4" type="video/mp4">
-<a href="/assets/robotics/so101-series/pan-swing.mp4">Watch the video</a>
-</video>
-<figcaption>Simulated SO-101 swinging its base. The other joints have fixed targets, but the swing pushes them off. Their error is drawn 10 times larger; the base is drawn as it is. <a class="video-link" href="/assets/robotics/so101-series/pan-swing.mp4">Open video</a></figcaption>
-</figure>
+![Error on shoulder_lift caused by speed coupling against joint speed, on a log scale. At the 1.1 rad/s of my fastest real recordings, a spinning base causes 0.38 mrad and the lift and elbow moving together cause 1.5 mrad, against 43 mrad of gravity sag.](/assets/robotics/so101-series/speed-coupling.png "Simulated SO-101 reaching out. Speed coupling grows with the square of the speed, but at the speeds I record it stays near or below one encoder tick.")
+
+On this arm, the effect is small. With the arm reaching out, a base that spins at 1.1 rad/s (about the fastest speed in my real recordings) pushes shoulder_lift by 0.38 mrad, a quarter of one encoder tick. Lift and elbow moving together at that speed cost 1.5 mrad, about one tick. Gravity at the same pose costs 43 mrad. The coupling grows with the square of the speed, so it matters for a fast or heavy arm, but on a slow $100 arm it is near the bottom of the list.
 
 ## A payload, and the torque limit
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/payload-pickup.png" aria-label="Simulated arm holding a pose when a 200 gram load appears in the gripper, with the error drawn five times larger">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/payload-pickup.png" aria-label="Simulated arm holding a pose when a 200 gram load appears in the gripper, with the lift and elbow error plotted under it">
 <source src="/assets/robotics/so101-series/payload-pickup.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/payload-pickup.mp4">Watch the video</a>
 </video>
-<figcaption>Simulated SO-101 holding a pose with `direct` control. At 2 s a 200 g load appears in the gripper and the arm sags. Error drawn 5 times larger. <a class="video-link" href="/assets/robotics/so101-series/payload-pickup.mp4">Open video</a></figcaption>
+<figcaption>Simulated SO-101 (MuJoCo physics) with `direct`, holding the reach pose of my real arm, drawn at its true pose. Before the load, gravity already pulls shoulder_lift 40 mrad below its target. At 2 s a 200 g load appears in the gripper and the sag grows to 83 mrad. <a class="video-link" href="/assets/robotics/so101-series/payload-pickup.mp4">Open video</a></figcaption>
 </figure>
 
 ![Braking torque needed before a stop. A late brake needs 7 N·m, above the 5.107 N·m torque clamp. An early brake needs 3 N·m, below the clamp.](/assets/robotics/so101-series/torque-limit.png "A brake that starts late needs more torque than the servo has. A brake that starts early stays under the limit.")
