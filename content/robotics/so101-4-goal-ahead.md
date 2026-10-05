@@ -18,11 +18,11 @@ The first three parts were about the problem: the servo only makes torque from a
 ![Two panels from the real arm on the same motion. With direct, the goal sits on the target and the joint arrives late. With inv, the goal leads the target and the joint lands closer to it.](/assets/robotics/so101-series/inv-goal.png "Real arm, 30 Hz. `inv` sends the goal ahead of the target, so the joint arrives closer to on time.")
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/sig-inv.png" aria-label="Three copies of the real arm on the same motion with direct, lead and inv, each with its joint error plotted beside it">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/sig-inv.png" aria-label="Three copies of the real arm on the same motion with direct, lead and inv, each with its error drawn larger and plotted beside it">
 <source src="/assets/robotics/so101-series/sig-inv.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/sig-inv.mp4">Watch the video</a>
 </video>
-<figcaption>Real arm on the same motion with `direct`, `lead` and `inv` at 30 Hz. The arm is drawn where it really was, and the gray shape is the target pose where the arm misses it. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the joint error in mrad, with the same scale in every plot. <a class="video-link" href="/assets/robotics/so101-series/sig-inv.mp4">Open video</a></figcaption>
+<figcaption>Real arm on the same motion with `direct`, `lead` and `inv` at 30 Hz. The error is drawn 10 times larger, and large errors are compressed so the arm stays clear of the table and the base. The gray shape is the target pose. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the true joint error in mrad, with the same scale in every plot. <a class="video-link" href="/assets/robotics/so101-series/sig-inv.mp4">Open video</a></figcaption>
 </figure>
 
 The simplest fixes don't look at the arm at all, only at the target. `lead` just sends the target one tick early. `inv` goes further and inverts a simple model of the servo, with the dead time and the lag from the step test on my arm:
@@ -100,7 +100,7 @@ I tested this in simulation, with the SO-101 model in MuJoCo, a 150 g load in th
 <source src="/assets/robotics/so101-series/shake.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/shake.mp4">Watch the video</a>
 </video>
-<figcaption>Simulated SO-101 shaking a 150 g load at 1 Hz, drawn at its true pose. Top row vertical (plot: shoulder_lift), bottom row horizontal (plot: shoulder_pan); left `pi`, right preview. The four plots use the same scale. <a class="video-link" href="/assets/robotics/so101-series/shake.mp4">Open video</a></figcaption>
+<figcaption>Simulated SO-101 shaking a 150 g load at 1 Hz, error drawn 10 times larger. Top row vertical (plot: shoulder_lift), bottom row horizontal (plot: shoulder_pan); left `pi`, right preview. The four plots use the same scale. <a class="video-link" href="/assets/robotics/so101-series/shake.mp4">Open video</a></figcaption>
 </figure>
 
 The result was half what I expected. In the vertical shake, the integral did remove the steady part: the mean error went from 50 mrad with `direct` to 0 with `pi`. But the shake itself stayed, with an RMS error of 77 mrad against 88, because the vertical shake also has to accelerate and stop the load, and that part reverses just like in the horizontal case. In the horizontal shake there was no steady part to remove, and `pi` did nothing at all, 66 mrad against 65.
@@ -176,11 +176,11 @@ I thought `solve` was basically Mink. It isn't. Mink is inverse kinematics: it t
 ### The real-arm numbers
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-four.png" aria-label="The same real motion with four controllers side by side: direct, pi, solve and mpc, each with its joint error plotted under it">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-four.png" aria-label="The same real motion with four controllers side by side: direct, pi, solve and mpc, each with its error drawn larger and plotted under it">
 <source src="/assets/robotics/so101-series/cat-four.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/cat-four.mp4">Watch the video</a>
 </video>
-<figcaption>Real arm on the cat motion: `direct` at 30 Hz, `pi`, `solve` and `mpc` at 60 Hz. The arm is drawn where it really was, and the gray shape is the target pose where the arm misses it. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the joint error in mrad, with the same scale in every plot. <a class="video-link" href="/assets/robotics/so101-series/cat-four.mp4">Open video</a></figcaption>
+<figcaption>Real arm on the cat motion: `direct` at 30 Hz, `pi`, `solve` and `mpc` at 60 Hz. The error is drawn 10 times larger, and large errors are compressed so the arm stays clear of the table and the base. The gray shape is the target pose. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the true joint error in mrad, with the same scale in every plot. <a class="video-link" href="/assets/robotics/so101-series/cat-four.mp4">Open video</a></figcaption>
 </figure>
 
 On the real arm, on the "cat" motion at 60 Hz, the errors in mrad were:
@@ -206,11 +206,11 @@ A model is fitted once, and then the arm picks up a tool, warms up, or simply is
 On my real arm, `mpca` is the controller I ran the most. On one 120 s motion at 60 Hz, with the fitted constants of my arm, it kept shoulder_lift at 10.3 mrad RMS. `direct` on the same motion and at the same rate gave 87.6 mrad, mostly because the arm reaches out and sags (mean error 70 mrad).
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/real-mpca.png" aria-label="Two copies of the real arm on the same motion at 60 Hz, direct and mpca, each with its joint error plotted under it">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/real-mpca.png" aria-label="Two copies of the real arm on the same motion at 60 Hz, direct and mpca, each with its error drawn larger and plotted under it">
 <source src="/assets/robotics/so101-series/real-mpca.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/real-mpca.mp4">Watch the video</a>
 </video>
-<figcaption>Real arm, same motion, 60 Hz: `direct` against `mpca`. The arm is drawn where it really was, and the gray shape is the target pose where the arm misses it. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the joint error in mrad, with the same scale in every plot. The plots cover the first 16 s; the RMS numbers in the text cover the whole 120 s run. <a class="video-link" href="/assets/robotics/so101-series/real-mpca.mp4">Open video</a></figcaption>
+<figcaption>Real arm, same motion, 60 Hz: `direct` against `mpca`. The error is drawn 10 times larger, and large errors are compressed so the arm stays clear of the table and the base. The gray shape is the target pose. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the true joint error in mrad, with the same scale in every plot. The plots cover the first 16 s; the RMS numbers in the text cover the whole 120 s run. <a class="video-link" href="/assets/robotics/so101-series/real-mpca.mp4">Open video</a></figcaption>
 </figure>
 
 <details>

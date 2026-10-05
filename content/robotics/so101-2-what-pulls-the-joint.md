@@ -167,7 +167,7 @@ The gravity torque on a joint depends on how far the links beyond it stick out h
 <source src="/assets/robotics/so101-series/gravity-real.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/gravity-real.mp4">Watch the video</a>
 </video>
-<figcaption>My real arm with `direct` at 60 Hz, making small shoulder_lift steps in two poses. The arm is drawn where it really was, and the gray shape is the target pose. Tucked in, the lift error averages -3.8 mrad and the servo reports about 1 % load. Reaching out, the error averages +42 mrad and the load is about 11 %. The spread inside each plot is the friction band from the section above. <a class="video-link" href="/assets/robotics/so101-series/gravity-real.mp4">Open video</a></figcaption>
+<figcaption>My real arm with `direct` at 60 Hz, making small shoulder_lift steps in two poses. The error is drawn 10 times larger, with large errors compressed, and the gray shape is the target pose. The plots give the true error. Tucked in, the lift error averages -3.8 mrad and the servo reports about 1 % load. Reaching out, the error averages +42 mrad and the load is about 11 %. The spread inside each plot is the friction band from the section above. <a class="video-link" href="/assets/robotics/so101-series/gravity-real.mp4">Open video</a></figcaption>
 </figure>
 
 One thing in the clip I can't explain yet: the elbow sits about 70 mrad off its target in both poses, and it does so in all my single-joint sweep recordings, even when the elbow target does not move.
@@ -197,7 +197,7 @@ On this arm, the effect is small. With the arm reaching out, a base that spins a
 <source src="/assets/robotics/so101-series/payload-pickup.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/payload-pickup.mp4">Watch the video</a>
 </video>
-<figcaption>Simulated SO-101 (MuJoCo physics) with `direct`, holding the reach pose of my real arm, drawn at its true pose. Before the load, gravity already pulls shoulder_lift 40 mrad below its target. At 2 s a 200 g load appears in the gripper and the sag grows to 83 mrad. <a class="video-link" href="/assets/robotics/so101-series/payload-pickup.mp4">Open video</a></figcaption>
+<figcaption>Simulated SO-101 (MuJoCo physics) with `direct`, holding the reach pose of my real arm. The error is drawn 10 times larger, with large errors compressed so the gripper stays above the table; the plot gives the true error. Before the load, gravity already pulls shoulder_lift 40 mrad below its target. At 2 s a 200 g load appears in the gripper and the sag grows to 83 mrad. <a class="video-link" href="/assets/robotics/so101-series/payload-pickup.mp4">Open video</a></figcaption>
 </figure>
 
 ![Braking torque needed before a stop. A late brake needs 7 N·m, above the 5.107 N·m torque clamp. An early brake needs 3 N·m, below the clamp.](/assets/robotics/so101-series/torque-limit.png "A brake that starts late needs more torque than the servo has. A brake that starts early stays under the limit.")

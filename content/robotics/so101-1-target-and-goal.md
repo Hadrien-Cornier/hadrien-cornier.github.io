@@ -16,7 +16,7 @@ When I send my arm a smooth path to follow, it doesn't quite follow it. It arriv
 <source src="/assets/robotics/so101-series/cat-direct.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/cat-direct.mp4">Watch the video</a>
 </video>
-<figcaption>My real arm on the "cat" motion with the default controller (`direct`, 30 Hz), replayed from the recorded joint angles. The arm is drawn where it really was, and the gray shape is the target pose where the arm misses it. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the joint error in mrad, with the same scale in every plot. The numbers cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-direct.mp4">Open video</a></figcaption>
+<figcaption>My real arm on the "cat" motion with the default controller (`direct`, 30 Hz), replayed from the recorded joint angles. The error is drawn 10 times larger, and large errors are compressed so the arm stays clear of the table and the base. The gray shape is the target pose. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the true joint error in mrad, with the same scale in every plot. The numbers cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-direct.mp4">Open video</a></figcaption>
 </figure>
 
 So I wanted to understand why the arm misses, and what each of the usual fixes actually buys me. This series goes through it one problem at a time. It starts with the gap between the goal and the joint, because the rest of the series builds on it.
@@ -26,11 +26,11 @@ So I wanted to understand why the arm misses, and what each of the usual fixes a
 Here is the same motion run with each of the controllers I built. Each one starts from an earlier controller and adds a single part to it.
 
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-four.png" aria-label="The same real motion with four controllers side by side: direct, pi, solve and mpc, each with its joint error plotted under it">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-four.png" aria-label="The same real motion with four controllers side by side: direct, pi, solve and mpc, each with its error drawn larger and plotted under it">
 <source src="/assets/robotics/so101-series/cat-four.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-series/cat-four.mp4">Watch the video</a>
 </video>
-<figcaption>The same motion on the real arm with four controllers. The arm is drawn where it really was, and the gray shape is the target pose where the arm misses it. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the joint error in mrad, with the same scale in every plot. `direct` ran at 30 Hz and the other three at 60 Hz, so the loop rate is part of the difference. The numbers cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-four.mp4">Open video</a></figcaption>
+<figcaption>The same motion on the real arm with four controllers. The error is drawn 10 times larger, and large errors are compressed so the arm stays clear of the table and the base. The gray shape is the target pose. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the true joint error in mrad, with the same scale in every plot. `direct` ran at 30 Hz and the other three at 60 Hz, so the loop rate is part of the difference. The numbers cover this 16 s window only. <a class="video-link" href="/assets/robotics/so101-series/cat-four.mp4">Open video</a></figcaption>
 </figure>
 
 ![Bar chart of the real-arm tracking error. Cat motion: direct 22.5 mrad at 30 Hz, pi 8.4, solve 6.2 and mpc 6.0 at 60 Hz. Signature motion: direct 28.3, lead 23.7 and inv 13.4 mrad.](/assets/robotics/so101-series/map-errors.png "Real arm, RMS error over all five joints and the whole motion. The two motions are different, so compare bars within a motion.")
