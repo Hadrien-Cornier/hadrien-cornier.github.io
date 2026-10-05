@@ -33,23 +33,23 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/robotics/so101-1-target-and-goal/</loc>
-    <lastmod>2026-10-05</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/robotics/so101-2-finer-than-the-sensor/</loc>
+    <loc>https://hadrien-cornier.github.io/robotics/so101-4-learning-what-physics-misses/</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/so101-3-choosing-the-goal/</loc>
-    <lastmod>2026-10-05</lastmod>
+    <lastmod>2026-10-04</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/robotics/so101-4-learning-what-physics-misses/</loc>
-    <lastmod>2026-10-05</lastmod>
+    <loc>https://hadrien-cornier.github.io/robotics/so101-2-finer-than-the-sensor/</loc>
+    <lastmod>2026-10-03</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/so101-1-target-and-goal/</loc>
+    <lastmod>2026-10-02</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>

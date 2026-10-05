@@ -1,7 +1,7 @@
 ---
 title: 'Six ways to choose the goal'
 description: 'One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC, is that formula with some terms set to zero.'
-date: '2026-10-05'
+date: '2026-10-04'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 3
