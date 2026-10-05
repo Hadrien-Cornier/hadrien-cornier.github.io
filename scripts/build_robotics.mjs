@@ -26,7 +26,14 @@ function validateSeriesMetadata(data) {
   if (data.series !== undefined && (typeof data.series !== 'string' || !data.series.trim())) throw new Error('series must be a non-empty string');
   if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 1)) throw new Error('part must be a positive integer');
   if (data.series && data.part === undefined) throw new Error('part is required when series is set');
+  if (data.track !== undefined && !TRACKS[data.track]) throw new Error(`track must be one of: ${Object.keys(TRACKS).join(', ')}`);
+  if (data.track !== undefined && !data.series) throw new Error('track requires series');
 }
+// A track marks a series part of a different kind (for example the hardware side of a control series).
+// It gives the part its own accent colour and a label wherever the series is listed.
+const TRACKS = {hardware:'Hardware'};
+const trackClass = (article) => article.track ? ` track-${article.track}` : '';
+const trackLabel = (article) => article.track ? ` · ${TRACKS[article.track]}` : '';
 const displayDate = (value) => new Intl.DateTimeFormat('en', {year:'numeric', month:'long', day:'numeric', timeZone:'UTC'}).format(new Date(value));
 
 export function renderArticle(source, root = ROOT) {
@@ -187,7 +194,7 @@ ${GENERATED_MARKER}
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
 <link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
-</head><body class="${pathname === '/' ? 'home-page' : 'robotics'}"><a class="skip" href="#main">Skip to content</a>
+</head><body class="${pathname === '/' ? 'home-page' : 'robotics'}${article ? trackClass(article) : ''}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
 ${footer}</main></body></html>\n`;
@@ -195,11 +202,11 @@ ${footer}</main></body></html>\n`;
 function seriesBox(article) {
   if (!article.seriesArticles) return '';
   const parts = article.seriesArticles.map((part) => part.slug === article.slug
-    ? `<li aria-current="page">${escape(part.title)}</li>`
-    : `<li><a href="/robotics/${part.slug}/">${escape(part.title)}</a></li>`).join('');
+    ? `<li class="series-part${trackClass(part)}" aria-current="page">${escape(part.title)}${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`
+    : `<li class="series-part${trackClass(part)}"><a href="/robotics/${part.slug}/">${escape(part.title)}</a>${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`).join('');
   const previous = article.seriesPrevious ? `<a rel="prev" href="/robotics/${article.seriesPrevious.slug}/">← Previous: ${escape(article.seriesPrevious.title)}</a>` : '';
   const next = article.seriesNext ? `<a rel="next" href="/robotics/${article.seriesNext.slug}/">Next: ${escape(article.seriesNext.title)} →</a>` : '';
-  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
 function articlePage(article, root) {
   const toc = article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
@@ -221,8 +228,8 @@ function articleUnits(articles) {
   });
 }
 function articleCard(article) {
-  const part = article.series ? `<span class="report-part">Part ${article.part}</span>` : '';
-  return `<a class="report-card" href="/robotics/${article.slug}/"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
+  const part = article.series ? `<span class="report-part">Part ${article.part}${trackLabel(article)}</span>` : '';
+  return `<a class="report-card${trackClass(article)}" href="/robotics/${article.slug}/"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
 }
 function seriesBlock(unit, renderArticle, className = '') {
   const count = `${unit.articles.length} ${unit.articles.length === 1 ? 'part' : 'parts'}`;
@@ -299,8 +306,8 @@ function homePage(articles, root) {
   let rowNumber = latestUnit?.series ? 1 : 2;
   const renderRow = (article) => {
     const image = previewImage(article, root);
-    const label = article.series ? `Part ${article.part}` : String(rowNumber++).padStart(2, '0');
-    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}" href="/robotics/${article.slug}/"><span class="writing-row-number">${label}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
+    const label = article.series ? `Part ${article.part}${article.track ? `<small>${TRACKS[article.track]}</small>` : ''}` : String(rowNumber++).padStart(2, '0');
+    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}${trackClass(article)}" href="/robotics/${article.slug}/"><span class="writing-row-number">${label}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
   };
   const feature = latestUnit?.series
     ? seriesBlock(latestUnit, renderRow, 'series-block-home')
