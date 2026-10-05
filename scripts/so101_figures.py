@@ -5,6 +5,7 @@ from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.ticker
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, Rectangle, Circle
 import numpy as np
@@ -314,14 +315,14 @@ def error_vs_kp():
     ax.axhline(5.0, color=ORANGE, lw=1.5, ls="--",
                label="goal hold, does not depend on kp")
     points = [
-        (13.64, 37.2, "nominal", BLUE, (-105, -58)),
-        (12.31, 40.5, "weak_supply", RED, (12, 28)),
-        (22.1, 24.8, "stiff_servo", PURPLE, (35, -32)),
+        (13.64, 37.2, "nominal", BLUE, (16.5, 13.0)),
+        (12.31, 40.5, "weak_supply", RED, (16.0, 47.0)),
+        (22.1, 24.8, "stiff_servo", PURPLE, (29.0, 33.0)),
     ]
     for x, y, label, color, offset in points:
         ax.scatter(x, y, s=55, color=color, edgecolor="white", linewidth=0.7, zorder=4)
         ax.annotate(f"{label} ({x:g}, {y:g})", (x, y), xytext=offset,
-                    textcoords="offset points", fontsize=10, color=INK,
+                    textcoords="data", fontsize=10, color=INK,
                     arrowprops={"arrowstyle": "->", "color": color, "lw": 1.2,
                                 "shrinkA": 4, "shrinkB": 5})
     ax.set_xlim(8, 60)
@@ -484,7 +485,7 @@ def lag_on_path():
     if lag_s > 0:
         ax.annotate("", xy=(delayed_feature_time, y_annot), xytext=(feature_time, y_annot),
                     arrowprops={"arrowstyle": "<->", "color": PURPLE, "lw": 1.6})
-        ax.text((feature_time + delayed_feature_time) / 2, y_annot + 0.7,
+        ax.text((feature_time + delayed_feature_time) / 2, y_annot + 2.5,
                 f"about {abs(lag_s) * 1000:.0f} ms late", ha="center",
                 fontsize=10, color=PURPLE)
     else:
@@ -492,7 +493,7 @@ def lag_on_path():
                 transform=ax.transAxes, fontsize=10, color=PURPLE,
                 bbox={"facecolor": "white", "edgecolor": "none", "pad": 1.0})
     ax.set_xlim(0, 6)
-    ax.set_xlabel(f"time from {start:g} s (s)")
+    ax.set_xlabel("time (s)")
     ax.set_ylabel("shoulder_lift angle (degrees)")
     ax.set_title("Real arm, direct control: the joint runs behind the target",
                  loc="left", pad=12, weight="bold")
@@ -973,10 +974,8 @@ def real_arm_joints():
         bars = ax.bar(x + (index - 1) * width, values[name], width,
                       color=CONTROLLER[name], label=name)
         for bar_index, bar in enumerate(bars):
-            value_offset = -0.10 if bar_index == len(joints) - 1 and index < 2 else 0.2
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + value_offset,
-                    f"{bar.get_height():g}", ha="center",
-                    va="top" if value_offset < 0 else "bottom", fontsize=8.8)
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.2,
+                    f"{bar.get_height():g}", ha="center", va="bottom", fontsize=7.8)
     ax.set_xticks(x, joints, rotation=0)
     ax.set_ylabel("RMS tracking error (mrad)")
     ax.set_ylim(0, 14.2)
@@ -1194,6 +1193,7 @@ def data_curves():
     ax.set_xticks([1, 2, 4, 8, 16], ["1", "2", "4", "8", "16"])
     ax.set_yscale("log")
     ax.set_yticks([3, 5, 10, 20, 30], ["3", "5", "10", "20", "30"])
+    ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
     ax.set_xlim(0.9, 19)
     ax.set_ylim(2.6, 45)
     ax.set_xlabel("real data (minutes, log scale)")
@@ -1222,7 +1222,7 @@ def residual():
     add_arrow(ax, (2.02, 3.48), (2.54, 3.00), BLUE)
     add_arrow(ax, (2.02, 2.22), (2.54, 2.77), RED)
     ax.text(2.28, 2.92, "+", ha="center", va="center", fontsize=18, color=INK)
-    ax.text(2.28, 2.18, "residual", ha="center", fontsize=9.5, color=RED)
+    ax.text(2.15, 1.62, "residual", ha="center", fontsize=9.5, color=RED)
     ax.text(2.15, 0.85, "physics + learned correction", ha="center",
             fontsize=9.3, color=MUTED)
 
