@@ -3,7 +3,12 @@ title: 'A pen holder that shows the arm’s error, not its own'
 description: 'I want to see my SO-101 trajectory errors as ink on paper. For that, the pen must not add an error of its own. Here is the holder I designed, the lever rule behind it, and the numbers I will test after I print it this weekend.'
 date: '2026-10-05'
 draft: false
+series: 'From policy to action: the last mile of robotics control'
+part: 5
+track: hardware
 ---
+
+This is the hardware part of the series. [Parts 1 to 4](/robotics/so101-1-target-and-goal/) measure the arm's error in joint angles. This part builds the tool that will show the same error as ink on paper.
 
 I want to make my SO-101 arm follow a path more accurately. For that, I need a way to see whether a change makes the path better or worse. Joint logs give me numbers, but numbers are easy to fool myself with. So I had an idea: put a pen on the arm and let it draw. When the arm leaves the path, the drawing goes wrong, and anyone can see it.
 

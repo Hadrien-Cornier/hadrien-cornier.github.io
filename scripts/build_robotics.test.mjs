@@ -221,6 +221,32 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 
+test('a hardware track part gets its own class and label in the series', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-track-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\n${metadata}---\n\n${title} body.`;
+    fs.writeFileSync(path.join(sourceDir, 'control-part.md'), report('Control part', '2026-09-26', 'series: Arm series\npart: 1\n'));
+    fs.writeFileSync(path.join(sourceDir, 'hardware-part.md'), report('Hardware part', '2026-09-28', 'series: Arm series\npart: 2\ntrack: hardware\n'));
+    build(root);
+    const control = fs.readFileSync(path.join(root, 'robotics/control-part/index.html'), 'utf8');
+    const hardware = fs.readFileSync(path.join(root, 'robotics/hardware-part/index.html'), 'utf8');
+    const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
+    const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(hardware, /<body class="robotics track-hardware">/);
+    assert.match(control, /<body class="robotics">/);
+    assert.match(hardware, /Part 2 of 2 · Hardware/);
+    assert.match(control, /<li class="series-part track-hardware"><a href="\/robotics\/hardware-part\/">Hardware part<\/a><span class="track-tag">Hardware<\/span>/);
+    assert.match(listing, /report-card track-hardware" href="\/robotics\/hardware-part\/"/);
+    assert.match(listing, /report-part">Part 2 · Hardware</);
+    assert.match(home, /writing-row track-hardware" href="\/robotics\/hardware-part\/"/);
+    assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\npart: 1\ntrack: wood\n---\nBody.`), /track must be one of: hardware/);
+    assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\ntrack: hardware\n---\nBody.`), /track requires series/);
+  } finally { fs.rmSync(root, {recursive:true,force:true}); }
+});
+
 test('published series reject duplicate part numbers', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-duplicate-'));
   try {
