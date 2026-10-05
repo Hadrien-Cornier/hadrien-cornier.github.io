@@ -8,11 +8,21 @@ slug: 'why-i-am-learning-robotics'
 
 In 2018, Boston Dynamics posted a video of its Atlas humanoid jumping over a log and running up a set of boxes. A year earlier, Atlas did a backflip. For a lot of people, me included, those clips were what a robot was supposed to look like. So where are they? I went looking for one at work, and I couldn't find many. Spot, the robot dog, [went on sale in 2020](https://venturebeat.com/ai/boston-dynamics-buy-spot-robot-74500) for $74,500, and Boston Dynamics now says it has [more than 1,500 Spots in customer hands](https://bostondynamics.com/products/spot/). Over the same years, Amazon put [one million robots](https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model) into its warehouses, and almost none of them can walk.
 
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/LikxFZZO2sk" title="Parkour Atlas, Boston Dynamics, 2018" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Boston Dynamics, "Parkour Atlas" (October 2018). <a href="https://www.youtube.com/watch?v=LikxFZZO2sk">Watch on YouTube</a></figcaption>
+</figure>
+
 That's the question that pulled me into robotics: **why did the most capable robots in the world stay in the videos, and why does that seem to be changing now?** My short answer is that the problem was never the body. It was the software, and more precisely the fact that the software couldn't generalize. Language models are changing that, and I think robotics today looks a lot like language models did in 2019.
 
 ## Why the best robots stayed in the videos
 
 Boston Dynamics explained how the parkour worked in [a 2021 post](https://bostondynamics.com/blog/flipping-the-script-with-atlas/). Atlas used **model predictive control**: a model of its own dynamics predicts how the body will move over the next moments, and an optimizer picks the forces that keep it on track. The jumps and vaults came from a small library of template behaviors that engineers designed offline. The controller adapted them to the terrain on the fly. It's great engineering. The catch is that each new behavior is a project for a team of experts.
+
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/tF4DML7FIWk" title="Atlas, Partners in Parkour, Boston Dynamics, 2021" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Boston Dynamics, "Partners in Parkour" (August 2021). This is the routine the 2021 post explains: behaviors designed offline, then adapted by model predictive control on the course. <a href="https://www.youtube.com/watch?v=tF4DML7FIWk">Watch on YouTube</a></figcaption>
+</figure>
 
 That works when the task is fixed. Spot sells for inspection because inspection is easy to specify: walk this route, read these gauges, take this thermal photo. Now suppose you ask it to unload the dishwasher in a kitchen it has never seen. Who writes that behavior? And the next one? Change the cup, the lighting, the table height or the clutter, and the same instruction needs a different movement. The ability to carry a skill into a situation you didn't program for is called **generalization**, and a hand-engineered controller has very little of it.
 
@@ -23,6 +33,13 @@ You can see how hard it was to turn that hardware into a business. Boston Dynami
 Here's a simple test for whether a robot's body is good enough for a task. Let a person drive it by remote control, which is called **teleoperation**. Can the operator do the task through the robot? Then the motors, joints and cameras are good enough. What's missing is a program that does what the operator did.
 
 Cheap robots pass this test more often than you might expect. The 2023 [ACT paper](https://arxiv.org/abs/2304.13705) asked directly whether learning lets "low-cost and imprecise hardware" do fine manipulation. Its two-arm ALOHA setup threaded cable ties and slotted a battery from about 50 demonstrations per task. A year later, [Mobile ALOHA](https://arxiv.org/abs/2401.02117) put the same arms on a wheeled base and learned to sauté a shrimp, store heavy pots in a cabinet and call an elevator, again from 50 demonstrations per task. A [Unitree G1 humanoid starts at $13,500](https://www.unitree.com/g1/). One SO-101 arm, the one I use, costs [a little over $100 in parts](https://github.com/TheRobotStudio/SO-ARM100).
+
+The two Mobile ALOHA videos below make the teleoperation test visible. On the left, a person drives the robot through a three-course meal. On the right, the robot does chores on its own after learning from demonstrations.
+
+<figure class="video-embed video-pair">
+<div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/mnLVbwxSdNM" title="Mobile ALOHA teleoperated cooking a three-course meal" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div><figcaption>Teleoperated: a person drives the arms (Stanford IRIS Lab). <a href="https://www.youtube.com/watch?v=mnLVbwxSdNM">Watch on YouTube</a></figcaption></div>
+<div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/HaaZ8ss-HP4" title="Mobile ALOHA autonomous housekeeping" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div><figcaption>Autonomous: the learned policy runs the robot (Zipeng Fu). <a href="https://www.youtube.com/watch?v=HaaZ8ss-HP4">Watch on YouTube</a></figcaption></div>
+</figure>
 
 This doesn't mean hardware is solved. Hands are still fragile, cables wear out, batteries run down, and a robot that breaks every week isn't useful (more on that in the drawers at the end). But compare two gaps. One is between the hardware and the task. The other is between what the hardware does with a human driving it and what it does on its own. The second gap is much bigger, and it's a software gap.
 
@@ -38,7 +55,23 @@ Language models closed this kind of gap for text. A **large language model**, or
 
 A VLA usually starts from a pretrained VLM and is then trained on robot data, so the robot inherits what the VLM learned from the web. [RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/) showed in 2023 that this transfer is real: on scenarios with unseen objects, backgrounds and environments, success rose from RT-1's **32% to 62%**. Systems like [Gemini Robotics 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/) add a reasoning model on top that breaks "put the groceries away" into steps and hands each one to the VLA.
 
+[OpenVLA](https://arxiv.org/abs/2406.09246) shows the recipe clearly. Two vision encoders turn the camera image into tokens, a 7-billion-parameter language model reads them with the instruction, and the model's output tokens are decoded back into a small change of the gripper's position, rotation and opening.
+
+![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture.png "OpenVLA architecture. Figure from Kim et al., OpenVLA (2024), CC BY 4.0.")
+
+Figure's [Helix](https://www.figure.ai/news/helix) is the same idea on a humanoid. In the video, two robots run the same model and put away groceries they never saw in training.
+
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/Z3yQHYNXPws" title="Introducing Helix, Figure, 2025" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Figure, "Introducing Helix" (February 2025). <a href="https://www.youtube.com/watch?v=Z3yQHYNXPws">Watch on YouTube</a></figcaption>
+</figure>
+
 For me, the clearest sign of the shift is what Boston Dynamics itself did. In August 2025, with Toyota Research Institute, it showed Atlas driven by [a single large behavior model](https://bostondynamics.com/blog/large-behavior-models-atlas-find-new-footing/) that controls the whole body, legs and hands, from demonstrations. Tasks like tying a rope or spreading a tablecloth, which would be miserable to hand-program, use the same training process as stacking blocks. In their words, "if you can demonstrate it, the robot can learn it." In January 2026, the company [unveiled a production Atlas](https://bostondynamics.com/blog/boston-dynamics-unveils-new-atlas-robot-to-revolutionize-industry/) and a partnership with Google DeepMind to put Gemini models inside it, and Hyundai announced a factory that can build **30,000 robots per year**. So the company that best stood for hand-engineered control is now betting on learned policies.
+
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/HYwekersccY" title="Getting a Leg up with End-to-end Neural Networks, Boston Dynamics, 2025" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Boston Dynamics and Toyota Research Institute, "Getting a Leg up with End-to-end Neural Networks" (August 2025). Watch the person with the hockey stick move the box and close the lid: the policy recovers on its own. <a href="https://www.youtube.com/watch?v=HYwekersccY">Watch on YouTube</a></figcaption>
+</figure>
 
 ## A reset button on classical robotics
 
@@ -60,6 +93,10 @@ The dates come from the papers and announcements: the [Transformer](https://arxi
 
 In 2019, GPT-2 showed that a bigger model trained on more data generalizes better, and a whole industry grew up around producing training data: [Scale](https://scale.com/about), [Labelbox](https://labelbox.com/company/about/) and [Snorkel AI](https://snorkel.ai/company/) all date from that period. I think robotics is at that point now. In August 2026, Figure launched [Index](https://www.figure.ai/news/introducing-index), an app that pays people to record everyday activities, and reported more than **16 million videos** from **44,000 weekly users**. A month later it [reported](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) **56% task success in 30 homes the robot had never seen**, compared with 9% without the Index pretraining. That's real generalization. It's also a long way from a robot you'd trust to finish the job.
 
+The first big step was pooling. In 2023, [Open X-Embodiment](https://arxiv.org/abs/2310.08864) gathered robot data from 21 institutions into one dataset, so a single model could learn from 22 different robots.
+
+![Collage of the Open X-Embodiment dataset: 1M episodes from 311 scenes, 34 research labs across 21 institutions, 22 embodiments, 527 skills and 60 datasets, surrounded by sample frames from datasets such as RT-1, Bridge, ALOHA and QT-Opt.](/assets/robotics/why-robotics/open-x-embodiment.png "Open X-Embodiment. Figure from the Open X-Embodiment Collaboration (2023), CC BY 4.0.")
+
 The data can come from several places, and each one gives something different:
 
 | Source | What it gives the learner | What remains difficult |
@@ -67,6 +104,10 @@ The data can come from several places, and each one gives something different:
 | Teleoperation: a person controls the robot | Camera views paired with actual robot commands and measured motion | Operator time, scene resets, and collecting enough varied examples |
 | Physics simulation | Repeatable trials, known state, and many experiments running in parallel | Matching real contact, friction, deformable objects, and sensor behavior |
 | Human video, filmed from the person's point of view | Everyday tasks across many people, objects, and places | Recovering motion and contact, then translating them to a different body |
+
+Variety matters as much as volume. [DROID](https://arxiv.org/abs/2403.12945) sent the same robot setup to 52 buildings and recorded 76,000 teleoperated episodes in bathrooms, bedrooms, kitchens and offices, because a robot that only saw one lab learns that lab.
+
+![Grid of photos from the DROID dataset: the same Franka robot arm working in bathrooms, kitchens, dining rooms, bedrooms, laboratories, laundry rooms and offices. Center panel: 76k episodes, 564 scenes, 52 buildings, 13 institutions, 86 tasks or verbs.](/assets/robotics/why-robotics/droid-scenes.png "DROID. Figure from Khazatsky et al., DROID (2024), CC BY 4.0.")
 
 ### Where the analogy breaks
 
@@ -76,7 +117,18 @@ The parallel isn't perfect, and I want to be honest about where it breaks.
 2. **There's no scaling law yet.** In 2020, language models got a curve that predicts how much better a model gets with more data and compute. That turned a bet into an investment plan. Robotics doesn't have that curve, so it's possible we're really in 2017, not 2019.
 3. **The bar for reliability is higher.** A wrong answer in a chat costs a retry. A wrong grasp can break a glass. And long tasks multiply errors: if a job has 20 steps that each succeed 95% of the time, the robot finishes only $0.95^{20} \approx 36\%$ of the time.
 
+![Line chart of the chance to finish a task against the number of steps, for 99%, 95% and 90% success per step. At 20 steps and 95% per step, 36% of jobs finish.](/assets/robotics/why-robotics/long-task-reliability.png "Chance to finish = (success per step) to the power of the number of steps, assuming no recovery. My chart.")
+
+Mobile ALOHA's authors published their failures too, and they show what those lost percentage points look like.
+
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/xGNNW6smDPQ" title="Mobile ALOHA funny failures" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Mobile ALOHA failures (Zipeng Fu). <a href="https://www.youtube.com/watch?v=xGNNW6smDPQ">Watch on YouTube</a></figcaption>
+</figure>
+
 That third point is also why measurement is so hard. Benchmarks like [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) and [RoboCasa](https://robocasa.ai/leaderboard.html) make it possible to compare policies in simulation, and even there the leading entry on RoboCasa scored **36.7%** on held-out multi-step tasks in September 2026. In the real world, someone has to reset the scene, the lighting shifts and the cup is slightly different every time.
+
+![Overview of RoboCasa365: diverse simulated kitchen scenes, a large object library, interactive fixtures, 365 everyday tasks, 2,500 kitchen scenes, 3,200+ objects, 2,200+ hours of data and 500K+ trajectories, with examples of skills, long-horizon tasks and semantic reasoning.](/assets/robotics/why-robotics/robocasa365.png "RoboCasa365, a simulated benchmark of household tasks. Figure from the RoboCasa365 paper (2026), CC BY 4.0.")
 
 ## Reindustrializing Europe and the United States
 
@@ -84,7 +136,14 @@ This is the part that excites me most. It's a vision, not a measurement.
 
 Factories in Europe and the US already use a lot of robots. The International Federation of Robotics counts [449 robots per 10,000 manufacturing employees in Germany and 307 in the US](https://ifr.org/ifr-press-releases/news/robot-density-surges-in-europe-asia-and-americas), against 1,220 in South Korea. But those robots sit mostly where the task never changes: welding the same car body, placing the same chip. Every new task means an integrator reprogramming the cell, so automation only pays off at high volume. Small-batch work, with many different parts and frequent changes, stayed manual, and manual work moved to wherever labor was cheapest.
 
+![Bar chart of industrial robots per 10,000 manufacturing employees in 2024: South Korea 1,220, Singapore 818, Germany 449, Japan 446, United States 307.](/assets/robotics/why-robotics/robot-density.png "Robot density in 2024. My chart from the IFR numbers.")
+
 Now suppose a robot can learn a new task from a few dozen demonstrations in an afternoon. That calculation changes. Small-batch production becomes something a robot can do, and labor cost stops being the reason to build a factory far away. With an aging workforce in Europe and a political push in both regions to bring manufacturing back, general-purpose robots could make reindustrialization economically possible rather than a slogan. Hyundai building a factory for 30,000 robots a year is one company placing that bet.
+
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/rrUHZKlrxms" title="Atlas product features, Boston Dynamics, 2026" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Boston Dynamics, the production Atlas (January 2026). Hyundai plans to use it in its car plants, starting with parts sequencing. <a href="https://www.youtube.com/watch?v=rrUHZKlrxms">Watch on YouTube</a></figcaption>
+</figure>
 
 What's blocking it, again, is software that generalizes and is reliable enough for a production line. That's the problem I want to work on.
 
@@ -105,6 +164,8 @@ The humanoid argument starts from the environment: doors, shelves, tools and wor
 <summary>Should a robot predict actions, or their consequences?</summary>
 
 A VLA looks at the scene and chooses a movement. An **action-conditioned world model** instead predicts what happens after a proposed movement: push here, and will the cup slide or tip? A planner can compare those futures before acting. Meta's [V-JEPA 2](https://arxiv.org/abs/2506.09985) learned from over a million hours of video without action labels, then from less than **62 hours of robot data**, and used its predictions to plan. Yann LeCun's company [AMI](https://amilabs.xyz/) is pursuing this direction.
+
+![Diagram of V-JEPA 2-AC: previous video frames pass through a frozen encoder into a predictor that also receives robot actions and poses; the prediction is compared with the frozen encoding of the future frame using an L1 loss.](/assets/robotics/why-robotics/vjepa2-ac.png "V-JEPA 2-AC predicts the next frame's features from past frames and the robot's action. Figure from Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
 
 </details>
 
