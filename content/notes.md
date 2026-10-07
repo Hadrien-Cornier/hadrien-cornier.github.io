@@ -1,10 +1,10 @@
 ## Leaving Paris
 
-I left Paris and came to the United States because I wanted to learn. Technology felt especially alive here, and I wanted to be close to the people building it and the conversations shaping what came next.
+I left Paris and came to the United States because I wanted to work in an environment that valued efficiency and outcomes. I was drawn to a practical way of working: decide what matters, build, and judge the result by what it accomplishes.
 
-The move exposed me to different ambitions, ways of working, and ideas about what could be built. I learned a great deal from the work itself and from the people around me.
+More freedom and lower taxes were also part of what I was looking for. I wanted more control over what I built and how I spent my time and money. The maker mentality appealed to me: take initiative, try things, and turn ideas into something useful.
 
-Looking back, the value of the move was less about geography than proximity. I put myself in a place where I would be challenged more often, and where learning was difficult to avoid. It has been deeply rewarding.
+I also wanted to maximize my learning. Being close to people building technology meant more opportunities to work on difficult problems, get direct feedback, and learn from different approaches. I wanted learning to be part of the work I did every day.
 
 ## Hiring
 
