@@ -308,3 +308,29 @@ test('redirects write small moved pages, survive cleanup, and reject bad targets
     assert.ok(!fs.existsSync(path.join(root, 'robotics/old-home/index.html')), 'a removed redirect must disappear');
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
+
+test('essay presentation keeps a centered reading path and loads figure styles only where needed', t => {
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'robotics-essay-layout-'));
+  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  fs.mkdirSync(path.join(root,'content/robotics'),{recursive:true});
+  fs.writeFileSync(path.join(root,'sitemap.xml'),'<urlset></urlset>');
+  const figure='<figure class="rf-figure" aria-label="Conditional example"><p>Possible constraint</p></figure>';
+  const essay=frontmatter.replace('Test report','Essay title').replace('---\n\n','layout: essay\n---\n\n')+'## One question\n\nA concrete opening.\n\n'+figure;
+  fs.writeFileSync(path.join(root,'content/robotics/essay.md'),essay);
+  fs.writeFileSync(path.join(root,'content/robotics/report.md'),frontmatter+'## A report section\n\nExisting report prose.');
+  build(root);
+  const essayPage=fs.readFileSync(path.join(root,'robotics/essay/index.html'),'utf8');
+  const reportPage=fs.readFileSync(path.join(root,'robotics/report/index.html'),'utf8');
+  assert.match(essayPage,/post-header-essay/);
+  assert.match(essayPage,/post-layout-without-toc/);
+  assert.match(essayPage,/post-layout-essay/);
+  assert.doesNotMatch(essayPage,/<aside class="article-toc"/);
+  assert.match(essayPage,/robotics-futures\.css\?v=/);
+  assert.match(essayPage,/<h1>Essay title<\/h1>/);
+  assert.match(essayPage,/rel="canonical" href="https:\/\/hadrien-cornier.github.io\/robotics\/essay\/"/);
+  assert.match(reportPage,/<aside class="article-toc"/);
+  assert.doesNotMatch(reportPage,/robotics-futures\.css|post-header-essay/);
+  assert.doesNotMatch(essayPage,/robotics-market\.js|robotics-futures\.js/);
+  assert.equal(renderArticle(essay).components.futures,true);
+  assert.throws(()=>renderArticle(essay.replace('layout: essay','layout: invalid')),/layout must be essay/);
+});

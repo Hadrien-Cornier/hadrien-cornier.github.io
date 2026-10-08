@@ -46,6 +46,7 @@ export function renderArticle(source, root = ROOT) {
   const date = dateValue(data.date, 'date');
   const updated = data.updated ? dateValue(data.updated, 'updated') : date;
   if (data.draft !== undefined && typeof data.draft !== 'boolean') throw new Error('draft must be true or false');
+  if (data.layout !== undefined && data.layout !== 'essay') throw new Error('layout must be essay when provided');
   validateSeriesMetadata(data);
   if (updated < date) throw new Error('updated cannot be earlier than date');
   const md = new MarkdownIt({html:true, linkify:true, typographer:false}).use(katex, {
@@ -53,10 +54,11 @@ export function renderArticle(source, root = ROOT) {
   });
   const headings = [];
   const ids = new Set();
-  const components = {timeline:false, geometry:false, so101:false, market:false};
+  const components = {timeline:false, geometry:false, so101:false, market:false, futures:false};
   md.core.ruler.push('article-structure', (state) => {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];
+      if (token.type === 'html_block' && /<figure\b[^>]*\bclass=["'][^"']*\brf-figure\b/.test(token.content)) components.futures = true;
       if (token.type === 'heading_open') {
         if (token.tag === 'h1') throw new Error('Use H2 or deeper in articles; title supplies H1');
         const inline = state.tokens[i + 1];
@@ -205,7 +207,7 @@ ${GENERATED_MARKER}
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/papers.css?v=${assetVersion(root, 'assets/papers.css')}"><link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
+<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/papers.css?v=${assetVersion(root, 'assets/papers.css')}"><link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.layout === 'essay' || article?.components.futures ? `<link rel="stylesheet" href="/assets/robotics-futures.css?v=${assetVersion(root, 'assets/robotics-futures.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
 </head><body class="${pathname === '/' ? 'home-page' : 'robotics'}${article ? trackClass(article) : ''}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
@@ -221,10 +223,10 @@ function seriesBox(article) {
   return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
 function articlePage(article, root) {
-  const toc = article.components.market ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
+  const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
-<header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p></header>
-${seriesBox(article)}<div class="post-layout${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
+<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p></header>
+${seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
 function articleUnits(articles) {
   const groups = new Map();

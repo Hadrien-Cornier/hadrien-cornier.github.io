@@ -1,0 +1,68 @@
+/* Static essay figures retain a complete reading order without JavaScript. */
+.post-header-essay { max-width: 720px; }
+.post-layout-essay { display: block; max-width: 720px; }
+.article-body .rf-figure {
+  --rf-green: #52634a;
+  --rf-green-soft: #edf0e8;
+  margin: 34px 0 40px;
+  padding: 23px;
+  border: 1px solid var(--line);
+  background: #f0f1eb;
+}
+.article-body .rf-figure p { margin: 0; }
+.article-body .rf-figure .rf-kicker { color: var(--muted); font: 12px/1.5 var(--mono); }
+.article-body .rf-figure .rf-title {
+  margin: 7px 0 22px;
+  color: var(--ink);
+  font: 27px/1.2 var(--serif);
+  letter-spacing: -.5px;
+}
+.article-body .rf-figure figcaption {
+  margin: 20px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.rf-arithmetic { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px; }
+.rf-card { min-width: 0; padding: 19px; border: 1px solid #d4d7ce; border-top: 3px solid var(--ink); background: var(--paper); }
+.rf-card-reliability { border-top-color: var(--rf-green); background: var(--rf-green-soft); }
+.rf-stage-name { display: block; margin-bottom: 18px; color: var(--ink); font-size: 20px; font-weight: 600; line-height: 1.3; letter-spacing: -.2px; }
+.rf-stage-work { display: block; color: var(--muted); font-size: 16px; line-height: 1.55; }
+.rf-cycle, .rf-failure-case { margin: 19px 0; }
+.rf-cycle-total { display: block; margin-bottom: 8px; color: var(--ink); font-size: 16px; line-height: 1.5; }
+.rf-cycle-bar { display: flex; width: 100%; height: 14px; margin-bottom: 9px; background: #e1e4db; }
+.rf-motion { width: 90%; background: #52634a; }
+.rf-decision { width: 10%; background: var(--accent); }
+.rf-cycle-faster { width: 90%; background: transparent; }
+.rf-cycle-faster .rf-motion { width: 100%; }
+.rf-failure-count { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; color: var(--rf-green); font: 38px/1.15 var(--serif); }
+.rf-failure-count span { color: var(--muted); font: 16px/1.5 Arial, Helvetica, sans-serif; }
+.rf-result { display: block; margin-top: 22px; margin-bottom: 6px; color: var(--ink); font-size: 18px; line-height: 1.4; }
+.rf-card-reliability .rf-result { color: var(--rf-green); }
+.rf-flows { display: grid; gap: 18px; }
+.article-body .rf-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 23px; margin: 0; padding: 0; list-style: none; }
+.article-body .rf-flow > li { position: relative; display: flex; flex-direction: column; justify-content: center; min-width: 0; margin: 0; padding: 17px 14px; border: 1px solid #d4d7ce; border-top: 3px solid var(--ink); background: var(--paper); }
+.rf-flow > li:not(:last-child)::after { content: ''; position: absolute; top: calc(50% - 4px); right: -16px; width: 8px; height: 8px; border-top: 1px solid var(--muted); border-right: 1px solid var(--muted); transform: rotate(45deg); }
+.rf-flow-name { display: block; color: var(--ink); font-size: 18px; font-weight: 600; line-height: 1.4; }
+.article-body .rf-flow-robots > li { border-top-color: var(--rf-green); background: var(--rf-green-soft); }
+.article-body .rf-responsibilities { display: grid; gap: 5px; margin: 13px 0 0; padding: 13px 0 0; border-top: 1px solid #d0d7c8; list-style: none; }
+.article-body .rf-responsibilities > li { margin: 0; padding: 0; color: var(--rf-green); font-size: 16px; line-height: 1.5; }
+@media (max-width: 600px) {
+  .article-body .rf-figure { padding: 19px 17px; margin: 29px 0 34px; }
+  .article-body .rf-figure .rf-title { font-size: 25px; }
+  .rf-arithmetic { grid-template-columns: 1fr; gap: 15px; }
+  .rf-card { padding: 17px; }
+  .rf-flows { gap: 25px; }
+  .article-body .rf-flow { grid-template-columns: 1fr; gap: 22px; }
+  .article-body .rf-flow > li { padding: 15px 17px; }
+  .rf-flow > li:not(:last-child)::after { top: auto; right: calc(50% - 4px); bottom: -15px; transform: rotate(135deg); }
+}
+@media print {
+  .article-body .rf-figure { break-inside: avoid; background: #fff; padding: 15px; }
+  .rf-arithmetic { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .article-body .rf-flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rf-stage-name { font-size: 13pt; }
+  .rf-stage-work, .rf-cycle-total, .rf-flow-name, .article-body .rf-responsibilities > li { font-size: 10pt; }
+  .rf-flow > li:not(:last-child)::after { display: none; }
+}

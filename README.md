@@ -56,7 +56,8 @@ date: '2026-09-26'
 ---
 ```
 
-Use level-two and level-three headings for the table of contents. The title supplies the
+Use level-two and level-three headings for the table of contents. Set `layout: essay`
+for a centered reading column without a contents sidebar. The title supplies the
 level-one heading. Standard Markdown handles links, lists, tables, and code. Use `$q_1$`
 for inline math and `$$` on separate lines for display equations. Matrices and other KaTeX
 expressions render during the build. Invalid math, missing image files, and missing metadata
@@ -105,6 +106,8 @@ need no network math service or reader-side JavaScript. GitHub Pages serves the 
 files directly. The build preserves unrelated sitemap entries and updates Robotics entries.
 
 The article layout lives in `assets/robotics.css`, on top of the existing site styles.
+Essay pages and trusted authored `rf-figure` diagrams load `assets/robotics-futures.css`.
+These diagrams need no JavaScript.
 Preview both `/robotics/` and a report at desktop and phone widths. Check images, equations,
 table scrolling, table-of-contents links, and the native details controls with JavaScript off.
 
