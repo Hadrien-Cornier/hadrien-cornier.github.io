@@ -1,0 +1,31 @@
+/* Shared section layout. The paper animation has separate styles. */
+.papers-main { max-width: 1120px; }
+.papers-index-header { padding: 56px 0 36px; }
+.papers-index-header h1 { margin: 19px 0 17px; }
+.papers-index-header > p:last-child { color: var(--muted); }
+.papers-list { border-top: 1px solid var(--line); min-height: 200px; }
+.paper-entry { display: grid; grid-template-columns: minmax(0, 1fr) 30px; gap: 25px; padding: 30px 0 34px; border-bottom: 1px solid var(--line); }
+.paper-entry:hover { text-decoration: none; }
+.paper-entry:hover h2, .paper-entry:hover h3 { color: var(--accent); }
+.paper-entry h2, .paper-entry h3 { margin: 10px 0 13px; font: 32px/1.2 var(--serif); letter-spacing: -.7px; }
+.paper-entry-description { max-width: 650px; color: var(--muted); font-size: 15px; }
+.paper-entry-arrow { color: var(--accent); font-size: 23px; align-self: center; }
+.home-papers { border-top: 1px solid var(--line); margin-bottom: 55px; padding-top: 36px; scroll-margin-top: 34px; }
+.home-papers .home-section-heading { margin-bottom: 0; }
+.papers-all-link { font-size: 13px; color: var(--accent); }
+.paper-header { padding: 36px 0 28px; }
+.paper-header h1 { margin: 19px 0 15px; font-size: clamp(40px, 5vw, 64px); line-height: 1.1; letter-spacing: -1.7px; }
+.paper-takeaway { max-width: 750px; font-size: 18px; line-height: 1.55; color: var(--muted); }
+@media (max-width: 700px) {
+  .papers-index-header { padding: 30px 0 28px; }
+  .papers-index-header h1 { font-size: 46px; }
+  .paper-header { padding: 28px 0 24px; }
+  .paper-header h1 { font-size: 40px; }
+  .paper-takeaway { font-size: 16px; }
+  .paper-entry { gap: 14px; padding: 23px 0 27px; }
+  .paper-entry h2, .paper-entry h3 { font-size: 29px; }
+  .paper-entry-description { font-size: 14px; }
+  .home-papers { margin-bottom: 40px; padding-top: 27px; }
+  .home-papers .home-section-heading { align-items: start; gap: 16px; }
+  .papers-all-link { max-width: 115px; padding-top: 9px; font-size: 12px; }
+}

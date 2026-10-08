@@ -1,0 +1,77 @@
+.dex-demo { margin:0; padding:26px 30px 22px; border:1px solid var(--line); background:#fffdf8; }
+.dex-topline { display:flex; justify-content:space-between; gap:15px; color:var(--muted); font:10px/1.5 var(--mono); text-transform:uppercase; letter-spacing:.7px; }
+.dex-steps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:22px 0 16px; }
+.dex-steps button { display:flex; gap:9px; align-items:start; border:0; border-top:2px solid var(--line); background:none; text-align:left; color:var(--muted); padding:13px 0 10px; font:13px/1.5 Arial,sans-serif; min-height:56px; }
+.dex-steps button > span { font:10px/1.9 var(--mono); }
+.dex-steps button[aria-current=step] { border-color:var(--accent); color:var(--ink); }
+.dex-demo:not(.dex-enhanced) .dex-steps { pointer-events:none; }
+.dex-story { text-align:center; min-height:30px; font:21px/1.4 var(--serif); margin:4px 0 14px; }
+.dex-stage { max-width:700px; margin:auto; background:#eef0e8; border:1px solid #d3d8c9; }
+.dex-stage-heading { display:flex; justify-content:space-between; gap:10px; align-items:center; padding:14px 20px 0; color:var(--ink); font:11px/1.6 var(--mono); }
+.dex-sample { color:var(--muted); font-size:10px; }
+.dex-hand { display:block; width:100%; height:clamp(280px,36vw,385px); }
+.dex-wrist { stroke:#798376; stroke-width:13; fill:#ced4c4; stroke-linejoin:round; }
+.dex-palm { fill:#d8ddcf; stroke:#798376; stroke-width:2; }
+.dex-palm-line { fill:none; stroke:#b8c2ac; stroke-width:2; }
+.dex-fingers path { fill:none; stroke:#626e5d; stroke-width:30; stroke-linecap:round; }
+.dex-joints circle { fill:#fffdf8; stroke:#687563; stroke-width:3; }
+.dex-tip-dots circle { fill:#fffdf8; }
+.dex-ghosts path { fill:none; stroke:#b44c2c; stroke-width:33; stroke-linecap:round; stroke-opacity:.22; stroke-dasharray:4 8; }
+.dex-motion-arrows path { stroke:#b44c2c; stroke-width:3; fill:none; stroke-linecap:round; }
+.dex-ghosts,.dex-motion-arrows,.dex-free-highlight { opacity:0; }
+.dex-demo[data-scene="1"] .dex-ghosts,.dex-demo[data-scene="2"] .dex-ghosts,.dex-demo[data-scene="3"] .dex-ghosts { opacity:1; }
+.dex-demo[data-scene="1"] .dex-motion-arrows,.dex-demo[data-scene="2"] .dex-motion-arrows { opacity:1; }
+.dex-demo[data-scene="1"] .dex-fingers path,.dex-demo[data-scene="2"][data-noise=structured] .dex-fingers path { stroke:#997450; }
+.dex-demo[data-scene="2"][data-noise=independent] .dex-fingers path { stroke:#4b7876; }
+.dex-demo[data-scene="2"][data-noise=independent] .dex-motion-arrows path { stroke:#4b7876; }
+.dex-demo[data-scene="3"] .dex-joints circle { fill:#b44c2c; stroke:#fffdf8; }
+.dex-demo[data-scene="3"] .dex-free-highlight { opacity:1; }
+.dex-free-highlight circle { fill:none; stroke:#b44c2c; stroke-width:2; stroke-dasharray:3 4; }
+.dex-targets { display:flex; gap:17px; align-items:center; border-top:1px solid #d3d8c9; padding:12px 20px; font:10px/1.6 var(--mono); }
+.dex-targets > div { display:flex; align-items:center; gap:7px; flex:1; }
+.dex-targets i { display:block; position:relative; width:100%; height:6px; background:#d7ddce; }
+.dex-targets b { display:block; position:absolute; top:-3px; left:50%; width:3px; height:12px; background:var(--accent); }
+.dex-controls { max-width:700px; margin:18px auto 0; }
+.dex-controls[hidden],.dex-joint-control[hidden] { display:none; }
+.dex-demo [data-interactive][hidden] { display:none; }
+.dex-demo[data-scene="0"] .dex-controls,.dex-demo[data-scene="1"] .dex-controls { display:none; }
+.dex-mode { display:flex; padding:4px; background:#efefe7; border:1px solid var(--line); gap:4px; }
+.dex-mode button { flex:1; min-height:44px; padding:10px 15px; border:1px solid transparent; background:transparent; font-size:13px; color:var(--muted); }
+.dex-mode button[aria-pressed=true] { background:#fffdf8; border-color:#c3b49e; color:var(--ink); }
+.dex-mode[hidden] { display:none; }
+.dex-joint-control { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:8px 20px; font-size:13px; }
+.dex-joint-control input { width:100%; min-height:44px; margin:0; accent-color:var(--accent); }
+.dex-joint-control > span { grid-column:1/-1; color:var(--muted); font-size:12px; }
+.dex-playback { display:flex; gap:10px; align-items:center; margin-top:14px; }
+.dex-playback button { min-height:44px; padding:9px 18px; border:1px solid #b7bdac; color:var(--ink); background:none; font-size:13px; }
+.dex-playback button:first-child { background:var(--ink); color:#fffdf8; }
+.dex-playback span[data-dex-progress] { margin-left:auto; color:var(--muted); font:11px var(--mono); }
+.dex-playback-top { max-width:700px; margin:0 auto 16px; }
+.dex-controls { margin:0 auto 16px; }
+.dex-demo figcaption { margin-top:18px; font-size:12px; text-align:center; color:var(--muted); }
+.dex-after { display:grid; grid-template-columns:1fr auto; gap:10px 25px; padding-top:18px; }
+.dex-method { font-size:12px; color:var(--muted); max-width:600px; }
+.dex-method summary { min-height:44px; padding:10px 0; cursor:pointer; color:var(--ink); }
+.dex-method p { margin:0 0 16px; line-height:1.8; }
+.dex-credit { font:10px/1.5 var(--mono); color:var(--muted); padding:12px 0; }
+.dex-sources { grid-column:1/-1; display:flex; justify-content:end; gap:26px; font-size:12px; }
+.dex-sources a { display:inline-block; padding:9px 0; min-height:44px; color:var(--accent); }
+.dex-nojs { max-width:550px; margin:18px auto 0; font-size:13px; color:var(--muted); }
+@media(max-width:700px){
+ .paper-header h1 { font-size:34px; }
+ .dex-demo { padding:19px 15px 17px; }
+ .dex-topline { font-size:9px; }
+ .dex-topline > :last-child { display:none; }
+ .dex-steps { grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 18px; margin:17px 0 12px; }
+ .dex-steps button { font-size:12px; min-height:52px; padding:10px 0 7px; }
+ .dex-story { font-size:20px; min-height:56px; display:flex; align-items:center; justify-content:center; }
+ .dex-hand { height:260px; }
+ .dex-stage-heading { padding:12px 12px 0; font-size:10px; }
+ .dex-targets { gap:12px; padding:12px; }
+ .dex-targets > span { max-width:45px; }
+ .dex-mode button { padding:10px 5px; font-size:12px; }
+ .dex-after { display:flex; flex-direction:column; gap:0; }
+ .dex-credit { padding:5px 0; }
+ .dex-sources { justify-content:start; }
+}
+@media(prefers-reduced-motion:reduce){.dex-demo *{scroll-behavior:auto;}}

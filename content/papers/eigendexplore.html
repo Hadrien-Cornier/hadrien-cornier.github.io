@@ -1,0 +1,51 @@
+<figure class="dex-demo" data-dex-demo data-scene="2" data-noise="structured" aria-labelledby="dex-caption">
+  <div class="dex-topline"><span>EigenDEXplore</span><span>01 / Human motion</span></div>
+  <nav class="dex-steps" aria-label="Animation steps">
+    <button type="button" data-step="0" disabled><span>01</span>Watch human hands</button>
+    <button type="button" data-step="1" disabled><span>02</span>Find shared motion</button>
+    <button type="button" data-step="2" disabled aria-current="step"><span>03</span>Guide exploration</button>
+    <button type="button" data-step="3" disabled><span>04</span>Keep every joint</button>
+  </nav>
+    <div class="dex-playback dex-playback-top" data-interactive hidden><button type="button" data-dex-play>Play <span aria-hidden="true">▷</span></button><button type="button" data-dex-replay>Replay <span aria-hidden="true">↶</span></button><span data-dex-progress>1 / 4</span></div>
+  <div class="dex-controls" data-interactive hidden>
+    <div class="dex-mode" role="group" aria-label="Exploration noise"><button type="button" data-mode="independent" aria-pressed="false">Independent</button><button type="button" data-mode="structured" aria-pressed="true">EigenDEXplore</button></div>
+    <label class="dex-joint-control" hidden>Move joint 2<input data-dex-joint type="range" min="-1" max="1" step="0.02" value="0.1"><span>The other targets stay fixed.</span></label>
+
+  </div>
+  <div class="dex-story" aria-live="polite"><p data-dex-caption>Add shared motion to independent noise.</p></div>
+  <div class="dex-stage">
+    <div class="dex-stage-heading"><span data-dex-scene>Coordinated + independent</span><span class="dex-sample" data-dex-sample>Schematic sample</span></div>
+    <svg class="dex-hand" viewBox="70 85 290 235" role="img" aria-labelledby="dex-hand-title dex-hand-description">
+      <title id="dex-hand-title">A schematic hand with three controlled joints</title>
+      <desc id="dex-hand-description">Human motion supplies shared movement patterns. EigenDEXplore adds noise along those patterns and keeps independent joint noise. The policy retains every joint target.</desc>
+      <defs><pattern id="dex-grid" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".8" fill="#d7ddcf"/></pattern></defs>
+      <rect x="15" y="10" width="390" height="315" rx="8" fill="url(#dex-grid)"/>
+      <g class="dex-ghosts" aria-hidden="true">
+        <path data-ghost="0" d="M130 222Q122 152 123 104"/>
+        <path data-ghost="1" d="M205 222Q197 152 198 96"/>
+        <path data-ghost="2" d="M280 222Q272 152 273 113"/>
+      </g>
+      <path class="dex-wrist" d="M167 310V276H243V310"/>
+      <rect class="dex-palm" x="93" y="208" width="224" height="79" rx="25"/>
+      <path class="dex-palm-line" d="M119 256Q207 236 292 256"/>
+      <g class="dex-fingers">
+        <path data-finger="0" d="M130 222Q143.5 143.12 146.8 160.6"/>
+        <path data-finger="1" d="M205 222Q220.75 137 223.5 155.5"/>
+        <path data-finger="2" d="M280 222Q291.25 149.92 295.1 166.7"/>
+      </g>
+      <g class="dex-joints">
+        <circle cx="130" cy="222" r="8"/><circle cx="205" cy="222" r="8"/><circle cx="280" cy="222" r="8"/>
+      </g>
+      <g class="dex-tip-dots" aria-hidden="true"><circle data-tip="0" cx="123" cy="104" r="4"/><circle data-tip="1" cx="198" cy="96" r="4"/><circle data-tip="2" cx="273" cy="113" r="4"/></g>
+      <g class="dex-motion-arrows" aria-hidden="true"><path data-arrow="0" d="M123 104L144 155m-5 -3l5 3-3 5"/><path data-arrow="1" d="M198 96L221 150m-5 -3l5 3-3 5"/><path data-arrow="2" d="M273 113L293 161m-5 -3l5 3-3 5"/></g>
+      <g class="dex-free-highlight" aria-hidden="true"><circle data-free-tip cx="198" cy="96" r="18"/></g>
+    </svg>
+    <div class="dex-targets" aria-label="Three joint targets stay available">
+      <span>Joint targets</span>
+      <div><span>1</span><i><b data-target="0"></b></i></div><div><span>2</span><i><b data-target="1"></b></i></div><div><span>3</span><i><b data-target="2"></b></i></div>
+    </div>
+  </div>
+  <figcaption id="dex-caption">A schematic of exploration during training.</figcaption>
+  <noscript><p class="dex-nojs">Human patterns guide exploration noise. Independent noise preserves every joint direction.</p></noscript>
+</figure>
+<div class="dex-after"><details class="dex-method"><summary>About this sketch</summary><p>This schematic uses a hand-drawn basis and selected synthetic samples. Both modes have equal expected total noise variance. Animation easing connects fresh, independently sampled noise. The paper learns its basis from human motion mapped to robot joints. The basis stays fixed during training.</p></details><p class="dex-credit">Gupta et al. · Stanford · 6 Oct 2026</p><nav class="dex-sources" aria-label="Original sources"><a href="https://arxiv.org/abs/2610.07681">Paper ↗</a><a href="https://eigendexplore.github.io/">Project ↗</a><a href="https://github.com/hgupt3/eigendexplore">Code ↗</a></nav></div>

@@ -15,7 +15,7 @@ script_version = hashlib.sha256((ROOT / 'assets/site.js').read_bytes()).hexdiges
 
 def header(current):
     result = (ROOT / 'scripts/templates/header.html').read_text()
-    for section in ('writing', 'notes', 'about'):
+    for section in ('writing', 'papers', 'notes', 'about'):
         result = result.replace('{{' + section + '_current}}', ' aria-current="page"' if current == section else '')
     return result
 
@@ -120,3 +120,6 @@ notes_page = f'''<!doctype html>
 # The Markdown renderer owns the writing homepage and Robotics pages.
 if (ROOT / "content/robotics").is_dir():
     subprocess.run(["node", str(ROOT / "scripts/build_robotics.mjs")], cwd=ROOT, check=True)
+
+if (ROOT / "content/papers").is_dir():
+    subprocess.run(["node", str(ROOT / "scripts/build_papers.mjs")], cwd=ROOT, check=True)

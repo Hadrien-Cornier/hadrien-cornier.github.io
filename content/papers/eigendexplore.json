@@ -1,0 +1,11 @@
+{
+  "slug": "eigendexplore",
+  "shortTitle": "EigenDEXplore",
+  "title": "Teach a robot hand how to explore.",
+  "description": "Human motion guides its experiments. Every joint stays free.",
+  "date": "2026-10-08",
+  "paperTitle": "EigenDEXplore: Structured Exploration for Dexterous Manipulation with Human Priors",
+  "paperUrl": "https://arxiv.org/abs/2610.07681",
+  "projectUrl": "https://eigendexplore.github.io/",
+  "codeUrl": "https://github.com/hgupt3/eigendexplore"
+}

@@ -11,7 +11,7 @@ npm ci
 python3 scripts/build_site.py
 ```
 
-Commit the generated `index.html`, `about.html`, `notes.html`, `robotics/`, `sitemap.xml`, and vendored math assets alongside the source. GitHub Pages serves the static HTML directly, with no runtime dependencies. Shared styles and interactions live in `assets/site.css` and `assets/site.js`. The writing and article layouts use `assets/robotics.css`. Shared navigation and footer markup live in `scripts/templates/`.
+Commit the generated `index.html`, `about.html`, `notes.html`, `robotics/`, `papers/`, `sitemap.xml`, and vendored math assets alongside the source. GitHub Pages serves the static HTML directly, with no runtime dependencies. Shared styles and interactions live in `assets/site.css` and `assets/site.js`. The writing and article layouts use `assets/robotics.css`. Shared navigation and footer markup live in `scripts/templates/`.
 
 The generator expects the current profile heading structure: four Talroo work areas, earlier roles, education, and skills. Structural changes should also update the generator. Contact links, Talroo dates and role progression are curated in `scripts/build_site.py`; update those alongside the profile when they change.
 
@@ -111,3 +111,18 @@ table scrolling, table-of-contents links, and the native details controls with J
 The company map uses a `robotics-market` fence with a local JSON data asset. Its HTML,
 company evidence and source links work without JavaScript; the optional script adds search,
 filters and map-to-entry navigation. Styles and interactions load only on that article.
+
+## Visual paper explanations
+
+The Papers section uses matching `content/papers/<slug>.json` metadata and
+`content/papers/<slug>.html` bodies. Metadata supplies the title, description, date,
+and Paper, Project, and Code links. The builder supplies the level-one heading.
+These HTML bodies are trusted author content.
+
+`scripts/build_papers.mjs` generates the section, individual explanations, and sitemap
+entries. The full build calls it after the Robotics builder, which also adds the newest
+paper to the homepage. Shared paper styles live in `assets/papers.css`; each explanation
+loads its own `assets/papers-<slug>.css` and module.
+
+Check the animation at desktop and phone widths, with touch controls, reduced motion,
+and JavaScript disabled. Keep the core explanation visible without animation.
