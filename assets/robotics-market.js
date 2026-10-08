@@ -1,37 +1,34 @@
 (() => {
-  const directory = document.querySelector('.rm-directory');
-  if (!directory) return;
-  const controls = directory.querySelector('.rm-controls');
-  const search = directory.querySelector('#market-search');
-  const filter = directory.querySelector('#market-filter');
-  const companies = [...directory.querySelectorAll('.rm-company')];
-  const status = directory.querySelector('.rm-results');
-  const update = () => {
-    const query = search.value.trim().toLowerCase();
-    let visible = 0;
-    for (const company of companies) {
-      company.hidden = !(company.dataset.search.includes(query) && (filter.value === 'all' || company.dataset.group === filter.value));
-      if (!company.hidden) visible++;
-    }
-    status.textContent = `${visible} of ${companies.length} entries`;
-    directory.querySelector('.rm-no-results').hidden = visible !== 0;
+  const market=document.querySelector('.robotics-market');
+  if(!market)return;
+  const points=[...market.querySelectorAll('.rm-point')];
+  const entries=[...market.querySelectorAll('.rm-company')];
+  const select=market.querySelector('#market-company');
+  const viewport=market.querySelector('.rm-map-viewport');
+  const world=market.querySelector('.rm-map-world');
+  const reveal=(id,{pan=false,focus=false}={})=>{
+    const point=points.find(p=>p.dataset.companyJump===id);
+    const entry=document.getElementById(`company-${id}`);
+    if(!point||!entry)return;
+    entries.forEach(e=>{e.hidden=e!==entry;e.open=e===entry;});
+    points.forEach(p=>p.setAttribute('aria-current',p===point?'true':'false'));
+    select.value=id;
+    if(pan){const x=point.offsetLeft+market.querySelector('.rm-plot').offsetLeft;viewport.scrollTo({left:x-viewport.clientWidth/2,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}
+    if(focus)entry.querySelector('summary').focus({preventScroll:true});
   };
-  const reveal = id => {
-    const target = document.getElementById(`company-${id}`);
-    if (!target) return;
-    search.value = '';
-    filter.value = 'all';
-    update();
-    directory.open = true;
-    target.open = true;
-  };
-  search.addEventListener('input', update);
-  filter.addEventListener('change', update);
-  document.querySelectorAll('[data-company-jump]').forEach(link => link.addEventListener('click', () => reveal(link.dataset.companyJump)));
-  window.addEventListener('hashchange', () => {
-    if (location.hash.startsWith('#company-')) reveal(location.hash.slice(9));
+  points.forEach(p=>p.addEventListener('click',event=>{
+    event.preventDefault();reveal(p.dataset.companyJump,{focus:true});
+    history.replaceState(null,'',`#company-${p.dataset.companyJump}`);
+    document.getElementById(`company-${p.dataset.companyJump}`).scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+  }));
+  select.addEventListener('change',()=>reveal(select.value,{pan:true}));
+  market.querySelector('#market-zoom').addEventListener('click',event=>{
+    const large=world.classList.toggle('rm-larger');event.currentTarget.setAttribute('aria-pressed',String(large));reveal(select.value,{pan:true});
   });
-  if (location.hash.startsWith('#company-')) reveal(location.hash.slice(9));
-  controls.hidden = false;
-  update();
+  market.querySelector('#market-links').addEventListener('click',event=>{const hide=market.classList.toggle('rm-hide-links');event.currentTarget.setAttribute('aria-pressed',String(!hide));});
+  market.querySelector('#market-fit').addEventListener('click',()=>{world.classList.remove('rm-larger');market.querySelector('#market-zoom').setAttribute('aria-pressed','false');viewport.scrollTo({left:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});});
+  window.addEventListener('hashchange',()=>{if(location.hash.startsWith('#company-'))reveal(location.hash.slice(9),{pan:true});});
+  market.querySelector('.rm-tools').hidden=false;
+  market.classList.add('rm-enhanced');
+  reveal(location.hash.startsWith('#company-')?location.hash.slice(9):(entries.some(e=>e.id==='company-field-ai')?'field-ai':entries[0].id.slice(8)),{pan:innerWidth<700});
 })();

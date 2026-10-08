@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import MarkdownIt from 'markdown-it';
 import matter from 'gray-matter';
 import { katex } from '@mdit/plugin-katex';
-import { parseMarket, renderMarket } from './robotics-market.mjs';
+import { parseMarket, renderMarket, renderValueLoop } from './robotics-market.mjs';
 import { parseTimeline, renderTimeline, timelineProse } from './robotics-timeline.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -114,6 +114,10 @@ export function renderArticle(source, root = ROOT) {
   });
   const renderFence = md.renderer.rules.fence;
   md.renderer.rules.fence = (tokens, index, options, environment, renderer) => {
+    if (tokens[index].info.trim() === 'robotics-value-loop') {
+      if (tokens[index].content.trim()) throw new Error('robotics-value-loop does not accept content');
+      return renderValueLoop();
+    }
     if (tokens[index].meta?.market) return renderMarket(tokens[index].meta.market);
     if (tokens[index].meta?.timeline) return renderTimeline(tokens[index].meta.timeline);
     if (tokens[index].meta?.geometry) return template('arm-demo.html', root, {
@@ -216,10 +220,10 @@ function seriesBox(article) {
   return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
 function articlePage(article, root) {
-  const toc = article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
+  const toc = article.components.market ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
 <header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p></header>
-${seriesBox(article)}<div class="post-layout${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
+${seriesBox(article)}<div class="post-layout${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
 function articleUnits(articles) {
   const groups = new Map();

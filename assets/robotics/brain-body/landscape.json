@@ -1,0 +1,688 @@
+{
+  "checked": "2026-10-08",
+  "companies": [
+    {
+      "id": "amazon",
+      "name": "Amazon Robotics",
+      "position": {
+        "x": 30,
+        "y": 95
+      },
+      "intelligence": "own",
+      "direction": false,
+      "evidence": "warehouse fleet operations",
+      "summary": "Amazon operates specialized warehouse robot fleets and DeepFleet orchestration.",
+      "placement": "Owns warehouse fleet operations and DeepFleet coordination. A broad operational footprint inside one domain, not universal manipulation.",
+      "evidenceDetail": "Heterogeneous fleet orchestration, not one universal robot policy.",
+      "sources": [
+        {
+          "label": "Fleet and DeepFleet",
+          "url": "https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model"
+        }
+      ]
+    },
+    {
+      "id": "waymo",
+      "name": "Waymo",
+      "position": {
+        "x": 10,
+        "y": 84
+      },
+      "intelligence": "own",
+      "direction": false,
+      "evidence": "road-driving service",
+      "summary": "Waymo develops and deploys a driving system for road vehicles.",
+      "placement": "Owns a driving service and autonomy in a defined domain. Road-driving intelligence is different from general robot tasks.",
+      "evidenceDetail": "Road vehicle; no general-purpose manipulation.",
+      "sources": [
+        {
+          "label": "Waymo Driver",
+          "url": "https://waymo.com/waymo-driver/"
+        }
+      ]
+    },
+    {
+      "id": "agility",
+      "name": "Agility Robotics",
+      "position": {
+        "x": 50,
+        "y": 95
+      },
+      "intelligence": "own",
+      "direction": false,
+      "evidence": "commercial tote workflows",
+      "summary": "Digit performs tote logistics using a bipedal manipulation platform.",
+      "placement": "Owns Digit and commercial workflow integration/support. The current evidence centers on material handling despite broader ambition.",
+      "evidenceDetail": "Bipedal Digit used for tote handling.",
+      "sources": [
+        {
+          "label": "Digit solutions",
+          "url": "https://www.agilityrobotics.com/solutions"
+        },
+        {
+          "label": "100,000 tote milestone",
+          "url": "https://www.agilityrobotics.com/content/digit-moves-over-100k-totes"
+        }
+      ]
+    },
+    {
+      "id": "ultra",
+      "name": "Ultra",
+      "position": {
+        "x": 74,
+        "y": 95
+      },
+      "intelligence": "partner",
+      "direction": false,
+      "evidence": "PI brain \u00b7 packaging shifts",
+      "summary": "OP1 uses a stationary industrial setup for packing, sorting and kitting, with Physical Intelligence as a model partner.",
+      "placement": "Shares PI-derived broad-intelligence access, while owning a focused application and customer deployment. Current packaging workflows are bounded; this X position is about the intelligence deployed, not the packaging task alone.",
+      "evidenceDetail": "Supplied through PI; deployment is on OP1.",
+      "sources": [
+        {
+          "label": "OP1 and its specifications",
+          "url": "https://www.ultra.tech/"
+        },
+        {
+          "label": "Physical Intelligence partnerships",
+          "url": "https://www.pi.website/blog/partner"
+        }
+      ]
+    },
+    {
+      "id": "dexterity",
+      "name": "Dexterity",
+      "position": {
+        "x": 50,
+        "y": 84
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "Foresight \u00b7 logistics",
+      "summary": "Mech pairs mobile dual-arm hardware with industrial intelligence and deployment.",
+      "placement": "Owns Foresight/autonomy and logistics deployment experience. Broad intelligence direction is distinguished from its industrial footprint.",
+      "evidenceDetail": "Hardware-agnostic direction claimed; logistics footprint better evidenced.",
+      "sources": [
+        {
+          "label": "Platform",
+          "url": "https://dexterity.ai/platform"
+        },
+        {
+          "label": "Foresight",
+          "url": "https://dexterity.ai/blog/foresight"
+        }
+      ]
+    },
+    {
+      "id": "reflex",
+      "name": "Reflex Robotics",
+      "position": {
+        "x": 10,
+        "y": 73
+      },
+      "intelligence": "own",
+      "direction": false,
+      "evidence": "industrial \u00b7 human support",
+      "summary": "A wheeled industrial manipulator combines learned policies with real-time human supervision.",
+      "placement": "Owns robot and intelligence plus real-time human supervision for delivered industrial work.",
+      "evidenceDetail": "Mobile manipulation with reach and two arms.",
+      "sources": [
+        {
+          "label": "Robot and reliability layer",
+          "url": "https://www.reflexrobotics.com/"
+        }
+      ]
+    },
+    {
+      "id": "figure",
+      "name": "Figure",
+      "position": {
+        "x": 70,
+        "y": 84
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "Helix \u00b7 three trained skills",
+      "summary": "Figure develops its humanoid body and Helix models together.",
+      "placement": "Owns the body, Helix and Index stack. Broad-task own-body ambition; the cited three-behavior home tests are bounded.",
+      "evidenceDetail": "Bipedal humanoid with dexterous manipulation.",
+      "sources": [
+        {
+          "label": "Helix 2.5: unseen-home evaluation",
+          "url": "https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization"
+        }
+      ]
+    },
+    {
+      "id": "1x",
+      "name": "1X",
+      "position": {
+        "x": 90,
+        "y": 84
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "NEO \u00b7 video/action research",
+      "summary": "NEO pairs a humanoid body with model learning from video and robot data.",
+      "placement": "Owns NEO and robot video/world-model learning with embodiment tuning. Broad home direction does not establish universal cross-body actions.",
+      "evidenceDetail": "Bipedal humanoid; reported model work covers shorter-horizon behavior.",
+      "sources": [
+        {
+          "label": "World-model self-learning",
+          "url": "https://www.1x.tech/discover/world-model-self-learning"
+        }
+      ]
+    },
+    {
+      "id": "dyna",
+      "name": "Dyna Robotics",
+      "position": {
+        "x": 90,
+        "y": 73
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "own robot + action model",
+      "summary": "Dyna combines learned manipulation, control and perception with its own wheeled Taku robot.",
+      "placement": "Owns robot, action model, controller and VLM workflow orchestration. Research spans bodies, but commercial work is focused.",
+      "evidenceDetail": "Multi-body research demonstrations.",
+      "sources": [
+        {
+          "label": "Dyna 2.1",
+          "url": "https://www.dyna.co/dyna-2.1"
+        },
+        {
+          "label": "Dyna 2",
+          "url": "https://www.dyna.co/dyna-2"
+        }
+      ]
+    },
+    {
+      "id": "rhoda",
+      "name": "Rhoda AI",
+      "position": {
+        "x": 55,
+        "y": 62
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "video-action \u00b7 industry",
+      "summary": "Rhoda pairs FutureVision with a wheeled industrial robot, using web-video pretraining and robot post-training.",
+      "placement": "Own video-action intelligence and robot platform. Broad reuse direction; a cited scaling study uses one task, body and setup.",
+      "evidenceDetail": "Wheeled industrial manipulator.",
+      "sources": [
+        {
+          "label": "Rhoda AI",
+          "url": "https://www.rhoda.ai/"
+        },
+        {
+          "label": "Web-video scaling study",
+          "url": "https://www.rhoda.ai/research/scaling-web-video-pretraining"
+        }
+      ]
+    },
+    {
+      "id": "sunday",
+      "name": "Sunday",
+      "position": {
+        "x": 90,
+        "y": 62
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "Memo + ACT \u00b7 laundry",
+      "summary": "Sunday develops ACT models, a capture glove and the wheeled Memo robot.",
+      "placement": "Owns Memo, ACT and its glove capture system. Household-task ambition with bounded laundry evidence.",
+      "evidenceDetail": "Wheeled home manipulator.",
+      "sources": [
+        {
+          "label": "Memo and the integrated approach",
+          "url": "https://www.sunday.ai/"
+        },
+        {
+          "label": "ACT-2 preview",
+          "url": "https://www.sunday.ai/blog/act-2-preview"
+        }
+      ]
+    },
+    {
+      "id": "genesis-ai",
+      "name": "Genesis AI",
+      "position": {
+        "x": 55,
+        "y": 51
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "Eno \u00b7 deployment roadmap",
+      "summary": "Genesis combines its GENE model and simulation work with its own Eno robot.",
+      "placement": "Owns GENE, simulation and Eno. Broad intelligence direction with initial deployments targeted for end-2026.",
+      "evidenceDetail": "Eno general-purpose robot, announced June 2026.",
+      "sources": [
+        {
+          "label": "Genesis AI",
+          "url": "https://www.genesis.ai/"
+        },
+        {
+          "label": "Eno announcement",
+          "url": "https://www.prnewswire.com/news-releases/introducing-eno-genesis-ais-first-general-purpose-robot-is-challenging-traditional-humanoid-design-302801103.html"
+        }
+      ]
+    },
+    {
+      "id": "skild",
+      "name": "Skild AI",
+      "position": {
+        "x": 90,
+        "y": 95
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "S1 + acquired deployment",
+      "summary": "Skild develops S1 for multiple robot bodies and has announced industrial partners and a robotics-automation acquisition.",
+      "placement": "Broad cross-embodiment S1 direction plus direct deployment responsibility after acquiring Zebra/Fetch. It is no longer adequately described as a pure upstream model supplier.",
+      "evidenceDetail": "Company demonstrations and portability claims; industrial integration still varies.",
+      "sources": [
+        {
+          "label": "S1",
+          "url": "https://www.skild.ai/blogs/s1"
+        },
+        {
+          "label": "Industrial partnerships",
+          "url": "https://www.skild.ai/blogs/reindustrial-revolution"
+        },
+        {
+          "label": "Zebra acquisition",
+          "url": "https://www.skild.ai/blogs/skild-zebra"
+        }
+      ]
+    },
+    {
+      "id": "field-ai",
+      "name": "Field AI",
+      "position": {
+        "x": 55,
+        "y": 73
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "FFM \u00b7 field data loop",
+      "summary": "FieldAI develops its own Field Foundation Models and deploys them on customer missions. It describes mission sensor data becoming site reconstructions for simulation training and validation.",
+      "placement": "Own reusable autonomy plus customer deployment. Navigation and inspection are better evidenced than universal manipulation; this is a field-learning strategy, not a claim of doing everything.",
+      "evidenceDetail": "The real-to-sim loop is documented. Exclusive customer-data rights and independent proof of compounding advantage are not established.",
+      "sources": [
+        {
+          "label": "Field deployments \u2192 reconstruction \u2192 training and validation",
+          "url": "https://www.fieldai.com/news/fieldai-and-nvidia-omniverse-building-the-next-generation-of-industrial-ai"
+        },
+        {
+          "label": "Big-D customer expansion",
+          "url": "https://www.fieldai.com/news/bringing-general-purpose-robots-to-every-construction-site-inside-big-d-constructions-expansion-with-fieldai"
+        }
+      ]
+    },
+    {
+      "id": "pi",
+      "name": "Physical Intelligence",
+      "position": {
+        "x": 90,
+        "y": 40
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "partner-supplied action models",
+      "summary": "Physical Intelligence develops general manipulation models and supplies partners including Ultra and Weave.",
+      "placement": "Upstream robot-action model developer with real task/robot transfer research and named hardware partners. Universal competence remains an ambition.",
+      "evidenceDetail": "Demonstrated task/robot transfer; universal plug-and-play is not established.",
+      "sources": [
+        {
+          "label": "\u03c00.7 transfer research",
+          "url": "https://www.pi.website/blog/pi07"
+        },
+        {
+          "label": "Model partnerships",
+          "url": "https://www.pi.website/blog/partner"
+        },
+        {
+          "label": "\u03c00.7 technical report",
+          "url": "https://www.pi.website/download/pi07.pdf"
+        }
+      ]
+    },
+    {
+      "id": "generalist",
+      "name": "Generalist",
+      "position": {
+        "x": 55,
+        "y": 29
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "cross-end-effector research",
+      "summary": "GEN1.5 explores manipulation with one- or few-shot task adaptation and end-effector transfer.",
+      "placement": "Upstream own robot foundation-model/capture research with cross-end-effector transfer; not proven universal whole-body autonomy.",
+      "evidenceDetail": "Demonstrated end-effector transfer; full-body autonomy is a separate question.",
+      "sources": [
+        {
+          "label": "GEN1.5",
+          "url": "https://generalistai.com/blog/gen-1.5"
+        },
+        {
+          "label": "A thousand hands",
+          "url": "https://generalistai.com/blog/towards-machines-with-a-thousand-hands"
+        }
+      ]
+    },
+    {
+      "id": "reward",
+      "name": "Reward AI",
+      "position": {
+        "x": 70,
+        "y": 40
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "OM1 \u00b7 arms to humanoids",
+      "summary": "OM1 targets manipulation across arms and humanoids, alongside capture hardware and low-level control.",
+      "placement": "Own manipulation-model, capture and control work across arm/humanoid directions. No complete owned humanoid verified.",
+      "evidenceDetail": "Company-reported across arms and humanoids.",
+      "sources": [
+        {
+          "label": "OM1",
+          "url": "https://www.rewardai.com/blog/OM-1/"
+        }
+      ]
+    },
+    {
+      "id": "deepmind",
+      "name": "Google DeepMind",
+      "position": {
+        "x": 90,
+        "y": 29
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "Gemini Robotics 2",
+      "summary": "Gemini Robotics 2 reports a shared VLA checkpoint across Apollo 2 hand variants and Franka Duo.",
+      "placement": "Flagship-lab robot intelligence is already real: Gemini Robotics 2 VLA, reasoning and on-device variants on partner bodies. Broad reuse is not universal success.",
+      "evidenceDetail": "Shared VLA checkpoint on Apollo 2 hand variants and Franka Duo.",
+      "sources": [
+        {
+          "label": "Gemini Robotics 2",
+          "url": "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/"
+        }
+      ]
+    },
+    {
+      "id": "nvidia",
+      "name": "NVIDIA",
+      "position": {
+        "x": 72,
+        "y": 29
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "GR00T + robotics tools",
+      "summary": "GR00T combines model development with Isaac robotics infrastructure.",
+      "placement": "Upstream GR00T action-model and infrastructure developer. Cross-body adaptation/post-training is still required.",
+      "evidenceDetail": "Target-body adaptation and post-training matter.",
+      "sources": [
+        {
+          "label": "GR00T policy workflow",
+          "url": "https://developer.nvidia.com/blog/develop-humanoid-robot-policies-end-to-end-with-nvidia-isaac-gr00t/"
+        },
+        {
+          "label": "Isaac-GR00T code",
+          "url": "https://github.com/NVIDIA/Isaac-GR00T"
+        }
+      ]
+    },
+    {
+      "id": "flexion",
+      "name": "Flexion",
+      "position": {
+        "x": 90,
+        "y": 51
+      },
+      "intelligence": "own",
+      "direction": true,
+      "evidence": "Reflect \u00b7 bounded missions",
+      "summary": "Reflect v1 demonstrates partner-humanoid skills including stairs, elevators, doors and parcel handling.",
+      "placement": "Autonomy on partner humanoids, with broader reuse ambition and a bounded multi-step mission repertoire.",
+      "evidenceDetail": "Portability claimed; public mission repertoire is bounded.",
+      "sources": [
+        {
+          "label": "Reflect v1",
+          "url": "https://flexion.ai/news/flexion-reflect-v1.0"
+        }
+      ]
+    },
+    {
+      "id": "waddle",
+      "name": "Waddle Labs",
+      "position": {
+        "x": 55,
+        "y": 40
+      },
+      "intelligence": "hybrid",
+      "direction": true,
+      "evidence": "LLM code + VLA calls",
+      "summary": "Waddle develops partner-arm control where an LLM writes control code and calls vision-language-action models.",
+      "placement": "Partner-arm agent/control layer combining LLM-written programs and VLA calls. Broad model-independent ambition has limited public demonstrations.",
+      "evidenceDetail": "Claimed; broad cross-body benchmarking not established.",
+      "sources": [
+        {
+          "label": "Waddle Labs",
+          "url": "https://www.waddlelabs.ai/"
+        },
+        {
+          "label": "YC company profile",
+          "url": "https://www.ycombinator.com/companies/waddle-labs"
+        }
+      ]
+    },
+    {
+      "id": "apptronik",
+      "name": "Apptronik",
+      "position": {
+        "x": 74,
+        "y": 73
+      },
+      "intelligence": "hybrid",
+      "direction": true,
+      "evidence": "own stack + Gemini",
+      "summary": "Apollo advertises industrial handling, packing, kitting, inspection and tending.",
+      "placement": "Own hardware/control/product stack plus access to Gemini robot intelligence. Its broad intelligence direction is separate from bounded data-collection/research work and deployment reliability.",
+      "evidenceDetail": "Humanoid with bipedal and wheeled configurations.",
+      "sources": [
+        {
+          "label": "Apollo 2",
+          "url": "https://apptronik.com/apollo/apollo-2"
+        },
+        {
+          "label": "Robot Park: Apollo at work",
+          "url": "https://apptronik.com/news-collection/welcome-to-robot-park-where-apptroniks-apollo-goes-to-work"
+        }
+      ]
+    },
+    {
+      "id": "hadrian",
+      "name": "Hadrian",
+      "position": {
+        "x": 10,
+        "y": 95
+      },
+      "intelligence": "own",
+      "evidence": "Opus \u00b7 parts / factories",
+      "summary": "Hadrian develops proprietary Opus and sells precision parts, dedicated manufacturing capacity and factories it operates.",
+      "placement": "Own Opus factory-autonomy stack and operated production; customers buy manufacturing outcomes. No cross-task, cross-embodiment robot model is established. Underlying pretrained-model provenance is not disclosed.",
+      "evidenceDetail": "Its customer buys production capacity or a manufactured outcome. This is different from licensing a general robot-action model.",
+      "sources": [
+        {
+          "label": "Manufacturing model and Opus",
+          "url": "https://www.hadrian.co/"
+        }
+      ],
+      "research": false,
+      "direction": false
+    },
+    {
+      "id": "standard-bots",
+      "name": "Standard Bots",
+      "position": {
+        "x": 30,
+        "y": 84
+      },
+      "intelligence": "unknown",
+      "evidence": "US arms \u00b7 integrated software",
+      "summary": "Standard Bots designs and assembles robots and actuators in Glen Cove, New York, and integrates vision, motion, agent software and support.",
+      "placement": "Own industrial product and customer support, with a manufacturing-task scope. The underlying foundation-model provider is not sufficiently disclosed.",
+      "evidenceDetail": "American manufacture and integrated software are established. Do not infer an OpenAI robot brain from an investment or partnership association.",
+      "sources": [
+        {
+          "label": "Hardware, software and support",
+          "url": "https://standardbots.com/ai"
+        },
+        {
+          "label": "Palletizing deployments",
+          "url": "https://standardbots.com/palletizing"
+        }
+      ],
+      "research": false,
+      "direction": false
+    },
+    {
+      "id": "boston-dynamics",
+      "name": "Boston Dynamics",
+      "position": {
+        "x": 74,
+        "y": 62
+      },
+      "intelligence": "hybrid",
+      "evidence": "Atlas \u00b7 own control + Gemini",
+      "summary": "Boston Dynamics combines its own athletic intelligence with a Google DeepMind partnership for Atlas.",
+      "placement": "Atlas-specific Gemini intelligence direction plus own athletic control and robot-product responsibility. The partnership is not generalized to Spot or Stretch.",
+      "evidenceDetail": "The Gemini partnership is Atlas-specific. It does not establish that every Spot or Stretch runs Gemini.",
+      "sources": [
+        {
+          "label": "Atlas / DeepMind partnership",
+          "url": "https://bostondynamics.com/blog/boston-dynamics-google-deepmind-form-new-ai-partnership/"
+        }
+      ],
+      "research": false,
+      "direction": false
+    },
+    {
+      "id": "weave",
+      "name": "Weave",
+      "position": {
+        "x": 74,
+        "y": 51
+      },
+      "intelligence": "partner",
+      "evidence": "PI models \u00b7 laundry / home",
+      "summary": "Weave builds its home/laundry robot application using Physical Intelligence models.",
+      "placement": "Shares PI-derived broad-intelligence access, with own home/laundry application and customer-facing product. It is not placed left because its current workflow is narrow.",
+      "evidenceDetail": "Named model partnership, not demonstrated ability to swap any model without adaptation.",
+      "sources": [
+        {
+          "label": "Weave Robotics",
+          "url": "https://www.weaverobotics.com/"
+        },
+        {
+          "label": "PI partner program",
+          "url": "https://www.pi.website/blog/partner"
+        }
+      ],
+      "research": false,
+      "direction": false
+    },
+    {
+      "id": "anthropic",
+      "name": "Anthropic",
+      "position": {
+        "x": 70,
+        "y": 18
+      },
+      "intelligence": "hybrid",
+      "evidence": "robot tests \u00b7 controllers",
+      "summary": "Anthropic has tested Claude in real and simulated robotics and previewed an interface for lab/manufacturing hardware.",
+      "placement": "Upstream flagship intelligence with actual controller-mediated physical experiments. A released universal low-level action product is not established.",
+      "evidenceDetail": "July tests perform much better with pretrained low-level policies than direct joint control. August MHS is a research preview for hardware orchestration.",
+      "sources": [
+        {
+          "label": "Claude robotics tests",
+          "url": "https://www.anthropic.com/research/claude-plays-robotics"
+        },
+        {
+          "label": "Model Hardware Standard research preview",
+          "url": "https://www.anthropic.com/news/model-hardware-standard-research-preview"
+        }
+      ],
+      "research": true,
+      "direction": true
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "position": {
+        "x": 90,
+        "y": 7
+      },
+      "intelligence": "unknown",
+      "evidence": "robotics team \u00b7 product unclear",
+      "summary": "OpenAI\u2019s official Robotics team posting describes general-purpose robotics, broad form factors and robotics data infrastructure.",
+      "placement": "Upstream research/entry evidence rather than a capability coordinate. Shown at the supplier edge; future expansion toward a general action layer is the separate scenario.",
+      "evidenceDetail": "A team and stated direction are verified. This source does not establish a shipped universal robot-control product.",
+      "sources": [
+        {
+          "label": "Official Robotics team / data systems role",
+          "url": "https://openai.com/careers/software-engineer-distributed-data-systems-robotics-san-francisco/"
+        }
+      ],
+      "research": true,
+      "direction": true
+    },
+    {
+      "id": "tacta",
+      "name": "Tacta Systems",
+      "position": {
+        "x": 30,
+        "y": 51
+      },
+      "intelligence": "unknown",
+      "evidence": "tactile / AI manufacturing stack",
+      "summary": "Tacta describes its tactile hand, capture glove and manufacturing AI stack.",
+      "placement": "Manufacturing-focused application/product layer. The underlying physical-AI provider is unnamed, so model provenance and broad-transfer intelligence remain uncertain.",
+      "evidenceDetail": "Own capture/tactile technology is publicly described. An external PI partnership is not established. Tactum is an unresolved name, not a verified alias.",
+      "sources": [
+        {
+          "label": "Tacta Systems",
+          "url": "https://www.tactasystems.com/"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "from": "pi",
+      "to": "ultra",
+      "scope": "Robot-model supply"
+    },
+    {
+      "from": "pi",
+      "to": "weave",
+      "scope": "Robot-model supply"
+    },
+    {
+      "from": "deepmind",
+      "to": "apptronik",
+      "scope": "Gemini robot-model partnership"
+    },
+    {
+      "from": "deepmind",
+      "to": "boston-dynamics",
+      "scope": "Atlas only"
+    }
+  ]
+}

@@ -1,58 +1,63 @@
 ---
-title: 'Robot brains, robot bodies'
-description: 'A map of robotics companies, and a question: when brains become reusable, who makes the robot useful?'
+title: 'Who captures the value in robotics?'
+description: 'If a robot company can buy intelligence, what does it still need to own? A map of models, deployments, and customer outcomes.'
 date: '2026-10-08'
 slug: 'robot-brains-robot-bodies'
 ---
 
-Suppose a warehouse wants a robot to pack boxes. One company offers a complete machine. Another makes a model that can control several kinds of robot. A third puts the hardware and software together and gets it working on the floor.
+Suppose a robot company can buy a capable brain. It chooses a model, connects it to a robot, and sells the work that robot does.
 
-Who is solving the hard part? And if the model improves next month, who gets the benefit?
+Who captures the value? The company that trained the brain? The company that made the machine? Or the one responsible when the robot stops working halfway through a customer's shift?
 
-I want to separate two questions that often get mixed together. **How many different things can the brain learn to do? How many different things can the body physically do?** They make a useful map, provided we keep track of what companies have actually shown.
-
-Read left to right as task and model breadth: from a focused workflow toward skills that transfer across tasks, objects and environments. Read bottom to top as mechanical versatility: from a bounded machine or workcell toward a mobile robot that can reach and manipulate in more places. A model that works on several robot types has another kind of breadth, **cross-body transfer**, which is shown separately.
+I want to understand where a robotics company can build an advantage if intelligence becomes something it buys. This map puts that question on two axes. **Left to right: task-specific intelligence toward intelligence intended to work across tasks and robot bodies. Bottom to top: supplying intelligence toward owning field deployments and customer outcomes.**
 
 ```robotics-market
-{"data":"/assets/robotics/brain-body/companies.json"}
+{"data":"/assets/robotics/brain-body/landscape.json"}
 ```
 
-This is a selection from my robotics reading and conversations, not a complete market census. These are evidence-informed approximations, not scores. The company details give the public evidence and its limits. A model supplier has no single deployed body, so it sits in a separate rail. Infrastructure and uncertain identities stay in the directory rather than getting a misleading position.
+The horizontal axis covers intelligence a company **builds or deploys**. A packaging product can use a broad model while doing a bounded job. Color shows where that intelligence comes from; arrows show verified supplier relationships. The positions describe strategies, not capability scores. Each company entry separates ambition, evidence and commercial scope.
 
-## A versatile body can have a focused job
+## Two routes to a reusable brain
 
-[Agility's Digit](https://www.agilityrobotics.com/solutions) has legs and arms, but its commercial work centers on moving totes. Agility reports [more than 100,000 tote moves](https://www.agilityrobotics.com/content/digit-moves-over-100k-totes). That makes it a useful example of a mechanically versatile body doing a bounded job. The shape of the robot doesn't establish the breadth of its intelligence.
+[Physical Intelligence](https://www.pi.website/blog/partner) and [Skild](https://www.skild.ai/blogs/s1) start with a robotics problem: train intelligence that can carry skills between tasks and bodies. If that works, each robot maker could use a shared model instead of learning everything again for its own machine.
 
-[Ultra's OP1](https://www.ultra.tech/) shows the other distinction. It's a stationary machine aimed at packing, sorting and kitting, using [Physical Intelligence's models](https://www.pi.website/blog/partner). A broad pretrained model can become part of a focused product. Casters that let someone reposition a machine don't make it an autonomously mobile robot.
+There is another route. Could a flagship model from OpenAI or Anthropic, already trained to understand images, language and problems, become a robot brain with an action interface and additional training?
 
-Figure and 1X build both humanoids and their intelligence. Their direction is broad, but the evidence still needs a task attached. Figure's [Helix 2.5 study](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) reports 56% aggregate success across three behaviors in 30 unseen homes, with task-specific training. [1X's world-model work](https://www.1x.tech/discover/world-model-self-learning) studies short-horizon learning on NEO. Neither result establishes a robot that can reliably handle every household chore.
+[Anthropic's July experiments](https://www.anthropic.com/research/claude-plays-robotics) tested models on simulated and real robots. They did much better supervising pretrained controllers than driving joints directly. On the manipulation benchmark, adding a language-model supervisor still performed worse than the action policy alone. Its [Model Hardware Standard preview](https://www.anthropic.com/news/model-hardware-standard-research-preview) makes programmable equipment accessible to agents. That is an orchestration interface, rather than a universal learned action model.
 
-So the upper right of the map needs two labels: the direction a company is taking, and the range it has demonstrated.
+[OpenAI's robotics team](https://openai.com/careers/software-engineer-distributed-data-systems-robotics-san-francisco/) states a general-purpose ambition across robot forms. That's work underway, rather than a released general control product. DeepMind supplies a more developed comparison: [Gemini Robotics 2](https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/) combines reasoning and action models, with reported transfer across embodiments. The routes are already starting to overlap.
 
-## Building both doesn't mean building a narrow brain
+The distinction matters. A model that decides to pick up a cup can delegate the movement. Producing that movement means dealing with contact, timing and a particular body. The question is how much robotics-specific training remains a lasting advantage as broader models improve.
 
-Vertical integration answers **who owns the pieces**, not how general the model is. A company can build a body, collect its own data and train a model intended to learn many tasks. Figure, 1X and [Sunday](https://www.sunday.ai/) take different versions of that route. Sunday's wheeled Memo and [laundry work](https://www.sunday.ai/blog/act-2-preview) also make the point that a robot doesn't need legs to pursue useful work around a home.
+## Dependence doesn't disappear at deployment
 
-[Dexterity](https://dexterity.ai/platform) combines intelligence, hardware and deployment around industrial manipulation. Its [Foresight direction](https://dexterity.ai/blog/foresight) is broader than its demonstrated logistics footprint. [Reflex](https://www.reflexrobotics.com/) combines a mobile manipulator with its own intelligence and a real-time human reliability layer. For a customer, that layer is part of how the job gets done. It also means delivered work and fully autonomous work are different measurements.
+[Ultra uses Physical Intelligence's models](https://www.pi.website/blog/partner) in its packing, sorting and kitting product. That makes the dependency concrete: one company supplies learned capability; another turns it into work a customer can use.
 
-The question I want to ask these companies is concrete: when they add a task, which parts carry over? The model? The data collection? The hand? Or mostly the team that knows how to get a deployment working?
+Could the deployment company switch suppliers? It would need to compare models on actual work, adapt their camera and action interfaces, and preserve recovery and safety behavior. Buying a model doesn't make it interchangeable with another one.
 
-## Reusable brains move the integration work
+An advantage could sit in making those swaps cheap. It could also sit in the opposite arrangement: tightly combining a model, hardware and data so the complete system improves faster. Vertical integration doesn't imply narrow intelligence. [Skild's acquisition of Zebra's Robotics Automation business](https://www.skild.ai/blogs/skild-zebra) also shows that an intelligence supplier can move toward deployment.
 
-Physical Intelligence's [partner program](https://www.pi.website/blog/partner) puts its models into products made by companies such as Ultra and Weave. [Skild's S1](https://www.skild.ai/blogs/s1) pursues transfer across bodies, and Skild also [acquired Zebra's Robotics Automation business](https://www.skild.ai/blogs/skild-zebra). Even a company associated with reusable intelligence can move deeper into deployment.
+## Can the field make the company smarter?
 
-Reusable brains don't remove integration; they move it. Someone still has to choose the grippers, connect the workflow, handle failures and maintain the machine. A customer needs the box packed, including the awkward box that arrived after the demo.
+[Field AI describes a concrete loop](https://www.fieldai.com/news/fieldai-and-nvidia-omniverse-building-the-next-generation-of-industrial-ai): robots running its Field Foundation Models collect sensor data during customer missions. That data becomes digital reconstructions of real sites, used with NVIDIA Isaac Sim and Isaac Lab for training and validation. Its [Big-D partnership](https://www.fieldai.com/news/bringing-general-purpose-robots-to-every-construction-site-inside-big-d-constructions-expansion-with-fieldai) reports expanding construction-site deployments. The clearest evidence is around navigation, inspection and site capture, rather than universal manipulation.
 
-Could a deployment company become independent of any one model supplier? Suppose it can compare models on the customer's actual work, replace one when another performs better, and keep the rest of the operation running. That's a possible role. Ultra's PI partnership alone doesn't prove it has that independence.
+Does running robots in the field create an advantage that a model supplier cannot easily buy?
 
-The practical test would be how much work a swap requires. Do the cameras and action commands line up? Does the replacement need new demonstrations? Do failure recovery and safety checks still work? A model that transfers between bodies isn't automatically interchangeable with another model.
+Consider a failure at one site. Someone records it, identifies the cause, improves the system, and tests whether the fix carries to the next site. Deployments could improve both the shared model and the machinery that adapts it to a customer.
 
-## What gets easier at the next customer?
+```robotics-value-loop
+```
 
-That is the moat question I want this map to help answer. A better model can make each robot more capable. A deployment team can learn how to install, operate and recover it. Both improvements matter; the evidence is in what happens on the next site.
+The evidence for that flywheel would be fewer interventions, faster launches, and improvements that transfer between customers. Field AI's published pipeline doesn't establish exclusive ownership of customer data. Who can reuse the failure examples, including if the deployment company changes model suppliers?
 
-Does deployment get cheaper because the intelligence transfers? Because the workflow is now understood? Or because people intervene less often? Who owns the failure data, and can it improve the next customer's robot?
+## The customer may buy something else entirely
 
-Then there is the business question: if model suppliers make intelligence easier to buy, do integrators keep the customer relationship and margins? Or does the model become so useful that deployment companies are easy to replace?
+[Hadrian](https://www.hadrian.co/) operates factories with its own Opus automation platform. It sells precision parts, manufacturing capacity and operated factories. The customer can buy a production outcome without buying a robot brain.
 
-I don't have an answer from a quadrant. I have a better set of questions: what transfers, what still needs a person, and who makes the next installation easier to launch and run?
+[Standard Bots](https://standardbots.com/ai) designs and assembles its arms, including actuators, in Glen Cove, New York. Its offering combines vision, motion and agent software with deployment support. The cited material doesn't establish the underlying foundation-model supplier.
+
+Reliable hardware, production capacity and responsibility for delivery can create value even when intelligence comes from elsewhere. For these businesses, the useful question is whether better models make their own product easier to deliver or make it easier for someone else to compete.
+
+For each company, I want to ask the same thing: **what gets better as the model suppliers improve, and what can the company improve on its own?**
+
+A universal brain could strengthen a deployment business by making new work cheaper to automate. It could also give the supplier more bargaining power. The next customer, the next failure, and the cost of changing models would tell us who captures the value.

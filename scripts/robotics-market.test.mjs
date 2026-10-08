@@ -11,7 +11,7 @@ function fixture(t) {
   t.after(() => fs.rmSync(root, {recursive:true, force:true}));
   const filename = path.join(root, 'assets/robotics/test/companies.json');
   fs.mkdirSync(path.dirname(filename), {recursive:true});
-  const company = {id:'sample',name:'Sample <robot>',group:'bounded-broad',summary:'Reported demo & its limits.',placement:'Interpretation.',integration:'Brain provider',featured:true,provider:true,sources:[{label:'Original evidence',url:'https://example.org/evidence'}]};
+  const company = {id:'sample',name:'Sample <robot>',position:{x:75,y:25},intelligence:'own',evidence:'Bounded transfer research',summary:'Reported demo & its limits.',placement:'Interpretation.',integration:'Brain provider',featured:true,provider:true,sources:[{label:'Original evidence',url:'https://example.org/evidence'}]};
   const write = data => fs.writeFileSync(filename, JSON.stringify(data));
   write({companies:[company],checked:'2026-10-08'});
   return {root, company, write, config:JSON.stringify({data:'/assets/robotics/test/companies.json'})};
@@ -24,8 +24,10 @@ test('market evidence renders without JavaScript and is escaped', t => {
   assert.match(html, /href="https:\/\/example.org\/evidence"/);
   assert.match(html, /id="company-sample"/);
   assert.match(html, /data-company-jump="sample"/);
-  assert.match(html, /class="rm-controls" hidden/);
-  assert.doesNotMatch(html, /<script/);
+  assert.match(html, /class="rm-tools" hidden/);
+  assert.match(html, /class="rm-point rm-own/);
+  assert.match(html, /Intelligence built or deployed/);
+  assert.doesNotMatch(html, /Body: bounded|Versatile body|<script/);
   const article = renderArticle('---\ntitle: A map\ndescription: Test\ndate: 2026-10-08\n---\n\n```robotics-market\n'+f.config+'\n```', f.root);
   assert.equal(article.components.market, true);
   assert.match(article.body, /Original evidence/);
@@ -35,6 +37,8 @@ test('market refuses missing evidence, duplicate identities, unsafe links and tr
   assert.throws(() => parseMarket('{"data":"/assets/robotics/test/../companies.json"}', f.root), /local robotics/);
   f.write({companies:[{...f.company,sources:[]}]});
   assert.throws(() => parseMarket(f.config, f.root), /public sources/);
+  f.write({companies:[{...f.company,position:{x:NaN,y:40}}]});
+  assert.throws(() => parseMarket(f.config, f.root), /layout position/);
   f.write({companies:[f.company,f.company]});
   assert.throws(() => parseMarket(f.config, f.root), /unique slugs/);
   f.write({companies:[{...f.company,sources:[{label:'Bad',url:'javascript:alert(1)'}]}]});
