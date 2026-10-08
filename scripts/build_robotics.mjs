@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import MarkdownIt from 'markdown-it';
 import matter from 'gray-matter';
 import { katex } from '@mdit/plugin-katex';
+import { parseMarket, renderMarket } from './robotics-market.mjs';
 import { parseTimeline, renderTimeline, timelineProse } from './robotics-timeline.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -51,7 +52,7 @@ export function renderArticle(source, root = ROOT) {
   });
   const headings = [];
   const ids = new Set();
-  const components = {timeline:false, geometry:false, so101:false};
+  const components = {timeline:false, geometry:false, so101:false, market:false};
   md.core.ruler.push('article-structure', (state) => {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];
@@ -83,6 +84,11 @@ export function renderArticle(source, root = ROOT) {
       if (token.type === 'heading_open' && ['h2', 'h3'].includes(token.tag)) {
         headings.push({id:token.attrGet('id'), title:token.meta.title, level:token.tag});
       }
+      if (token.type === 'fence' && token.info.trim() === 'robotics-market') {
+        if (components.market) throw new Error('Only one robotics-market per article');
+        token.meta = {...token.meta, market:parseMarket(token.content, root)};
+        components.market = true;
+      }
       if (token.type === 'fence' && token.info.trim() === 'robotics-arm') {
         if (token.content.trim()) throw new Error('robotics-arm does not accept content');
         if (components.geometry) throw new Error('Only one robotics-arm widget per article');
@@ -108,6 +114,7 @@ export function renderArticle(source, root = ROOT) {
   });
   const renderFence = md.renderer.rules.fence;
   md.renderer.rules.fence = (tokens, index, options, environment, renderer) => {
+    if (tokens[index].meta?.market) return renderMarket(tokens[index].meta.market);
     if (tokens[index].meta?.timeline) return renderTimeline(tokens[index].meta.timeline);
     if (tokens[index].meta?.geometry) return template('arm-demo.html', root, {
       arm_article_href:`#${tokens[index].meta.geometryAnchor || 'main'}`,
@@ -193,7 +200,7 @@ ${GENERATED_MARKER}
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
+<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
 </head><body class="${pathname === '/' ? 'home-page' : 'robotics'}${article ? trackClass(article) : ''}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}

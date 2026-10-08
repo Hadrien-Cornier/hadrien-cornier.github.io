@@ -1,0 +1,1681 @@
+{
+  "checked": "2026-10-08",
+  "companies": [
+    {
+      "id": "10things",
+      "name": "10Things",
+      "group": "versatile-broad",
+      "integration": "Builder + services",
+      "summary": "Aida targets care-home and household support, alongside simulation and deployment services.",
+      "placement": "Laundry, room reset and supply workflows are advertised. The intended breadth is wider than the established deployment evidence.",
+      "embodiments": "Intended wheeled bimanual mobile manipulator.",
+      "sources": [
+        {
+          "label": "10Things product and approach",
+          "url": "https://10things.tech/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "1x",
+      "name": "1X",
+      "group": "versatile-broad",
+      "integration": "Integrated",
+      "summary": "NEO pairs a humanoid body with model learning from video and robot data.",
+      "placement": "A broad home direction. Video pretraining, embodiment tuning and inverse dynamics do not establish complete autonomous household operation.",
+      "embodiments": "Bipedal humanoid; reported model work covers shorter-horizon behavior.",
+      "sources": [
+        {
+          "label": "World-model self-learning",
+          "url": "https://www.1x.tech/discover/world-model-self-learning"
+        }
+      ],
+      "featured": true,
+      "mapNote": "Home direction · short-horizon"
+    },
+    {
+      "id": "9-mothers",
+      "name": "9 Mothers",
+      "group": "bounded-focused",
+      "integration": "Specialist builder",
+      "summary": "Edda is a specialized counter-drone defense product.",
+      "placement": "A focused point-defense system. Other announced systems include future releases.",
+      "embodiments": "Dedicated turret mechanics.",
+      "sources": [
+        {
+          "label": "9 Mothers product and approach",
+          "url": "https://9mothers.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "abb",
+      "name": "ABB Robotics",
+      "group": "infrastructure",
+      "integration": "Industrial robot hardware",
+      "summary": "Industrial robot hardware supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "ABB Robotics hardware and integration context",
+          "url": "https://press.siemens.com/global/en/pressrelease/cooperation-multi-vendor-integration-industrial-robots-tia-portal"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "agility",
+      "name": "Agility Robotics",
+      "group": "versatile-focused",
+      "integration": "Integrated",
+      "summary": "Digit performs tote logistics using a bipedal manipulation platform.",
+      "placement": "Versatile mechanics and a focused deployed task can coexist. Moving many totes measures operations in that workflow, not general task transfer.",
+      "embodiments": "Bipedal Digit used for tote handling.",
+      "sources": [
+        {
+          "label": "Digit solutions",
+          "url": "https://www.agilityrobotics.com/solutions"
+        },
+        {
+          "label": "100,000 tote milestone",
+          "url": "https://www.agilityrobotics.com/content/digit-moves-over-100k-totes"
+        }
+      ],
+      "featured": true,
+      "mapNote": "Digit · totes today"
+    },
+    {
+      "id": "ai2",
+      "name": "Ai2",
+      "group": "providers",
+      "integration": "Open model research",
+      "summary": "MolmoAct2 offers open manipulation-model research across SO100, YAM and Franka.",
+      "placement": "Research model support across several arms. Humanoids and hands need additional training; this is not a deployed robot supplier.",
+      "embodiments": "SO100, YAM and Franka research platforms.",
+      "sources": [
+        {
+          "label": "MolmoAct2",
+          "url": "https://allenai.org/blog/molmoact2"
+        }
+      ],
+      "featured": false,
+      "crossEmbodiment": "Bounded support for SO100, YAM and Franka; further bodies need training."
+    },
+    {
+      "id": "allen-control",
+      "name": "Allen Control Systems",
+      "group": "bounded-focused",
+      "integration": "Specialist builder",
+      "summary": "Bullfrog combines sensing and control with specialized defense hardware.",
+      "placement": "A land/sea defense station, outside general manipulation.",
+      "embodiments": "Dedicated weapon-station mechanics.",
+      "sources": [
+        {
+          "label": "Allen Control Systems product and approach",
+          "url": "https://www.allencontrolsystems.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "amazon",
+      "name": "Amazon Robotics",
+      "group": "infrastructure",
+      "integration": "Integrated fleet",
+      "summary": "Amazon operates specialized warehouse robot fleets and DeepFleet orchestration.",
+      "placement": "Strong operations in a defined domain. A fleet of specialized machines is different from one broadly transferable robot policy.",
+      "embodiments": "Multiple specialized warehouse machines; no single body score.",
+      "sources": [
+        {
+          "label": "Fleet and DeepFleet",
+          "url": "https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model"
+        }
+      ],
+      "featured": false,
+      "mapNote": "Specialized warehouse fleet",
+      "crossEmbodiment": "Heterogeneous fleet orchestration, not one universal robot policy."
+    },
+    {
+      "id": "ami",
+      "name": "AMI Labs",
+      "group": "uncertain",
+      "integration": "World-model lab",
+      "summary": "AMI Labs describes world-model research.",
+      "placement": "Public product, task and body detail is insufficient for a useful quadrant placement.",
+      "embodiments": "Not assigned.",
+      "sources": [
+        {
+          "label": "AMI Labs",
+          "url": "https://amilabs.xyz/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "apptronik",
+      "name": "Apptronik",
+      "group": "versatile-broad",
+      "integration": "Builder + partner models",
+      "summary": "Apollo advertises industrial handling, packing, kitting, inspection and tending.",
+      "placement": "Broader intended task repertoire on a versatile body. Home and eldercare expansion remain a vision; commercial maturity is not audited here.",
+      "embodiments": "Humanoid with bipedal and wheeled configurations.",
+      "sources": [
+        {
+          "label": "Apptronik product and approach",
+          "url": "https://apptronik.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "argon",
+      "name": "Argon Mechatronics",
+      "group": "infrastructure",
+      "integration": "Reconfigurable hardware",
+      "summary": "SCARA systems offer printing, CNC, laser and pick-and-place toolheads.",
+      "placement": "Broader mechanical task configurations on a bounded setup. This is reconfigurability, not demonstrated learned task transfer; advertised Argon One humanoid maturity needs separate evidence.",
+      "embodiments": "SCARA with swappable toolheads.",
+      "sources": [
+        {
+          "label": "Argon Mechatronics product and approach",
+          "url": "https://www.argonmech.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "arm-automation",
+      "name": "ARM Automation",
+      "group": "infrastructure",
+      "integration": "Custom integrator",
+      "summary": "Turnkey engineering for assembly, inspection, machining and handling.",
+      "placement": "The broad portfolio belongs to engineering services, not one reusable robot body.",
+      "embodiments": "Bespoke equipment and third-party robots.",
+      "sources": [
+        {
+          "label": "ARM Automation product and approach",
+          "url": "https://www.armautomation.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "augmentus",
+      "name": "Augmentus",
+      "group": "infrastructure",
+      "integration": "Programming + perception",
+      "summary": "Scan/CAD-to-path software for finishing, spraying, dispensing and welding.",
+      "placement": "Cross-brand industrial-arm support is integration breadth; it is not evidence of a universal learned robot policy.",
+      "embodiments": "Host-dependent industrial arms, with optional vision hardware.",
+      "sources": [
+        {
+          "label": "Augmentus product and approach",
+          "url": "https://www.augmentus.tech/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "austin-mechatronics",
+      "name": "Austin Mechatronics (ANDESIGN Lab)",
+      "group": "infrastructure",
+      "integration": "Engineering services",
+      "summary": "R&D, prototypes and pilot builds combine mechanics, electronics and controls.",
+      "placement": "Project-dependent engineering; no standard robot product is established.",
+      "embodiments": "Project-dependent.",
+      "sources": [
+        {
+          "label": "Austin Mechatronics (ANDESIGN Lab) product and approach",
+          "url": "https://www.austinmechatronics.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "avride",
+      "name": "Avride",
+      "group": "bounded-focused",
+      "integration": "Autonomy + deployer",
+      "summary": "Autonomy adapted across passenger cars and delivery robots.",
+      "placement": "Two specialized transport embodiments. Sharing an approach is different from a general-purpose body.",
+      "embodiments": "Road cars and delivery robots.",
+      "sources": [
+        {
+          "label": "Avride product and approach",
+          "url": "https://www.avride.ai/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "beckhoff",
+      "name": "Beckhoff",
+      "group": "infrastructure",
+      "integration": "Control + modular robotics",
+      "summary": "Control + modular robotics supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Beckhoff hardware and integration context",
+          "url": "https://www.beckhoff.com/en-us/products/motion/atro-automation-technology-for-robotics/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "brightpick",
+      "name": "Brightpick",
+      "group": "versatile-focused",
+      "integration": "Builder + deployer",
+      "summary": "Autopicker performs picking, buffering, sortation and fulfillment.",
+      "placement": "Broad warehouse-workflow coverage stays within a defined domain.",
+      "embodiments": "Mobile manipulation within shelving and tote workflows.",
+      "sources": [
+        {
+          "label": "Brightpick product and approach",
+          "url": "https://brightpick.ai/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "comau",
+      "name": "Comau",
+      "group": "infrastructure",
+      "integration": "Industrial robot hardware",
+      "summary": "Industrial robot hardware supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Comau hardware and integration context",
+          "url": "https://press.siemens.com/global/en/pressrelease/cooperation-multi-vendor-integration-industrial-robots-tia-portal"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "contoro",
+      "name": "Contoro Robotics",
+      "group": "versatile-focused",
+      "integration": "Builder + deployer",
+      "summary": "Industrial mobile manipulation for unloading cartons from trailers.",
+      "placement": "Varying cartons, one unloading workflow. Adaptable mechanics do not imply cross-domain model generality.",
+      "embodiments": "Arm and mobile base with specialized gripper and conveyor.",
+      "sources": [
+        {
+          "label": "Contoro Robotics product and approach",
+          "url": "https://contoro.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "cortex",
+      "name": "Cortex AI",
+      "group": "infrastructure",
+      "integration": "Embodied data",
+      "summary": "Cortex supplies embodied data, including support for MolmoAct2.",
+      "placement": "Data collection and the trained policy are separate products.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Ego data",
+          "url": "https://cortexrobot.ai/ego/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "crewline",
+      "name": "Crewline",
+      "group": "bounded-focused",
+      "integration": "Retrofit autonomy",
+      "summary": "Autonomy kits for roller compaction.",
+      "placement": "Rollers are the current product. Dozers advertised for late 2026 remain a roadmap item.",
+      "embodiments": "Retrofit on dedicated construction rollers.",
+      "sources": [
+        {
+          "label": "Crewline product and approach",
+          "url": "https://crewline.ai/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "dac",
+      "name": "DAC Robotics",
+      "group": "infrastructure",
+      "integration": "Custom integrator",
+      "summary": "Assembly, tending, depalletizing, decant and box-opening systems.",
+      "placement": "Multiple configured cells and proprietary systems; no single reusable body/policy score.",
+      "embodiments": "Project-dependent industrial cells.",
+      "sources": [
+        {
+          "label": "DAC Robotics product and approach",
+          "url": "https://dacrobotics.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "dexterity",
+      "name": "Dexterity",
+      "group": "versatile-broad",
+      "integration": "Integrated platform",
+      "summary": "Mech pairs mobile dual-arm hardware with industrial intelligence and deployment.",
+      "placement": "Broader Foresight model direction on a versatile body, with a focused logistics deployment footprint. Hardware-agnostic ambition exceeds the demonstrated scope.",
+      "embodiments": "Mobile dual-arm industrial manipulator.",
+      "sources": [
+        {
+          "label": "Platform",
+          "url": "https://dexterity.ai/platform"
+        },
+        {
+          "label": "Foresight",
+          "url": "https://dexterity.ai/blog/foresight"
+        }
+      ],
+      "featured": true,
+      "mapNote": "Foresight direction · logistics today",
+      "crossEmbodiment": "Hardware-agnostic direction claimed; logistics footprint better evidenced."
+    },
+    {
+      "id": "diligent",
+      "name": "Diligent Robotics",
+      "group": "versatile-focused",
+      "integration": "Builder + deployer",
+      "summary": "Moxi fetches hospital supplies and handles doors and elevators.",
+      "placement": "A flexible manipulator in related hospital-logistics workflows. The deployed mission is narrower than the body’s possible actions.",
+      "embodiments": "Mobile base with compliant arm and hand.",
+      "sources": [
+        {
+          "label": "Diligent Robotics product and approach",
+          "url": "https://www.diligentrobots.com/moxi"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "dyna",
+      "name": "Dyna Robotics",
+      "group": "versatile-broad",
+      "integration": "Integrated",
+      "summary": "Dyna combines learned manipulation, control and perception with its own wheeled Taku robot.",
+      "placement": "Its three-body research supports some transfer. Its move into hardware means the company is no longer described well as a model-only supplier.",
+      "embodiments": "Wheeled Taku plus additional research embodiments.",
+      "sources": [
+        {
+          "label": "Dyna 2.1",
+          "url": "https://www.dyna.co/dyna-2.1"
+        },
+        {
+          "label": "Dyna 2",
+          "url": "https://www.dyna.co/dyna-2"
+        }
+      ],
+      "featured": false,
+      "crossEmbodiment": "Multi-body research demonstrations."
+    },
+    {
+      "id": "eidon",
+      "name": "Eidon",
+      "group": "infrastructure",
+      "integration": "Historical data archive",
+      "summary": "Eidon retains a historical data archive; its site says operations ceased in 2026.",
+      "placement": "Included as a historical data layer, not an active deployed robot supplier.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Eidon status",
+          "url": "https://www.eidon.ai/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "elysium",
+      "name": "Elysium Robotics",
+      "group": "infrastructure",
+      "integration": "Actuator research",
+      "summary": "Muscle-like dielectric-elastomer microfiber actuation with dexterity ambitions.",
+      "placement": "Component technology is evidenced more clearly than a validated general-purpose deployed robot.",
+      "embodiments": "Actuators; full robot scope insufficiently evidenced.",
+      "sources": [
+        {
+          "label": "Elysium Robotics product and approach",
+          "url": "https://www.elysium-robotics.com/about/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "fanuc",
+      "name": "FANUC",
+      "group": "infrastructure",
+      "integration": "Industrial robot hardware",
+      "summary": "Industrial robot hardware supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "FANUC hardware and integration context",
+          "url": "https://press.siemens.com/global/en/pressrelease/cooperation-multi-vendor-integration-industrial-robots-tia-portal"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "feetech",
+      "name": "Feetech",
+      "group": "infrastructure",
+      "integration": "Smart-servo components",
+      "summary": "Smart-servo components supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Feetech hardware and integration context",
+          "url": "https://www.feetechrc.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "field-ai",
+      "name": "Field AI",
+      "group": "providers",
+      "integration": "Partner-body autonomy",
+      "summary": "Field AI provides robot autonomy with public evidence in navigation, inspection and mapping.",
+      "placement": "Body depends on the partner. Cross-body autonomy for inspection should not be read as general manipulation.",
+      "embodiments": "Includes partner mobile platforms such as Spot.",
+      "sources": [
+        {
+          "label": "Boston Dynamics partnership",
+          "url": "https://www.fieldai.com/news/boston-dynamics-and-fieldai-partner-to-bring-robots-into-uncharted-and-dynamic-environments"
+        }
+      ],
+      "featured": true,
+      "crossEmbodiment": "Demonstrated/claimed across mobile platforms; navigation evidence is strongest."
+    },
+    {
+      "id": "figure",
+      "name": "Figure",
+      "group": "versatile-broad",
+      "integration": "Integrated",
+      "summary": "Figure develops its humanoid body and Helix models together.",
+      "placement": "Broader skills on a versatile body, with bounded evidence: Helix 2.5 reports 56% aggregate success across three behaviors in 30 unseen homes, using task-specific training.",
+      "embodiments": "Bipedal humanoid with dexterous manipulation.",
+      "sources": [
+        {
+          "label": "Helix 2.5: unseen-home evaluation",
+          "url": "https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization"
+        }
+      ],
+      "featured": true,
+      "mapNote": "Trained skills · home tests"
+    },
+    {
+      "id": "firsthand",
+      "name": "Firsthand",
+      "group": "infrastructure",
+      "integration": "Egocentric data",
+      "summary": "Firsthand supplies first-person data.",
+      "placement": "Human video is training material; transfer to a robot needs separate evidence.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Firsthand",
+          "url": "https://www.ifirsthand.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "flexion",
+      "name": "Flexion",
+      "group": "providers",
+      "integration": "Partner-body autonomy",
+      "summary": "Reflect v1 demonstrates partner-humanoid skills including stairs, elevators, doors and parcel handling.",
+      "placement": "A model/autonomy layer with a bounded demonstrated task distribution. A varied demo repertoire is not an unrestricted task interface.",
+      "embodiments": "Partner humanoid demonstrations.",
+      "sources": [
+        {
+          "label": "Reflect v1",
+          "url": "https://flexion.ai/news/flexion-reflect-v1.0"
+        }
+      ],
+      "featured": false,
+      "crossEmbodiment": "Portability claimed; public mission repertoire is bounded."
+    },
+    {
+      "id": "fox",
+      "name": "Fox Robotics",
+      "group": "bounded-focused",
+      "integration": "Builder + deployer",
+      "summary": "Autonomous forklifts load and unload pallets.",
+      "placement": "Pallet and trailer variation stay within the core lifting and transport function.",
+      "embodiments": "Dedicated forklift.",
+      "sources": [
+        {
+          "label": "Fox Robotics product and approach",
+          "url": "https://foxrobotics.com/our-product"
+        }
+      ],
+      "featured": true,
+      "mapNote": "Forklift · pallets today"
+    },
+    {
+      "id": "franka",
+      "name": "Franka Robotics",
+      "group": "infrastructure",
+      "integration": "Research robot hardware",
+      "summary": "Research robot hardware supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Franka Robotics hardware and integration context",
+          "url": "https://franka.de/franka-research-3"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "gale",
+      "name": "GALE Project",
+      "group": "infrastructure",
+      "integration": "Drone infrastructure",
+      "summary": "Monitoring, alerts and drone-response infrastructure.",
+      "placement": "The dock and sensor layer enables host drones, without specifying a general-purpose mobile body.",
+      "embodiments": "Host-drone dependent.",
+      "sources": [
+        {
+          "label": "GALE Project product and approach",
+          "url": "https://www.galeproject.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "general-instinct",
+      "name": "General Instinct",
+      "group": "infrastructure",
+      "integration": "Edge optimization",
+      "summary": "General Instinct optimizes supplied models for edge deployment.",
+      "placement": "Optimizing a model is different from creating the robot policy or proving new task capability.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "YC profile",
+          "url": "https://www.ycombinator.com/companies/general-instinct"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "general-intuition",
+      "name": "General Intuition",
+      "group": "infrastructure",
+      "integration": "World/action research",
+      "summary": "General Intuition works on world and action models from gameplay.",
+      "placement": "Gameplay research does not establish physical-robot performance.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "General Intuition",
+          "url": "https://www.generalintuition.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "generalist",
+      "name": "Generalist",
+      "group": "providers",
+      "integration": "Model + capture",
+      "summary": "GEN1.5 explores manipulation with one- or few-shot task adaptation and end-effector transfer.",
+      "placement": "Broad manipulation model direction. Short-task and end-effector transfer should not be read as full-body autonomy.",
+      "embodiments": "Manipulation setups and different end effectors.",
+      "sources": [
+        {
+          "label": "GEN1.5",
+          "url": "https://generalistai.com/blog/gen-1.5"
+        },
+        {
+          "label": "A thousand hands",
+          "url": "https://generalistai.com/blog/towards-machines-with-a-thousand-hands"
+        }
+      ],
+      "featured": false,
+      "crossEmbodiment": "Demonstrated end-effector transfer; full-body autonomy is a separate question."
+    },
+    {
+      "id": "genesis-ai",
+      "name": "Genesis AI",
+      "group": "versatile-broad",
+      "integration": "Integrated",
+      "summary": "Genesis combines its GENE model and simulation work with its own Eno robot.",
+      "placement": "Broad manipulation demonstrations on a versatile robot. The Eno announcement targets initial deployments for the end of 2026; demonstrations and deployments are distinct.",
+      "embodiments": "Eno general-purpose robot, announced June 2026.",
+      "sources": [
+        {
+          "label": "Genesis AI",
+          "url": "https://www.genesis.ai/"
+        },
+        {
+          "label": "Eno announcement",
+          "url": "https://www.prnewswire.com/news-releases/introducing-eno-genesis-ais-first-general-purpose-robot-is-challenging-traditional-humanoid-design-302801103.html"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "deepmind",
+      "name": "Google DeepMind",
+      "group": "providers",
+      "integration": "Model provider",
+      "summary": "Gemini Robotics 2 reports a shared VLA checkpoint across Apollo 2 hand variants and Franka Duo.",
+      "placement": "Cross-embodiment model evidence. Early-access success varies; supporting multiple bodies does not assign the supplier a single mechanically versatile body.",
+      "embodiments": "Apollo 2 variants and Franka Duo.",
+      "sources": [
+        {
+          "label": "Gemini Robotics 2",
+          "url": "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/"
+        }
+      ],
+      "featured": true,
+      "crossEmbodiment": "Shared VLA checkpoint on Apollo 2 hand variants and Franka Duo."
+    },
+    {
+      "id": "hugging-face",
+      "name": "Hugging Face / Pollen",
+      "group": "infrastructure",
+      "integration": "Open ecosystem",
+      "summary": "LeRobot, SmolVLA and Reachy belong to an ecosystem spanning code, models and hardware.",
+      "placement": "These projects have different scopes. Treating the ecosystem as one robot overstates what any single component supplies.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "SmolVLA",
+          "url": "https://huggingface.co/blog/smolvla"
+        },
+        {
+          "label": "Pollen acquisition",
+          "url": "https://huggingface.co/blog/hugging-face-pollen-robotics-acquisition"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "i2rt",
+      "name": "i2RT",
+      "group": "infrastructure",
+      "integration": "Research hardware",
+      "summary": "i2RT provides YAM research hardware and capture tools.",
+      "placement": "Robot hardware and the policy used with it need separate evidence.",
+      "embodiments": "YAM research arm.",
+      "sources": [
+        {
+          "label": "i2RT",
+          "url": "https://i2rt.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "icon",
+      "name": "ICON",
+      "group": "bounded-focused",
+      "integration": "Builder + deployer",
+      "summary": "Large construction manipulators print building walls.",
+      "placement": "Construction printing remains one process family. Titan customer deliveries are advertised for 2027.",
+      "embodiments": "Tracked base, boom and print head.",
+      "sources": [
+        {
+          "label": "ICON product and approach",
+          "url": "https://www.iconbuild.com/technology"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "intrinsic",
+      "name": "Intrinsic",
+      "group": "infrastructure",
+      "integration": "Industrial runtime",
+      "summary": "Intrinsic provides industrial Intelligence Cell and runtime capabilities on partner arms.",
+      "placement": "Runtime and integration scope are distinct from demonstrated general-purpose policy breadth.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Intrinsic Intelligence",
+          "url": "https://www.intrinsic.ai/intrinsic-intelligence"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "deere",
+      "name": "John Deere",
+      "group": "bounded-focused",
+      "integration": "Machine family + autonomy",
+      "summary": "Autonomy products span tillage, orchard spraying, quarry haulage and mowing.",
+      "placement": "Different machines perform different field-work tasks. The family should not be treated as one broadly capable body or policy.",
+      "embodiments": "Specialized tractors, trucks and mowers; implements add flexibility.",
+      "sources": [
+        {
+          "label": "John Deere product and approach",
+          "url": "https://www-cm-ue.deere.com/en-gb/our-company/news/autonomous-machines-and-technology-at-ces"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "kawasaki",
+      "name": "Kawasaki Robotics",
+      "group": "infrastructure",
+      "integration": "Industrial robot hardware",
+      "summary": "Industrial robot hardware supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Kawasaki Robotics hardware and integration context",
+          "url": "https://press.siemens.com/global/en/pressrelease/cooperation-multi-vendor-integration-industrial-robots-tia-portal"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "kuka",
+      "name": "KUKA",
+      "group": "infrastructure",
+      "integration": "Hardware + control + AI",
+      "summary": "Hardware + control + AI supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "KUKA hardware and integration context",
+          "url": "https://www.kuka.com/en-de/company/iimagazine/2026/04/kuka-hannover-messe-2026"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "lightwheel",
+      "name": "Lightwheel",
+      "group": "infrastructure",
+      "integration": "Simulation + evaluation",
+      "summary": "Lightwheel provides simulation, data and robotics evaluation.",
+      "placement": "An enabling and benchmarking layer rather than one brain/body deployment.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Lightwheel",
+          "url": "https://www.lightwheel.ai/"
+        },
+        {
+          "label": "RoboFinals",
+          "url": "https://www.lightwheel.ai/robofinals"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "linestar",
+      "name": "Linestar Automation",
+      "group": "uncertain",
+      "integration": "Integrator (provisional)",
+      "summary": "An Austin automation business is identified in its company profile.",
+      "placement": "Current robotic-product capabilities remain unverified. A JavaScript-only primary site did not resolve the detail.",
+      "embodiments": "Unknown or project-dependent.",
+      "sources": [
+        {
+          "label": "Linestar Automation product and approach",
+          "url": "https://www.linkedin.com/company/linestar"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "meta",
+      "name": "Meta FAIR",
+      "group": "infrastructure",
+      "integration": "World-model research",
+      "summary": "V-JEPA 2 investigates video world models and planning.",
+      "placement": "The physical manipulation evidence requires robot post-training and is limited in scope.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "V-JEPA 2 research",
+          "url": "https://ai.meta.com/research/publications/v-jepa-2-self-supervised-video-models-enable-understanding-prediction-and-planning/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "micro1",
+      "name": "micro1",
+      "group": "infrastructure",
+      "integration": "Data + evaluation",
+      "summary": "micro1 supplies robotics data and evaluation services.",
+      "placement": "Data supply should not be assigned the capability of the models trained on it.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Robotics services",
+          "url": "https://www.micro1.ai/robotics"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "motogo",
+      "name": "Motogo",
+      "group": "infrastructure",
+      "integration": "Parcel infrastructure",
+      "summary": "Reusable parcel and anchor hardware for delivery.",
+      "placement": "Human couriers are the current operation. Robot-ready infrastructure is not a current autonomous courier.",
+      "embodiments": "Parcel and anchor hardware.",
+      "sources": [
+        {
+          "label": "Motogo product and approach",
+          "url": "https://www.motogo.systems/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "nowcuisine",
+      "name": "NowCuisine",
+      "group": "bounded-focused",
+      "integration": "Kiosk builder",
+      "summary": "ZipKitchen kiosks serve hot meals.",
+      "placement": "Menu variety is not breadth across unrelated mechanical tasks. Primary information was available through an indexed page; direct extraction was empty.",
+      "embodiments": "Specialized stationary kiosk.",
+      "sources": [
+        {
+          "label": "NowCuisine product and approach",
+          "url": "https://www.nowcuisine.com/forconsumers/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "nucleus4d",
+      "name": "Nucleus4D (Nucleus)",
+      "group": "infrastructure",
+      "integration": "Data + simulation",
+      "summary": "Real-scene imagery, poses, lidar and simulation-ready USD for physical AI.",
+      "placement": "Enabling data across domains; no task-performing robot platform to place.",
+      "embodiments": "Not applicable.",
+      "sources": [
+        {
+          "label": "Nucleus4D (Nucleus) product and approach",
+          "url": "https://www.nucleus4d.com/physical-ai"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "nvidia",
+      "name": "NVIDIA",
+      "group": "infrastructure",
+      "integration": "Models + infrastructure",
+      "summary": "GR00T combines model development with Isaac robotics infrastructure.",
+      "placement": "Cross-body policies require target-body post-training. Using Isaac does not establish that a company uses GR00T.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "GR00T policy workflow",
+          "url": "https://developer.nvidia.com/blog/develop-humanoid-robot-policies-end-to-end-with-nvidia-isaac-gr00t/"
+        },
+        {
+          "label": "Isaac-GR00T code",
+          "url": "https://github.com/NVIDIA/Isaac-GR00T"
+        }
+      ],
+      "featured": false,
+      "crossEmbodiment": "Target-body adaptation and post-training matter."
+    },
+    {
+      "id": "objectways",
+      "name": "Objectways",
+      "group": "infrastructure",
+      "integration": "Data capture",
+      "summary": "Objectways provides embodied-AI dataset services.",
+      "placement": "A data/capture layer rather than one brain/body system.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Embodied-AI datasets",
+          "url": "https://objectways.com/embodied-ai-dataset/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "paradigm",
+      "name": "Paradigm Robotics",
+      "group": "bounded-focused",
+      "integration": "Response platform",
+      "summary": "FireBot supports reconnaissance, sensing and payload applications.",
+      "placement": "Modularity broadens hazardous-response missions without establishing general-purpose manipulation.",
+      "embodiments": "Rugged mobile ground platform with modular payloads.",
+      "sources": [
+        {
+          "label": "Paradigm Robotics product and approach",
+          "url": "https://paradigmrobotics.com/join-us"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "peanut",
+      "name": "Peanut Robotics",
+      "group": "bounded-focused",
+      "integration": "Cleaning platform",
+      "summary": "Mobile robots for cleaning, with broader ambitions.",
+      "placement": "Current cleaning scope is more concrete than general-purpose manipulation. Treated separately from Tailos. No primary evidence here establishes Peanut as a Maidbot alias.",
+      "embodiments": "Mobile cleaning robot; manipulation scope needs more evidence.",
+      "sources": [
+        {
+          "label": "Peanut Robotics product and approach",
+          "url": "https://www.peanutrobotics.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "pi",
+      "name": "Physical Intelligence",
+      "group": "providers",
+      "integration": "Model provider",
+      "summary": "Physical Intelligence develops general manipulation models and supplies partners including Ultra and Weave.",
+      "placement": "Broad task and robot transfer is the model question. A partner deployment still needs embodiment-specific integration; universal plug-and-play is not established.",
+      "embodiments": "Multiple manipulation setups; deployed body comes from the partner.",
+      "sources": [
+        {
+          "label": "Model partnerships",
+          "url": "https://www.pi.website/blog/partner"
+        },
+        {
+          "label": "π0.7 technical report",
+          "url": "https://www.pi.website/download/pi07.pdf"
+        }
+      ],
+      "featured": true,
+      "crossEmbodiment": "Demonstrated task/robot transfer; universal plug-and-play is not established."
+    },
+    {
+      "id": "pike",
+      "name": "Pike Robotics",
+      "group": "bounded-focused",
+      "integration": "Inspection platform",
+      "summary": "Wall-Eye inspects hazardous storage tanks.",
+      "placement": "Sensor variety expands measurements within inspection; general manipulation is not established.",
+      "embodiments": "Specialized wall crawler with adaptable sensors.",
+      "sources": [
+        {
+          "label": "Pike Robotics product and approach",
+          "url": "https://www.pikerobotics.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "pipedream",
+      "name": "Pipedream",
+      "group": "bounded-focused",
+      "integration": "Transport infrastructure",
+      "summary": "Underground robots transport goods through dedicated infrastructure.",
+      "placement": "Different customer use cases share a goods-transport task.",
+      "embodiments": "Tube-constrained delivery robots.",
+      "sources": [
+        {
+          "label": "Pipedream product and approach",
+          "url": "https://www.pipedreamlabs.co/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "reflex",
+      "name": "Reflex Robotics",
+      "group": "versatile-focused",
+      "integration": "Integrated + human support",
+      "summary": "A wheeled industrial manipulator combines learned policies with real-time human supervision.",
+      "placement": "A mechanically versatile platform serving industrial workflows. Delivered work includes a human reliability layer; it is not evidence of fully autonomous generality.",
+      "embodiments": "Mobile manipulation with reach and two arms.",
+      "sources": [
+        {
+          "label": "Robot and reliability layer",
+          "url": "https://www.reflexrobotics.com/"
+        }
+      ],
+      "featured": true,
+      "mapNote": "Industrial · supervised"
+    },
+    {
+      "id": "reward",
+      "name": "Reward AI",
+      "group": "providers",
+      "integration": "Model + capture + control",
+      "summary": "OM1 targets manipulation across arms and humanoids, alongside capture hardware and low-level control.",
+      "placement": "Broad manipulation direction. No owned complete humanoid is established by the cited source.",
+      "embodiments": "Robot-arm and humanoid model work; its capture hand is not a complete robot.",
+      "sources": [
+        {
+          "label": "OM1",
+          "url": "https://www.rewardai.com/blog/OM-1/"
+        }
+      ],
+      "featured": true,
+      "crossEmbodiment": "Company-reported across arms and humanoids."
+    },
+    {
+      "id": "rhoda",
+      "name": "Rhoda AI",
+      "group": "versatile-broad",
+      "integration": "Integrated",
+      "summary": "Rhoda pairs FutureVision with a wheeled industrial robot, using web-video pretraining and robot post-training.",
+      "placement": "Broad manipulation direction. Its reported scaling study covers one task, body and setup, so that study alone does not demonstrate general-purpose autonomy.",
+      "embodiments": "Wheeled industrial manipulator.",
+      "sources": [
+        {
+          "label": "Rhoda AI",
+          "url": "https://www.rhoda.ai/"
+        },
+        {
+          "label": "Web-video scaling study",
+          "url": "https://www.rhoda.ai/research/scaling-web-video-pretraining"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "robocurve",
+      "name": "Robocurve",
+      "group": "infrastructure",
+      "integration": "Evaluation",
+      "summary": "Robocurve evaluates robot capabilities.",
+      "placement": "An evaluation layer, not one deployed robot or general-purpose policy.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Robocurve",
+          "url": "https://robocurve.org/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "roboligent",
+      "name": "Roboligent",
+      "group": "versatile-focused",
+      "integration": "Builder + deployer",
+      "summary": "Robin supports tote handling, picking, assembly, insertion and line-side transport.",
+      "placement": "Several related industrial manipulation tasks, with an explicitly specialized model. Open-world generality is not established.",
+      "embodiments": "Mobile base, lifting column and two 7-DOF force-controlled arms.",
+      "sources": [
+        {
+          "label": "Roboligent product and approach",
+          "url": "https://roboligent.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "robotic-data",
+      "name": "Robotic Data (formerly Voxelmaps)",
+      "group": "infrastructure",
+      "integration": "Data supplier",
+      "summary": "World and human datasets for vehicles, humanoids, drones and embodied AI.",
+      "placement": "A dataset supplier, not one task-performing robot body.",
+      "embodiments": "Not applicable.",
+      "sources": [
+        {
+          "label": "Robotic Data (formerly Voxelmaps) product and approach",
+          "url": "https://roboticdata.com/about"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "robotis",
+      "name": "ROBOTIS",
+      "group": "infrastructure",
+      "integration": "Actuators + platforms",
+      "summary": "Actuators + platforms supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "ROBOTIS hardware and integration context",
+          "url": "https://www.robotis.us/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "rockwell",
+      "name": "Rockwell Automation",
+      "group": "infrastructure",
+      "integration": "Control + integration",
+      "summary": "Control + integration supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Rockwell Automation hardware and integration context",
+          "url": "https://www.rockwellautomation.com/en-us/capabilities/advanced-motion-robotics/integrated-robots.html"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "salem",
+      "name": "Salem Robotics",
+      "group": "providers",
+      "integration": "Partner-body autonomy",
+      "summary": "Inspection software plans routes, collects measurements and produces facility reports.",
+      "placement": "Hazardous-facility inspection autonomy. Turnkey systems do not establish proprietary robot mechanics.",
+      "embodiments": "Host-dependent platforms, including quadrupeds.",
+      "sources": [
+        {
+          "label": "Salem Robotics product and approach",
+          "url": "https://www.salemroboticsinc.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "saronic",
+      "name": "Saronic",
+      "group": "bounded-focused",
+      "integration": "Vessel platform",
+      "summary": "Autonomous defense and commercial vessels with configurable payloads and command software.",
+      "placement": "Mission and payload variety stay within maritime operations. They do not establish general-purpose manipulation.",
+      "embodiments": "Vessel family with configurable payloads.",
+      "sources": [
+        {
+          "label": "Saronic product and approach",
+          "url": "https://www.saronic.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "shadow",
+      "name": "Shadow Robot",
+      "group": "infrastructure",
+      "integration": "Hands + teleoperation",
+      "summary": "Shadow supplies dexterous hands and teleoperation components.",
+      "placement": "A mechanically capable hand is not a complete autonomous system.",
+      "embodiments": "Dexterous hand components.",
+      "sources": [
+        {
+          "label": "Dexterous hand series",
+          "url": "https://shadowrobot.com/dexterous-hand-series/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "shift",
+      "name": "Shift Robotics",
+      "group": "bounded-focused",
+      "integration": "Wearable builder",
+      "summary": "Moonwalkers provide powered assistance for walking.",
+      "placement": "Adaptive gait assistance is a focused mobility function. This is wearable hardware rather than an autonomous labor robot.",
+      "embodiments": "Powered footwear.",
+      "sources": [
+        {
+          "label": "Shift Robotics product and approach",
+          "url": "https://shiftrobotics.io/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "siemens",
+      "name": "Siemens",
+      "group": "infrastructure",
+      "integration": "Automation + integration",
+      "summary": "Automation + integration supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Siemens hardware and integration context",
+          "url": "https://press.siemens.com/global/en/pressrelease/cooperation-multi-vendor-integration-industrial-robots-tia-portal"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "sisu",
+      "name": "Sisu",
+      "group": "infrastructure",
+      "integration": "Integrator + components",
+      "summary": "Custom robotics, weld grinding, robot power and manufacturing services.",
+      "placement": "Portfolio breadth belongs to separate configured systems. It should not be assigned to one general-purpose robot.",
+      "embodiments": "Project-dependent robots and custom tooling.",
+      "sources": [
+        {
+          "label": "Sisu product and approach",
+          "url": "https://sisu.us/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "skild",
+      "name": "Skild AI",
+      "group": "providers",
+      "integration": "Brain + deployment",
+      "summary": "Skild develops S1 for multiple robot bodies and has announced industrial partners and a robotics-automation acquisition.",
+      "placement": "Model and deployment layer; body depends on the integration. ABB, Universal Robots and MiR partnerships plus the Zebra acquisition make “model-only” an incomplete description.",
+      "embodiments": "Reported cross-body work; industrial partner embodiments vary.",
+      "sources": [
+        {
+          "label": "S1",
+          "url": "https://www.skild.ai/blogs/s1"
+        },
+        {
+          "label": "Industrial partnerships",
+          "url": "https://www.skild.ai/blogs/reindustrial-revolution"
+        },
+        {
+          "label": "Zebra acquisition",
+          "url": "https://www.skild.ai/blogs/skild-zebra"
+        }
+      ],
+      "featured": true,
+      "crossEmbodiment": "Company demonstrations and portability claims; industrial integration still varies."
+    },
+    {
+      "id": "skyways",
+      "name": "Skyways",
+      "group": "bounded-focused",
+      "integration": "Builder + deployer",
+      "summary": "Cargo aircraft for long-range deliveries.",
+      "placement": "V2 is in production; V3 is in development and testing. Cargo transport is a focused task.",
+      "embodiments": "Dedicated autonomous cargo aircraft.",
+      "sources": [
+        {
+          "label": "Skyways product and approach",
+          "url": "https://www.skyways.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "staubli",
+      "name": "Stäubli",
+      "group": "infrastructure",
+      "integration": "Industrial robot hardware",
+      "summary": "Industrial robot hardware supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Stäubli hardware and integration context",
+          "url": "https://press.siemens.com/global/en/pressrelease/cooperation-multi-vendor-integration-industrial-robots-tia-portal"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "sunday",
+      "name": "Sunday",
+      "group": "versatile-broad",
+      "integration": "Integrated",
+      "summary": "Sunday develops ACT models, a capture glove and the wheeled Memo robot.",
+      "placement": "Broader home-task direction on a versatile body. The ACT-2 preview remains evidence about demonstrated laundry tasks, not all household work.",
+      "embodiments": "Wheeled home manipulator.",
+      "sources": [
+        {
+          "label": "Memo and the integrated approach",
+          "url": "https://www.sunday.ai/"
+        },
+        {
+          "label": "ACT-2 preview",
+          "url": "https://www.sunday.ai/blog/act-2-preview"
+        }
+      ],
+      "featured": true,
+      "mapNote": "ACT · laundry evidence"
+    },
+    {
+      "id": "synsi",
+      "name": "SYNSI",
+      "group": "uncertain",
+      "integration": "Identity unresolved",
+      "summary": "The exact robotics identity could not be established from the directory-linked site.",
+      "placement": "The site could not be retrieved, and similar names are not substitutes. No placement assigned.",
+      "embodiments": "Unknown.",
+      "sources": [
+        {
+          "label": "SYNSI product and approach",
+          "url": "https://www.synsi.ai/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "tacta",
+      "name": "Tacta Systems",
+      "group": "infrastructure",
+      "integration": "Hand + tactile + AI stack",
+      "summary": "Tacta describes dexterous hands, tactile sensing, data and AI for manufacturing.",
+      "placement": "A verified manufacturing hand/tactile/data/AI stack, with complete body mobility and model partner unverified. No full-body coordinate assigned. Separately verified name; not a confirmed resolution of “Tactum”.",
+      "embodiments": "Dexterous hand and manufacturing stack; complete mobile robot unverified.",
+      "sources": [
+        {
+          "label": "Tacta Systems",
+          "url": "https://www.tactasystems.com/"
+        }
+      ],
+      "featured": false,
+      "mapNote": "Manufacturing stack"
+    },
+    {
+      "id": "tactum",
+      "name": "Tactum (unresolved name)",
+      "group": "uncertain",
+      "integration": "Identity unresolved",
+      "summary": "The name could not be tied confidently to the intended robotics company.",
+      "placement": "Tacta Systems is separately listed. Similar spelling is not enough to merge the two identities.",
+      "embodiments": "Not assigned.",
+      "sources": [],
+      "featured": false
+    },
+    {
+      "id": "tailos",
+      "name": "Tailos (formerly Maidbot)",
+      "group": "bounded-focused",
+      "integration": "Cleaning deployer",
+      "summary": "Commercial floor-cleaning robots.",
+      "placement": "A dedicated cleaning task. Maidbot became Tailos; it is not merged with Peanut. A supplied combined Maidbot/Peanut label was not treated as a verified alias.",
+      "embodiments": "Specialized robot vacuum.",
+      "sources": [
+        {
+          "label": "Tailos (formerly Maidbot) product and approach",
+          "url": "https://tailos.com/"
+        },
+        {
+          "label": "Maidbot rebrands to Tailos",
+          "url": "https://www.prnewswire.com/news-releases/maidbot-rebrands-to-tailos-as-emerging-leader-in-providing-robotics-and-ai-enabled-solutions-for-the-physical-world-301492940.html"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "terrafirma",
+      "name": "TerraFirma",
+      "group": "bounded-focused",
+      "integration": "Retrofit + deployer",
+      "summary": "Retrofitted machinery for excavation, clearing, grading and demolition.",
+      "placement": "Multiple earthworks tasks within one domain. Operations mix autonomous, remote and traditional control.",
+      "embodiments": "Heavy machines with interchangeable attachments.",
+      "sources": [
+        {
+          "label": "TerraFirma product and approach",
+          "url": "https://terrafirma.inc/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "terran",
+      "name": "Terran Robotics",
+      "group": "bounded-focused",
+      "integration": "Builder + deployer",
+      "summary": "Robot construction places and tamps adobe walls.",
+      "placement": "A large workspace and different wall shapes stay within one construction-process family.",
+      "embodiments": "Cable-driven placement and tamping system.",
+      "sources": [
+        {
+          "label": "Terran Robotics product and approach",
+          "url": "https://www.terranrobotics.ai/terraforming"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "tesla",
+      "name": "Tesla Optimus",
+      "group": "versatile-broad",
+      "integration": "Integrated ambition",
+      "summary": "Optimus is advertised as a general-purpose humanoid.",
+      "placement": "The corner reflects intended breadth and body design. This source does not establish autonomous deployment breadth or reliability.",
+      "embodiments": "Intended bipedal humanoid manipulation.",
+      "sources": [
+        {
+          "label": "Tesla Optimus product and approach",
+          "url": "https://www.tesla.com/AI"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "robot-group",
+      "name": "The Robot Group",
+      "group": "infrastructure",
+      "integration": "Community / nonprofit",
+      "summary": "An Austin community for robotics and technology art.",
+      "placement": "Member projects vary. This is not a commercial robot-product platform.",
+      "embodiments": "No single product.",
+      "sources": [
+        {
+          "label": "The Robot Group product and approach",
+          "url": "https://therobotgroup.org/about/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "thinkbot",
+      "name": "Thinkbot Solutions",
+      "group": "infrastructure",
+      "integration": "Components + integrator",
+      "summary": "Off-the-shelf cobot solutions, grippers and accessories.",
+      "placement": "Enables customer systems; no single proprietary general-purpose robot is established.",
+      "embodiments": "Host-dependent cobots and components.",
+      "sources": [
+        {
+          "label": "Thinkbot Solutions product and approach",
+          "url": "https://thinkbotsolutions.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "tubular",
+      "name": "Tubular Network",
+      "group": "bounded-focused",
+      "integration": "Transport infrastructure",
+      "summary": "Material shuttles travel inside and between buildings.",
+      "placement": "Configurable routes, vertical travel and swarm coordination do not change the core transport function.",
+      "embodiments": "Dedicated tube shuttles.",
+      "sources": [
+        {
+          "label": "Tubular Network product and approach",
+          "url": "https://www.tubular.network/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "ultra",
+      "name": "Ultra",
+      "group": "bounded-broad",
+      "integration": "Deployment + partner brain",
+      "summary": "OP1 uses a stationary industrial setup for packing, sorting and kitting, with Physical Intelligence as a model partner.",
+      "placement": "Broader pretrained manipulation model supplied by PI, on a bounded body. Actual deployed tasks remain packing, sorting and kitting. Model breadth and current workflow breadth are different.",
+      "embodiments": "Fixed base on locking casters. Moving it between stations is different from autonomous navigation.",
+      "sources": [
+        {
+          "label": "OP1 and its specifications",
+          "url": "https://www.ultra.tech/"
+        },
+        {
+          "label": "Physical Intelligence partnerships",
+          "url": "https://www.pi.website/blog/partner"
+        }
+      ],
+      "featured": true,
+      "mapNote": "PI model · packing today",
+      "crossEmbodiment": "Supplied through PI; deployment is on OP1."
+    },
+    {
+      "id": "unitree",
+      "name": "Unitree",
+      "group": "infrastructure",
+      "integration": "Hardware platforms",
+      "summary": "Unitree offers Go2 quadrupeds and G1 humanoids.",
+      "placement": "The two bodies have different mechanical capabilities. Hardware specifications do not settle task/model breadth.",
+      "embodiments": "Go2 quadruped and G1 humanoid; distinct bodies.",
+      "sources": [
+        {
+          "label": "Go2",
+          "url": "https://www.unitree.com/mobile/go2/"
+        },
+        {
+          "label": "G1",
+          "url": "https://www.unitree.com/mobile/g1/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "ur",
+      "name": "Universal Robots",
+      "group": "infrastructure",
+      "integration": "Cobot hardware + platform",
+      "summary": "Cobot hardware + platform supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Universal Robots hardware and integration context",
+          "url": "https://www.universal-robots.com/products-and-services/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "waddle",
+      "name": "Waddle Labs",
+      "group": "providers",
+      "integration": "Agent-control software",
+      "summary": "Waddle develops partner-arm control where an LLM writes control code and calls vision-language-action models.",
+      "placement": "Deployment/control layer with broad ambition and limited public demonstrations. Model independence is a claim to test across actual integrations.",
+      "embodiments": "Partner robot arms.",
+      "sources": [
+        {
+          "label": "Waddle Labs",
+          "url": "https://www.waddlelabs.ai/"
+        },
+        {
+          "label": "YC company profile",
+          "url": "https://www.ycombinator.com/companies/waddle-labs"
+        }
+      ],
+      "featured": false,
+      "crossEmbodiment": "Claimed; broad cross-body benchmarking not established."
+    },
+    {
+      "id": "wandelbots",
+      "name": "Wandelbots",
+      "group": "infrastructure",
+      "integration": "Multivendor deployment",
+      "summary": "NOVA provides multivendor robot programming and orchestration.",
+      "placement": "API compatibility across robot brands is not learned skill transfer.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "NOVA product description",
+          "url": "https://www.wandelbots.com/product-description-wandelbots-nova"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "waymo",
+      "name": "Waymo",
+      "group": "bounded-focused",
+      "integration": "Integrated deployment",
+      "summary": "Waymo develops and deploys a driving system for road vehicles.",
+      "placement": "A domain specialist with a defined vehicle. Deployment maturity and breadth across unrelated robot tasks are separate questions.",
+      "embodiments": "Road vehicle; no general-purpose manipulation.",
+      "sources": [
+        {
+          "label": "Waymo Driver",
+          "url": "https://waymo.com/waymo-driver/"
+        }
+      ],
+      "featured": true,
+      "mapNote": "Road driving"
+    },
+    {
+      "id": "wilder",
+      "name": "Wilder Systems",
+      "group": "versatile-focused",
+      "integration": "Builder + integrator",
+      "summary": "Mobile industrial platforms for aerospace drilling, defastening and other manufacturing or maintenance work.",
+      "placement": "Modular tooling supports related process families. Some platforms are single-application; configuration matters.",
+      "embodiments": "Mobile arms with modular end effectors.",
+      "sources": [
+        {
+          "label": "Wilder Systems product and approach",
+          "url": "https://wsrobots.com/"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "world-labs",
+      "name": "World Labs",
+      "group": "infrastructure",
+      "integration": "World generation + real-to-sim",
+      "summary": "Marble and Atlas support generated environments and real-to-simulation workflows. SceniX joined World Labs in July 2026.",
+      "placement": "Environment generation does not by itself supply a robot control policy.",
+      "embodiments": "No single deployed robot body.",
+      "sources": [
+        {
+          "label": "Atlas",
+          "url": "https://www.worldlabs.ai/blog/atlas"
+        },
+        {
+          "label": "SceniX joins World Labs",
+          "url": "https://www.worldlabs.ai/blog/scenix"
+        }
+      ],
+      "featured": false
+    },
+    {
+      "id": "yaskawa",
+      "name": "Yaskawa",
+      "group": "infrastructure",
+      "integration": "Industrial robot hardware",
+      "summary": "Industrial robot hardware supporting application-specific robot systems.",
+      "placement": "Hardware, controls or integration portfolio; no single company-level task/body position. Vendor compatibility does not determine learned-model generality.",
+      "embodiments": "Product-dependent. A portfolio is not one deployed body.",
+      "sources": [
+        {
+          "label": "Yaskawa hardware and integration context",
+          "url": "https://press.siemens.com/global/en/pressrelease/cooperation-multi-vendor-integration-industrial-robots-tia-portal"
+        }
+      ],
+      "featured": false
+    }
+  ]
+}

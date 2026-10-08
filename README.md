@@ -107,3 +107,7 @@ files directly. The build preserves unrelated sitemap entries and updates Roboti
 The article layout lives in `assets/robotics.css`, on top of the existing site styles.
 Preview both `/robotics/` and a report at desktop and phone widths. Check images, equations,
 table scrolling, table-of-contents links, and the native details controls with JavaScript off.
+
+The company map uses a `robotics-market` fence with a local JSON data asset. Its HTML,
+company evidence and source links work without JavaScript; the optional script adds search,
+filters and map-to-entry navigation. Styles and interactions load only on that article.

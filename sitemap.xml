@@ -29,7 +29,12 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/</loc>
-    <lastmod>2026-10-07</lastmod>
+    <lastmod>2026-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/robot-brains-robot-bodies/</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>

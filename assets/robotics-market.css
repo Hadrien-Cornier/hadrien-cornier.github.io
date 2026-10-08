@@ -1,0 +1,78 @@
+.robotics-market { margin: 34px 0 40px; border: 1px solid var(--line); background: #fffdf8; padding: 25px; }
+.robotics-market .rm-kicker { margin: 0 0 10px; color: var(--accent); font: 10px var(--mono); text-transform: uppercase; letter-spacing: 1px; }
+.robotics-market .rm-title { margin: 0; font: 32px/1.2 var(--serif); letter-spacing: -.6px; }
+.robotics-market .rm-axis-y { margin: 23px 0 13px; font: 11px/1.6 var(--mono); color: var(--muted); }
+.rm-axis-y span { color: var(--accent); font-size: 18px; margin-right: 5px; }
+.rm-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+.rm-cell { min-width: 0; padding: 19px 18px; background: #f5f5ee; }
+.rm-cell:nth-child(2) { background: #f5e9df; }
+.rm-cell:nth-child(3) { background: #edeee8; }
+.rm-cell:nth-child(4) { background: #f7f0e9; }
+.robotics-market .rm-cell-label { font: 15px/1.45 Arial,sans-serif; font-weight: 600; margin: 0 0 8px; }
+.robotics-market .rm-cell-caption { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0 0 17px; }
+.rm-map-names { display: flex; gap: 7px; flex-wrap: wrap; }
+.article-body .rm-map-names a { display: inline-flex; align-items: center; gap: 7px; background: #fffdf8; padding: 7px 10px; border: 1px solid #d4c9be; font-size: 13px; line-height: 1.5; text-decoration: none; color: var(--ink); }
+.article-body .rm-map-names a:hover { border-color: var(--accent); color: var(--accent); }
+.rm-provider { color: var(--accent); }
+.robotics-market .rm-cell-count { color: var(--muted); font: 10px/1.5 var(--mono); margin: 16px 0 0; }
+.rm-axis-x { display: flex; justify-content: space-between; gap: 10px; font: 10px/1.6 var(--mono); margin-top: 13px; color: var(--muted); }
+.rm-axis-x strong { color: var(--ink); font-weight: 500; }
+.rm-empty-cell { color: var(--muted); font-size: 12px; font-style: italic; }
+.article-body .robotics-market figcaption { margin-top: 20px; font-size: 12px; }
+.rm-directory { border-top: 1px solid var(--line); padding-top: 26px; margin-bottom: 38px; }
+.article-body .rm-directory-title { margin: 0 0 10px; font: 28px/1.3 var(--serif); }
+.article-body .rm-directory-intro { margin: 0 0 19px; font-size: 14px; color: var(--muted); line-height: 1.65; }
+.rm-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; margin: 0 0 16px; }
+.rm-controls[hidden], .rm-company[hidden], .rm-no-results[hidden] { display: none; }
+.rm-controls label { font-size: 12px; line-height: 1.5; }
+.rm-controls input, .rm-controls select { display: block; width: 100%; min-height: 45px; font: 13px/1.5 Arial,sans-serif; color: var(--ink); border: 1px solid #babfb3; border-radius: 0; background: white; padding: 10px 11px; margin-top: 7px; }
+.rm-controls select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.article-body .rm-results { grid-column: 1/-1; font: 11px/1.5 var(--mono); color: var(--muted); margin: 0; }
+.article-body .rm-company { margin: 0; background: transparent; border: 0; border-top: 1px solid var(--line); padding: 0; scroll-margin-top: 24px; }
+.article-body .rm-company:last-child { border-bottom: 1px solid var(--line); }
+.article-body .rm-company summary { padding: 17px 3px; font-size: 15px; font-weight: 400; min-height: 54px; }
+.rm-company-name { font-weight: 600; margin-right: 9px; }
+.rm-badge { display: inline-block; border: 1px solid #d6d7ce; padding: 3px 7px; color: var(--muted); font: 10px/1.5 var(--mono); vertical-align: middle; }
+.article-body .rm-company[open] summary { margin-bottom: 0; }
+.rm-company-body { padding: 2px 3px 23px 19px; font-size: 14px; line-height: 1.7; }
+.article-body .rm-summary { margin: 0 0 16px; }
+.rm-company dl { margin: 0 0 16px; }
+.rm-company dl > div { margin-bottom: 10px; }
+.rm-company dt, .article-body .rm-source-label { font: 10px/1.6 var(--mono); text-transform: uppercase; letter-spacing: .7px; color: var(--muted); }
+.rm-company dd { margin: 4px 0 0; }
+.article-body .rm-source-label { margin: 0 0 7px; }
+.article-body .rm-sources { list-style: none; padding: 0; margin: 0; font-size: 12px; }
+.article-body .rm-sources li { margin: 0 0 8px; }
+.article-body .rm-no-results { padding: 20px 0; font-size: 14px; }
+@media(max-width:600px) {
+  .robotics-market { padding: 19px 15px; margin: 27px 0 34px; }
+  .robotics-market .rm-title { font-size: 29px; }
+  .rm-grid { grid-template-columns: 1fr; gap: 8px; border: 0; background: transparent; }
+  .rm-cell { padding: 19px 17px; border: 1px solid var(--line); }
+  .robotics-market .rm-cell-label { font-size: 16px; }
+  .robotics-market .rm-cell-caption { font-size: 13px; }
+  .rm-axis-x { flex-wrap: wrap; }
+  .rm-axis-x strong { order: -1; width: 100%; }
+  .rm-controls { grid-template-columns: 1fr; }
+  .rm-controls input, .rm-controls select { font-size: 16px; }
+  .rm-badge { margin-top: 4px; }
+}
+@media print {
+  .rm-controls { display: none; }
+  .rm-company[hidden] { display: block; }
+  .rm-company-body { display: block; }
+  .rm-grid { break-inside: avoid; }
+}
+
+.rm-provider-rail { margin-top: 22px; padding: 18px; border: 1px dashed #b5b9ae; }
+.rm-provider-rail .rm-map-names a { background: transparent; border-style: dashed; }
+
+.article-body details.rm-directory { background: transparent; padding: 22px 0; border: 0; border-block: 1px solid var(--line); }
+.article-body .rm-directory summary.rm-directory-title { font: 22px/1.4 var(--serif); margin: 0; padding: 0 0 0 3px; }
+.article-body .rm-directory[open] summary.rm-directory-title { margin-bottom: 19px; }
+
+.article-body .rm-map-names a { flex-direction: column; align-items: start; gap: 1px; }
+.rm-map-names a small { font: 9px/1.5 var(--mono); color: var(--muted); }
+
+.article-body .rm-map-names a { min-height: 44px; justify-content: center; }
+.article-body .rm-sources a { display: inline-block; min-height: 44px; padding: 9px 0; }
