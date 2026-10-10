@@ -25,7 +25,7 @@
 <h2 id="section-the-answer-a-sleeve-on-the-stock-finger">The answer: a sleeve on the stock finger</h2>
 <p>After five designs, my answer is a printed sleeve. It slides up onto the fixed finger of the stock gripper and holds the pen in two V clamps. You print 4 small parts: the sleeve and 3 identical thumbscrews. You buy nothing, and you do not take the arm apart. It takes any round pen from 8 to 13 mm, and the tip position is known for each pen.</p>
 <figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-pen-holder/design5-on-arm.png" aria-label="Open full image: Design 5 on the full arm in a drawing pose"><img src="/assets/robotics/so101-pen-holder/design5-on-arm.png" alt="Design 5 on the full arm in a drawing pose" width="1400" height="1000" loading="lazy" decoding="async"></a><figcaption>Design 5 on the SO-101 model. The blue sleeve is on the stock fixed finger. The pen is vertical, and its tip presses 2 mm into a soft pad under the paper, 240 mm in front of the base.</figcaption></figure>
-<p>The design is open source: <a href="https://github.com/Hadrien-Cornier/so101-pen-holder">github.com/Hadrien-Cornier/so101-pen-holder</a>. The repository has the STL files, the fitting steps, and a parametric CAD script that checks the parts against the stock gripper. The first set is printed, and the sleeve is on my arm. The two videos below show it. I have not measured anything yet, so every number in this article is still a design value.</p>
+<p>The design is open source: <a href="https://github.com/Hadrien-Cornier/so101-pen-holder">github.com/Hadrien-Cornier/so101-pen-holder</a>. The repository has the STL files, the fitting steps, and a parametric CAD script that checks the parts against the stock gripper. The first set is printed in PLA, and the sleeve is on my arm. It slid onto the finger and the screws turned in on the first try, with no change to the design. I felt no play by hand. The two videos below show the print and the holder on the arm. I have not measured anything yet, so every number in this article is still a design value.</p>
 <div class="video-mixed">
 <figure>
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-pen-holder/first-print-timelapse-poster.jpg" aria-label="Time-lapse of the print: four thumbscrews, a thread coupon and the sleeve grow on the bed of a printer. The sleeve stands up on tree supports.">
@@ -42,7 +42,7 @@
 <figcaption>The holder on the arm, 13 s. The sleeve is on the stock fixed finger, and the pen is in both clamps with a thumbscrew on each. The Wacom Intuos S tablet is in front of the arm, and the tip is above it. <a class="video-link" href="/assets/robotics/so101-pen-holder/on-the-arm.mp4">Open video</a></figcaption>
 </figure>
 </div>
-<p>The videos are not test results. They show no drawing and no tablet reading. I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the <a href="https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet">README of the repository</a> explains why.</p>
+<p>The videos are not test results. They show no drawing and no tablet reading. I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. I felt no play by hand, but that is not a measurement. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the <a href="https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet">README of the repository</a> explains why.</p>
 <p>The rest of this article explains how I got there, and why each design failed or lost.</p>
 <h2 id="section-what-the-holder-must-do">What the holder must do</h2>
 <p>I wrote the requirements before I looked for a design. Each one removes one source of error that is not the arm, or one reason why nobody would use the holder:</p>
@@ -377,9 +377,9 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">â€
 <p>The public repository has a standalone version of the design 5 script. In a new Python environment, it makes STL files that are byte for byte the same as mine.</p>
 </details>
 <h2 id="section-what-i-will-test">What I will test</h2>
-<p>The first set is printed. Next I do these tests:</p>
+<p>The first set is printed, and test 1 passed by hand. Next I do the other tests:</p>
 <ol>
-<li><strong>Thread fit:</strong> the thread coupon first. The screw must turn by hand with no play. If not, I change the thread clearance and print the coupon again.</li>
+<li><strong>Thread fit:</strong> done by hand. The screws turned in on the first try, so I did not change the thread clearance.</li>
 <li><strong>Play:</strong> a 51 g weight pulls the pen to each side, and a dial indicator reads the tip. Goal: under 0.1 mm.</li>
 <li><strong>Repeatability:</strong> I take the pen out and put it back 10 times, and make a dot each time. I scan the dots. Goal: under 0.2 mm spread.</li>
 <li><strong>Hold:</strong> I hang a 500 g weight (about 5 N) from the sleeve and check that it does not slip down the finger.</li>

@@ -23,7 +23,7 @@ After five designs, my answer is a printed sleeve. It slides up onto the fixed f
 
 ![Design 5 on the full arm in a drawing pose](/assets/robotics/so101-pen-holder/design5-on-arm.png "Design 5 on the SO-101 model. The blue sleeve is on the stock fixed finger. The pen is vertical, and its tip presses 2 mm into a soft pad under the paper, 240 mm in front of the base.")
 
-The design is open source: [github.com/Hadrien-Cornier/so101-pen-holder](https://github.com/Hadrien-Cornier/so101-pen-holder). The repository has the STL files, the fitting steps, and a parametric CAD script that checks the parts against the stock gripper. The first set is printed, and the sleeve is on my arm. The two videos below show it. I have not measured anything yet, so every number in this article is still a design value.
+The design is open source: [github.com/Hadrien-Cornier/so101-pen-holder](https://github.com/Hadrien-Cornier/so101-pen-holder). The repository has the STL files, the fitting steps, and a parametric CAD script that checks the parts against the stock gripper. The first set is printed in PLA, and the sleeve is on my arm. It slid onto the finger and the screws turned in on the first try, with no change to the design. I felt no play by hand. The two videos below show the print and the holder on the arm. I have not measured anything yet, so every number in this article is still a design value.
 
 <div class="video-mixed">
 <figure>
@@ -42,7 +42,7 @@ The design is open source: [github.com/Hadrien-Cornier/so101-pen-holder](https:/
 </figure>
 </div>
 
-The videos are not test results. They show no drawing and no tablet reading. I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the [README of the repository](https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet) explains why.
+The videos are not test results. They show no drawing and no tablet reading. I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. I felt no play by hand, but that is not a measurement. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the [README of the repository](https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet) explains why.
 
 The rest of this article explains how I got there, and why each design failed or lost.
 
@@ -230,9 +230,9 @@ The public repository has a standalone version of the design 5 script. In a new 
 
 ## What I will test
 
-The first set is printed. Next I do these tests:
+The first set is printed, and test 1 passed by hand. Next I do the other tests:
 
-1. **Thread fit:** the thread coupon first. The screw must turn by hand with no play. If not, I change the thread clearance and print the coupon again.
+1. **Thread fit:** done by hand. The screws turned in on the first try, so I did not change the thread clearance.
 2. **Play:** a 51 g weight pulls the pen to each side, and a dial indicator reads the tip. Goal: under 0.1 mm.
 3. **Repeatability:** I take the pen out and put it back 10 times, and make a dot each time. I scan the dots. Goal: under 0.2 mm spread.
 4. **Hold:** I hang a 500 g weight (about 5 N) from the sleeve and check that it does not slip down the finger.
