@@ -27,11 +27,11 @@ The design is open source: [github.com/Hadrien-Cornier/so101-pen-holder](https:/
 
 <div class="video-mixed">
 <figure>
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-pen-holder/first-print-timelapse-poster.jpg" aria-label="Time-lapse of the print: four thumbscrews, a thread coupon and the sleeve grow on the bed of a printer. The sleeve stands up on tree supports.">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-pen-holder/first-print-timelapse-poster.jpg" aria-label="Time-lapse of the print: four thumbscrews, two thread coupons and the sleeve grow on the bed of a printer. The sleeve stands up on tree supports.">
 <source src="/assets/robotics/so101-pen-holder/first-print-timelapse.mp4" type="video/mp4">
 <a href="/assets/robotics/so101-pen-holder/first-print-timelapse.mp4">Watch the video</a>
 </video>
-<figcaption>The print, as a 15 s time-lapse. A Bambu Lab printer makes the 4 thumbscrews, a thread coupon and the sleeve in one job. The screws print head down. The sleeve stands up on tree supports. <a class="video-link" href="/assets/robotics/so101-pen-holder/first-print-timelapse.mp4">Open video</a></figcaption>
+<figcaption>The print, as a 15 s time-lapse. A Bambu Lab printer makes the 4 thumbscrews, two thread coupons and the sleeve in one job. The screws print head down. The sleeve stands up on tree supports. <a class="video-link" href="/assets/robotics/so101-pen-holder/first-print-timelapse.mp4">Open video</a></figcaption>
 </figure>
 <figure class="portrait">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-pen-holder/on-the-arm-poster.jpg" aria-label="The printed sleeve on the stock fixed finger of the SO-101, with a pen in both clamps, and the Wacom Intuos S tablet in front of the arm.">
