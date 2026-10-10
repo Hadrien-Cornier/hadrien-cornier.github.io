@@ -86,6 +86,10 @@
 .article-body .article-figure { margin: 31px 0 37px; }
 .article-body video { display: block; width: 100%; height: auto; border: 1px solid var(--line); background: #fff; }
 .article-body .video-link { display: inline-block; margin-top: 6px; }
+.article-body .video-mixed { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr); gap: 14px; align-items: start; margin: 31px 0 37px; }
+.article-body .video-mixed figure { margin: 0; }
+.article-body .video-mixed figcaption { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+@media (max-width: 640px) { .article-body .video-mixed { grid-template-columns: minmax(0, 1fr); } .article-body .video-mixed .portrait video { max-width: 300px; } }
 .article-body img { display: block; width: 100%; max-width: 100%; height: auto; border: 1px solid var(--line); background: white; }
 .article-body figcaption { color: var(--muted); font-size: 12px; line-height: 1.7; margin-top: 11px; padding: 0 2px; }
 .article-body blockquote { border-left: 2px solid var(--accent); margin: 26px 0; padding: 5px 23px; color: var(--muted); }

@@ -2,7 +2,7 @@
 title: 'A pen holder that shows the arm’s error, not its own'
 description: 'I want to see my SO-101 trajectory errors as ink on paper. For that, the pen must not add an error of its own. I made five holder designs. The one I release is a printed sleeve that slides onto the stock gripper: 4 printed parts, nothing to buy, any pen from 8 to 13 mm.'
 date: '2026-10-05'
-updated: '2026-10-07'
+updated: '2026-10-10'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 5
@@ -23,7 +23,26 @@ After five designs, my answer is a printed sleeve. It slides up onto the fixed f
 
 ![Design 5 on the full arm in a drawing pose](/assets/robotics/so101-pen-holder/design5-on-arm.png "Design 5 on the SO-101 model. The blue sleeve is on the stock fixed finger. The pen is vertical, and its tip presses 2 mm into a soft pad under the paper, 240 mm in front of the base.")
 
-The design is open source: [github.com/Hadrien-Cornier/so101-pen-holder](https://github.com/Hadrien-Cornier/so101-pen-holder). The repository has the STL files, the fitting steps, and a parametric CAD script that checks the parts against the stock gripper. Nobody has printed it yet, so every number in this article is a design value.
+The design is open source: [github.com/Hadrien-Cornier/so101-pen-holder](https://github.com/Hadrien-Cornier/so101-pen-holder). The repository has the STL files, the fitting steps, and a parametric CAD script that checks the parts against the stock gripper. The first set is printed, and the sleeve is on my arm. The two videos below show it. I have not measured anything yet, so every number in this article is still a design value.
+
+<div class="video-mixed">
+<figure>
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-pen-holder/first-print-timelapse-poster.jpg" aria-label="Time-lapse of the print: four thumbscrews, a thread coupon and the sleeve grow on the bed of a printer. The sleeve stands up on tree supports.">
+<source src="/assets/robotics/so101-pen-holder/first-print-timelapse.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-pen-holder/first-print-timelapse.mp4">Watch the video</a>
+</video>
+<figcaption>The print, as a 15 s time-lapse. A Bambu Lab printer makes the 4 thumbscrews, a thread coupon and the sleeve in one job. The screws print head down. The sleeve stands up on tree supports. <a class="video-link" href="/assets/robotics/so101-pen-holder/first-print-timelapse.mp4">Open video</a></figcaption>
+</figure>
+<figure class="portrait">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-pen-holder/on-the-arm-poster.jpg" aria-label="The printed sleeve on the stock fixed finger of the SO-101, with a pen in both clamps, and the Wacom Intuos S tablet in front of the arm.">
+<source src="/assets/robotics/so101-pen-holder/on-the-arm.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-pen-holder/on-the-arm.mp4">Watch the video</a>
+</video>
+<figcaption>The holder on the arm, 13 s. The sleeve is on the stock fixed finger, and the pen is in both clamps with a thumbscrew on each. The Wacom Intuos S tablet is in front of the arm, and the tip is above it. <a class="video-link" href="/assets/robotics/so101-pen-holder/on-the-arm.mp4">Open video</a></figcaption>
+</figure>
+</div>
+
+The videos are not test results. They show no drawing and no tablet reading. I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the [README of the repository](https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet) explains why.
 
 The rest of this article explains how I got there, and why each design failed or lost.
 
@@ -211,7 +230,7 @@ The public repository has a standalone version of the design 5 script. In a new 
 
 ## What I will test
 
-I will print design 5 at HICAM, a manufacturing center in East Austin. Then I do these tests:
+The first set is printed. Next I do these tests:
 
 1. **Thread fit:** the thread coupon first. The screw must turn by hand with no play. If not, I change the thread clearance and print the coupon again.
 2. **Play:** a 51 g weight pulls the pen to each side, and a dial indicator reads the tip. Goal: under 0.1 mm.
