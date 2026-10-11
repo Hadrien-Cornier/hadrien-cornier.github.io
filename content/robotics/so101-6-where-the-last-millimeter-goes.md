@@ -7,24 +7,61 @@ series: 'From policy to action: the last mile of robotics control'
 part: 6
 ---
 
-## The pain point: the arm cannot see its own pen
+## Where the series stands
+
+This is part 6 of a series about the last mile of robot control: how a goal reaches a servo and what the arm does with it.
+
+- [Part 1](/robotics/so101-1-target-and-goal/) writes one joint as one equation. Gravity, friction, a payload, dead time and a dead band are each one way the arm misses its target.
+- [Part 2](/robotics/so101-2-finer-than-the-sensor/) is about the sensor: why differences of encoder ticks explode the noise, and how a filter can estimate an angle finer than one tick.
+- [Part 3](/robotics/so101-3-choosing-the-goal/) writes every controller I built as one formula for the goal, from a plain look-ahead to MPC.
+- [Part 4](/robotics/so101-4-learning-what-physics-misses/) asks where a neural network fits: a network that learns only what the physics model gets wrong.
+- [Part 5](/robotics/so101-pen-holder/) builds a pen holder, so that the arm's error shows up as ink.
+
+Those parts measured the arm in joint angles. This part measures it where it matters, at the pen tip, and it starts with what the joint sensors cannot tell me.
+
+## The limits of the encoders
 
 My SO-101 arm measures each joint with an encoder. An encoder reads a joint angle in whole steps called ticks. The first joint, the shoulder pan, turns the whole arm about a vertical axis. One tick of the pan is $2\pi/4096 = 1.534$ mrad. The pen is 231 mm from the pan axis, so one tick moves the pen 0.354 mm.
 
 ![Left: side view of the arm with the pan, shoulder lift, elbow flex, wrist flex and wrist roll joints named, and the distance R from the pan axis to the pen. Right: top view of the arm. One tick of the pan, drawn 100 times too big, moves the pen 0.354 mm, which is 231 mm times 1.534 mrad.](/assets/robotics/so101-controllers/arm-pan-lever.png "The pan sits at the base, so its lever to the pen is long. One tick of the pan is 0.354 mm at the pen.")
 
-Two things follow.
+So the encoder is a coarse ruler at the pen. Rounding alone gives up to ±0.18 mm of error, and about 0.10 mm RMS. The controller can only command whole ticks. This is the first limit, and it is not the worst one.
 
-1. **The encoder is a coarse ruler at the pen.** Rounding alone gives up to ±0.18 mm of error, and about 0.10 mm RMS. The controller can only command whole ticks.
-2. **Friction sets the floor today.** The pan holds a goal only within about 2.6 ticks, which is about 0.9 mm at the pen. At the servo gain setting P32, it does not move at all for steps of 10 ticks or less (Measured, 11 Oct).
+### What goes wrong in the servos
 
-The encoders also miss things that happen after them.
+- **Friction sets the floor today.** The pan holds a goal only within about 2.6 ticks, which is about 0.9 mm at the pen. At the servo gain setting P32, it does not move at all for steps of 10 ticks or less (Measured, 11 Oct).
+- **A firmware dead zone** of about 1.5 ticks (2.3 mrad) sits inside the servo.
+- **A delay** of 20 to 25 ms separates the joint from the controller, which runs at 60 Hz.
+- **Gravity and the gain** make a held joint sag: the servo needs a steady gap between goal and angle to carry a load.
+- **Heat** weakens the motor.
+
+### What the encoders cannot see
 
 - **Between two ticks,** they say nothing.
-- **A slow gap** opens between the joint angles and the real pen position. The pen lags 86 ms behind the encoder reading along the pan direction, with a direction offset and a position error on top. Play and bending outside the servo hide here.
-- **Shaking is a different case.** The shaking that I can see on the arm is mostly the controller's own goal chatter, which excites a lift mode at about 4.3 to 4.5 Hz (Offline). The encoders see it. In an Offline study of tablet and encoder logs, the tablet showed nothing that the encoders miss between 2 and 12 Hz, and the ring after a stop was about one encoder tick (Measured).
+- **A slow gap** opens between the joint angles and the real pen position. The pen lags 86 ms behind the encoder reading along the pan direction, with a direction offset and a position error on top. Play and bending outside the servo, in the base, the table or the pen holder, hide here.
+- **Backlash inside the servo** is small. The encoder sits on the output shaft (project notes, not checked against a datasheet), so the loop sees about 1 mrad of it or less.
 
-So the controller cannot fix what it cannot see. To find out how big the unseen part is, I need a second opinion on where the pen tip is.
+### Where my model and my simulator are wrong
+
+The physics controller from parts 3 and 4 and my simulator share one model of the arm. It contains friction, gravity and motor terms, the delays and the firmware dead zone. It does not contain these things.
+
+- **Backlash.** There is no backlash term.
+- **Compliance.** The base, the table and the holder can bend. The model treats them as rigid.
+- **The real pan friction.** The pan needs a much larger force to start moving than to keep moving. A single friction value misses that, so the model underestimates the late start of the pan.
+
+The error shows up as a gap. When the model predicts 10 ticks ahead (about 0.17 s), its error at the pen is 1.81 mm, larger than the tracking error that it tries to fix (1.24 mm). A simulator built from this model inherits the same blind spots. To make it better, I would have to model every defect of every joint.
+
+### The shaking
+
+The shaking that I see on the arm is mostly the controller's own goal chatter. It excites a mode of the shoulder lift at about 4.3 to 4.5 Hz (Offline). In the figure, the goal that the controller sends to the lift servo swings by up to 20 mrad in a 2.5 s window, and the joint answers with about 2 mrad, which is one to two ticks.
+
+![Two stacked plots over 2.5 seconds. Top: the goal chatter on the shoulder lift, swinging between minus 20 and plus 20 mrad about 10 times per second. Bottom: the joint response, a few mrad.](/assets/robotics/so101-controllers/goal-chatter.png "The strongest 2.5 s of one drawing. Over the whole drawing, the chatter is 6.0 mrad RMS and the joint response is 1.4 mrad RMS. Offline, from Measured logs.")
+
+The encoders see this shaking. In an Offline study of tablet and encoder logs, the tablet showed nothing that the encoders miss between 2 and 12 Hz, and the ring after a stop was about one encoder tick. So the shaking is a controller problem, and it is not hidden from the sensor. I have requested gripper-camera footage of it, and I will add it here when I have it.
+
+### So I need an outside judge
+
+What the encoders miss is mostly slow: the lag, the offset, and the position error of the pen. To measure that, I need a second opinion on where the pen tip is. A tablet gives one.
 
 ## Why a tablet?
 
@@ -38,7 +75,7 @@ The goal behind all this: my arm will do kitting and carry tools. These are 3D m
 
 The question of this part: **my arm draws with about 1 mm of error. Where does the rest come from, and which controller ideas reduced it?**
 
-Short on time? Look at the drawings, watch the replay, and read the five findings. The long parts are in closed drawers.
+Short on time? Watch the time-lapse, look at the drawings, and read the five findings. The long parts are in closed drawers.
 
 ## The drawings
 
@@ -52,12 +89,16 @@ I use two sets of drawings. The **test drawings** (kitten, star, spiral, square)
 
 ![Eight drawings. Top row: kitten 2.52 mm, star 2.86, spiral 2.88, square 2.69 without correction. Bottom row: kitten 1.01, star 1.08, spiral 1.10, square 0.91 with the frozen correction head.](/assets/robotics/so101-controllers/four-drawings.png "The four test drawings, Measured. Each column is one drawing: no correction on top, the frozen head below.")
 
+### Time-lapse: the drawings get more precise
+
+The video draws all four test drawings at once, with four controllers in a row. Each stage is the real arm, drawn again from the tablet recording at 8 times speed. The bars on the right keep the error of every stage. The four stages ran the same night, at the same tablet pose. They are ordered by error and not by clock time.
+
 <figure class="article-figure">
-<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/replay-kitten-poster.jpg" aria-label="Replay of two drawings of a kitten. Left, no correction, the pen trace drifts off the gray reference line by several millimeters. Right, with the frozen correction head, the trace stays close to the line.">
-<source src="/assets/robotics/so101-controllers/replay-kitten.mp4" type="video/mp4">
-<a href="/assets/robotics/so101-controllers/replay-kitten.mp4">Watch the video</a>
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/timelapse-poster.jpg" aria-label="Time-lapse of four drawings, a kitten, a star, a spiral and a square, drawn with four controllers in turn. The pen trace sits further from the gray reference line for the physics base, closer with a learned torque, close with a neural-network correction and closest with the frozen correction head. The bars show the mean error: 2.74, 2.27, 1.15 and 1.03 millimeters.">
+<source src="/assets/robotics/so101-controllers/timelapse.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-controllers/timelapse.mp4">Watch the video</a>
 </video>
-<figcaption>Replay of two real runs, 26 s at 4x speed. This is the tablet recording, drawn again, not camera footage. Gray: the reference line. Dot: the pen. Ring: where the pen should be.</figcaption>
+<figcaption>Time-lapse of the four test drawings with four controllers, 57 s. This is the tablet recording of the real runs, drawn again, not camera footage. Gray: the reference line. Dot: the pen. Mean errors: 2.74, 2.27, 1.15 and 1.03 mm (Measured). The last stage is the first block of the frozen head; the control block of the baseline test gave 1.057 mm.</figcaption>
 </figure>
 
 <figure class="article-figure" style="max-width:300px">
@@ -162,6 +203,11 @@ On my tablet, the pan moves the pen mostly along x. One milliradian of pan angle
 
 ![Two scatter plots of tablet minus encoder position against planned pen speed. Left, x axis, the pan direction: a steep line down. Right, y axis: a gentle slope.](/assets/robotics/so101-controllers/nib-error-vs-speed.png "The x axis, the pan direction, has a steep slope. The y axis has a gentle one. Measured.")
 
+The dead band is friction (Measured). The cause of the lag on x is not known: compliance and pen drag are suspects, and backlash is small. The drawer has the three tests.
+
+<details>
+<summary>Why does the pan lag? Friction, backlash, compliance and pen drag</summary>
+
 Three mechanical causes can make a joint lag.
 
 | Suspect | What it is | What it predicts |
@@ -185,6 +231,8 @@ From $P$ = 4 to 32, the product stays between 100 and 160. That is the signature
 
 **Pen drag is a fourth suspect.** A pressed pen drags against the motion. The direction offset on x grows with press depth, from −0.44 mm at 0.5 mm press to −1.01 mm at 2.0 mm. It is zero on y and about zero in hover. But 32 to 36 ms of the x lag stays in hover, so drag is not the whole story. A hover replay would decide it. It has not run.
 
+</details>
+
 ## What worked
 
 The physics base is wrong in a repeatable way: 98 % of its error repeats from run to run (2.58 mm repeatable, 0.58 mm random). An error that repeats can be learned. The head's inputs are the sine, cosine, angle, speed, acceleration and a saturated speed of each joint: 30 numbers plus a constant. I ran the same head with fewer inputs (Measured, mean of the test drawings):
@@ -198,7 +246,12 @@ The physics base is wrong in a repeatable way: 98 % of its error repeats from ru
 
 Offsets alone give almost nothing. The speed and acceleration features carry the gain.
 
-**Hysteresis features.** Hysteresis means that the output depends on the history of the input. A gear with a gap has it: the joint position depends on which way the motor came from. An automated research process, which I will describe in a separate post, found that features of this kind help most. A **play operator** is a tiny model of a gap. It keeps a state $s$ that stays still while the input $q$ moves inside a gap of width $w$, and follows when the input pushes against an edge:
+**Hysteresis features.** Hysteresis means that the output depends on the history of the input. A gear with a gap has it: the joint position depends on which way the motor came from. An automated research process, which I will describe in a separate post, found that features of this kind help most.
+
+<details>
+<summary>How the hysteresis features work, and the scores</summary>
+
+A **play operator** is a tiny model of a gap. It keeps a state $s$ that stays still while the input $q$ moves inside a gap of width $w$, and follows when the input pushes against an edge:
 
 $$
 s_k = \min\!\big(\max(s_{k-1},\, q_k - w/2),\ q_k + w/2\big)
@@ -215,6 +268,8 @@ Models fit on the search motions and scored once on four held-out motions (Offli
 | Kernel model | 0.9852 | 1.0077 |
 
 A kernel model builds many curved features through a similarity function and fits a linear map on top. It adds only 0.02 mm over the linear model on the held-out motions, so the gain comes from the features, not from the model class. These are candidates: none has been tested on the arm.
+
+</details>
 
 **More data.** A learning curve retrains each model on 3 to 12 distinct motions and scores held-out motions (Offline).
 
@@ -244,12 +299,13 @@ A reviewer would ask whether this correction is circular. The head learns from t
 
 I also use a simulator. Its value is unclear to me, because every candidate ends up on the real arm anyway. It cannot rank learned models: a simulator built from my model of the arm favors the planner that uses the same model. Its real uses are a dry run before the arm moves, and ideas that need many runs.
 
-The simulator is also flawed. It contains friction, gravity and motor terms. It lacks the compliance, the backlash and the shaking of the real arm. To make it better, I would have to model every defect of every joint.
+The simulator is also flawed, for the reasons in the limits of the encoders above. The defect atlas below is the way to fix it.
 
 ## What comes next
 
 - **A defect atlas of every joint.** Estimate every error source of every joint, with a method and an uncertainty for each: backlash, breakaway and running friction, the firmware dead band, compliance, the servo ramp and gain, temperature and drift. This work restarted on 11 October. It starts from the logs that exist, then runs a targeted arm battery for what the logs cannot separate.
 - **Accelerometers on the arm.** Planned, not ordered. An accelerometer sees shaking and bending, so it is a cheap candidate for the unseen gap. Gyros measure the pan rotation rate but not the absolute pan angle, because gravity is vertical.
+- **Camera footage.** Gripper-camera clips of the shaking and of a drawing are requested, and I will add them here.
 - **A gripper camera over a tag mat,** to see the shake and the parasitic motion of the pen tip. This is an idea. It is being scoped offline and is not queued.
 - **A tilted tablet,** to measure height as well as x and y. This is an idea.
 - **Strings or a precise camera** as lab references. This is an idea.
