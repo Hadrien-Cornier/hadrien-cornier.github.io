@@ -17,16 +17,24 @@
   <a class="header-github" href="https://github.com/Hadrien-Cornier">GitHub <span aria-hidden="true">↗</span></a>
 </header>
 <main id="main" class="robotics-main">
-<header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>Where the last millimeter of my drawing arm goes</h1><p class="post-description">My SO-101 arm draws a kitten with 1 mm of error. Here are the drawings, the controllers that made them better, and what still limits the arm: the pan joint.</p><p class="post-meta"><time datetime="2026-10-11">October 11, 2026</time><span>19 min read</span></p></header>
-<nav class="series-box" aria-label="Series"><p class="series-box-name">From policy to action: the last mile of robotics control</p><p class="series-box-position">Part 6 of 6</p><ol><li class="series-part"><a href="/robotics/so101-1-target-and-goal/">One equation, and every way the arm misses it</a></li><li class="series-part"><a href="/robotics/so101-2-finer-than-the-sensor/">Seeing finer than the sensor</a></li><li class="series-part"><a href="/robotics/so101-3-choosing-the-goal/">Six ways to choose the goal</a></li><li class="series-part"><a href="/robotics/so101-4-learning-what-physics-misses/">Learning what the physics misses</a></li><li class="series-part track-hardware"><a href="/robotics/so101-pen-holder/">A pen holder that shows the arm’s error, not its own</a><span class="track-tag">Hardware</span></li><li class="series-part" aria-current="page">Where the last millimeter of my drawing arm goes</li></ol><div class="series-box-links"><a rel="prev" href="/robotics/so101-pen-holder/">← Previous: A pen holder that shows the arm’s error, not its own</a></div></nav><div class="post-layout"><aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol><li class="toc-h2"><a href="#section-the-drawing-gets-better-with-each-change">The drawing gets better with each change</a></li><li class="toc-h2"><a href="#section-what-the-arm-is-doing">What the arm is doing</a></li><li class="toc-h2"><a href="#section-what-i-found">What I found</a></li><li class="toc-h2"><a href="#section-the-controllers">The controllers</a></li><li class="toc-h2"><a href="#section-where-the-error-comes-from">Where the error comes from</a></li><li class="toc-h2"><a href="#section-the-pan-axis">The pan axis</a></li><li class="toc-h3"><a href="#section-why-does-the-pan-lag">Why does the pan lag?</a></li><li class="toc-h2"><a href="#section-what-worked">What worked</a></li><li class="toc-h3"><a href="#section-a-correction-learned-from-the-planned-path">A correction learned from the planned path</a></li><li class="toc-h3"><a href="#section-hysteresis-features">Hysteresis features</a></li><li class="toc-h2"><a href="#section-what-did-not-work">What did not work</a></li><li class="toc-h2"><a href="#section-how-much-data-does-a-correction-need">How much data does a correction need?</a></li><li class="toc-h2"><a href="#section-the-tests-i-use">The tests I use</a></li><li class="toc-h2"><a href="#section-where-this-can-be-wrong">Where this can be wrong</a></li><li class="toc-h2"><a href="#section-check-yourself">Check yourself</a></li><li class="toc-h2"><a href="#section-what-i-test-next">What I test next</a></li></ol></nav></details></aside><article class="article-body" aria-label="Where the last millimeter of my drawing arm goes"><p>My SO-101 arm holds a pen and draws on a tablet. The tablet records where the pen really goes, so I can lay every drawing over its reference line and measure the gap in millimeters. This part shows how the drawings got better when I changed the controller, and what still limits the arm.</p>
+<header class="robotics-header post-header"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>Where the last millimeter of my drawing arm goes</h1><p class="post-description">My SO-101 arm draws a kitten with 1 mm of error. Here are the drawings, the controllers that made them better, and what still limits the arm: the pan joint.</p><p class="post-meta"><time datetime="2026-10-11">October 11, 2026</time><span>22 min read</span></p></header>
+<nav class="series-box" aria-label="Series"><p class="series-box-name">From policy to action: the last mile of robotics control</p><p class="series-box-position">Part 6 of 6</p><ol><li class="series-part"><a href="/robotics/so101-1-target-and-goal/">One equation, and every way the arm misses it</a></li><li class="series-part"><a href="/robotics/so101-2-finer-than-the-sensor/">Seeing finer than the sensor</a></li><li class="series-part"><a href="/robotics/so101-3-choosing-the-goal/">Six ways to choose the goal</a></li><li class="series-part"><a href="/robotics/so101-4-learning-what-physics-misses/">Learning what the physics misses</a></li><li class="series-part track-hardware"><a href="/robotics/so101-pen-holder/">A pen holder that shows the arm’s error, not its own</a><span class="track-tag">Hardware</span></li><li class="series-part" aria-current="page">Where the last millimeter of my drawing arm goes</li></ol><div class="series-box-links"><a rel="prev" href="/robotics/so101-pen-holder/">← Previous: A pen holder that shows the arm’s error, not its own</a></div></nav><div class="post-layout"><aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol><li class="toc-h2"><a href="#section-abstract">Abstract</a></li><li class="toc-h2"><a href="#section-why-draw-on-a-tablet">Why draw on a tablet?</a></li><li class="toc-h2"><a href="#section-the-drawing-gets-better-with-each-change">The drawing gets better with each change</a></li><li class="toc-h2"><a href="#section-the-setup-as-a-system">The setup, as a system</a></li><li class="toc-h3"><a href="#section-input-output-and-where-the-corrections-happen">Input, output, and where the corrections happen</a></li><li class="toc-h3"><a href="#section-where-the-numbers-come-from">Where the numbers come from</a></li><li class="toc-h2"><a href="#section-what-i-found">What I found</a></li><li class="toc-h2"><a href="#section-the-controllers">The controllers</a></li><li class="toc-h2"><a href="#section-where-the-error-comes-from">Where the error comes from</a></li><li class="toc-h2"><a href="#section-the-pan-axis">The pan axis</a></li><li class="toc-h3"><a href="#section-why-does-the-pan-lag">Why does the pan lag?</a></li><li class="toc-h2"><a href="#section-what-worked">What worked</a></li><li class="toc-h3"><a href="#section-a-correction-learned-from-the-planned-path">A correction learned from the planned path</a></li><li class="toc-h3"><a href="#section-hysteresis-features">Hysteresis features</a></li><li class="toc-h2"><a href="#section-what-did-not-work">What did not work</a></li><li class="toc-h2"><a href="#section-how-much-data-does-a-correction-need">How much data does a correction need?</a></li><li class="toc-h2"><a href="#section-the-tests-i-use">The tests I use</a></li><li class="toc-h2"><a href="#section-where-this-can-be-wrong">Where this can be wrong</a></li><li class="toc-h2"><a href="#section-check-yourself">Check yourself</a></li><li class="toc-h2"><a href="#section-what-i-test-next">What I test next</a></li></ol></nav></details></aside><article class="article-body" aria-label="Where the last millimeter of my drawing arm goes"><h2 id="section-abstract">Abstract</h2>
+<p>I want my SO-101 arm to put a tool exactly where I ask. To measure how close it gets, I make the arm draw on a tablet that records the pen tip. On four validation drawings, the physics controller from parts 3 and 4 misses by 2.74 mm. A correction that I learn from the planned path cuts this to 1.057 mm (Measured, real arm). The shoulder pan joint causes most of what is left. This part gives the setup, the controllers, the tests, and what I do not know yet.</p>
+<h2 id="section-why-draw-on-a-tablet">Why draw on a tablet?</h2>
+<p><strong>The goal.</strong> My arm will do kitting and carry tools. These are 3D motions with a payload that changes. The final controller can use only what the arm carries: joint encoders, and maybe a camera. So I want to know how accurate a cheap arm can be, which controller ideas make it better, and which physical effects set the limit.</p>
+<p><strong>The problem.</strong> The encoders measure joint angles. What I care about is where the tool tip goes. The two can differ: links bend, gears have play, and a pressed pen drags. At the pen, 1 mrad of pan angle is 0.231 mm, but an encoder cannot show a bend that happens after it. I need a judge outside the arm that measures the tip directly.</p>
+<p><strong>The idea.</strong> A tablet reports where a pen touches it. If the arm draws a path that I know exactly, the tablet tells me, moment by moment, how far the tip is from where it should be. The ink also shows the error to anyone (<a href="/robotics/so101-pen-holder/">part 5</a>).</p>
+<p><strong>What I measure.</strong> One number: the RMS distance between the pen tip and the reference path, over four validation drawings that never train anything. The tablet is a lab instrument. It gives the score, the labels for learning, and a way to find causes. The final controller must work without it. The datasheet gives an accuracy of ±0.25 mm at the center of the tablet. I have not finished checking it, so a difference below that is not proof.</p>
 <p>The question: <strong>my arm draws with about 1 mm of error. Where does the rest come from, and which controller ideas reduced it?</strong></p>
 <p>Short on time? Read the picture below, watch the replay, and read the five findings. The rest of the page explains each finding, and the long parts are in closed drawers.</p>
 <h2 id="section-the-drawing-gets-better-with-each-change">The drawing gets better with each change</h2>
-<p>Here is the whole story in one picture. It is the same kitten, drawn by the real arm with four controllers. Gray is the reference line. The colored line is where the pen really went, as measured by a tablet under the pen. The number is the error of the whole drawing: the root mean square (RMS) distance between the pen and the line, in millimeters. All four are Measured, which means the real arm drew them.</p>
+<p>Here is the whole story in one picture. It is the same kitten, drawn by the real arm with four controllers. Gray is the reference line. The colored line is where the pen really went, as measured by the tablet. The number is the error of the whole drawing: the root mean square (RMS) distance between the pen and the line, in millimeters. All four are Measured, which means the real arm drew them.</p>
 <figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-controllers/kitten-timeline.png" aria-label="Open full image: Four drawings of a kitten, each over its gray reference line. Physics base without correction: 2.52 mm, the pen trails behind the line and wanders off it. With a learned torque (PhysR): 2.10 mm. With a neural-network correction: 1.05 mm. With the frozen correction head: 1.01 mm, the pen sits on the line."><img src="/assets/robotics/so101-controllers/kitten-timeline.png" alt="Four drawings of a kitten, each over its gray reference line. Physics base without correction: 2.52 mm, the pen trails behind the line and wanders off it. With a learned torque (PhysR): 2.10 mm. With a neural-network correction: 1.05 mm. With the frozen correction head: 1.01 mm, the pen sits on the line." width="1102" height="1071" loading="lazy" decoding="async"></a><figcaption>The top row is the physics controller from parts 3 and 4. The bottom row adds a learned correction.</figcaption></figure>
 <p>The top two drawings show the problem: the pen trails behind the line and wanders off it. The bottom two show what a learned correction does: the pen follows the line.</p>
-<h2 id="section-what-the-arm-is-doing">What the arm is doing</h2>
-<p>The arm holds a pen in the sleeve from <a href="/robotics/so101-pen-holder/">part 5</a>. A Wacom Intuos tablet sits under the pen. The tablet is a lab instrument: it scores drawings and gives training data. It is never part of the final product.</p>
+<p>The other three validation drawings (a star, a spiral and a square that I made up) show the same pattern. Each column is one drawing: no correction on top, the frozen head below.</p>
+<figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-controllers/four-drawings.png" aria-label="Open full image: Eight drawings. Top row: kitten 2.52 mm, star 2.86, spiral 2.88, square 2.69 without correction. Bottom row: kitten 1.01, star 1.08, spiral 1.10, square 0.91 with the frozen correction head."><img src="/assets/robotics/so101-controllers/four-drawings.png" alt="Eight drawings. Top row: kitten 2.52 mm, star 2.86, spiral 2.88, square 2.69 without correction. Bottom row: kitten 1.01, star 1.08, spiral 1.10, square 0.91 with the frozen correction head." width="1300" height="700" loading="lazy" decoding="async"></a><figcaption>All four validation drawings, Measured. The frozen head cuts the error to 0.91 to 1.10 mm.</figcaption></figure>
+<h2 id="section-the-setup-as-a-system">The setup, as a system</h2>
+<p>The arm holds a pen in the sleeve from part 5, and a Wacom Intuos tablet sits under the pen. The replay shows two real runs of the kitten, drawn again from the tablet recording. The second video shows the setup.</p>
 <figure class="article-figure">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/replay-kitten-poster.jpg" aria-label="Replay of two drawings of a kitten. Left, no correction, the pen trace drifts off the gray reference line by several millimeters. Right, with the frozen correction head, the trace stays close to the line.">
 <source src="/assets/robotics/so101-controllers/replay-kitten.mp4" type="video/mp4">
@@ -34,7 +42,6 @@
 </video>
 <figcaption>Replay of two real runs, 26 s at 4x speed. This is the tablet recording, drawn again, not camera footage. Gray: the reference line. Dot: the pen. Ring: where the pen should be.</figcaption>
 </figure>
-<p>The replay above is the tablet recording of two real runs. For the arm itself, this is the setup: the pen sleeve on the arm and the tablet in front.</p>
 <figure class="article-figure" style="max-width:300px">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-pen-holder/on-the-arm-poster.jpg" aria-label="The printed sleeve on the fixed finger of the SO-101, with a pen in both clamps, and the Wacom Intuos S tablet in front of the arm.">
 <source src="/assets/robotics/so101-pen-holder/on-the-arm.mp4" type="video/mp4">
@@ -42,7 +49,77 @@
 </video>
 <figcaption>The setup, 13 s: pen sleeve on the arm, tablet in front.</figcaption>
 </figure>
-<p>Two words appear in every number of this part.</p>
+<h3 id="section-input-output-and-where-the-corrections-happen">Input, output, and where the corrections happen</h3>
+<p>The diagram shows the whole system. The input is a drawing: a path in tablet millimeters. The output is where the pen tip really goes, read by the tablet. Blue boxes run in the final product. Orange boxes are lab only.</p>
+<figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-controllers/system.png" aria-label="Open full image: Block diagram. A reference drawing goes through inverse kinematics to a joint path. A correction head adds joint offsets at a plus node. The physics controller sends goals to the servo, which drives the arm and pen. Encoder readings go back to the controller. The tablet reads the pen tip. Its error against the reference gives the score, and an online head learns from it."><img src="/assets/robotics/so101-controllers/system.png" alt="Block diagram. A reference drawing goes through inverse kinematics to a joint path. A correction head adds joint offsets at a plus node. The physics controller sends goals to the servo, which drives the arm and pen. Encoder readings go back to the controller. The tablet reads the pen tip. Its error against the reference gives the score, and an online head learns from it." width="1240" height="1760" loading="lazy" decoding="async"></a><figcaption>The three letters mark the error parts: c is the correction, tr is servo lag, u is what the encoders cannot see.</figcaption></figure>
+<p>A correction can happen in three places.</p>
+<ol>
+<li><strong>Inside the physics controller.</strong> It predicts the torque that the path needs and picks the best goal for the next 15 ticks. This is the physics base. A learned torque (PhysR) is one more correction here.</li>
+<li><strong>On the path, before the controller (the correction head).</strong> It adds joint offsets that I learned from features of the planned path. The frozen head needs only the path, so it can run in the final product.</li>
+<li><strong>From the tablet error (the online head).</strong> The head learns from the tablet while the arm draws. This needs the tablet, so it is a lab tool. I freeze the head before it is used.</li>
+</ol>
+<p>The three letters on the diagram split the error: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi></mrow><annotation encoding="application/x-tex">c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span> is the correction, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mi>r</mi></mrow><annotation encoding="application/x-tex">tr</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6151em;"></span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span></span></span></span> is the servo lag, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi></mrow><annotation encoding="application/x-tex">u</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">u</span></span></span></span> is what the encoders cannot see. The error budget below uses them.</p>
+<h3 id="section-where-the-numbers-come-from">Where the numbers come from</h3>
+<p>Every number in this part has a label. The diagram shows how each kind of number is made. Only the Measured numbers rank controllers.</p>
+<figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-controllers/numbers.png" aria-label="Open full image: Three columns. Measured: the real arm draws, the tablet and encoders log it, pen minus reference is scored as RMS, examples 2.74 and 1.057 mm, ranks controllers. Offline: logs of real runs split by whole motion, a model fitted on some motions and tested on others with a frozen scorer, examples 2.22, 1.008 and 0.847 mm, proposes candidates. Simulation: a model of the arm plays the arm, examples seqplan at most 5 percent better, never ranks learned models."><img src="/assets/robotics/so101-controllers/numbers.png" alt="Three columns. Measured: the real arm draws, the tablet and encoders log it, pen minus reference is scored as RMS, examples 2.74 and 1.057 mm, ranks controllers. Offline: logs of real runs split by whole motion, a model fitted on some motions and tested on others with a frozen scorer, examples 2.22, 1.008 and 0.847 mm, proposes candidates. Simulation: a model of the arm plays the arm, examples seqplan at most 5 percent better, never ranks learned models." width="1240" height="1160" loading="lazy" decoding="async"></a><figcaption>The three labels of this part.</figcaption></figure>
+<details>
+<summary>Where each key number comes from</summary>
+<div class="table-scroll" role="region" aria-label="Table" tabindex="0"><table>
+<thead>
+<tr>
+<th>Number</th>
+<th>How I got it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2.74 mm (2.52 for the kitten)</td>
+<td>The physics base with no correction draws the four validation drawings on the real arm (pen press 1.5 mm, 20 mm/s). RMS of tablet minus plan at the same moment, mean of the four. Measured</td>
+</tr>
+<tr>
+<td>1.057 mm</td>
+<td>The frozen head draws the same four drawings, in the control block of an A B A test. Measured. Two earlier blocks an hour apart gave 1.03 and 1.14 mm</td>
+</tr>
+<tr>
+<td>2.27 mm, 1.14 to 1.15 mm</td>
+<td>PhysR, and two neural-network corrections played back, on the same four drawings. Measured</td>
+</tr>
+<tr>
+<td>2.22 mm</td>
+<td>The 2.74 mm runs, recomputed with the tracking error set to zero, so the error is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi></mrow><annotation encoding="application/x-tex">u</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">u</span></span></span></span> alone. Offline</td>
+</tr>
+<tr>
+<td>61 %, and the other shares</td>
+<td>Parts of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mo>=</mo><mi>u</mi><mo>+</mo><mi>t</mi><mi>r</mi><mo>+</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">e = u + tr + c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">e</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">u</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6984em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span> fitted on 44 recorded runs of 10 motions, each fit tested on a motion left out. Offline fits on Measured logs</td>
+</tr>
+<tr>
+<td>267 ms</td>
+<td>The median delay of the pan joint after 46 goal reversals in the uncorrected runs. Measured</td>
+</tr>
+<tr>
+<td>Pan dead band against <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">P</span></span></span></span></td>
+<td>Direct holds of the pan from older logs, at four values of the servo gain register <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi></mrow><annotation encoding="application/x-tex">P</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">P</span></span></span></span>. Measured</td>
+</tr>
+<tr>
+<td>1.131, 1.029, 1.008 mm</td>
+<td>Models fitted on the dev motions and scored once on four sealed motions, with a frozen scorer that predicts the nib error from logged runs. Offline</td>
+</tr>
+<tr>
+<td>0.847 mm</td>
+<td>The same scorer, on the motions that the network trained on. Offline, in-sample</td>
+</tr>
+<tr>
+<td>Learning curve</td>
+<td>Models retrained on 3 to 12 motions and scored on held-out motions. Offline</td>
+</tr>
+<tr>
+<td>seqplan, at most 5 %</td>
+<td>A software copy of the arm built from my model of it, which favors the planner. Simulation</td>
+</tr>
+</tbody>
+</table></div>
+</details>
+<p>Two words appear in every number.</p>
 <ul>
 <li><strong>Nib error.</strong> The distance between where the pen tip (the nib) should be and where the tablet says it is, at each moment. RMS averages it over a drawing: square each error, average, take the root. Errors of 1 mm and 3 mm give <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msqrt><mrow><mo stretchy="false">(</mo><msup><mn>1</mn><mn>2</mn></msup><mo>+</mo><msup><mn>3</mn><mn>2</mn></msup><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mn>2</mn></mrow></msqrt><mo>=</mo><mn>2.24</mn></mrow><annotation encoding="application/x-tex">\sqrt{(1^2 + 3^2)/2} = 2.24</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.24em;vertical-align:-0.305em;"></span><span class="mord sqrt"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.935em;"><span class="svg-align" style="top:-3.2em;"><span class="pstrut" style="height:3.2em;"></span><span class="mord" style="padding-left:1em;"><span class="mopen">(</span><span class="mord"><span class="mord">1</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7401em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord">3</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7401em;"><span style="top:-2.989em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">/2</span></span></span><span style="top:-2.895em;"><span class="pstrut" style="height:3.2em;"></span><span class="hide-tail" style="min-width:1.02em;height:1.28em;"><svg xmlns="http://www.w3.org/2000/svg" width="400em" height="1.28em" viewBox="0 0 400000 1296" preserveAspectRatio="xMinYMin slice"><path d="M263,681c0.7,0,18,39.7,52,119
 c34,79.3,68.167,158.7,102.5,238c34.3,79.3,51.8,119.3,52.5,120
@@ -55,11 +132,8 @@ c-22.3,46.7,-33.8,70.3,-34.5,71c-4.7,4.7,-12.3,7,-23,7s-12,-1,-12,-1
 s-109,-253,-109,-253c-72.7,-168,-109.3,-252,-110,-252c-10.7,8,-22,16.7,-34,26
 c-22,17.3,-33.3,26,-34,26s-26,-26,-26,-26s76,-59,76,-59s76,-60,76,-60z
 M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.305em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">2.24</span></span></span></span> mm. Big misses count more.</li>
-<li><strong>Validation drawings.</strong> A kitten, a star, a spiral and a square that I made up. They never train anything.</li>
+<li><strong>Validation drawings.</strong> Four drawings that never train anything.</li>
 </ul>
-<p>Every number has a label. <strong>Measured</strong> means the real arm drew it and the tablet scored it. <strong>Offline</strong> means a computer scored a model on recorded data. <strong>Simulation</strong> means a software copy of the arm. Only Measured numbers rank controllers.</p>
-<p>All four validation drawings show the same pattern. Each column is one drawing: no correction on top, the frozen head below.</p>
-<figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-controllers/four-drawings.png" aria-label="Open full image: Eight drawings. Top row: kitten 2.52 mm, star 2.86, spiral 2.88, square 2.69 without correction. Bottom row: kitten 1.01, star 1.08, spiral 1.10, square 0.91 with the frozen correction head."><img src="/assets/robotics/so101-controllers/four-drawings.png" alt="Eight drawings. Top row: kitten 2.52 mm, star 2.86, spiral 2.88, square 2.69 without correction. Bottom row: kitten 1.01, star 1.08, spiral 1.10, square 0.91 with the frozen correction head." width="1300" height="700" loading="lazy" decoding="async"></a><figcaption>All four validation drawings, Measured. The frozen head cuts the error to 0.91 to 1.10 mm.</figcaption></figure>
 <h2 id="section-what-i-found">What I found</h2>
 <ol>
 <li><strong>A learned correction does most of the work.</strong> Physics alone gives 2.74 mm. The frozen correction head gives 1.057 mm (Measured, mean of the four drawings).</li>
@@ -70,69 +144,69 @@ M1001 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">�
 </ol>
 <figure class="article-figure"><a class="figure-link" href="/assets/robotics/so101-controllers/controllers-map.png" aria-label="Open full image: Bar chart of the nib error of each controller. Measured on the real arm: physics base 2.74, with a residual network 2.27, neural-network corrections 1.14 to 1.15, frozen correction head 1.057. Offline on sealed motions: old linear model 1.131, linear hysteresis model 1.029, kernel model 1.008."><img src="/assets/robotics/so101-controllers/controllers-map.png" alt="Bar chart of the nib error of each controller. Measured on the real arm: physics base 2.74, with a residual network 2.27, neural-network corrections 1.14 to 1.15, frozen correction head 1.057. Offline on sealed motions: old linear model 1.131, linear hysteresis model 1.029, kernel model 1.008." width="1155" height="572" loading="lazy" decoding="async"></a><figcaption>All controllers of this part. The Measured group ranks controllers. The Offline group are candidates that I did not yet test on the arm.</figcaption></figure>
 <h2 id="section-the-controllers">The controllers</h2>
-<p>Each controller sends a joint-angle goal to the servo at every tick. A tick is one step of the control loop, about 16.7 ms. The table gives what each one does and what it needs while it draws.</p>
+<p>Each controller sends a joint-angle goal to the servo at every tick. A tick is one step of the control loop, about 16.7 ms. The table says what each one does, which place in the diagram it changes, and what it needs while it draws. The results are in the chart above.</p>
 <div class="table-scroll" role="region" aria-label="Table" tabindex="0"><table>
 <thead>
 <tr>
 <th>Name</th>
+<th>Where it acts</th>
 <th>What it does</th>
 <th>Needs while drawing</th>
-<th>Best result</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Physics base (<code>phys</code>)</td>
+<td>Controller</td>
 <td>Predicts 15 ticks ahead with a physical model of the arm and picks the best goal. An extended Kalman filter estimates a missing torque for each joint</td>
 <td>The encoder readings</td>
-<td>2.74 mm, no correction. Measured</td>
 </tr>
 <tr>
 <td>PhysR</td>
+<td>Controller</td>
 <td>The physics base plus a small learned torque</td>
 <td>The encoder readings</td>
-<td>2.27 mm. Measured</td>
 </tr>
 <tr>
 <td>Online correction head</td>
+<td>Head</td>
 <td>Adds a learned offset to the joint goals. It learns while the arm draws, from the tablet error</td>
 <td>The tablet</td>
-<td>No separate arm score</td>
 </tr>
 <tr>
 <td>Frozen correction head</td>
+<td>Head</td>
 <td>The same head, with learning stopped</td>
 <td>The planned path only</td>
-<td>1.057 mm. Measured</td>
 </tr>
 <tr>
 <td>Hysteresis models</td>
+<td>Head</td>
 <td>A correction learned from the planned path, with features for backlash and the last direction. Linear and kernel versions</td>
 <td>The planned path only</td>
-<td>1.029 mm (linear) and 1.008 mm (kernel), sealed motions. Offline</td>
 </tr>
 <tr>
 <td>Neural-network correction</td>
+<td>Head</td>
 <td>A network that learns the correction, trained even on the exact test examples</td>
 <td>The planned path only</td>
-<td>0.847 mm on its own training motions, 1.14 to 1.15 mm on the arm</td>
 </tr>
 <tr>
 <td>Fast Kalman head</td>
+<td>Head</td>
 <td>Follows the tablet error of the last few ticks</td>
 <td>The tablet</td>
-<td>0.74 to 0.84 mm. Offline, not for production</td>
 </tr>
 <tr>
 <td>Whole-path planner (seqplan)</td>
+<td>Controller</td>
 <td>Plans the full drawing at once</td>
 <td>The path and a model</td>
-<td>At most 5 % better. Simulation</td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="section-where-the-error-comes-from">Where the error comes from</h2>
-<p>To find the causes, I remove one cause at a time and measure what is left. This is an <strong>error budget</strong>. It needs three parts that add up to the error <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi></mrow><annotation encoding="application/x-tex">e</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">e</span></span></span></span>:</p>
+<p>To find the causes, I remove one cause at a time and measure what is left. This is an <strong>error budget</strong>. It needs three parts that add up to the error <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi></mrow><annotation encoding="application/x-tex">e</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">e</span></span></span></span>. They are the three letters on the system diagram:</p>
 <p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>e</mi><mo>=</mo><mi>u</mi><mo>+</mo><mi>t</mi><mi>r</mi><mo>+</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">e = u + tr + c
 </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">e</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">u</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6984em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">c</span></span></span></span></span></p>
 <ul>
@@ -494,7 +568,7 @@ P_k = \frac{1}{\lambda}\left(P_{k-1} - K_k \phi_k^\top P_{k-1}\right)
 <h2 id="section-where-this-can-be-wrong">Where this can be wrong</h2>
 <ul>
 <li><strong>Offline is not the arm.</strong> The Offline scorer treats the uncorrected error as independent of the correction. On the frozen-head runs, it predicts the new linear model at 1.24 mm, while the frozen head measured 1.06 mm. <a href="/robotics/so101-4-learning-what-physics-misses/#section-offline-against-closed-loop">Part 4</a> showed the same gap. The hysteresis numbers are candidates.</li>
-<li><strong>The tablet is the judge.</strong> Its stream arrives about 20 ms late. I estimated this from three indirect methods that agree within 10 to 30 ms. There is no hardware sync. Tablet noise is about 0.4 mm.</li>
+<li><strong>The tablet is the judge.</strong> The datasheet accuracy is ±0.25 mm at the center, so differences below that are weak evidence. Its stream arrives about 20 ms late. I estimated this from three indirect methods that agree within 10 to 30 ms. There is no hardware sync. Tablet noise is about 0.4 mm.</li>
 <li><strong>The validation set is small.</strong> Four drawings, and a test-retest drift of 0.12 mm.</li>
 <li><strong>The cause of the pan lag on x is unknown.</strong> Friction explains the dead band, not the 86 ms lag. The project notes say that the servo encoder sits on the output shaft, so backlash inside the servo is at most about 1 mrad. I did not verify this against a datasheet. The late start is 267 ms in one count and 235 ms in another, so I quote about 250 ms.</li>
 <li><strong>The drag cause is only supported.</strong> The hover replay did not run.</li>
