@@ -21,7 +21,7 @@ Here is what I learned, in five lines.
 2. The shoulder pan joint causes 61 % of the squared error of the uncorrected controller. It starts about 267 ms late after each direction change, and the pen lags behind the encoder reading on the same axis.
 3. A correction learned from the planned motion removes most of that error. The gain comes from the features, not from a bigger model. In my Offline tests, features for backlash and for the memory of the last direction helped most.
 4. A neural network fits its training drawings perfectly (0.85 mm) and gains at most 0.02 mm on new drawings. Planning the whole drawing ahead did not help in simulation.
-5. I do not know why the pan joint misbehaves. Three mechanical causes fit the data, and I describe the tests that can separate them.
+5. The pan dead band is friction, not backlash (Measured, older logs). But I do not yet know why the pen lags 86 ms behind the encoders on x. Compliance is the leading suspect, and I describe the tests that can separate the causes.
 
 The figure shows every controller of this part on one axis. The two groups use different tests, so only the top group, Measured on the real arm, ranks controllers.
 
@@ -153,7 +153,7 @@ The controller expects the pan to follow its goal at once. It does not. So the p
 
 ### Three suspects for the cause
 
-I do not know why the pan lags. Three mechanical causes fit the data. I define each one first.
+Three mechanical causes can make a pan joint lag. I define each one first. Then I show what my data say about each.
 
 | Suspect | What it is | What it predicts |
 |---|---|---|
@@ -161,7 +161,20 @@ I do not know why the pan lags. Three mechanical causes fit the data. I define e
 | Backlash | A gap between gear teeth. The motor crosses the gap before the joint moves | A fixed-angle gap at each reversal, whatever the torque |
 | Compliance | A part bends like a spring under load: deflection = torque ÷ stiffness. The base, the table or the pen holder can bend | An error that grows with the torque, and that the encoders cannot see |
 
-The data lean toward compliance. The pan load reading (a percentage of maximum torque) predicts the x error: $-0.77$ mm for each 10 % of load. When I add the load to the fit, the direction offset falls from $-0.54$ mm to $-0.14$ mm (Offline fit on Measured logs). A fixed backlash gap would not follow the torque. But the data cannot separate the three suspects.
+Two results point at two different suspects.
+
+**Friction explains the dead band.** I held the pan at a goal and measured how far from the goal it stopped, at four values of the servo $P$ register. These are direct holds from older logs (Measured):
+
+| $P$ | Pan dead band (mrad) | Dead band times $P$ |
+|---|---|---|
+| 4 | 26.2 | about 105 |
+| 16 | 9.2 to 9.7 | about 150 |
+| 32 | 3.8 to 4.1 | about 125 |
+| 128 | 0.04 to 0.13 | near zero, below one encoder tick |
+
+From $P$ = 4 to 32, the dead band times $P$ stays between 100 and 160. That is the signature of friction: the error is the friction torque divided by the stiffness. Backlash in the control loop is at most about 1 mrad. With an integral term, the dead band falls to 0.3 mrad or less. During head-off drawing strokes, the dead band is only 2.2 mrad, because the physics model compensates part of it. But the start after a pan reversal is still late, by a median of 235 ms in these runs.
+
+**Compliance still explains the lag on x.** The pan load reading (a percentage of maximum torque) predicts the x error: $-0.77$ mm for each 10 % of load. When I add the load to the fit, the direction offset falls from $-0.54$ mm to $-0.14$ mm (Offline fit on Measured logs). A fixed backlash gap would not follow the torque. A friction dead band does not explain a 66 ms extra lag on x either. The data cannot yet separate play or bending outside the servo (the base, the table, the holder) from the rest. The encoder cannot see them.
 
 ### Pen drag: supported, not decided
 
@@ -183,9 +196,9 @@ Each test changes one thing and watches which number moves.
 1. **A speed sweep at 10, 20 and 40 mm/s.** All validation drawings run at 20 mm/s, so a lag (in ms) and a direction offset (in mm) move together. Different speeds split them.
 2. **A hover replay at about 2 mm above the tablet.** If drag explains the offset, the offset goes to about zero. If the arm explains it, the offset stays near −0.4 to −0.7 mm.
 3. **A low-friction nib.** PTFE tape on the nib cuts drag. Arm-side effects do not change.
-4. **The servo P register from 16 to 32.** The servo torque is $P \times$ the position error. A larger $P$ gives more torque for the same error.
+4. **The servo P register, at several values.** The servo torque is $P \times$ the position error. A larger $P$ gives more torque for the same error. I already have this test on direct holds (table above). The test that is left runs the drawing at $P$ = 16, 32 and 16 again (A B A) and asks whether a stiffer pan lowers the drawing error.
 
-Test 4 deserves a worked example, because it separates friction from backlash. With stiction, the joint starts to move only when $P \times e$ exceeds the breakaway torque $T$. So the dead zone is $e = T / P$. If I double $P$, the dead zone halves. A hold offset of 3 mrad, which I measured when the pan stands still, would fall to about 1.5 mrad. A backlash gap is an angle fixed by the gears. Doubling $P$ does not change it. So the hold offset stays at 3 mrad. This is my reasoning, not a measurement. I have not run this test, because it writes servo registers on the arm, and a higher $P$ can also add chatter.
+Test 4 separates friction from backlash, and here is why. With stiction, the joint starts to move only when $P \times e$ exceeds the breakaway torque $T$. So the dead zone is $e = T / P$. If I double $P$, the dead zone halves. A backlash gap is an angle fixed by the gears. Doubling $P$ does not change it. The table above shows the dead band shrinking with $P$, so the dead band is friction. One more check from the table: at $P$ = 16, $e = 150 / 16 = 9.4$ mrad. At $P$ = 32, $e = 150 / 32 = 4.7$ mrad, close to the 3.8 to 4.1 that I measured. A higher $P$ is not free: $P$ = 64 rang at about 5 Hz in my circles.
 
 ## Controller 2: the correction head
 
@@ -345,7 +358,7 @@ This section lists what I did not verify. Check these first.
 - **Offline is not the arm.** The Offline scorer treats the error of the uncorrected run as independent of the correction. In the real loop, the head changes the error. On the frozen-head runs, the scorer predicts the new linear model at 1.24 mm, but the frozen head measured 1.06 mm. On uncorrected runs, the same scorer predicts 0.90 mm. [Part 4](/robotics/so101-4-learning-what-physics-misses/#section-offline-against-closed-loop) showed the same gap in another form. Only the arm decides. The hysteresis numbers are candidates.
 - **The tablet is the judge.** The tablet stream arrives about 20 ms late. I estimated this from three indirect methods that agree within 10 to 30 ms. There is no hardware sync. If the delay is larger, the tablet delay bar of the error chart grows and the pan bars shrink. The tablet noise itself is about 0.4 mm.
 - **The validation set is small.** There are four drawings. The test-retest drift of the mean is 0.12 mm. The dev set has 13 groups and 14 motions. The sealed set has four motions. The sealed scores come from one look, but four motions are still few.
-- **The pan cause is unknown.** Friction, backlash and compliance all fit. I do not know which shaft the servo encoder reads, the motor side or the output side. That changes how backlash shows up in the loop. I have not verified it.
+- **The cause of the pan lag on x is unknown.** Friction explains the dead band, but not the 86 ms lag. The project notes say that the servo encoder sits on the output shaft, so backlash inside the servo shows up in the loop and is at most about 1 mrad. I did not verify this against a datasheet. Play and bending outside the servo are invisible to the encoder. The late-start delay is 267 ms in one count (46 events) and 235 ms in another, so I quote it as about 250 ms.
 - **The hysteresis name is about features.** The unexplained part of the gap has the same size when a joint stands still and when it moves. So I have no direct sign of backlash at reversals.
 - **The drag cause is only supported.** The hover replay did not run. Part of the x lag (32 to 36 ms) stays in hover.
 - **One arm, one tablet pose.** The x axis is the pan direction at this tablet place. The pan result may change at another place.
@@ -413,7 +426,7 @@ B. The dead zone is $e = T/P$, so doubling $P$ halves it. A gap is an angle that
 
 These tests have a prediction each. I choose the next one by the number that it can move.
 
-1. **The $P$ register from 16 to 32 on the pan.** Prediction: if friction dominates, the 3 mrad hold offset and the start delay shrink. If backlash dominates, the hold offset stays.
+1. **A drawing block at $P$ = 16, 32, 16 on the pan (A B A).** The arm test is running as I write. Rule: $P$ = 32 wins if it lowers the error by 0.12 mm or more. Earlier circles at $P$ = 32 had 6 to 12 % less total error than at $P$ = 16. Prediction: the gain is small, because the physics model already removes most of the friction effect.
 2. **The hover replay and the low-friction nib.** Prediction: the direction offset on x falls to about zero in hover.
 3. **A speed sweep at 10, 20 and 40 mm/s.** Prediction: it splits the 86 ms lag from the −0.54 mm offset.
 4. **The hysteresis models on the arm, A B A against the frozen head.** Prediction: no gain above 0.12 mm.
