@@ -101,6 +101,18 @@ The video draws all four test drawings at once, with four controllers in a row. 
 <figcaption>Time-lapse of the four test drawings with four controllers, 57 s. This is the tablet recording of the real runs, drawn again, not camera footage. Gray: the reference line. Dot: the pen. Mean errors: 2.74, 2.27, 1.15 and 1.03 mm (Measured). The last stage is the first block of the frozen head; the control block of the baseline test gave 1.057 mm.</figcaption>
 </figure>
 
+### Before the tablet: the arm in the camera view
+
+Before I had the tablet, I measured the pen with an overhead camera. This clip is real camera footage from 6 Oct. A pencil taped in the gripper hovers over a circle, with no contact. A grid is drawn over the table for scale. The left half is the default controller, `direct`, which sends the target angle unchanged. The right half is the physics controller. Purple is the pen trace that the camera sees. After 67 s, the error so far is 10.1 mm for `direct` and 1.3 mm for the physics controller (Measured with the camera, not with the tablet).
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/overlay-direct-vs-phys-poster.jpg" aria-label="Overhead camera footage of the arm moving a hovering pencil around a circle, twice side by side. Left, the default controller, the purple trace of the pen wanders off the green circle. Right, the physics controller, the trace follows the circle.">
+<source src="/assets/robotics/so101-controllers/overlay-direct-vs-phys.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-controllers/overlay-direct-vs-phys.mp4">Watch the video</a>
+</video>
+<figcaption>Overhead camera, 54 s, 6 Oct. Left: the default controller. Right: the physics controller. A grid of 1 cm squares is drawn over the table.</figcaption>
+</figure>
+
 <figure class="article-figure" style="max-width:300px">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-pen-holder/on-the-arm-poster.jpg" aria-label="The printed sleeve on the fixed finger of the SO-101, with a pen in both clamps, and the Wacom Intuos S tablet in front of the arm.">
 <source src="/assets/robotics/so101-pen-holder/on-the-arm.mp4" type="video/mp4">
