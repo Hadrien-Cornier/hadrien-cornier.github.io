@@ -19,6 +19,14 @@ This is part 6 of a series about the last mile of robot control: how a goal reac
 
 Those parts measured the arm in joint angles. This part measures it where it matters, at the pen tip, and it starts with what the joint sensors cannot tell me.
 
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/kitty-overhead-v6c-poster.jpg" aria-label="Overhead view of the SO-101 arm drawing the kitten on the tablet. The arm holds the pen against the black tablet and moves it along the drawing.">
+<source src="/assets/robotics/so101-controllers/kitty-overhead-v6c.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-controllers/kitty-overhead-v6c.mp4">Watch the video</a>
+</video>
+<figcaption>The real arm drawing the kitten, 40 s, real speed. Overhead camera, 11 Oct. This run used the frozen correction head (v6c) and servo gain P32. The black rectangle is the tablet.</figcaption>
+</figure>
+
 ## The limits of the encoders
 
 My SO-101 arm measures each joint with an encoder. An encoder reads a joint angle in whole steps called ticks. The first joint, the shoulder pan, turns the whole arm about a vertical axis. One tick of the pan is $2\pi/4096 = 1.534$ mrad. The pen is 231 mm from the pan axis, so one tick moves the pen 0.354 mm.
@@ -57,7 +65,29 @@ The shaking that I see on the arm is mostly the controller's own goal chatter. I
 
 ![Two stacked plots over 2.5 seconds. Top: the goal chatter on the shoulder lift, swinging between minus 20 and plus 20 mrad about 10 times per second. Bottom: the joint response, a few mrad.](/assets/robotics/so101-controllers/goal-chatter.png "The strongest 2.5 s of one drawing. Over the whole drawing, the chatter is 6.0 mrad RMS and the joint response is 1.4 mrad RMS. Offline, from Measured logs.")
 
-The encoders see this shaking. In an Offline study of tablet and encoder logs, the tablet showed nothing that the encoders miss between 2 and 12 Hz, and the ring after a stop was about one encoder tick. So the shaking is a controller problem, and it is not hidden from the sensor. I have requested gripper-camera footage of it, and I will add it here when I have it.
+The encoders see this shaking. In an Offline study of tablet and encoder logs, the tablet showed nothing that the encoders miss between 2 and 12 Hz, and the ring after a stop was about one encoder tick. So the shaking is a controller problem, and it is not hidden from the sensor.
+
+I also filmed it. The gripper camera rides on the arm, so a shake of the arm would shake the picture. I recorded the kitten twice: with the correction head on (v6c) and with it off. My prediction was a visible shake with the head off and less with the head on. The clips do not show that.
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/kitty-gripper-headoff-poster.jpg" aria-label="View from the gripper camera while the arm draws the kitten with the correction head off. The pen mount stays in the lower middle of the picture. The tablet and the table move slowly past.">
+<source src="/assets/robotics/so101-controllers/kitty-gripper-headoff.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-controllers/kitty-gripper-headoff.mp4">Watch the video</a>
+</video>
+<figcaption>Gripper camera, correction head off, 30 s excerpt, real speed. The pen mount is the object at the bottom center.</figcaption>
+</figure>
+
+<figure class="article-figure">
+<video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/kitty-gripper-v6c-poster.jpg" aria-label="View from the gripper camera while the arm draws the kitten with the frozen correction head v6c. It looks the same as the head-off clip.">
+<source src="/assets/robotics/so101-controllers/kitty-gripper-v6c.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-controllers/kitty-gripper-v6c.mp4">Watch the video</a>
+</video>
+<figcaption>Gripper camera, correction head v6c, 30 s excerpt, real speed.</figcaption>
+</figure>
+
+I measured the picture instead of trusting my eyes. For each frame, I computed how far the picture moved against the previous frame, and removed the slow drawing motion (below 2 Hz). Over 70 s of each clip, the remaining motion is 0.25 px RMS with the head off and 0.28 px RMS with it on (Measured, 960 px wide pictures at 30 frames per second). Neither spectrum has a peak at 4 to 5 Hz.
+
+So these clips do not show the lift shaking. They do not contradict the Offline result either. The camera is a wide-angle lens at 30 frames per second, and the joint answers the chatter with only one to two ticks. A shake that small may be below what this camera shows. An accelerometer on the arm is a better test, and it is on the list below.
 
 ### So I need an outside judge
 
@@ -317,7 +347,6 @@ The simulator is also flawed, for the reasons in the limits of the encoders abov
 
 - **A defect atlas of every joint.** Estimate every error source of every joint, with a method and an uncertainty for each: backlash, breakaway and running friction, the firmware dead band, compliance, the servo ramp and gain, temperature and drift. This work restarted on 11 October. It starts from the logs that exist, then runs a targeted arm battery for what the logs cannot separate.
 - **Accelerometers on the arm.** Planned, not ordered. An accelerometer sees shaking and bending, so it is a cheap candidate for the unseen gap. Gyros measure the pan rotation rate but not the absolute pan angle, because gravity is vertical.
-- **Camera footage.** Gripper-camera clips of the shaking and of a drawing are requested, and I will add them here.
 - **A gripper camera over a tag mat,** to see the shake and the parasitic motion of the pen tip. This is an idea. It is being scoped offline and is not queued.
 - **A tilted tablet,** to measure height as well as x and y. This is an idea.
 - **Strings or a precise camera** as lab references. This is an idea.
