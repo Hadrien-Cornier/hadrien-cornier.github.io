@@ -309,7 +309,7 @@ The simulator is also flawed, for the reasons in the limits of the encoders abov
 - **A gripper camera over a tag mat,** to see the shake and the parasitic motion of the pen tip. This is an idea. It is being scoped offline and is not queued.
 - **A tilted tablet,** to measure height as well as x and y. This is an idea.
 - **Strings or a precise camera** as lab references. This is an idea.
-- **Pan gain P32.** The blocks at P32 on four joints gave 0.061 mm lower error over four pairs (Measured, standard error 0.015 mm). This is below the 0.12 mm drift threshold of one controller, so it is not shown yet.
+- **Servo gain P32.** I set P32 on four joints (pan, elbow, wrist flex, wrist roll; the lift stayed at P16). The error was 0.061 mm lower over four pairs of blocks (Measured, standard error 0.015 mm). My pre-written rule still scored it as a loss, because the lift rang past its stop. The lift had P16 in both arms, so the stop did not measure P32. The next test, elbow P32 with wrist flex P48, checks the same direction under a fairer ring rule.
 - **The held-out drawings.** Score the validation drawings, circle and plus, with the best controller.
 - **The hysteresis models on the arm,** with a baseline run before and after each one to cancel drift.
 

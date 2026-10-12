@@ -401,7 +401,7 @@ M834 80h400000v40h-400000z"/></svg></span></span></span><span class="vlist-s">â€
 <li><strong>A gripper camera over a tag mat,</strong> to see the shake and the parasitic motion of the pen tip. This is an idea. It is being scoped offline and is not queued.</li>
 <li><strong>A tilted tablet,</strong> to measure height as well as x and y. This is an idea.</li>
 <li><strong>Strings or a precise camera</strong> as lab references. This is an idea.</li>
-<li><strong>Pan gain P32.</strong> The blocks at P32 on four joints gave 0.061 mm lower error over four pairs (Measured, standard error 0.015 mm). This is below the 0.12 mm drift threshold of one controller, so it is not shown yet.</li>
+<li><strong>Servo gain P32.</strong> I set P32 on four joints (pan, elbow, wrist flex, wrist roll; the lift stayed at P16). The error was 0.061 mm lower over four pairs of blocks (Measured, standard error 0.015 mm). My pre-written rule still scored it as a loss, because the lift rang past its stop. The lift had P16 in both arms, so the stop did not measure P32. The next test, elbow P32 with wrist flex P48, checks the same direction under a fairer ring rule.</li>
 <li><strong>The held-out drawings.</strong> Score the validation drawings, circle and plus, with the best controller.</li>
 <li><strong>The hysteresis models on the arm,</strong> with a baseline run before and after each one to cancel drift.</li>
 </ul>
