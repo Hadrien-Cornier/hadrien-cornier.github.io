@@ -2,7 +2,7 @@
 title: 'What information can a reinforcement learner use?'
 description: 'A short model for the words in Breaking Bellman: data weight, real rewards, and the guess that follows.'
 date: '2026-10-16'
-draft: true
+draft: false
 layout: essay
 ---
 
