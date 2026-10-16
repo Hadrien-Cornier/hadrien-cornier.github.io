@@ -1314,6 +1314,36 @@ function renderContinuousAction(el) {
 }
 register('continuous-action', renderContinuousAction);
 
+// Fetch reward: a facing bonus paid every step can be worth more than the stick (Breaking Bellman, bonus level).
+// Sums over one throw, without discount: sit = T x (b - c); fetch = n x (b - c) + R, with R = 1.
+function renderFetchReward(el) {
+  setWidgetRoot(el, 'fetch-reward');
+  const controls = node('div', undefined, 'so101-controls');
+  const bars = node('div', undefined, 'so101-bars');
+  const verdict = node('p', '', 'so101-total');
+  verdict.setAttribute('aria-live', 'polite');
+  const tip = node('p', '', 'so101-units');
+  let bonus = 0.05, cost = 0.01, steps = 15, limit = 60;
+  const sitBar = valueBar(bars, 'Sit and stare at the stick until the time limit', 0, '', 4, 'limit × (bonus − cost)');
+  const fetchBar = valueBar(bars, 'Walk to the stick, facing it, and get it', 0, '', 4, 'steps × (bonus − cost) + 1 for the stick');
+  const draw = () => {
+    const sit = limit * (bonus - cost), fetch = steps * (bonus - cost) + 1;
+    const max = Math.max(1, sit, fetch) * 1.1;
+    updateBar(sitBar, sit, '', max);
+    updateBar(fetchBar, fetch, '', max);
+    verdict.textContent = sit > fetch ? `Sitting pays more (${format(sit, 2)} against ${format(fetch, 2)}). A learner that maximizes this reward learns to sit.`
+      : `Fetching pays more (${format(fetch, 2)} against ${format(sit, 2)}). The bonus only helps here.`;
+    tip.textContent = steps < limit ? `Tipping point: sitting wins when the bonus is above cost + 1 / (limit − steps) = ${format(cost + 1 / (limit - steps), 3)} per step.` : 'The dog needs the whole throw to fetch, so the bonus cannot tip it.';
+  };
+  slider(controls, {label:'Facing bonus per step', min:0, max:0.1, step:0.005, value:bonus, onInput:(v) => { bonus = v; draw(); }});
+  slider(controls, {label:'Cost per step', min:0, max:0.05, step:0.005, value:cost, onInput:(v) => { cost = v; draw(); }});
+  slider(controls, {label:'Steps to fetch', min:5, max:40, step:1, value:steps, onInput:(v) => { steps = v; draw(); }});
+  slider(controls, {label:'Time limit (steps)', min:20, max:120, step:10, value:limit, onInput:(v) => { limit = v; draw(); }});
+  el.append(node('p', 'Rewards over one throw. The stick pays 1 and ends the throw. Move the sliders to find where the bonus takes over.'), controls, bars, verdict, tip);
+  draw();
+}
+register('fetch-reward', renderFetchReward);
+
 function mount(element, fn) {
   if (element.dataset.so101Ready === 'true' || element.dataset.so101Ready === 'pending') return;
   let config;
