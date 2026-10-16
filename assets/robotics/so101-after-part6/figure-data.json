@@ -1,0 +1,31 @@
+{
+  "repeat_budget": {
+    "label": "Offline",
+    "source_commit": "eb62c4e2055c83f34c4de762b82ca0ce29d6aa6f",
+    "source": "studies/workshop-1010/atlas/run-noise/README.md",
+    "cohort": "40 repeats of s40, old nib, phys, P16, one pose",
+    "rms_mm": 0.69,
+    "seen_percent": 70,
+    "unexplained_percent": 30,
+    "delay_ms": [50, 100, 150, 200],
+    "predicted_variance_percent": [48, 27, 11, 5]
+  },
+  "learning": {
+    "label": "Measured",
+    "source": "bcw-ops/archive/neural/row45e-n64-results-20261015.md",
+    "code_commit": "d2bf1b9fcd683362c49c6e758a252fc1d24921f2",
+    "cohort": "N64 frozen head, 102 training passes; four Test drawings",
+    "native_baselines_mm": [1.481082, 1.593553],
+    "native_head_mm": 1.641165,
+    "fixed_baselines_mm": [2.160272, 2.314955],
+    "fixed_head_mm": 1.642870
+  },
+  "twin": {
+    "label": "Simulation vs Offline arm logs",
+    "source_commit": "a55cb4f227b9eff5633a887c647599c330bc3cc4",
+    "source": "studies/workshop-1010/twin-accurate/LOG.md, E47 and E48",
+    "version": "c2 + E41 row-13 play",
+    "original_cohort": {"passes": 72, "share_percent": 49.6, "mismatch_rms_mm": 1.304},
+    "held_date": {"passes": 28, "share_percent": -5.6, "mismatch_rms_mm": 1.248}
+  }
+}
