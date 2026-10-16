@@ -10,7 +10,7 @@ part: 8
 
 ## Why I want to measure the tool in space
 
-I want to improve the path that my SO-101 arm follows. In [the tablet article](/robotics/so101-6-where-the-last-millimeter-goes/), I put a pen on the arm and used a Wacom tablet to measure where the tip went. This gave BCW, my controller project, a way to judge a change by the path it produced.
+I want to improve the path that my SO-101 arm follows. In [the tablet article](/robotics/so101-6-where-the-last-millimeter-goes/), I put a pen on the arm and used a Wacom tablet to measure where the tip went. This gave me a way to judge a controller change by the path it produced.
 
 I want the same view when the pen leaves the surface. Measuring free-space paths would let me test whether corrections learned while drawing still help above the tablet. It would also give me tool-position data to fit and test the arm's dynamics model.
 
@@ -78,7 +78,7 @@ For optical motion capture, I would ask for a demonstration over the arm's actua
 
 A laser tracker combines distance measurement with angular encoders. It follows a reflector and reports its center in space. This gives an independent metric reference with substantial accuracy margin for a small arm. The quoted Leica accuracy is a maximum permissible error under the brochure's reflector and test conditions. [Hexagon specifications](https://solutions-ds.com/wp-content/uploads/2017/06/Hexagon_MI_AT960_Brochure_EN.pdf)
 
-A reflector gives position. A dedicated pose target adds orientation. That matters if the reflector sits away from the nib and the tool rotates. For BCW, I would seek a loan or a paid reference session before considering ownership. The purchase allowance in the table is a planning estimate. A supplier quote must include the target, software, support, and calibration.
+A reflector gives position. A dedicated pose target adds orientation. That matters if the reflector sits away from the nib and the tool rotates. For my arm, I would seek a loan or a paid reference session before considering ownership. The purchase allowance in the table is a planning estimate. A supplier quote must include the target, software, support, and calibration.
 
 ## Measure the offset and the time
 
