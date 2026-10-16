@@ -2,40 +2,29 @@
 title: 'How I would measure my drawing arm in space'
 description: 'A tablet sees the pen on its surface. I compare calibrated cameras, swept-laser tracking, infrared motion capture, and a laser tracker for measuring the tool above it.'
 date: '2026-10-15'
+updated: '2026-10-16'
 draft: true
 series: 'From policy to action: the last mile of robotics control'
 part: 8
 ---
 
-## Keep the tablet, then test the Pixel
+## Why I want to measure the tool in space
 
-My first choice is to keep the Wacom tablet for drawing scores and use my Pixel phone for a camera feasibility study. A ChArUco board gives the camera a ruler. A small target on the tool gives it something to follow. This is the cheapest next step toward measuring free-space motion. The board order still waits for approval.
+I want to improve the path that my SO-101 arm follows. In [the tablet article](/robotics/so101-6-where-the-last-millimeter-goes/), I put a pen on the arm and used a Wacom tablet to measure where the tip went. This gave BCW, my controller project, a way to judge a change by the path it produced.
 
-The weakest point is depth at the nib. A camera can locate a target well in its image and still estimate its distance poorly. The target also sits above the nib. An error in its orientation becomes a position error at the tip.
+I want the same view when the pen leaves the surface. Measuring free-space paths would let me test whether corrections learned while drawing still help above the tablet. It would also give me tool-position data to fit and test the arm's dynamics model.
 
-In [the tablet article](/robotics/so101-6-where-the-last-millimeter-goes/), I used the pen position to judge controllers. That measurement stops at the tablet plane. BCW, my project to build the best controller I can for this arm, also needs trajectories with the pen clear of the table. These motions let me test whether a correction learned while drawing transfers to space.
+The tablet gives me a precise view of a drawing, but it reports position in its plane. It cannot show the tool's height or orientation. Joint encoders give angles, but they do not measure the nib directly. I need an outside reference that follows the tool through space.
 
-A friend who works on robots described three routes: high-resolution cameras with a ChArUco board, markers read by sweeping base stations or infrared motion capture, and a laser tracker. I read the specifications and papers before choosing hardware.
+A friend who works on robots described three routes. A calibrated camera can locate a known pattern on the tool. Sweeping base stations or infrared motion-capture cameras can follow markers on the arm. A laser tracker can follow a reflector. Each route gives a different balance of accuracy, coverage, setup work, and cost.
 
-This is a research draft. **All external specifications, paper results, calculations, budgets, and proposed tests below are Dry run.** Each numerical claim also names its source type: **Datasheet**, **Paper**, or **Estimate**. A vendor product specification counts as Datasheet. These labels do not mean that I measured the BCW arm. Only Measured results from the real arm can rank its controllers.
-
-## Choose a ruler for the nib
-
-The requested nib run-to-run target is **0.6 mm (Dry run, Estimate: design requirement)**. Before testing, I would define this as the RMS distance between time-aligned repetitions of the same nib path. That proposed definition needs to stay fixed across sensors and controllers.
-
-A sensor must resolve changes smaller than that target. I propose a sensor contribution of **0.2 mm RMS or less (Dry run, Estimate: engineering allocation)** at the nib. This allocation includes calibration, timing, and the target mount. It is a test gate, not a specification that the phone already meets.
-
-Accuracy is agreement with an independent reference. Repeatability is agreement across repeated readings or runs. A stable bias can leave repeatability good and accuracy poor. Pixel spacing, static jitter, and reprojection error do not by themselves give nib accuracy in millimeters.
-
-### What the tablet gives me today
-
-The Wacom Intuos S reports pen coordinates and pressure. It gives me a direct reference for a drawing, without estimating the arm geometry. Its hover detection does not give a calibrated height coordinate. This model also does not report pen tilt. It cannot describe the tool pose above the drawing surface. [Wacom specifications](https://estore.wacom.com/en-au/wacom-intuos-small-without-bluetooth-black-ctl-4100-k0-cx.html)
-
-The earlier article reports a tablet-stream delay of about **20 ms (Offline, real drawing logs)**. That is an estimate for the existing recording chain, not a Wacom latency guarantee. [Tablet delay analysis](/robotics/so101-6-where-the-last-millimeter-goes/#section-what-the-physics-misses)
+After reading papers and specifications, I propose keeping the tablet for drawing scores and starting a camera study with the Pixel phone I already have. A ChArUco board would establish scale and the camera frame. A small target fixed to the tool would let me estimate the nib position. I would compare that estimate with the tablet before using it for free-space paths.
 
 ## Compare the measurement systems
 
-**Every entry in this table is Dry run.** Source labels apply to the adjacent values. Costs are incremental USD planning costs with the existing computer available. Setup effort is my Estimate. Frame or output rate is separate from latency, which runs from physical motion to a usable sample in my program.
+This is a research draft. **All external specifications, paper results, calculations, budgets, and proposed tests below are Dry run.** Each numerical claim also names its source type: **Datasheet**, **Paper**, or **Estimate**. A vendor product specification counts as Datasheet. Only Measured results from the real arm can rank its controllers.
+
+Costs are incremental USD planning costs with the existing computer available. Setup effort is my Estimate. Rate counts samples per second. Latency is the time from physical motion to a usable sample in my program.
 
 | System | Accuracy evidence, mm | Rate, Hz | Latency evidence | Working area or volume | What it measures | USD cost and setup effort |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -47,17 +36,31 @@ The earlier article reports a tablet-stream delay of about **20 ms (Offline, rea
 
 The table compares different error definitions. A tolerance, an MAE, an RMSE, and a maximum permissible error are not interchangeable. I would use this table to choose a validation route. I would use a common nib test to compare purchased systems.
 
+## Choose a ruler for the nib
+
+The requested nib run-to-run target is **0.6 mm (Dry run, Estimate: design requirement)**. Before testing, I would define this as the RMS distance between time-aligned repetitions of the same nib path. That proposed definition needs to stay fixed across sensors and controllers.
+
+A sensor must resolve changes smaller than that target. I propose a sensor contribution of **0.2 mm RMS or less (Dry run, Estimate: engineering allocation)** at the nib. This allocation includes calibration, timing, and the target mount. It sets the gate for the proposed study.
+
+Accuracy is agreement with an independent reference. Repeatability is agreement across repeated readings or runs. A stable bias can leave repeatability good and accuracy poor. The study must report both in physical units.
+
+### What the tablet gives me today
+
+The Wacom Intuos S reports pen coordinates and pressure. It gives me a direct reference for a drawing, without estimating the arm geometry. [Wacom specifications](https://estore.wacom.com/en-au/wacom-intuos-small-without-bluetooth-black-ctl-4100-k0-cx.html)
+
+The earlier article estimates a tablet-stream delay of **20 ms (Offline, real drawing logs)** for the existing recording chain. [Tablet delay analysis](/robotics/so101-6-where-the-last-millimeter-goes/#section-what-the-physics-misses)
+
 ## How cameras become a ruler in space
 
 A ChArUco board combines checkerboard corners with coded markers. The codes identify visible parts of the board. The corners support camera calibration and pose estimation. The known square size supplies metric scale. OpenCV explains how to recover a board pose from calibrated image points. [OpenCV ChArUco guide](https://docs.opencv.org/4.x/df/d4a/tutorial_charuco_detection.html)
 
-The board beside the tablet establishes the tablet frame. It does not locate an unmarked pen above it. I also need a light target fixed to the tool, with a known relation to the nib. A calibrated camera can estimate that target's position and orientation. A second synchronized view adds a triangulation baseline and helps when the arm blocks the first view.
+A board beside the tablet establishes the tablet frame in the camera view. A light target fixed to the tool supplies its position and orientation. The target needs a known relation to the nib. A second synchronized view adds a triangulation baseline and helps when the arm blocks the first view.
 
 I would start with the existing Pixel on a rigid support. I would record to the phone and process the footage offline. That avoids making a network video stream part of the first measurement chain. I would record the phone model, lens, capture resolution, exposure, focus, stabilization settings, frame timestamps, and calibration software version. The calibration and trajectory footage must use the same image geometry.
 
-For scale, suppose a **400 mm** field spans **3,840 pixels**. The spacing is **0.104 mm per pixel (Dry run, Estimate: field width divided by image width)**. This tells me how much table width one image sample covers. It says nothing yet about depth accuracy.
+For scale, suppose a **400 mm** field spans **3,840 pixels**. The spacing is **0.104 mm per pixel (Dry run, Estimate: field width divided by image width)**. This gives the table width covered by an image sample.
 
-The ChArUco paper in the table used a different camera rig. Its authors report **0.90°** rotation MAE alongside the translation result **(Dry run, Paper)**. That result is evidence that calibration needs validation in physical units. It is not a prediction for my phone. [An et al., calibration results](https://doi.org/10.3390/electronics7120421)
+The ChArUco paper in the table also reports **0.90°** rotation MAE **(Dry run, Paper)**. I would report rotation error alongside translation error in the camera study. [An et al., calibration results](https://doi.org/10.3390/electronics7120421)
 
 ## How markers become a tool pose
 
@@ -67,7 +70,7 @@ With Lighthouse, the base stations sweep infrared laser light across photodiodes
 
 For the first nib study, I would put a light cluster near the tool. Markers on arm links can later show link motion and bending. A marker on an upstream link alone leaves the flex between that link and the nib unmeasured.
 
-The SteamVR results are a reason to test motion before buying. The same paper reports a dynamic aggregate RMSE of **0.574 mm** at **12.5 mm/s**, rising to **4.237 mm** at **50 mm/s**, with four stations **(Dry run, Paper, Table 4)**. Those results do not establish the sensor allocation for this arm. They make Lighthouse more attractive for coarse play trajectories than for the nib reference. [Dynamic results and processing method](https://doi.org/10.3390/s23020725)
+The SteamVR results are a reason to test motion before buying. The same paper reports a dynamic aggregate RMSE of **0.574 mm** at **12.5 mm/s**, rising to **4.237 mm** at **50 mm/s**, with four stations **(Dry run, Paper, Table 4)**. I would consider Lighthouse for coarse play trajectories before considering it as the nib reference. [Dynamic results and processing method](https://doi.org/10.3390/s23020725)
 
 For optical motion capture, I would ask for a demonstration over the arm's actual motions. I would request nib error, visible-marker count, dropout rate, and timestamps. That gives a better buying test than the camera model alone.
 
@@ -85,9 +88,9 @@ $$
 p_{\text{nib}} = t + Rr.
 $$
 
-For a small orientation error $\delta\theta$, the added nib error is about $\lVert r\rVert\delta\theta$. A **100 mm** offset with **0.1°** orientation error adds about **0.175 mm (Dry run, Estimate: lever-arm calculation)**. A flexible pen holder adds error that this rigid transform cannot remove. A target near the nib reduces the lever arm.
+For a small orientation error $\delta\theta$, the added nib error is about $\lVert r\rVert\delta\theta$. A **100 mm** offset with **0.1°** orientation error adds about **0.175 mm (Dry run, Estimate: lever-arm calculation)**. A target near the nib reduces the lever arm.
 
-Timing also becomes position error. At **20 mm/s**, a **10 ms** time error creates **0.2 mm** of apparent path error **(Dry run, Estimate: speed multiplied by time)**. The test must therefore measure delay and jitter for the full recording chain. A fast sample rate does not establish either one.
+Timing also becomes position error. At **20 mm/s**, a **10 ms** time error creates **0.2 mm** of apparent path error **(Dry run, Estimate: speed multiplied by time)**. The test must therefore measure delay and jitter for the full recording chain.
 
 ## My recommendation and the test that decides it
 
@@ -99,15 +102,15 @@ I would choose among these routes in this order:
 
 I would keep the tablet throughout. The next study starts with a static target, then checks camera-versus-tablet nib coordinates while drawing. Fit the camera-to-tablet transform on calibration data. Keep that transform fixed on held-out paths. Estimate timing on separate data and preserve the raw timestamps. Report bias, repeated-position spread, path error, delay, jitter, and missing detections.
 
-The Wacom check validates only the drawing plane. To validate height, I also need an independent fixture with known height steps and stated uncertainty, or a reference session with motion capture or a laser tracker. Repeating the same camera estimate is not an independent height test.
+For the height check, I would use an independent fixture with known height steps and stated uncertainty, or a reference session with motion capture or a laser tracker.
 
 Only after these checks would I use the camera to score pen-clear play trajectories. Any arm collection belongs to the arm operator and the normal test queue. This draft does not start a test or authorize an order.
 
 ## Limits
 
-- **The recommendation's weakest point is unvalidated nib depth.** Phone calibration, rolling shutter, image processing, occlusion, target orientation, and holder flex all enter the result. A good image fit alone does not pass the nib test.
-- **The tablet is a plane reference with its own error.** Its datasheet tolerance is not a measured uncertainty for this installation. Tablet agreement alone cannot certify the proposed sensor allocation. That needs a reference with characterized uncertainty and an error budget for the comparison. Pressure and pen angle also need controlled conditions.
-- **The literature describes other systems.** The ChArUco paper evaluates an omnidirectional calibration structure. The SteamVR paper uses a robot reference and post-processes coordinate systems and sample rates. Its aggregate RMSE is not a uniform spatial bound or an isolated latency measurement.
+- **The recommendation's weakest point is unvalidated nib depth.** Phone calibration, rolling shutter, image processing, occlusion, target orientation, and holder flex all enter the result. Pixel spacing and image-fit error alone do not establish depth accuracy. A rigid target-to-nib transform also cannot remove holder flex.
+- **The tablet is a plane reference with its own error.** Hover detection does not supply calibrated height, and this model does not report tilt. Its datasheet tolerance is not a measured uncertainty for this installation. Tablet agreement alone cannot certify the proposed sensor allocation. That needs a reference with characterized uncertainty and an error budget for the comparison. Pressure and pen angle also need controlled conditions.
+- **The literature describes other systems.** The ChArUco paper evaluates an omnidirectional calibration structure, not Pixel nib trajectories. The SteamVR paper uses a robot reference and post-processes coordinate systems and sample rates. Its aggregate RMSE is not a uniform spatial bound or an isolated latency measurement.
 - **Vendor claims depend on conditions.** OptiTrack's product page lists the accuracy used here; its [family sheet](https://optitrack-documents.s3.us-west-2.amazonaws.com/primex-family-spec-sheet-26.01.16.pdf) lists **±0.2 mm (Dry run, Datasheet)**. A quote must fix the specification and test volume. Leica's reflector specification does not establish the error of a custom nib mount.
-- **Latency is incomplete.** The cited sources do not establish end-to-end delay for my proposed Pixel, SteamVR, motion-capture, or tracker host chains. Timestamp accuracy, camera latency, frame period, and program delivery delay are separate quantities. The exact Pixel model and supported capture modes also need confirmation.
+- **Latency is incomplete.** The cited sources do not establish end-to-end delay for my proposed Pixel, SteamVR, motion-capture, or tracker host chains. Timestamp accuracy, camera latency, frame period, and program delivery delay are separate quantities. The earlier tablet delay estimate applies only to its recording chain. The exact Pixel model and supported capture modes also need confirmation.
 - **Costs and approval remain open.** The camera, motion-capture, and laser-tracker totals are Estimates, with existing compute assumed. Tax, shipping, service, and any new host are extra. The ChArUco board order remains pending. No new real-arm measurement or controller ranking is claimed here.
