@@ -1,6 +1,6 @@
 ---
-title: 'How I would measure my drawing arm in space'
-description: 'A tablet sees the pen on its surface. I compare calibrated cameras, swept-laser tracking, infrared motion capture, and a laser tracker for measuring the tool above it.'
+title: "How do I get the XYZ position of my robot's tool tip?"
+description: 'The drawing arm project needs a smooth, precise controller beyond the tablet plane. I compare cameras, marker tracking, and a laser tracker for measuring the tool tip in space.'
 date: '2026-10-15'
 updated: '2026-10-16'
 draft: true
@@ -8,23 +8,29 @@ series: 'From policy to action: the last mile of robotics control'
 part: 8
 ---
 
-## Why I want to measure the tool in space
+How do I get the precise x, y, and z coordinates of the tip of my robot's gripper?
 
-I want to improve the path that my SO-101 arm follows. In [the tablet article](/robotics/so101-6-where-the-last-millimeter-goes/), I put a pen on the arm and used a Wacom tablet to measure where the tip went. This gave me a way to judge a controller change by the path it produced.
+I use an SO-101, a small robot arm, to develop a smooth, precise controller: a program that turns a desired path into motor commands. I call this the drawing arm project, but drawing is one showcase for a controller that should also work in space. The gripper holds a pen; a Wacom drawing tablet, a flat position sensor, measures its tip, or nib. The tablet reports x and y along its surface, so this post asks how to add z, the height above that plane.
 
-I want the same view when the pen leaves the surface. Measuring free-space paths would let me test whether corrections learned while drawing still help above the tablet. It would also give me tool-position data to fit and test the arm's dynamics model.
+## From the drawing plane to space
 
-The tablet gives me a precise view of a drawing, but it reports position in its plane. It cannot show the tool's height or orientation. Joint encoders give angles, but they do not measure the nib directly. I need an outside reference that follows the tool through space.
+Measuring the actual tip path lets me judge a controller change by the motion it produces. I want the arm to follow the intended path smoothly, whether it draws or carries a tool above the table.
+
+With free-space measurements, I could test whether corrections learned while drawing still help above the tablet. The same data would help me fit and test a model of the arm's motion.
+
+An encoder is a sensor that reads a joint angle. The arm's encoders report those angles, but they do not measure the tool tip directly. Bending between a joint and the tip can change the path. I need an outside reference that follows the tip through space.
 
 A friend who works on robots described three routes. A calibrated camera can locate a known pattern on the tool. Sweeping base stations or infrared motion-capture cameras can follow markers on the arm. A laser tracker can follow a reflector. Each route gives a different balance of accuracy, coverage, setup work, and cost.
 
-After reading papers and specifications, I propose keeping the tablet for drawing scores and starting a camera study with the Pixel phone I already have. A ChArUco board would establish scale and the camera frame. A small target fixed to the tool would let me estimate the nib position. I would compare that estimate with the tablet before using it for free-space paths.
+After reading papers and specifications, I propose keeping the tablet for drawing scores and starting a camera study with the Pixel phone I already have. A ChArUco board, a checkerboard with coded markers, would give the camera a known scale and reference frame. A small target fixed to the tool would let me estimate the nib position. I would compare that estimate with the tablet before using it for free-space paths.
 
 ## Compare the measurement systems
 
 This is a research draft. **All external specifications, paper results, calculations, budgets, and proposed tests below are Dry run.** Each numerical claim also names its source type: **Datasheet**, **Paper**, or **Estimate**. A vendor product specification counts as Datasheet. Only Measured results from the real arm can rank its controllers.
 
 Costs are incremental USD planning costs with the existing computer available. Setup effort is my Estimate. Rate counts samples per second. Latency is the time from physical motion to a usable sample in my program.
+
+Mean absolute error (MAE) averages the size of the errors. Root mean square error (RMSE) squares the errors before averaging and taking the square root, so large errors count more. A tolerance or maximum permissible error states a bound under specified conditions.
 
 | System | Accuracy evidence, mm | Rate, Hz | Latency evidence | Working area or volume | What it measures | USD cost and setup effort |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -34,11 +40,11 @@ Costs are incremental USD planning costs with the existing computer available. S
 | Infrared motion capture: OptiTrack PrimeX cameras | PrimeX 13 product page: **±0.3 mm** typical position accuracy (Datasheet, [specifications](https://www.optitrack.com/cameras/primex-13/specs)); applies to the marker system | **240 Hz** at full resolution (Datasheet) | **4.2 ms** listed camera latency (Datasheet); application latency still needs measurement | Vendor accuracy context: **9 × 9 m** tracking area (Datasheet, [conditions](https://www.optitrack.com/cameras/primex-13)); usable volume depends on camera overlap | Marker positions; a rigid cluster gives tool position and orientation | **$15,000–30,000** complete small system allowance (Estimate, not a quote; [vendor pricing](https://www.optitrack.com/cameras/primex-13/buy)); high effort: camera network, calibration wand, mounts, license, tool cluster |
 | Laser tracker: Leica AT960 with reflector | **±(0.015 + 0.006 × L) mm**, with L in meters (Datasheet, [Hexagon brochure, specifications](https://solutions-ds.com/wp-content/uploads/2017/06/Hexagon_MI_AT960_Brochure_EN.pdf)); **±0.027 mm at 2 m** (Estimate, substitution) | **1,000 Hz** output (Datasheet) | Application latency not specified in the cited brochure; output period is **1 ms** (Estimate), not a latency guarantee | AT960-MR: **40 m** diameter for reflector position, **20 m** for the pose accessory (Datasheet, same brochure) | Reflector center position; orientation needs a pose accessory such as T-Mac | **$100,000–200,000** purchase allowance (Estimate, not a quote; [vendor sales](https://nexus.hexagon.com/home/product/laser-trackers-at960/)); high effort: instrument setup, software, reference frame, reflector mount |
 
-The table compares different error definitions. A tolerance, an MAE, an RMSE, and a maximum permissible error are not interchangeable. I would use this table to choose a validation route. I would use a common nib test to compare purchased systems.
+These error definitions are not interchangeable. I would use the table to choose a validation route and a common nib test to compare systems.
 
 ## Choose a ruler for the nib
 
-The requested nib run-to-run target is **0.6 mm (Dry run, Estimate: design requirement)**. Before testing, I would define this as the RMS distance between time-aligned repetitions of the same nib path. That proposed definition needs to stay fixed across sensors and controllers.
+The requested nib run-to-run target is **0.6 mm (Dry run, Estimate: design requirement)**. Before testing, I would define this as the root mean square (RMS) distance between time-aligned repetitions of the same nib path. That proposed definition needs to stay fixed across sensors and controllers.
 
 A sensor must resolve changes smaller than that target. I propose a sensor contribution of **0.2 mm RMS or less (Dry run, Estimate: engineering allocation)** at the nib. This allocation includes calibration, timing, and the target mount. It sets the gate for the proposed study.
 
@@ -48,11 +54,11 @@ Accuracy is agreement with an independent reference. Repeatability is agreement 
 
 The Wacom Intuos S reports pen coordinates and pressure. It gives me a direct reference for a drawing, without estimating the arm geometry. [Wacom specifications](https://estore.wacom.com/en-au/wacom-intuos-small-without-bluetooth-black-ctl-4100-k0-cx.html)
 
-The earlier article estimates a tablet-stream delay of **20 ms (Offline, real drawing logs)** for the existing recording chain. [Tablet delay analysis](/robotics/so101-6-where-the-last-millimeter-goes/#section-what-the-physics-misses)
+In the existing recording chain, the estimated tablet-stream delay is **20 ms (Offline, real drawing logs)**. [Optional background: tablet delay analysis](/robotics/so101-6-where-the-last-millimeter-goes/#section-what-the-physics-misses)
 
 ## How cameras become a ruler in space
 
-A ChArUco board combines checkerboard corners with coded markers. The codes identify visible parts of the board. The corners support camera calibration and pose estimation. The known square size supplies metric scale. OpenCV explains how to recover a board pose from calibrated image points. [OpenCV ChArUco guide](https://docs.opencv.org/4.x/df/d4a/tutorial_charuco_detection.html)
+The codes on a ChArUco board identify visible parts of the pattern. The corners support camera calibration and pose estimation. The known square size supplies metric scale. OpenCV explains how to recover a board pose from calibrated image points. [OpenCV ChArUco guide](https://docs.opencv.org/4.x/df/d4a/tutorial_charuco_detection.html)
 
 A board beside the tablet establishes the tablet frame in the camera view. A light target fixed to the tool supplies its position and orientation. The target needs a known relation to the nib. A second synchronized view adds a triangulation baseline and helps when the arm blocks the first view.
 
