@@ -11,6 +11,14 @@ part: 7
 
 My drawing arm needs to learn as it changes. It also needs to react to errors that change within a stroke. Those are different jobs. A correction learned from past drawings handles the repeatable part. Feedback handles what the arm does differently this time.
 
+<figure class="article-figure">
+<video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-drawing-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm drawing a kitten with a pen on the black Wacom tablet. The arm sweeps the pen along the outline of the drawing.">
+<source src="/assets/robotics/so101-series/arm-drawing-overhead.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/arm-drawing-overhead.mp4">Watch the video</a>
+</video>
+<figcaption>The real arm drawing a kitten on the Wacom tablet. Overhead camera, 11 Oct 2026. This is 88 s of drawing sped up 4 times, so it plays in 22 s. The black rectangle is the tablet, and the arm is the white machine at the top right.</figcaption>
+</figure>
+
 This is part 7 of the SO-101 series. [Part 6](/robotics/so101-6-where-the-last-millimeter-goes/) measured the pen tip with a tablet. A frozen learned correction reached **1.057 mm RMS on the controller-selection drawings (Measured)**. RMS means square each distance error, average, then take the square root. A large miss counts more than a small one.
 
 Since then, I tried direct motor drive, added learning, and tested the software copy of the arm against more recordings. I made an explainer for a friend who works on robots. This post follows that explainer, with the later results and corrected numbers.

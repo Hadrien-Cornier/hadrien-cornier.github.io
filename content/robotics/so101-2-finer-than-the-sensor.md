@@ -9,6 +9,14 @@ part: 2
 
 [Part 1](/robotics/so101-1-target-and-goal/) wrote one joint of my arm as an equation, and every term in it uses the true angle $q$. My controllers never see $q$. They see the reading $\hat q$, in whole encoder ticks of 1.534 mrad. Two questions kept coming back while I worked on this side of the equation. What happens when a controller needs more than the angle, like the speed or the acceleration? And can a controller know the angle better than the sensor tells it?
 
+<figure class="article-figure">
+<video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-drawing-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm drawing a kitten with a pen on the black Wacom tablet. The arm sweeps the pen along the outline of the drawing.">
+<source src="/assets/robotics/so101-series/arm-drawing-overhead.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/arm-drawing-overhead.mp4">Watch the video</a>
+</video>
+<figcaption>The real arm drawing a kitten on the Wacom tablet. Overhead camera, 11 Oct 2026. This is 88 s of drawing sped up 4 times, so it plays in 22 s. The black rectangle is the tablet, and the arm is the white machine at the top right.</figcaption>
+</figure>
+
 [Part 3](/robotics/so101-3-choosing-the-goal/) groups my controllers into six families. This part uses four of their names. This is what each name means.
 
 | Name | Family | What it sends to the servo as the goal | What it needs |

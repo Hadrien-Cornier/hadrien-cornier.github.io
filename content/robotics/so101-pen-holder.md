@@ -15,6 +15,14 @@ I want to make my SO-101 arm follow a path more accurately. For that, I need a w
 
 Today the pen is strapped into the gripper with tape. The gripper is taped shut, and its motor is off. It draws, but it raises a problem: the drawing shows the error of the arm plus the error of the strap. When the paper pulls on the tip, the pen moves in the strap. And I do not know exactly where the tip is. My best fit puts it about 110 mm from the gripper, with a 3.0 mm residual. That is larger than the error I want to see.
 
+<figure class="article-figure">
+<video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-drawing-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm drawing a kitten with a pen on the black Wacom tablet. The arm sweeps the pen along the outline of the drawing.">
+<source src="/assets/robotics/so101-series/arm-drawing-overhead.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/arm-drawing-overhead.mp4">Watch the video</a>
+</video>
+<figcaption>The real arm drawing a kitten on the Wacom tablet. Overhead camera, 11 Oct 2026. This is 88 s of drawing sped up 4 times, so it plays in 22 s. The black rectangle is the tablet, and the arm is the white machine at the top right.</figcaption>
+</figure>
+
 So the question of this article is simple: **how do I hold a pen on the SO-101 so that the ink shows the arm's error, and not the holder's?**
 
 ## The answer: a sleeve on the stock finger
