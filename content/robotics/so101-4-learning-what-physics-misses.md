@@ -9,6 +9,14 @@ part: 4
 
 [Part 3](/robotics/so101-3-choosing-the-goal/) wrote every controller I built as one formula for the goal, and grouped them in six families. The first five families use a model that I wrote down or fitted. This part is about the sixth family, where the controller learns: from repeats of the same motion, from data with a neural network, and from both physics and a network together.
 
+<figure class="article-figure">
+<video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-drawing-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm drawing a kitten with a pen on the black Wacom tablet. The arm sweeps the pen along the outline of the drawing.">
+<source src="/assets/robotics/so101-series/arm-drawing-overhead.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/arm-drawing-overhead.mp4">Watch the video</a>
+</video>
+<figcaption>The real arm drawing a kitten on the Wacom tablet. Overhead camera, 11 Oct 2026. This is 88 s of drawing sped up 4 times, so it plays in 22 s. The black rectangle is the tablet, and the arm is the white machine at the top right.</figcaption>
+</figure>
+
 The question of the whole series was whether a controller can be more accurate than the classical ones. My answer at the end of this part: a network alone wasn't the way, but a network that only learns what the physics model misses is promising, and the research of 2026 goes the same way.
 
 This part uses these controller names. Each one sends a position goal to the servo at each tick.

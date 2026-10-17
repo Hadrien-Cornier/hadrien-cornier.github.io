@@ -9,6 +9,14 @@ part: 3
 
 [Part 1](/robotics/so101-1-target-and-goal/) ended with one equation for a joint of my arm, and one rule: the servo only makes torque from the gap between the goal and the joint, so every term of the equation needs a bit more gap. [Part 2](/robotics/so101-2-finer-than-the-sensor/) was about the reading the controller sees. This part is about the fixes.
 
+<figure class="article-figure">
+<video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-drawing-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm drawing a kitten with a pen on the black Wacom tablet. The arm sweeps the pen along the outline of the drawing.">
+<source src="/assets/robotics/so101-series/arm-drawing-overhead.mp4" type="video/mp4">
+<a href="/assets/robotics/so101-series/arm-drawing-overhead.mp4">Watch the video</a>
+</video>
+<figcaption>The real arm drawing a kitten on the Wacom tablet. Overhead camera, 11 Oct 2026. This is 88 s of drawing sped up 4 times, so it plays in 22 s. The black rectangle is the tablet, and the arm is the white machine at the top right.</figcaption>
+</figure>
+
 I built close to twenty controllers during this project, and each one has a short lab name. Taken one by one, they look like a long list of small variations. They become much simpler once you write them all as one formula for the goal: each controller is that formula with some terms switched on and the others set to zero. They fall into six families, and each family exists to solve one kind of problem from the equation of part 1.
 
 ## One formula for the goal
