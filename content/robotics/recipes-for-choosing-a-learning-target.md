@@ -1,6 +1,6 @@
 ---
 title: 'Recipes for choosing a learning target'
-description: 'Rules of thumb for a reinforcement learning target: freeze, take a second estimate, or take the minimum — and why the combinations table is one reading, not a law.'
+description: 'Rules of thumb for a reinforcement learning target: freeze, take a second estimate, or take the minimum, and why the combinations table is one reading, not a law.'
 date: '2026-10-17'
 draft: false
 layout: essay
@@ -15,8 +15,8 @@ A **target** is the reference value an update moves toward. Its scorer sits on t
 | `scored by` | Changes | Shares the selector's errors |
 |---|---|---|
 | `The live estimate` | every update | all of them |
-| `A frozen copy` | only at each refresh | often much — same learning history |
-| `Scored by a second estimate` | when it learns | fewer — separate updates |
+| `A frozen copy` | only at each refresh | often much (same learning history) |
+| `Scored by a second estimate` | when it learns | fewer (separate updates) |
 | `The smaller of live and second` | when either learns | fewer, and lowered by construction |
 
 A frozen copy addresses change over time. A second estimate addresses shared errors. Neither guarantees accuracy.
@@ -37,7 +37,7 @@ If the learner repeatedly trusts actions because of over-estimates, a frozen cop
 | `A frozen copy` | 13 | 8 |
 | `Scored by a second estimate` | 9 | 11 |
 
-Live selects Left by its error. Frozen scores that pick at 13 — the same error. Second scores it at 9.
+Live selects Left by its error. Frozen scores that pick at 13: the same error. Second scores it at 9.
 
 ### The minimum lowers the target
 
@@ -45,7 +45,7 @@ The smaller of live and second takes the lower number. It helps when over-estima
 
 ### The table is one reading, not a law
 
-The mechanism is general: a minimum lowers the target. The result is conditional: here the lower target gave the better policy, **159.1 ± 5.2** against **147.5 ± 22.0**. Three seeds do not establish a winner. One environment, one settings row, one seed set; elsewhere the best cell could be in the bottom row or the last column.
+The mechanism is general: a minimum lowers the target. The evidence is thin: scored by a frozen copy, the frozen chooser made **159.1 ± 5.2** against **147.5 ± 22.0** for the live chooser, and three seeds do not establish a winner. One environment, one settings row, one seed set; elsewhere the best cell could be in the bottom row or the last column.
 
 **A stable target can still be wrong; a less biased target can still produce unstable learning.** Each recipe chooses which error to accept.
 
