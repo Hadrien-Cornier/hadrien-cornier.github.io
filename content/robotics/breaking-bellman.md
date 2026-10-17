@@ -42,6 +42,8 @@ Replay slowed the explosion down. The frozen copy stopped it.
 
 All numbers come from the game's own engine and are logged in [the experiment log](https://github.com/Hadrien-Cornier/breaking-bellman/blob/main/EXPERIMENTS.md). They are simulations of toy worlds.
 
+For the trade-offs behind these settings, see [Observations and estimates in reinforcement learning](/robotics/what-information-can-a-reinforcement-learner-use/). It covers the weight of new data, return length, and the source of a continuation estimate.
+
 ## The dog that learned to sit
 
 The bonus level is inspired by [Huggy](https://huggingface.co/learn/deep-rl-course/unitbonus1/introduction), the dog from the Hugging Face Deep RL course. You train a 2D dog with PPO to fetch a stick. The reward is +1 for the stick, −0.01 per step so it hurries, and a small bonus of up to 0.05 per step for facing the stick, to help it learn to look first.
