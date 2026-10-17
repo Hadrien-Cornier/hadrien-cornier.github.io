@@ -2,8 +2,7 @@
 title: "How do I get the XYZ position of my robot's tool tip?"
 description: 'A drawing tablet measures a pen in a plane. Cameras, marker tracking, and laser trackers extend the view into space, with different costs and sources of error.'
 date: '2026-10-15'
-updated: '2026-10-16'
-draft: true
+updated: '2026-10-17'
 series: 'From policy to action: the last mile of robotics control'
 part: 8
 ---
