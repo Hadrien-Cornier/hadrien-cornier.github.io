@@ -1,139 +1,156 @@
 ---
-title: 'The deadly triad: why three useful ideas fail together'
-description: 'Function approximation, bootstrapping and off-policy learning each solve a real problem. Together they can push a value estimate far outside the range of possible returns.'
+title: 'The deadly triad: three useful ideas that fail together'
+description: 'Function approximation, bootstrapping and off-policy learning each fix a real problem in reinforcement learning. Combined, they can make value estimates grow far beyond any possible reward.'
 date: '2026-10-17'
 draft: true
 layout: essay
 ---
 
-In Baird's counterexample, every reward is zero, so every true value is zero. A linear estimate with eight weights can represent that exactly. Semi-gradient off-policy TD(0), a one-step bootstrapped update, still sends the weights to infinity, for any positive step size ([Sutton and Barto, section 11.2](http://incompleteideas.net/book/RLbook2020.pdf)).
+A robot on a rail must keep a broom upright. It pushes the cart left or right, and it earns 1 point for each step the broom stays up. It starts with no knowledge. It must learn by trying.
 
-Sutton and Barto name the cause the **deadly triad**: function approximation, bootstrapping, and off-policy training. Each one solves a problem you have. This article asks what each one buys you, why they fail together, and what that says about epsilon exploration and the number of real rewards in a target.
+![The CartPole level of Breaking Bellman: a small robot on a rail holds a broom upright on a stage. The caption reads: Press Run, the robot learns to balance a broom.](/assets/robotics/the-deadly-triad/problem-cartpole.png "CartPole in Breaking Bellman, before training. The robot senses four numbers: cart position, cart speed, broom angle and broom speed. Simulation.")
 
-## What each element buys you
+This is a **reinforcement learning** problem. The learner acts, gets a reward, and must improve its choices. Many methods learn a **value**: how much total reward to expect from a situation if you act well afterward. With values, the choice is simple. Pick the action with the best value.
 
-- **Function approximation** estimates all values with one shared formula, such as a linear function or a network. It buys values for states you never visited, with memory that does not grow with the state count. Giving it up means tables, which fail on large problems. The book says this element "most clearly cannot be given up".
-- **Bootstrapping** builds the target from the next reward plus the current estimate of what follows. It buys learning before the episode ends, often faster. Giving it up means Monte Carlo methods, which wait for the end of the episode and often learn more slowly.
-- **Off-policy training** learns about one policy from data another policy produced. It buys exploring while you learn about the greedy policy, reusing old data, and learning many predictions from one stream of experience. Giving it up is possible for control, since Sarsa works on-policy: off-policy learning is "an appealing convenience but not a necessity" there. For parallel prediction it is "essential".
+This article is about three techniques that make value learning practical. Each one helps. Together they can break the learner. The pictures come from [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), a game I made where real learning code runs in your browser and fails in front of you. The game is one example. The three techniques appear in many large reinforcement learning systems.
 
-The book covers all three in [section 11.3](http://incompleteideas.net/book/RLbook2020.pdf). The trap is that each reason is real, so you reach for all three.
+## What makes the problem hard
+
+Four difficulties explain why the techniques exist.
+
+- **Rewards come late.** A push now decides whether the broom is still up 100 steps later. The learner must work out which earlier action earned a later reward.
+- **There are too many situations.** The broom world has four sensor numbers, and each can take any value in a range. You cannot list every situation and learn each one.
+- **Actions can be numbers.** The pendulum below has a motor. Its action is a torque, a continuous number, not a choice from a short list.
+- **Rewards are noisy.** Each slot machine pays a random amount around a hidden average. One payout tells you little.
+
+![The Pendulum level of Breaking Bellman: a weak motor must swing a weight up to the top. The caption reads: Press Run, a weak motor learns to swing the weight up.](/assets/robotics/the-deadly-triad/problem-pendulum.png "Pendulum swing-up in Breaking Bellman. The action is a motor torque. Simulation.")
+
+![The slot machine level of Breaking Bellman: ten machines and a small robot that asks which one pays best.](/assets/robotics/the-deadly-triad/problem-slots.png "Ten slot machines in Breaking Bellman. Each machine pays a hidden average plus noise. Simulation.")
+
+## Three techniques that help
+
+### 1. Function approximation: replace the table
+
+The simplest value learner keeps a **table**: one number for each situation and action. This works on a small grid. It fails when the sensors are real numbers.
+
+You can cut each broom sensor into 6 bins. That gives 6 × 6 × 6 × 6 = 1,296 cells. In 20,000 steps, each cell gets about 15 visits on average. A cell learns nothing from its neighbors, even when they describe almost the same situation.
+
+**Function approximation** replaces the table with a formula, for example a neural network. The formula estimates the value of any situation, including ones it never saw. It uses fixed memory. What it learns in one situation carries over to similar situations.
+
+In the game, a table scored 50 of 200 after 20,000 steps. A network with the stabilizers described below scored 143 of 200. Both are runs with 5 seeds.
+
+### 2. Bootstrapping: learn before the episode ends
+
+An **episode** is one attempt, from the start until the broom falls or time runs out. To learn the value of an action, you can wait for the episode to end and add up all the rewards. This is slow when episodes are long.
+
+**Bootstrapping** shortens the wait. The target for an update is the next reward plus the learner's own current estimate of what follows. The learner uses its guess as a stand-in for the future. It learns after each step.
+
+The cliff shows the benefit. In the game's cliff walking world, one reward plus a guess learned the best path (score −13). Waiting for the whole episode never learned it (score −200, 20 seeds). In CartPole the wait was cheap, because episodes are short: a table that waited scored 95.4 against 50.4 for a table that bootstrapped. So bootstrapping is not always better. It is a tool for long episodes.
+
+### 3. Off-policy learning: learn about the best action while acting differently
+
+A **policy** is a rule for choosing actions. The learner must try new actions to find good ones, so the policy that collects data is not the best policy. It acts at random some of the time, for example with probability ε (epsilon).
+
+**Off-policy** learning separates two things. One is the policy that collects the data. The other is the policy that the value describes. Q-learning, a common method, always scores the next state with its best action, even when the robot took a random action there. This lets you explore, reuse old experience from a memory, and learn from data that another system collected.
+
+Some methods also split a value network from a separate policy network. That is a different split, called actor-critic. This article is about the split between the data and the target.
+
+The cliff shows the benefit again. Q-learning found the best path (score −13). Sarsa, the version that scores the action it really took, ended with a worse greedy score while ε was on: −82 ± 47 (20 seeds).
 
 ## Why the three fail together
 
-The book's smallest example has two states. The first has estimated value $w$ and the second has $2w$, set by one parameter. The only transition goes from the first state to the second, with reward 0. The true values are zero.
+Each technique has a real reason, so you use all three. Then you get this loop in the broom world:
 
-<figure class="rf-figure" aria-labelledby="rf-loop-title">
-  <p class="rf-kicker">Section 11.2 of Sutton and Barto, with γ = 0.99</p>
-  <p class="rf-title" id="rf-loop-title">One repeated transition raises its own target</p>
-  <ol class="rf-flow">
-    <li><span class="rf-flow-name">1. Build the target</span><span class="rf-stage-work">Reward 0 plus 0.99 × 2<em>w</em>. The guess is made from <em>w</em>.</span></li>
-    <li><span class="rf-flow-name">2. Compare</span><span class="rf-stage-work">The estimate is <em>w</em>. The target is 1.98<em>w</em>. The update raises <em>w</em>.</span></li>
-    <li><span class="rf-flow-name">3. Repeat</span><span class="rf-stage-work">The new <em>w</em> raises the target again. The next error is larger.</span></li>
-  </ol>
-  <figcaption>Start at <em>w</em> = 10 with step size 0.1. After one update <em>w</em> is 10.98, after ten it is 25.5, and after one hundred it is about 115,000.</figcaption>
-</figure>
+1. The update moves the estimate for the current situation toward a target.
+2. The target contains the estimate for the next situation.
+3. The network shares weights, so raising one estimate also raises the estimate for the next situation. In CartPole, consecutive situations are almost the same.
+4. The target is now higher. The next update raises the estimate again.
 
-Each element is part of the loop. Removing any one breaks it.
-
-- **Without bootstrapping**, the target is the real return, 0. The estimate moves toward 0.
-- **Without function approximation**, the second state has its own value. Raising the first state's value does not change the target.
-- **Without off-policy training**, the system must also leave the $2w$ state, and that update reduces $w$ unless it leads to a state of even higher value. On-policy, "the promise of future reward must be kept". Off-policy, "a promise can be made and then, after taking an action that the target policy never would, forgotten and forgiven."
+The learner chases a target that moves with it. Reward is at most 1 per step and the discount is γ = 0.99. So no policy can earn more than 1 / (1 − 0.99) = 100. Nothing in the loop knows that bound.
 
 <details>
-<summary>The update equation</summary>
+<summary>A two-state example of the loop, with numbers</summary>
 
-The error on that transition is $\delta_t = (2\gamma - 1)\,w_t$. With importance ratio 1, the off-policy semi-gradient TD(0) update is
+[Sutton and Barto, section 11.2](http://incompleteideas.net/book/RLbook2020.pdf) give the smallest case. State 1 has estimated value $w$. State 2 has estimated value $2w$, because one parameter sets both. The only transition goes from state 1 to state 2, with reward 0. So the true values are 0.
 
-$$
-w_{t+1} = w_t + \alpha\,\delta_t = \bigl(1 + \alpha(2\gamma - 1)\bigr)\,w_t.
-$$
-
-The factor is 1.098 at $\gamma = 0.99$ and $\alpha = 0.1$. It is above 1 whenever $\gamma > 0.5$, for every positive $\alpha$. A smaller step size changes the speed, not the outcome.
+The target for state 1 is $0 + \gamma \cdot 2w = 1.98w$. The update with step size $\alpha$ changes $w$ by the factor $1 + \alpha(2\gamma - 1)$. With $\gamma = 0.99$ and $\alpha = 0.1$ the factor is 1.098. A starting $w$ of 10 becomes 10.98, then about 25.5 after 10 updates and about 115,000 after 100. The estimate grows even though every true value is 0.
 
 </details>
 
-## What the theory covers
+### What happens in the game
 
-The book states: "If any two elements of the deadly triad are present, but not all three, then instability can be avoided." That sentence has a setting. [Tsitsiklis and Van Roy (1997)](https://www.mit.edu/~jnt/Papers/J063-97-bvr-td.pdf) prove that on-policy TD with a linear approximator converges. The same paper gives an example where TD diverges with a nonlinear approximator. So "any two are safe" does not carry over to neural networks.
+Level **Values explode** takes the network and keeps the other two techniques. It is the plain combination: a network, one-step bootstrapping, and Q-learning with random moves. I ran it with 5 seeds for 20,000 steps.
 
-In practice the triad acts as a matter of degree. [van Hasselt and colleagues (2018)](https://arxiv.org/abs/1812.02648) trained DQN variants on Atari over 336 settings, 3 replications each. They call an estimate **soft-diverged** when it leaves the range any policy can earn, here [−100, 100]. One-step Q-learning soft-diverged in 94% of runs, and 10-step returns lowered that to 21%.
+![Three charts from Breaking Bellman. Score per test episode stays near 10 of 200. The predicted value rises to the 10,000 chart ceiling while the value earned stays near 0. The largest absolute Q value rises past one million on a log scale.](/assets/robotics/the-deadly-triad/naive-charts.png "Level Values explode, naive network, 5 seeds (101 to 505), 20,000 steps. Top: the score stays near 9 of 200. Middle: the predicted value rises to the chart ceiling of 10,000 while the value earned stays near 0. Bottom: the largest estimate, on a log scale, reaches 5 million, the largest over the 5 seeds. Simulation.")
 
-## A run of the game
+![The CartPole stage after training: the robot has fallen and the broom lies sideways. The caption reads: Fell after 0.2 s.](/assets/robotics/the-deadly-triad/naive-broom-falls.png "The same run, seed 1, greedy test: the broom falls after 0.2 seconds. Simulation.")
 
-[Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) is my browser game for these failures. I ran its own learner code on CartPole, level **Values explode**, 20,000 training steps, 5 seeds (runs A in the [source note](#source-note)). Reward is +1 per step and γ = 0.99, so no discounted value exceeds 100. The score is the greedy policy's undiscounted reward, out of 200.
+The estimates grew to millions, against a limit of 100, and they were still rising at the end of the run. The policy was poor: score 9 of 200.
 
-| Learner | Largest estimate (median) | Score |
-|---|---:|---:|
-| Network, 1-step, best-next-action target (all three elements) | 4.1 million | 9.4 ± 0.2 |
-| Table of cells, same words (no network) | 32.5 | 50.4 ± 10.6 |
-| Network, all real rewards (no bootstrapping, on-policy) | 25.8 | 33.9 ± 14.3 |
-| Network, Sarsa target (on-policy) | 1.0 million | 9.4 ± 0.2 |
-| Network, replay and frozen copy, DQN (all three elements) | 61.7 | 143.0 ± 33.7 |
+The standard repair holds the target still. The next run keeps the network and bootstrapping but changes two things. **Replay** trains on random old moves from a memory. A **frozen copy** of the network, refreshed every 250 updates, makes the target. The target no longer moves with each update.
 
-**Confirmed:** with all three elements, the network's estimates reach millions and the policy scores 9.4. **Confirmed:** replay with a frozen copy keeps the estimates near 62. **Contradicted:** removing the off-policy target did not remove the blow-up for this network. That agrees with the nonlinear caveat above and says nothing about the linear case, because the game has no linear approximator. The table reports the largest value seen during training. The runs do not show whether values would grow without bound.
+![Three charts from Breaking Bellman comparing two runs. The dashed run is the naive network. The solid run, with replay and a frozen copy, keeps the largest Q near 65 and reaches a score of about 150.](/assets/robotics/the-deadly-triad/naive-vs-dqn-charts.png "Level Values explode, 5 seeds, 20,000 steps. Dashed: the naive network. Solid: replay and a frozen copy (the method called DQN). The largest estimate stays near 65 and the score ends at 143 of 200. The score is noisy and falls after an early peak near 200. Simulation.")
 
-## Exploration is the usual source of the third element
+![The game's comparison panel: the new run scores 143 of 200 with largest Q 65.4, against the pinned naive run at 9 of 200 and 5 million. The sentence differs in three words.](/assets/robotics/the-deadly-triad/naive-vs-dqn-words.png "The game lists the three words that changed: learn from random old moves, and choose and score the next action with a frozen copy. Simulation.")
 
-Epsilon-greedy exploration takes a random action with probability ε. If you learn about the greedy policy while acting this way, you are off-policy. It costs most when actions cannot be undone. In [Cliff Walking, Example 6.6](http://incompleteideas.net/book/RLbook2020.pdf), Q-learning learns the optimal path but "occasionally" falls off the cliff "because of the ε-greedy action selection". [Moldovan and Abbeel (2012)](https://arxiv.org/abs/1205.4810) note that exploration methods with guarantees assume any state is reachable from any other, and that most physical systems do not satisfy this.
+## What the theory says, and what the game adds
 
-The game shows the cost on the cliff. Level **Falling while learning**, 10,000 steps, 20 seeds (runs B): Q-learning with ε = 0.1 fell 0.30 times per training episode in the second half of training, against 0.00 without ε. Sarsa fell 0.10 against 0.00. Both Q-learning variants ended at the optimal −13. The no-ε learner still explored, because untried actions start at 0 while tried ones look worse.
+[Sutton and Barto](http://incompleteideas.net/book/RLbook2020.pdf) name the three techniques the **deadly triad**. They write: "If any two elements of the deadly triad are present, but not all three, then instability can be avoided." That statement has a setting. [Tsitsiklis and Van Roy (1997)](https://www.mit.edu/~jnt/Papers/J063-97-bvr-td.pdf) prove that on-policy TD learning (bootstrapping) with a linear formula converges. The same paper gives an example where it fails with a nonlinear formula. So "any two are safe" does not carry over to neural networks.
 
-CartPole is mixed (runs A). With the table, ε raised the final score and narrowed the spread (50.4 ± 10.6 against 39.4 ± 24.9) but lowered the first-quarter score (27.9 against 38.0). With DQN, ε helped early (122.7 against 97.5) and hurt at the end (143.0 ± 33.7 against 166.5 ± 19.8).
+The game agrees. I removed the off-policy leg: the same network, still bootstrapping, but scoring the action it really took (Sarsa). Its estimates also grew to millions.
 
-**Reversibility as the reason is not tested.** The worlds differ in other ways: a CartPole fall ends the episode, while a cliff fall costs −100 and restarts. The failure where the cart chases the pole and runs off the rail does exist. In the final greedy episode, 4 of 5 DQN seeds ended at the rail with the pole inside its 12° limit. It happened equally with ε off (4 of 5), so these traces do not blame a missing ε. Whether ε teaches recovery is not tested.
+![The sentence panel of Breaking Bellman: a network, the move just made, one real reward and the action really taken next. The result reads: Does not work yet, score 9 of 200, largest Q 2M.](/assets/robotics/the-deadly-triad/on-policy-network.png "Level Values explode with one word changed: the target uses the action really taken. 5 seeds, 20,000 steps: score 9 of 200, largest estimate 2 million. Simulation.")
 
-## How many real rewards?
+The game's formula is a nonlinear network. I did not test a linear formula, so this does not contradict the proof for linear formulas.
 
-A target with $n$ real rewards, then a guess, sets how much an update bootstraps. $n = 1$ bootstraps the most, and all rewards to the end is Monte Carlo. The [previous article](/robotics/what-information-can-a-reinforcement-learner-use/) covers the exchange: more real rewards remove guess error but add sampled events, and one failure can lower the target of every earlier action in the window. On the cliff with 8 real rewards (seed 101, training steps 9 to 11), a plain step on a safe cell received a target of −100, because the eighth reward in its window was the fall. That is an illustration from the game's inspection tool, not a measurement.
+In practice the triad is a matter of degree. [van Hasselt and colleagues (2018)](https://arxiv.org/abs/1812.02648) trained DQN variants on Atari over 336 settings, 3 replications each. They call an estimate **soft-diverged** when it leaves the range any policy can earn, here −100 to 100. One-step Q-learning soft-diverged in 94% of runs. Ten-step returns lowered that to 21%.
 
-Final greedy scores by $n$:
+## Exploration and reversibility
 
-| Real rewards | Cliff, Q-learning table (runs B). Optimum −13 | CartPole, DQN learner (runs A). Maximum 200 |
-|---|---:|---:|
-| 1 | −13 ± 0 | 143.0 ± 33.7 |
-| 2 | −21.9 ± 14.0 | 169.2 ± 31.8 |
-| 4 | −87.7 ± 43.9 | 199.3 ± 1.4 |
-| 8 | −131.9 ± 30.7 | 189.5 ± 15.2 |
-| all | −200 ± 0 | 193.9 ± 8.3 |
+Random exploration is the usual source of off-policy data, and it has a cost. In cliff walking, a fall costs 100 and sends the robot back to the start. In [Cliff Walking, Example 6.6](http://incompleteideas.net/book/RLbook2020.pdf), Q-learning finds the best path but "occasionally" falls off the cliff "because of the ε-greedy action selection".
 
-**Contradicted:** the most real rewards is not best. The best $n$ is 1 on the cliff and 4 on CartPole, and with 5 seeds I cannot separate 4, 8 and all on CartPole. **Partly confirmed:** more real rewards help while the estimate is poor. In the first quarter of evaluations on CartPole, every $n$ above 1 scored 156 to 171 against 122.7. On the cliff, 2 and 4 beat 1 early (−134.2 and −148.9 against −207.8), 8 matched it (−207.6), and all rewards was far worse (−697.1).
+![The cliff walking level of Breaking Bellman replaying training: tan squares mark visited cells, two red minus 100 marks show falls, and the robot tumbles into the canyon.](/assets/robotics/the-deadly-triad/cliff-falls.png "Level Falling while learning, Q-learning with ε = 0.1, 20 seeds, 10,000 steps. Replay of run 1: red marks show falls. The autopsy reports 0.32 falls per episode in the second half of training. Simulation.")
 
-The axis also touches the triad: in the Atari study, longer returns lowered soft divergence. My DQN runs had a median largest estimate between 62 and 141 at every $n$, so they do not test that finding.
+In my batch of the same runs, falls happened only with ε on. Q-learning fell 0.30 times per episode against 0.00 without ε. Sarsa fell 0.10 against 0.00. [Moldovan and Abbeel (2012)](https://arxiv.org/abs/1205.4810) note that exploration with guarantees assumes you can get from any state back to any other, and that most physical systems do not allow this. **Whether ε teaches recovery is not tested here.** CartPole was mixed: with ε, a table scored higher at the end (50.4 against 39.4) and DQN scored lower (143.0 against 166.5).
 
-## More real rewards early, fewer later?
+## How many real rewards in a target?
 
-Start with long returns while the guess is poor, then shorten them as it improves. **This is not tested.** Every game run uses one fixed $n$. The cliff pattern fits the idea, since 2 and 4 led early and 1 won at the end. CartPole shows no such crossover in 20,000 steps.
+Bootstrapping is a dial. A target can use 1 real reward and then a guess, or 2, 4, 8, or all rewards to the end of the episode. All rewards is the Monte Carlo method. One reward is pure bootstrapping. The table lists the final score for each setting. Higher is better.
 
-The closest published work I found is [Meta-Gradient Reinforcement Learning](https://proceedings.neurips.cc/paper_files/paper/2018/file/2715518c875999308842e3455eda2fe3-Paper.pdf) (Xu, van Hasselt and Silver, NeurIPS 2018). It treats the return as a function of meta-parameters and adapts them online, by differentiating performance on later experience through the update. It does not learn $n$. The paper writes the $n$-step return with only the discount γ as meta-parameter, and the λ-return with γ and λ. Its Atari experiments (IMPALA, 57 games) adapted single values of γ and λ. Adapting γ gave the larger gain over a hand-tuned baseline. The paper also cites a hand-made schedule over γ: start myopic and raise the discount once learning works. That is a different knob from the number of rewards.
+| Real rewards | Cliff, table (20 seeds) | CartPole, DQN (5 seeds) |
+| --- | --- | --- |
+| 1 | −13 | 143.0 |
+| 2 | −21.9 | 169.2 |
+| 4 | −87.7 | 199.3 |
+| 8 | −131.9 | 189.5 |
+| all | −200 | 193.9 |
+
+The best setting depends on the world. On the cliff, 1 is best. On CartPole with DQN, 4 is best. With replay and a frozen copy, the largest estimate stayed below 150 at every setting (median per seed, 62 to 141). The Atari result above says more real rewards can lower the risk of runaway estimates. I did not test that in the game, because the stabilized runs did not run away.
+
+**Does it help to use more real rewards early and fewer later?** This is not tested. Every game run uses one fixed number. The closest published work I found is [Meta-Gradient Reinforcement Learning](https://proceedings.neurips.cc/paper_files/paper/2018/file/2715518c875999308842e3455eda2fe3-Paper.pdf) (Xu, van Hasselt and Silver, NeurIPS 2018). It adapts the discount γ and the mixing weight λ online. It does not learn the number of rewards. The paper also cites a hand-made schedule: start with a short-sighted discount and raise it once learning works.
+
+## What the game shows, and what it does not
+
+- **Confirmed:** a network, one-step bootstrapping and Q-learning with random moves led to estimates of millions in a world with a limit of 100. Replay and a frozen copy together prevented it.
+- **Confirmed:** a network with those stabilizers beat the table (143 against 50 of 200).
+- **Contradicted:** "the off-policy leg is required for the blow-up". The on-policy network also blew up.
+- **Contradicted:** "more real rewards are always better". The best number was 1 on the cliff and 4 on CartPole.
+- **Not tested:** a linear formula, reversibility as the cause of the cost of ε, and a schedule over the number of rewards.
+- **Limits:** 5 and 20 seeds, one game, one network design. Largest estimate means the largest value seen at any test point. It does not prove that growth never stops.
 
 <details id="source-note">
-<summary>Source note: settings, seeds and limits for the game runs</summary>
+<summary>Source note: settings, seeds and where the numbers come from</summary>
 
-All game numbers come from the game's own `RLA.run` code at commit [681cae3](https://github.com/Hadrien-Cornier/breaking-bellman/tree/681cae3820f05f8604d212c0ab048ebf0e017e73), the path the page uses to train. I ran them on October 17, 2026. Arms in a world share seeds. The run script and raw per-seed results are stored locally and are not published.
+The screenshots are real captures of the game page, built at commit [681cae3](https://github.com/Hadrien-Cornier/breaking-bellman/tree/681cae3820f05f8604d212c0ab048ebf0e017e73) and run in a browser on October 17, 2026. The page uses seeds 101, 202, and so on. Numbers in a caption are the page's own headline figures. The largest estimate there is the largest value over all seeds and test points.
 
-**Runs A.** CartPole, levels **Too many cells** and **Values explode**. 20,000 training steps. Seeds 101, 202, 303, 404, 505. ε falls from 1.0 to 0.05 over 5,000 steps, except in "no ε" arms. The network has two hidden layers of 32 units and Adam at 0.001. DQN adds replay of 10,000 moves and a frozen copy refreshed every 250 updates.
+Numbers outside a caption come from the game's own `RLA.run` code at the same commit, the code path the page trains with. Arms in a world share seeds. The run script and raw results are stored locally and are not published.
 
-**Runs B.** Cliff, a 4 by 12 grid, levels **Falling while learning** and **The cliff edge**. A fall costs −100 and returns to the start. 10,000 training steps. 20 seeds (101, 202, up to 2020). ε = 0.1 and table learning rate 0.5.
+**CartPole runs.** Levels **Too many cells** and **Values explode**. 20,000 steps, seeds 101 to 505. ε falls from 1.0 to 0.05 over 5,000 steps. The network has two hidden layers of 32 units and Adam at 0.001. DQN adds a memory of 10,000 moves and a frozen copy refreshed every 250 updates. In the script batch, the median of the per-seed largest estimate was 4.1 million for the naive network and 61.7 for DQN. The page shows 5 million and 65.4, which are maxima over seeds and points, so the figures differ by design.
 
-**Scores.** The score is the greedy policy's undiscounted reward over its first 200 counted steps, averaged over 3 evaluation episodes and the last quarter of evaluation points. "Early" is the first quarter. ± is the sample standard deviation across seeds. "Largest estimate" is the largest absolute value at any evaluation. With 5 and 20 seeds, none of this is a general guarantee.
+**Cliff runs.** A 4 by 12 grid. A fall costs −100 and returns to the start. 10,000 steps, 20 seeds, ε = 0.1, table learning rate 0.5. The page shows 0.32 falls per episode for Q-learning in the second half of training. My batch measured 0.30. I did not resolve that gap.
 
-**Not shown.** The runs measure no linear approximation, no recovery behavior and no schedule over $n$. The game's own page quotes three fall rates that differ from mine: 0.32, 0.06 and 0.04, against my 0.30, 0.10 and 0.00 for Q-learning, Sarsa and Expected Sarsa. I did not resolve that difference.
+**Scores.** The score is the greedy policy's undiscounted reward over its first 200 counted steps, averaged over 3 test episodes and the last quarter of the test points. The ± value is the standard deviation across seeds.
+
+**Not shown.** The runs measure no linear approximation, no recovery behavior and no schedule over the number of rewards.
 
 </details>
-
-## What the game supports
-
-| Claim | Status |
-|---|---|
-| All three elements together push estimates far outside the possible range | Confirmed (runs A) |
-| Removing any one of the three is safe | Contradicted for the on-policy network (runs A). Not tested for linear approximation |
-| Function approximation helps alone | Contradicted at this budget (runs A). With replay and a frozen copy the network scored 143.0, against 50.4 for the plain table |
-| Bootstrapping helps alone | Confirmed on the cliff: −13 against −200 for all rewards (runs B). Not on CartPole: a table with all rewards scored 95.4 against 50.4 (runs A) |
-| The off-policy target helps alone | Partly confirmed (runs B): −13 against −82.1 ± 47.3 for Sarsa, at a cost in falls |
-| ε helps on CartPole | Mixed (runs A) |
-| ε costs falls on the cliff | Confirmed (runs B) |
-| Reversibility explains where ε helps | Not tested |
-| Without ε the cart runs off the rail, and ε fixes it | Rail endings seen with and without ε (runs A). Recovery not tested |
-| The most real rewards is best | Contradicted (runs A, B) |
-| More real rewards help while estimates are poor | Partly confirmed (runs A, B) |
-| More real rewards early and fewer later | Not tested |
