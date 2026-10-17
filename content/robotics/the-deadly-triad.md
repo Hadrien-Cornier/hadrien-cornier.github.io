@@ -81,7 +81,14 @@ An **episode** is one attempt, from the start until the broom falls or time runs
 
 **Meaning A: learning can start before the episode ends.** The Monte Carlo target needs every reward to the last step. So the learner cannot update until the episode ends. A bootstrapped target needs one reward and an estimate. So the learner updates at every step. This claim is about *when* learning starts. It does not say how many samples the learner needs.
 
-<div class="tri-anim" data-anim="timing"><p class="tri-fallback">Chart, measured. In the cliff world, with a table and seed 101, the one-reward learner had used 177 training rows before its first episode ended. The all-rewards learner had used 0, then used 200 at once. After 400 steps, both had used 400 rows. This chart needs JavaScript.</p></div>
+The table shows a measured run. The world is the cliff, the learner uses a table, and the seed is 101. The run lasts 400 steps.
+
+| Learner | Training rows used before episode 1 ended | Episode 1 ended at step |
+| --- | --- | --- |
+| 1 real reward, then an estimate | 177 | 178 |
+| All real rewards | 0 (then 200 at once) | 200 |
+
+After 400 steps, both learners had used 400 rows.
 
 **Meaning B: fewer samples to reach a score.** This claim is about **sample efficiency**: how many environment steps a learner needs to reach a given score. It has two parts that the game does not separate. One part is how many *samples* the learner collects. The other is how many *updates* it makes. The game makes one update for each step, so it cannot show what happens with more updates on the same data. Theory adds a third claim: bootstrapped targets have lower variance, but they add bias. The game does not measure variance.
 
@@ -92,7 +99,7 @@ An **episode** is one attempt, from the start until the broom falls or time runs
 | Bootstrapped targets have lower variance and add bias. | B: variance | Theory only. Not measured here. |
 | Bootstrapping needs fewer updates on the same fixed data. | B: updates | Not tested. The game makes one update for each step. |
 
-The measured steps use the first test point with a score above a threshold, median over seeds. Cliff walking, table, threshold −20, 20 seeds: 1 real reward needed 2,750 steps, 2 needed 1,750, 4 needed 1,750, 8 needed 3,625, and all rewards never reached it in 10,000 steps. CartPole, DQN, threshold 150, 5 seeds: 1 real reward needed 2,500 steps, and 2, 4, 8 and all rewards each needed 1,500. So "bootstrapping needs fewer samples" is not a rule. In CartPole, the pure one-step target was the slowest. On the cliff, a target with 2 or 4 real rewards was faster than one with 1. The [dial section](#how-many-real-rewards-in-a-target) shows the full curves.
+The measured steps use the first test point with a score above a threshold, median over seeds. Cliff walking, table, threshold −20, 20 seeds: 1 real reward needed 2,750 steps, 2 needed 1,750, 4 needed 1,750, 8 needed 3,625, and all rewards never reached it in 10,000 steps. CartPole, DQN, threshold 150, 5 seeds: 1 real reward needed 2,500 steps, and 2, 4, 8 and all rewards each needed 1,500. So "bootstrapping needs fewer samples" is not a rule. In CartPole, the pure one-step target was the slowest. On the cliff, a target with 2 or 4 real rewards was faster than one with 1. The [section on the number of real rewards](#how-many-real-rewards-in-a-target) lists the full results in tables.
 
 **Fixed-budget scores (measured performance, meaning B).** These scores compare performance after a fixed number of steps. They are not evidence about when updates start, and the game does not show why the results differ. On the cliff after 10,000 steps (20 seeds), a table with one real reward plus a guess scored −13, and a table that waited for the whole episode scored −200. In CartPole after 20,000 steps (5 seeds), a table that waited scored 95.4 against 50.4 for a table that bootstrapped. So bootstrapping did not always give the higher score.
 
@@ -125,23 +132,32 @@ The target for state 1 is $y = 0 + \gamma \cdot 2w$. The gradient of the estimat
 
 $$w \leftarrow w + \alpha\,(2\gamma w - w) = \bigl(1 + \alpha(2\gamma - 1)\bigr)\,w$$
 
-With $\gamma = 0.99$ and $\alpha = 0.1$ the factor is 1.098. A starting $w$ of 10 becomes 10.98, then about 25.5 after 10 updates and about 115,000 after 100. The estimate grows even though every true value is 0. Run it below. Switch the rule and see which leg you remove.
+With $\gamma = 0.99$ and $\alpha = 0.1$ the factor is 1.098. A starting $w$ of 10 becomes 10.98, then about 25.5 after 10 updates and about 115,000 after 100. The estimate grows even though every true value is 0. The next table lists $w$ after $k$ updates. This is a computation from the rule, not game data.
 
-<div class="tri-anim" data-anim="two-state"><p class="tri-fallback">Conceptual example, not game data. With one shared weight and off-policy updates, the value of state 1 starts at 10 and grows by a factor of 1.098 at every update, to about 115,000 after 100 updates. The true value is 0. This animation needs JavaScript.</p></div>
+| Updates $k$ | 0 | 1 | 10 | 100 |
+| --- | --- | --- | --- | --- |
+| Estimate $w$ (true value 0) | 10 | 10.98 | 25.5 | about 115,000 |
 
 ### What happens in the game
 
 Level **Values explode** takes the network and keeps the other two techniques. It is the plain combination: a network, one-step bootstrapping, and Q-learning with random moves. I ran it with 5 seeds for 20,000 steps, then ran DQN on the same seeds. DQN keeps the network and bootstrapping but changes two things. **Replay** trains on random old moves from a memory. A **frozen copy** of the network, refreshed every 250 updates, makes the target ($\bar\theta$ in the rule). The target no longer moves with each update.
 
-The next animation replays the logged values of both runs. The score is the greedy test score of 200. The loss is the mean squared TD error of the latest training batch.
+The score is the greedy test score of 200. After 20,000 steps the naive network scored about 9 of 200, and its largest estimate was in the millions. DQN scored 143 of 200, and its largest estimate was near 65.
 
-<div class="tri-anim" data-anim="run"><p class="tri-fallback">Measured game runs, 5 seeds, 20,000 steps. The naive network ends with a score of about 9 of 200 and a largest estimate of millions. DQN ends with a score of 143 of 200 and a largest estimate near 65. This animation needs JavaScript.</p></div>
+The naive estimates grew to millions, against a limit of 100, and they were still rising at the end of the run. I call this a blow-up: the estimate left the range any policy can earn, and it kept growing until the run ended. The game logs do not show whether it grows forever.
 
-The naive estimates grew to millions, against a limit of 100, and they were still rising at the end of the run. The policy was poor: score 9 of 200. I call this a blow-up: the estimate left the range any policy can earn, and it kept growing until the run ended. The game logs do not show whether it grows forever.
+### Watch the robot
 
-The next animation replays a recorded greedy test episode of each kind of run. The naive network drops the broom after 9 steps. Choose a DQN run to see a long balance. The DQN score is noisy: one run held the broom for the whole test, another run ended after 118 steps when the cart reached the rail end.
+The clips below are real recorded episodes of these runs. Each clip is drawn by the game's own scene code, with the game's own sprites, from the logged sensor values. Each clip is a greedy test after 20,000 training steps, with no random moves.
 
-<div class="tri-anim" data-anim="episode"><p class="tri-fallback">Measured test episodes of the game. The naive network lets the broom fall after 9 steps (0.18 s). A DQN run balances for 600 steps. This animation needs JavaScript.</p></div>
+<div class="tri-clips">
+<figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>Naive network, seed 101: the broom falls after 9 steps</b>Network, one-step bootstrapping, Q-learning. The broom falls after 9 steps, 0.18 s. All 5 seeds fell after 8 to 10 steps. Shown at 1/4 speed so that you can see it. Score: 9 of 200.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-101" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-dqn-101-desktop.mp4"></video><figcaption><b>DQN, seed 101: it balances, then the cart hits the rail end</b>The same network with replay and a frozen copy. The broom stays up for 118 steps, 2.4 s. Then the cart reaches the end of the rail and the test ends. Real time. Score: 118 of 200. Seeds 303, 404 and 505 ended the same way after 99, 104 and 272 steps.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-dqn-202-desktop.mp4"></video><figcaption><b>DQN, seed 202: the only seed that held the broom for the full test</b>The broom stays up for all 600 steps, 12 s, and the cart stays on the rail. Real time. Score: 200 of 200. I chose seeds 101 and 202 because they are the two kinds of DQN result in the 5 seeds.</figcaption></figure>
+</div>
+
+The clips show the size of the difference, not a clean split. The naive network failed at once in every seed: 8 to 10 steps. DQN lasted 99 to 600 steps, but four of its five tests still ended because the cart ran out of rail. So the stabilizers helped, and the DQN policy was still not good.
+
 
 ![The game's comparison panel: the new run scores 143 of 200 with largest Q 65.4, against the pinned naive run at 9 of 200 and 5 million. The sentence differs in three words.](/assets/robotics/the-deadly-triad/naive-vs-dqn-words.png "The game lists the three words that changed: learn from random old moves, and choose and score the next action with a frozen copy. Simulation.")
 
@@ -172,9 +188,26 @@ In practice the triad is a matter of degree. [van Hasselt and colleagues (2018)]
 
 Random exploration is the usual source of off-policy data, and it has a cost. In cliff walking, a fall costs 100 and sends the robot back to the start. In [Cliff Walking, Example 6.6](http://incompleteideas.net/book/RLbook2020.pdf), Q-learning finds the best path but "occasionally" falls off the cliff "because of the ε-greedy action selection".
 
-![The cliff walking level of Breaking Bellman replaying training: tan squares mark visited cells, two red minus 100 marks show falls, and the robot tumbles into the canyon.](/assets/robotics/the-deadly-triad/cliff-falls.png "Level Falling while learning, Q-learning with ε = 0.1, 20 seeds, 10,000 steps. Replay of run 1: red marks show falls. The autopsy reports 0.32 falls per episode in the second half of training. Simulation.")
+The clips below are real recorded episodes of cliff walking, drawn by the game's own scene code. Each clip replays three episodes of one run, in this order. First is training episode 1. Then comes the last training episode. Then comes the greedy test, with no random moves. Both runs use a table, ε = 0.1 and 10,000 steps.
 
-In my batch of the same runs, falls happened only with ε on. Q-learning fell 0.30 times per episode against 0.00 without ε. Sarsa fell 0.10 against 0.00. [Moldovan and Abbeel (2012)](https://arxiv.org/abs/1205.4810) note that exploration with guarantees assumes you can get from any state back to any other, and that most physical systems do not allow this. **Whether ε teaches recovery is not tested here.** CartPole was mixed: with ε, a table scored higher at the end (50.4 against 39.4) and DQN scored lower (143.0 against 166.5).
+<div class="tri-clips">
+<figure class="tri-clip"><video class="tri-video" data-clip="cliff-q-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cliff-q-202-desktop.mp4"></video><figcaption><b>Q-learning, seed 202: falls while learning, a safe test</b>Episode 1: 185 steps, 7 falls, return −878. Episode 485, the last: 20 steps, 1 fall, return −119. Greedy test: 13 steps, no falls, return −13, the best path.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cliff-sarsa-101" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cliff-sarsa-101-desktop.mp4"></video><figcaption><b>Sarsa, seed 101: a longer, safer path</b>Episode 1: 200 steps (the step limit), 9 falls, return −1,091. Episode 355, the last: 25 steps, no fall, return −25. Greedy test: 17 steps, no falls, return −17.</figcaption></figure>
+</div>
+
+I chose episode 1 and the last episode of each run. I chose seeds 202 and 101 as clear examples. The table after the clips covers all 20 seeds.
+
+The falls in these clips come from exploration. They are not numerical divergence. The next table gives the measured evidence, over 20 seeds with 10,000 training steps.
+
+| Measure | Q-learning, ε = 0.1 | Q-learning, no ε | Sarsa, ε = 0.1 |
+| --- | --- | --- | --- |
+| Falls per episode, second half of training | 0.318 | 0.000 | 0.061 |
+| Lowest and highest table value | −112.1 and 0.0 | −52.1 and 0.0 | −153.2 and 0.0 |
+| Greedy tests that reach the goal | 20 of 20, in 13 steps | 20 of 20, in 13 steps | 12 of 20, in 17 or 19 steps |
+
+The lowest value, −112.1, is about one fall plus a few steps. Divergence would send values far below that, as in CartPole, where they reached millions. Here none did. Sarsa's 8 other tests did not fall. In each one, the greedy policy stopped making progress and stayed within 1 to 14 cells until the 200-step limit. I did not examine why.
+
+[Moldovan and Abbeel (2012)](https://arxiv.org/abs/1205.4810) note that exploration with guarantees assumes you can get from any state back to any other, and that most physical systems do not allow this. In the cliff, a fall is reversible: the robot goes back to the start, and it pays 100. On a real robot, the same fall could break it. **Whether ε teaches recovery is not tested here.** CartPole was mixed: with ε, a table scored higher at the end (50.4 against 39.4) and DQN scored lower (143.0 against 166.5).
 
 ## How many real rewards in a target?
 
@@ -182,11 +215,17 @@ Bootstrapping is a dial. In the target $y$, the number $n$ is how many real rewa
 
 $$y = r_t + \gamma r_{t+1} + \dots + \gamma^{n-1} r_{t+n-1} + \gamma^{n}\,\max_{a'} Q_{\bar\theta}(s_{t+n}, a')$$
 
-A target can use $n = 1$, 2, 4 or 8 real rewards and then a guess, or all rewards to the end of the episode. All rewards is the Monte Carlo method. One reward is pure bootstrapping. The animation draws the mean test score against environment steps (meaning B above), and lists the steps that each setting needed to pass a threshold.
+A target can use $n = 1$, 2, 4 or 8 real rewards and then a guess, or all rewards to the end of the episode. All rewards is the Monte Carlo method. One reward is pure bootstrapping. The next table lists the environment steps that each setting needed to pass a score threshold (meaning B above).
 
-<div class="tri-anim" data-anim="dial"><p class="tri-fallback">Measured game runs. Cliff, table, 20 seeds: the first test point at or above −20 came at a median of 2,750 steps for 1 real reward, 1,750 for 2, 1,750 for 4, 3,625 for 8, and never for all rewards. CartPole, DQN, 5 seeds, threshold 150: 2,500 steps for 1 real reward, and 1,500 for each other setting. This animation needs JavaScript.</p></div>
+| Real rewards | Cliff, table, threshold −20 (20 seeds): median steps | CartPole, DQN, threshold 150 (5 seeds): median steps |
+| --- | --- | --- |
+| 1 | 2,750 | 2,500 |
+| 2 | 1,750 | 1,500 |
+| 4 | 1,750 | 1,500 |
+| 8 | 3,625 | 1,500 |
+| all | never in 10,000 | 1,500 |
 
-The table lists the final score for each setting. Higher is better.
+The next table lists the final score for each setting. Higher is better.
 
 | Real rewards | Cliff, table (20 seeds) | CartPole, DQN (5 seeds) |
 | --- | --- | --- |
@@ -208,8 +247,10 @@ The best setting depends on the world. On the cliff, 1 is best. On CartPole with
 - **Mixed (meaning B, samples):** bootstrapping did not always need fewer steps. A target with 2 or 4 real rewards beat 1 on the cliff, and 1 was the slowest on CartPole.
 - **Contradicted:** "the off-policy leg is required for the blow-up". The on-policy network also blew up.
 - **Contradicted:** "more real rewards are always better". The best number was 1 on the cliff and 4 on CartPole.
-- **Not tested:** a linear formula, reversibility as the cause of the cost of ε, a schedule over the number of rewards, the variance of the targets, and the number of updates needed on fixed data.
-- **Limits:** 5 and 20 seeds, one game, one network design. Largest estimate means the largest value at a test point. It does not prove that growth never stops. The two-state animation is a conceptual computation, not game data.
+- **Not tested:** a linear formula, whether ε teaches recovery, a schedule over the number of rewards, the variance of the targets, and the number of updates needed on fixed data.
+- **Confirmed:** in cliff walking, the falls come from exploration and not from divergence. With ε the second-half falls were 0.318 per episode for Q-learning, and 0.000 without ε. The table values stayed between −112.1 and 0.0.
+- **Contradicted:** "a fall in a clip means the values blew up". The cliff tables stayed in range. The blow-up appeared only in the CartPole network.
+- **Limits:** 5 and 20 seeds, one game, one network design. Largest estimate means the largest value at a test point. It does not prove that growth never stops. The 5 clips are single seeds that I selected, so they show examples and not averages. The two-state table is a computation, not game data.
 
 <details id="source-note">
 <summary>Source note: settings, seeds and where the numbers come from</summary>
@@ -220,19 +261,20 @@ Numbers outside a caption come from the game's own `RLA.run` code at the same co
 
 **CartPole runs.** Levels **Too many cells** and **Values explode**. 20,000 steps, seeds 101 to 505. ε falls from 1.0 to 0.05 over 5,000 steps. The network has two hidden layers of 32 units and Adam at 0.001. DQN adds a memory of 10,000 moves and a frozen copy refreshed every 250 updates. In the script batch, the median of the per-seed largest estimate was 4.1 million for the naive network and 61.7 for DQN. The page shows 5 million and 65.4, which are maxima over seeds and points, so the figures differ by design.
 
-**Cliff runs.** A 4 by 12 grid. A fall costs −100 and returns to the start. 10,000 steps, 20 seeds, ε = 0.1, table learning rate 0.5. The page shows 0.32 falls per episode for Q-learning in the second half of training. My batch measured 0.30. I did not resolve that gap.
+**Cliff runs.** A 4 by 12 grid. A fall costs −100 and returns to the start. 10,000 steps, 20 seeds, ε = 0.1, table learning rate 0.5. The page shows 0.32 falls per episode for Q-learning in the second half of training. I recomputed the figure from the raw results as 0.318, with the second half counted in training steps, which matches the page.
 
 **Scores.** The score is the greedy policy's undiscounted reward over its first 200 counted steps, averaged over 3 test episodes and the last quarter of the test points. The ± value is the standard deviation across seeds.
 
-**Animations.** The two-state animation is computed in your browser from the rules in the text. It is conceptual. The other animations replay measured data stored in `triad-data.js`, built from the same raw results: loss, score and largest estimate at the logged points (every 500 steps), the median over 5 seeds, and recorded greedy test episodes (seeds 101 and 202 for the network, seed 303 for the table). Episodes play at 0.02 s per step, slowed when they are short.
+**Robot clips.** Each clip is a real recorded episode from the runs above. The clip is drawn by the game's own `web/scenes.js` at the same commit, unmodified, with the game's sprites and fonts, in a real browser. The scene code gets the logged data: the sensor values of the CartPole test, and the training episodes, the test path and the greedy arrows of the cliff run. I only replaced the clock, so that the scene runs at a fixed 30 frames per second, and I encoded the frames with ffmpeg (H.264). The naive CartPole clip plays at 1/4 speed, because the real episode lasts 0.18 s. All other clips play in real time. The cliff clips use seeds 202 (Q-learning) and 101 (Sarsa), with the first and the last recorded training episode of each run. The game stores ten training episodes per run, spread over the run, and the clips show the first and the last of those ten. CartPole clips: naive seed 101, DQN seeds 101 and 202. Desktop and phone clips differ only in canvas size.
+
+**Tables.** The tables for the two-state example, the steps to a threshold and the cliff falls are static. The two-state values come from the rule in the text. The other tables come from the raw results.
 
 **Timing run.** The cliff world, a table, seed 101 and the first 400 steps, run with the game's `RLA.session` code. I counted the training rows that the learner used, not the update calls, because one call can use many rows. The one-reward learner finished episode 1 at step 178 and episode 2 at step 378. The all-rewards learner finished at steps 200 and 400.
 
-**Steps to the threshold.** The first test point with a mean score at or above the threshold (−20 on the cliff, 150 on CartPole), per seed. The animation shows the median over the seeds that reached it. Test points come every 250 steps on the cliff and every 500 steps on CartPole. The game makes one update for each environment step, so the steps and the updates are the same here.
+**Steps to the threshold.** The first test point with a mean score at or above the threshold (−20 on the cliff, 150 on CartPole), per seed. The table shows the median over the seeds that reached it. Test points come every 250 steps on the cliff and every 500 steps on CartPole. The game makes one update for each environment step, so the steps and the updates are the same here.
 
 **Not shown.** The runs measure no linear approximation, no recovery behavior, no schedule over the number of rewards, no variance of the targets and no updates on fixed data.
 
 </details>
 
-<script src="/assets/robotics/the-deadly-triad/triad-data.js" defer></script>
-<script src="/assets/robotics/the-deadly-triad/triad-animations.js" defer></script>
+<script src="/assets/robotics/the-deadly-triad/triad-videos.js" defer></script>
