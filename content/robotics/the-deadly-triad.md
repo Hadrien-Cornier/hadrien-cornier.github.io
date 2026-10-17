@@ -1,75 +1,131 @@
 ---
-title: 'The deadly triad: three useful ideas that fail together'
-description: 'Function approximation, bootstrapping and off-policy learning each fix a real problem in reinforcement learning. Combined, they can make value estimates grow far beyond any possible reward.'
+title: 'Why bootstrapping exists, and what it costs'
+description: 'Why reinforcement learning learns from its own estimates, how that carries a reward from the end of a task back to the start, and why the same trick sits inside the deadly triad.'
 date: '2026-10-17'
 draft: true
 layout: essay
 ---
 
-A small robot learned to balance a broom, using three standard ideas from reinforcement learning. Each idea is sensible. Put together, they produced this.
+A robot learning to fold a shirt hears only at the end whether it worked. Which of its two hundred movements deserves the credit? Below, two robots on a cliff walk learn in different ways: one guesses the future as it goes, and the other waits for each walk to end. The clips only illustrate; the rest explains what the guess is for.
 
 <div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>All three ideas together: the broom falls almost at once</b>The robot after a full round of training. The real fall takes less than a fifth of a second, so the clip plays at quarter speed.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cliff-q-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cliff-q-202-desktop.mp4"></video><figcaption><b>A robot that guesses the future: it learns the path along the cliff</b>The first walk (several falls), a late walk, then the final test with no random moves. The arrows show the robot's favorite move in each cell. Every step costs 1 and a fall costs 100. Simulation, real recorded run.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cliff-mc-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cliff-mc-202-desktop.mp4"></video><figcaption><b>A robot that waits for the end of each walk: after the same practice, it has not learned the path</b>The same world and the same number of steps. The first walk, a late walk, then the final test, sped up: the robot stays at the start and the walk ends at the step limit. Simulation, real recorded run.</figcaption></figure>
 </div>
 
-The robot rides a cart on a rail. It pushes the cart left or right, and it earns a point for every moment the broom stays up. That failure is the subject of this article. The three ideas are called function approximation, bootstrapping and off-policy learning, and together they are known as the **deadly triad**. Each one solves a problem that the one before it left open, so the easiest way to understand them is to meet the problems in order.
+Both robots practiced for the same 10,000 steps. The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), a small game I made. They show the two styles and do not explain why one did better.
 
-The pictures come from [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), a small game I made in which real learning code runs in your browser and fails in front of you. Every level of the game is a designed counterexample: a tiny world built to break one method and so to show why the next method exists. Before I use a level, I say what the robot must do there and what the level was built to show.
+## The problem: credit that arrives late
 
-## The first problem: a learner that stops trying
+The robot wants a **value** $V(s)$ for every situation $s$ it can be in:
 
-Start with the simplest world there is. A robot faces ten slot machines. Each pays a random amount around its own hidden average, and the robot has a thousand pulls to find the best machine. Nothing else happens in this world: no position, no future, only the question of which lever to pull.
+$$V(s) = \mathbb{E}\bigl[\, r_t + \gamma\, r_{t+1} + \gamma^2\, r_{t+2} + \cdots \,\big|\, s_t = s \,\bigr]$$
 
-![The slot machine level of Breaking Bellman: ten machines and a small robot that asks which one pays best.](/assets/robotics/the-deadly-triad/problem-slots.png "The first level of Breaking Bellman: ten slot machines. Each machine pays a hidden average plus noise. Simulation.")
+In words: the reward you expect to collect from now on, with later rewards counted a little less. Here $r_t$ is the reward at step $t$, $\gamma$ (gamma) is a number just below 1 that does the discounting, and $\mathbb{E}$ means the average over everything that could happen. In the shirt task, every one of the two hundred values has to come from one yes or no at the end.
 
-The robot keeps an estimate of each machine's average payout and always pulls the machine with the best estimate. After each pull it nudges that machine's estimate toward the payout it just saw:
+## First answer: wait for the end
 
-$$Q(a) \leftarrow Q(a) + \alpha\,\bigl(r - Q(a)\bigr)$$
+The direct method is to wait. Finish the fold, then give every situation you visited the real **return**, the discounted sum of the rewards that followed it:
 
-Here $Q(a)$ is the estimate for machine $a$, $r$ is the payout just received, and $\alpha$ (alpha) is a small step size that sets how far one payout moves the estimate. In words: move the estimate a little toward what just happened.
+$$G_t = r_t + \gamma\, r_{t+1} + \cdots + \gamma^{T-t-1}\, r_{T-1}$$
 
-This learner is easy to fool. The first machine that pays better than the starting guess becomes its favorite, and because only the pulled machine gets updated, nothing ever tells the robot that another machine would have paid more. In the game, the robot ends up on the best machine in only about one run out of three.
+Then move each estimate a small step toward its own return:
 
-The remedy is to explore. One pull in ten, the robot picks a machine at random, whatever its estimates say. Keep this remedy in mind, because it has a price. The robot now acts differently from how it believes it should act. That gap comes back as the third idea.
+$$V(s_t) \leftarrow V(s_t) + \alpha\,\bigl(G_t - V(s_t)\bigr)$$
 
-## The second problem: rewards that arrive late
+In words: move your estimate a little toward what actually happened afterward. Here $T$ is the step where the fold ends and $\alpha$ (alpha) is the step size. This is called **Monte Carlo**. It never uses a guess, so its target is the true return. It has two costs. You learn nothing until the end, and a task that never ends leaves nothing to wait for. And one return is a noisy sample: luck at step 150 is credited to step 3, and only an average over many folds washes it out.
 
-Slot machines pay at once. Most tasks do not. The second level puts the robot at the left end of a grid and the goal at the right end, with a cliff along the bottom row between them. Every step costs one point. A step off the edge costs a hundred and sends the robot back to the start. The level differs from the casino in one respect on purpose: the consequence of a move may show up many moves later, so the robot has to work out which of its steps deserve the credit.
+## Second answer: use your own guess
 
-The obvious strategy is to wait. The robot finishes a walk, adds up every reward it received afterward, and credits that total to each step along the way:
+Bootstrapping removes the wait. After one step the robot knows one real reward, $r_t$, and the situation it has reached, $s_{t+1}$. It already has an estimate for that situation. So it replaces everything after the next step with its current estimate:
 
-$$y = r_t + \gamma r_{t+1} + \dots + \gamma^{T-t} r_T$$
+$$V(s_t) \leftarrow V(s_t) + \alpha\,\bigl(\underbrace{r_t + \gamma\, V(s_{t+1})}_{\text{target}} - V(s_t)\bigr)$$
 
-Here $t$ is the current step, $T$ is the last step of the walk, $r_t$ is the reward at step $t$, and $\gamma$ (gamma) is a discount just below 1, which makes near rewards count a little more than far ones. The number $y$ is the **target**: the value that the estimate should move toward. In words: the value of a step is everything that actually came after it.
+In words: the target is what I just earned, plus my own current guess of everything that follows. The robot can update after every step. It learns a guess from a guess, like lifting itself by its own bootstraps.
 
-This target is honest, and on the cliff it is almost useless. A robot that wanders at random almost never reaches a goal eleven squares away before time runs out. Every walk ends with the same bad total, and that total says nothing about which steps were the bad ones. In the game, the waiting learner never found a path to the goal.
+## The made-up reward
 
-The fix is **bootstrapping**: stop waiting for the future and guess it. After a single step, the robot takes the one reward it actually saw and adds its own current estimate of what comes next:
+The gap inside that update is called the **TD error** (temporal difference error):
 
-$$y = r + \gamma \max_{a'} Q(s', a')$$
+$$\delta_t = r_t + \gamma\, V(s_{t+1}) - V(s_t)$$
 
-Then it moves its estimate toward that target:
+In words: the real reward, plus how much better the next situation looks than the current one. Read it as a reward the robot makes up for itself on every step. On a step with zero real reward, $\delta_t$ is positive when the discounted estimate of the next situation is higher than the estimate of the current one. Once the estimates carry some knowledge of the reward at the end, that single reward can show up as a signal on earlier movements. On the first walk, with every estimate at zero, only the last step has one. If the estimates did not change during a walk, the real return minus the current estimate would equal the sum of the made-up rewards along the rest of the walk: $G_t - V(s_t) = \sum_k \gamma^{k-t}\,\delta_k$.
 
-$$Q(s,a) \leftarrow Q(s,a) + \alpha\,\bigl(y - Q(s,a)\bigr)$$
+The made-up reward is not the task's reward. It is built from the current estimate, so it changes whenever the estimate does. It resembles reward shaping: Ng, Harada and Russell (1999) showed that adding $\gamma\Phi(s') - \Phi(s)$ to the reward, for a fixed $\Phi$, leaves the best behavior unchanged. The TD error has this form when $\Phi = V$, but $V$ moves during learning, so the guarantee does not carry over.
 
-Here $s$ is the situation the robot was in, $a$ is the move it made, $s'$ is the situation it reached, and $\max_{a'}$ picks the best next move $a'$ according to the robot's current estimates. The bracket $y - Q(s,a)$ is the surprise: how far the target is from the estimate. In words: the value of a move is the reward it brings plus the value of the best place it leads to. Now the robot learns from every step, and the news of the goal travels backward one square at a time. In the game, this learner found the shortest path along the edge in every run.
+## How the credit trickles back
 
-People often say that bootstrapping "trains faster", and that sentence hides two different claims. The first is about timing: learning can begin before the walk is over. That is clearly true, and the game measured it. By the end of its first walk, the guessing learner had already learned from about 180 steps, and the waiting learner had learned from none. The second claim is about efficiency: that guessing reaches a given score in fewer steps. The game does not support that as a rule. Sometimes a mix of a few real rewards followed by a guess did best, and in one world the pure one-step guess was the slowest of all. Textbooks add that guessed targets vary less but carry a bias, because they trust an estimate that may be wrong. I did not measure variance, and I did not test how many updates a method needs on a fixed pile of data.
+Eight situations in a row, reward 1 on the last move, nothing else. Press the button to send the robot down again. A red cell means the learner knows a reward is coming from there.
 
-Bootstrapping has a price, and the name says what it is. The target now contains the robot's own estimate, so the robot is learning from itself. If the estimate is wrong, the target is wrong too.
+<div class="tri-corridor"><noscript>Without scripts: after walk 1, waiting credits all 8 states, three-step credits the last 3, one-step credits the last 1. After walk 3, three-step has all 8. One-step needs 8 walks.</noscript></div>
+
+Waiting credits every situation after the first walk. The one-guess learner credits only the last, the only place a real reward exists. On the next walk the second to last can borrow the guess of the last, and so on. The reward trickles back one link per walk. The made-up reward $\delta$ in the row under the first learner marks the front: it is positive where the next walk will teach something new.
+
+Between the two sits a dial: use $n$ real rewards, then a guess.
+
+$$G_{t:t+n} = r_t + \gamma\, r_{t+1} + \cdots + \gamma^{n-1}\, r_{t+n-1} + \gamma^{n}\, V(s_{t+n})$$
+
+In words: add the next $n$ real rewards, then the discounted guess for the situation $n$ steps ahead. With $n = 1$ this is the guess above, and with $n$ as long as the walk it is waiting. The middle row uses $n = 3$ and finishes in 3 walks instead of 8. Eligibility traces blend all these $n$.
+
+The corridor does not show the guess winning. With no randomness and a step size of 1, this is the best case for waiting. The trickle's speed also depends on update order: a learner that updates backward after each walk, or uses traces, carries credit further in one pass. The guess was not invented to win this race.
+
+## What the guess buys
+
+**It lets learners share what they know.** Sutton and Barto give a small example: eight recorded walks through two situations, A and B. One walk goes from A to B and ends with no reward at all. Seven walks start at B: six end with reward 1 and one ends with 0. The value of B is clearly 3/4. What is the value of A? If the learner reuses this data until its estimates settle, waiting says 0, because the one walk through A returned 0. Guessing says A leads to B, and B is worth 3/4, so A is worth 3/4. The guess shares what was learned about B with every situation that leads to B. If the world is Markov (the next situation depends only on the current one), the shared answer is the better one. This holds for repeated reuse of the data, and a single online pass would not give these numbers. Which method learns faster has no general proof, though in practice the guess has usually won on noisy tasks.
+
+**It learns while the task runs.** The robot does not need the walk to end, so it can learn in a task with very long walks or one that never ends. Its target also holds one random reward and not two hundred. Sutton and Barto call the one-step target often superior in variance, though it introduces bias, because the guess can be wrong.
+
+## A reward on every step does not remove the problem
+
+Bootstrapping does not exist because rewards are rare. Suppose a reward arrives on every step. It still speaks only about the step just taken, while the value is about everything that step leads to: a step that costs 1 can lead along a safe path or toward a cliff five steps later. The estimate of the future supplies that delayed consequence, whether rewards are rare or frequent. The cliff clips are pictures, not proof: I did not test why the waiting robot failed there.
+
+## The price: a guess built on a guess
+
+The target uses the robot's own number. In a table, where each situation has a separate entry, a wrong number gets pulled toward reality, because the guesses end at real rewards. Now let one set of weights produce the numbers for all situations, as a neural network does (**function approximation**), and let the target assume a different behavior from the one that collects the data (**off-policy learning**: Q-learning assumes the best next action while the robot also makes random moves). With bootstrapping these make the **deadly triad**, and a wrong guess can feed itself.
+
+The smallest case comes from Sutton and Barto. Two situations share one weight $w$. The first has estimated value $w$ and the second has $2w$. The only move goes from the first to the second, with reward 0, so the true value of both is 0. The target for the first is $\gamma \cdot 2w$, and the update is:
+
+$$w \leftarrow w + \alpha\,(2\gamma w - w) = \bigl(1 + \alpha(2\gamma - 1)\bigr)\,w$$
+
+In words: every update multiplies $w$ by a number above 1, so the estimate of something worth nothing grows without end. With $\gamma = 0.99$ and $\alpha = 0.1$ the factor is 1.098. Starting at 10, the estimate is about 25 after 10 updates and over 100,000 after 100.
+
+<div class="tri-clips">
+<figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>The price: the broom falls almost at once</b>A simulated robot balances a broom on a cart. Its network learned from one-step guesses (Q-learning), updating from each move as it happened, with random moves. There was no memory of old moves and no frozen copy. The real fall takes less than a fifth of a second, so the clip plays at quarter speed. Recorded game simulation.</figcaption></figure>
+</div>
+
+The clip is a recorded game simulation of that loop, not a physical robot. Its estimates grew into the millions in a world where the true value cannot pass 100, and the broom fell. Replaying old moves in random order and taking the target from a frozen copy of the network prevented this in the game.
+
+## What this shows, and what it does not
+
+The guess let one robot learn a path that a waiting robot did not find, and it let a network push its estimates beyond any possible reward. It does not show that guessing is faster in general, how often the blow-up happens in real systems, or why the waiting robot failed.
 
 <details>
-<summary>Exact numbers for waiting and guessing, and the dial between them</summary>
+<summary>Source checks and what each claim depends on</summary>
 
-**Timing.** The world was the cliff, with a table, one seed, and the first 400 steps. The learner that used one real reward and then a guess used 177 training rows before its first walk ended, at step 178. The learner that waited for all rewards used none, then used 200 at once when its first walk ended at step 200. After 400 steps both had used 400.
+All equation numbers are from Sutton and Barto, [*Reinforcement Learning: An Introduction*, second edition](http://incompleteideas.net/book/RLbook2020.pdf), which I checked in the published text.
 
-**Scores after a fixed budget (performance, not timing).** On the cliff after 10,000 steps (20 seeds), a table with one real reward and a guess scored −13, the best possible, and a table that waited scored −200. In CartPole after 20,000 steps (5 seeds), a table that waited scored 95.4 of 200 against 50.4 for a table that guessed. So guessing did not always give the higher score. These numbers compare performance after the same budget. They say nothing about when updates can start.
+- **Update and TD error.** The one-step update is Eq. 6.2 and the TD error is Eq. 6.5. Eq. 6.6 states $G_t - V(S_t) = \sum_{k=t}^{T-1}\gamma^{k-t}\delta_k$. It is exact only if $V$ does not change during the walk. For TD(0) with a small step size it holds approximately.
+- **n-step return.** Eq. 7.1 is the formula in the text. Eq. 7.2 is the matching update. Sutton and Barto note that no change is made during the first $n-1$ steps of a walk, and that the missing updates are made at the end. The corridor follows their pseudocode.
+- **Waiting versus guessing on the same data.** The example is Example 6.4. The eight recorded walks are: A, reward 0, B, reward 0, end (once); B, reward 1, end (six times); B, reward 0, end (once). Batch updating means the data are presented again and again until the estimates settle. Batch Monte Carlo gives A the value 0, which is the best fit to the data seen. Batch TD(0) gives 3/4, the answer for the maximum-likelihood Markov model of the data. The book says TD's answer is expected to be better if the process is Markov. One online pass over these walks gives neither number.
+- **Speed.** Section 6.2 says it is an open question which method converges faster and that no proof exists. Example 6.2 (a random walk) shows TD ahead of constant-step Monte Carlo. The book says nothing more definite can be said about this.
+- **Variance and bias.** The sentence that the one-step return is often superior in variance and computational convenience, even though it introduces bias, is from the actor-critic section. The same section notes that the extent of the bias can be modulated with n-step returns and traces.
+- **Shaping.** Ng, Harada and Russell, [*Policy invariance under reward transformations: Theory and application to reward shaping*](https://people.eecs.berkeley.edu/~pabbeel/cs287-fa09/readings/NgHaradaRussell-shaping-ICML1999.pdf) (ICML 1999). The PDF has bitmap glyphs and no text layer, so I rendered pages 3 and 4 as images and read them. The shaped task is $M' = (S,A,T,\gamma,R+F)$. Theorem 1: $F$ is potential-based if some real-valued $\Phi : S \to \mathbb{R}$ gives $F(s,a,s') = \gamma\Phi(s') - \Phi(s)$ for all $s \in S-\{s_0\}$, all $a$ and all $s'$ (with $S-\{s_0\}=S$ if $\gamma<1$). That form is necessary and sufficient to guarantee consistency with the optimal policy. Sufficiency: every optimal policy in $M'$ is optimal in $M$ and the reverse. Necessity: for any other $F$, some transition function and some reward function exist for which no optimal policy of $M'$ is optimal in $M$. So necessity holds without further knowledge of the task, not in every task. The theorem treats $\Phi$ as a fixed function of the situation. For infinite state spaces the paper asks for a bounded $\Phi$. The paper does not cover a $\Phi$ that changes during learning, which is why the article does not claim the TD error is covered.
+- **Two situations and one weight.** Sutton and Barto, Section 11.2. The multiplication factor and the numbers (25 and 114,877) are my own arithmetic from the update rule.
+- **The triad.** Sutton and Barto state that if any two of the three elements are present but not all three, instability can be avoided, and that the danger comes from all three together. My game runs showed a possible exception: a network with the Sarsa target (the action actually taken next, not the best next action), also without memory or a frozen copy, blew up too. Whether that contradicts the book depends on details I did not examine.
+- **Atari.** Across 336 settings, one-step Q-learning showed soft divergence in 94% of runs against 21% for ten-step returns ([van Hasselt and colleagues, 2018](https://arxiv.org/abs/1812.02648)).
 
-**The dial.** The target can use a few real rewards before the guess. With $n$ real rewards, where $t$ is the step number, $r_{t+k}$ is the reward received $k$ steps after step $t$, and $s_{t+n}$ is the situation reached $n$ steps after step $t$:
+</details>
 
-$$y = r_t + \gamma r_{t+1} + \dots + \gamma^{n-1} r_{t+n-1} + \gamma^{n}\,\max_{a'} Q(s_{t+n}, a')$$
+<details>
+<summary>Exact numbers for the cliff clips and the dial between waiting and guessing</summary>
 
-One real reward is pure bootstrapping. All rewards to the end of the walk is waiting. The next table lists the median number of environment steps that each setting needed to first pass a score threshold. The game makes one update per step, so steps and updates are the same here.
+Both clips use a 4 by 12 grid, a table, random moves with probability 0.1, and 10,000 training steps. Falls cost 100 and return the robot to the start. The guessing clip is Q-learning, seed 202. The waiting clip is the waiting learner, seed 202. I chose the first and the last of the ten training walks that the game stores for each run. Each clip is one run, so it is an example and not an average. The waiting clip's final test is sped up.
+
+In the final test the guessing learner reaches the flag in 13 steps with no fall. In the 20 seeds, the guessing learner reached the flag in a test every time, and the waiting learner never did: its final score was −200 in every run, which is the step limit. A table that guessed scored −13 after 10,000 steps, the best possible. I did not examine why the waiting learner stays at the start. These numbers compare performance after a fixed budget. They say nothing about when updates can start.
+
+**Timing.** One seed, the first 400 steps. The learner with one real reward and a guess used 177 training rows before its first walk ended, at step 178. The learner that waited used none, then used 200 at once when its first walk ended at step 200.
+
+**The dial.** The median number of environment steps that each setting needed to first pass a score threshold. The game makes one update per step.
 
 | Real rewards | Cliff, table, threshold −20 (20 seeds) | CartPole, network with replay and a frozen copy, threshold 150 (5 seeds) |
 | --- | --- | --- |
@@ -79,148 +135,45 @@ One real reward is pure bootstrapping. All rewards to the end of the walk is wai
 | 8 | 3,625 | 1,500 |
 | all | never in 10,000 | 1,500 |
 
-The final scores differ by setting too. Cliff, table: −13, −21.9, −87.7, −131.9 and −200 for 1, 2, 4, 8 and all rewards. CartPole, network: 143.0, 169.2, 199.3, 189.5 and 193.9. The best number of real rewards depends on the world.
+The best number of real rewards depends on the world. In CartPole after 20,000 steps, a table that waited scored 95.4 of 200 against 50.4 for a table that guessed, so guessing was not always better.
 
-Does it help to trust many real rewards early and fewer later? The game did not test this, because every run uses one fixed number. The closest published work I found is [Meta-Gradient Reinforcement Learning](https://proceedings.neurips.cc/paper_files/paper/2018/file/2715518c875999308842e3455eda2fe3-Paper.pdf) (Xu, van Hasselt and Silver, NeurIPS 2018). It adapts the discount and a mixing weight online, and it does not learn the number of rewards.
+**Falls on the cliff.** The falls in the guessing clip come from random moves, not from numbers going wrong. Over 20 seeds, in the second half of training, Q-learning with random moves fell 0.318 times per walk, Q-learning without them 0.000 times, and Sarsa with them 0.061 times. Table values stayed between −153 and 0.
 
 </details>
-
-## The third problem: learning while you can fall
-
-The cliff robot found its path, but notice how it learned. It kept exploring, taking a random move one time in ten, and a random move at the edge can be the one that goes over. The third level, "Falling while learning", exists to make this cost visible. On a real arm, every fall during learning is a real crash.
-
-The level also exposes something about the target above. The $\max$ in it says: assume that the best next move will be taken. The robot does not take it a tenth of the time. So Q-learning learns the value of a robot that never slips, while the real robot slips. To a robot that never slips, the edge is a perfectly safe shortcut. It hugs the edge and falls.
-
-Learning about one way of behaving while acting in another is **off-policy** learning. A **policy** is just a rule for choosing moves, and here the policy that gathers the data (with random moves) differs from the policy that the values describe (always the best move). The benefit is real: an off-policy learner can explore freely, reuse old experience from a memory, and learn from data that someone else collected. The cost is this mismatch between what the robot assumes and what it does.
-
-The alternative is to score the move the robot really makes next, $a'$, in place of the best one:
-
-$$y = r + \gamma\,Q(s', a')$$
-
-This method is called Sarsa. In words: the value of a move is its reward plus the value of what the robot will actually do next, random slips included. Now the edge squares look dangerous, because some of their targets contain a fall, and a path along the top of the grid looks better. Each clip below replays three walks from one finished run: the first walk of training, the last walk of training, and a final test with no random moves.
-
-<div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cliff-q-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cliff-q-202-desktop.mp4"></video><figcaption><b>Q-learning: it falls while learning, then walks the edge</b>It falls many times in its first walk, and it still falls now and then late in training. The test walk takes the shortest path along the edge.</figcaption></figure>
-<figure class="tri-clip"><video class="tri-video" data-clip="cliff-sarsa-101" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cliff-sarsa-101-desktop.mp4"></video><figcaption><b>Sarsa: it falls early, then keeps away from the edge</b>It also falls often in its first walk. By the end of training it rarely falls, and its test walk takes a longer route across the top.</figcaption></figure>
-</div>
-
-Late in training, the Q-learning robot fell about once every three walks, and the Sarsa robot about once every sixteen. Sarsa pays for its safety. Its finished policy was less reliable: in about two of five runs, the robot stopped making progress and stayed on the grid until time ran out.
-
-These falls come from exploring, and not from the numbers going wrong. Without random moves, the same learners did not fall late in training, and their value tables stayed in the range that one fall plus a few steps would explain. The cliff is a lesson about the cost of off-policy exploration. It is not the blow-up that the triad produces, which needs one more ingredient.
 
 <details>
-<summary>Exact numbers and settings for the cliff clips</summary>
+<summary>Exact numbers for the CartPole failure, and a fix that held</summary>
 
-Both runs use a table, random moves with probability 0.1, and 10,000 training steps. Falls cost 100. The clips show one run of each method: Q-learning seed 202 and Sarsa seed 101. I chose the first and the last of the ten training walks that the game stores for each run.
+Runs use 20,000 steps and seeds 101 to 505. Random moves fall from 1.0 to 0.05 over the first 5,000 steps. The network has two hidden layers of 32 units and uses Adam at 0.001. The memory fix adds a memory of 10,000 moves and a frozen copy refreshed every 250 updates. The score is the greedy policy's undiscounted reward over its first 200 counted steps, averaged over 3 test episodes and the last quarter of the test points.
 
-| | Q-learning, seed 202 | Sarsa, seed 101 |
-| --- | --- | --- |
-| First walk | 185 steps, 7 falls, return −878 | 200 steps (the limit), 9 falls, return −1,091 |
-| Last walk | walk 485, 20 steps, 1 fall, return −119 | walk 355, 25 steps, no fall, return −25 |
-| Final test | 13 steps, no falls, return −13 | 17 steps, no falls, return −17 |
-
-The next table covers all 20 seeds. Falls are counted per walk in the second half of training steps.
-
-| Measure | Q-learning, random moves | Q-learning, no random moves | Sarsa, random moves |
-| --- | --- | --- | --- |
-| Falls per walk, second half | 0.318 | 0.000 | 0.061 |
-| Lowest and highest table value | −112.1 and 0.0 | −52.1 and 0.0 | −153.2 and 0.0 |
-| Final tests that reach the goal | 20 of 20, in 13 steps | 20 of 20, in 13 steps | 12 of 20, in 17 or 19 steps |
-
-In the 8 Sarsa tests that did not reach the goal, the robot did not fall. It stayed within 1 to 14 cells until the 200-step limit. I did not examine why. Without random moves, falls over the whole run were rare but not zero (0.017 per walk), because early guesses can also send the robot off the edge.
-
-Whether random moves teach the robot to recover was not tested here. [Moldovan and Abbeel (2012)](https://arxiv.org/abs/1205.4810) note that exploration with guarantees assumes you can get from any state back to any other, which most physical systems do not allow. On the cliff a fall costs 100 and returns the robot to the start. A real fall could break the robot.
-
-</details>
-
-## The fourth problem: too many situations
-
-So far every situation fits in a table, with one entry per square. The cliff has only 48 of them. The fourth level, "Too many cells", changes the world to break the table. It brings back the robot on the rail from the start of this article.
-
-![The CartPole level of Breaking Bellman: a small robot on a rail holds a broom upright on a stage. The caption reads: Press Run, the robot learns to balance a broom.](/assets/robotics/the-deadly-triad/problem-cartpole.png "CartPole in Breaking Bellman, before training. The robot senses four numbers: cart position, cart speed, broom angle and broom speed. Simulation.")
-
-The robot senses four numbers, namely the cart's position and speed and the broom's angle and speed, and each number can take any value in a range. A table must cut each sensor into bins. With six bins per sensor there are $6^4 = 1{,}296$ cells, and every cell learns on its own. What the robot learns in one cell tells it nothing about the next cell, even though the two describe almost the same moment. After 20,000 steps, the table scored about 50 out of 200, where 200 means that the broom stayed up for the whole test.
-
-The fix is **function approximation**: replace the table with a formula, here a small neural network with weights $\theta$ (theta), that returns an estimate for any situation. Because the weights are shared, what it learns in one situation carries over to similar ones. The update now moves the weights instead of one table entry:
-
-$$\theta \leftarrow \theta + \alpha\,\bigl(y - Q_\theta(s,a)\bigr)\,\nabla_\theta Q_\theta(s,a)$$
-
-Here $Q_\theta(s,a)$ is the network's estimate, $y$ is the same target as before, and $\nabla_\theta Q_\theta(s,a)$ (the gradient) says how much the estimate changes when each weight changes. In words: change every weight a little, in the direction that moves the estimate toward the target. This rule treats the target as a fixed number even though the target can also depend on $\theta$, which is why it is called a semi-gradient update. A table is the special case where each weight belongs to one cell.
-
-The price is the mirror image of the gift. Because the weights are shared, one update moves the estimates for many situations at once, including the situation that the next target is built from.
-
-## All three together
-
-Now combine everything. Use a network for the estimates, a bootstrapped target for late rewards, and Q-learning's best-move target while taking random moves. This is the fifth level, "Values explode", and it is the robot from the top of the page. It scored about 9 out of 200, and its largest value estimate grew into the millions. The best value any robot could ever earn here is 100: one point per step, discounted by 0.99, adds up to at most $1/(1-0.99) = 100$.
-
-Follow a single update to see why. The network raises its estimate for the current situation toward a target. That target contains its estimate for the next situation. In CartPole the next situation is almost the same as the current one, and the weights are shared, so raising the first estimate also raises the second. The next target is therefore higher, the next update raises the estimate again, and so on. The learner chases a target that rises as it moves. Nothing in the loop knows about the limit of 100.
-
-The smallest case that shows this loop comes from [Sutton and Barto, section 11.2](http://incompleteideas.net/book/RLbook2020.pdf). Two situations share one weight $w$. The first has estimated value $w$ and the second has estimated value $2w$. The only transition goes from the first to the second, with reward 0, so the true value of both is 0. The learner replays this transition and updates only the first. Its target is $y = 0 + \gamma \cdot 2w$, and the gradient of the estimate with respect to $w$ is 1, so the update is:
-
-$$w \leftarrow w + \alpha\,(2\gamma w - w) = \bigl(1 + \alpha(2\gamma - 1)\bigr)\,w$$
-
-In words: each update multiplies $w$ by a number larger than 1, so the estimate of something worth nothing grows without end. With $\gamma = 0.99$ and $\alpha = 0.1$, the factor is 1.098. Starting from $w = 10$, the estimate is about 25 after 10 updates and over 100,000 after 100.
-
-Two changes break the loop, and together they form the method called DQN. **Replay** trains on random old moves from a memory, so that consecutive updates stop pushing the same neighborhood of situations. A **frozen copy** of the network builds the targets, and the game refreshes the copy only now and then, so that the target holds still while the estimate approaches it.
+The naive network is one-step Q-learning on a live network. It updates from the latest move, makes random moves, and has no memory and no frozen copy. It scored about 9 of 200. In all 5 seeds the broom fell after 8 to 10 steps. The median over seeds of the largest estimate was 4.1 million. With replay and a frozen copy the score was 143 and the median of the largest estimate was 61.7. The five tests lasted 118, 600, 99, 104 and 272 steps. Four ended at the end of the rail, and only one held the broom for all 600 steps. That is the clip below.
 
 <div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-101" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-dqn-101-desktop.mp4"></video><figcaption><b>The same network with replay and a frozen copy: it balances, then runs out of rail</b>A typical test. The broom stays up for a couple of seconds, until the cart reaches the end of the rail and the test ends.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-dqn-202-desktop.mp4"></video><figcaption><b>The same robot with a fix: the broom stays up</b>Old moves are replayed in random order, and the target comes from a frozen copy of the network. This run is the only one of five that held the broom for the full 12 seconds.</figcaption></figure>
 </div>
 
-With these changes the largest estimate stayed near 65, well under the limit, and the score rose from about 9 to about 143 out of 200. That also beat the table (about 50). The result is a real improvement and not a solution. Most of the stabilized robot's tests still ended because the cart ran off the end of the rail, and only one of five runs held the broom for the whole test.
+The game page shows 5 million and 65.4, which are maxima over seeds and test points. A network with the Sarsa target scored 9 to 11 of 200, with a largest estimate near 2 million. Sarsa uses the action that the random-move behavior actually took next, where Q-learning uses the best next action. It also had no memory and no frozen copy. So changing that one choice did not prevent the blow-up in this network. Memory and the frozen copy are separate changes, and I did not test each alone beyond the arms listed in the source note.
 
-<details>
-<summary>Exact numbers for the CartPole runs, and a full-length balance</summary>
+![Three charts from Breaking Bellman. Score per test episode stays near 10 of 200. The predicted value rises to the 10,000 chart ceiling while the value earned stays near 0. The largest absolute Q value rises past one million on a log scale.](/assets/robotics/the-deadly-triad/naive-charts.png "Level Values explode, naive network, 5 seeds, 20,000 steps. The score stays near 9 of 200 and the predicted value rises to the chart ceiling. Simulation.")
 
-Runs use 20,000 steps and seeds 101 to 505 (5 seeds). Random moves fall from 1.0 to 0.05 over the first 5,000 steps. The network has two hidden layers of 32 units and uses Adam at 0.001. DQN adds a memory of 10,000 moves and a frozen copy refreshed every 250 updates. The score is the greedy policy's undiscounted reward over its first 200 counted steps, averaged over 3 test episodes and the last quarter of the test points.
-
-The top clip is the naive network with seed 101, played at quarter speed. Its test lasted 9 steps (0.18 s). In all 5 seeds the broom fell after 8 to 10 steps. The DQN clip above is seed 101, 118 steps (2.4 s) in real time. The five DQN tests lasted 118, 600, 99, 104 and 272 steps. Four of them ended at the end of the rail, and the scores were 118, 200, 99, 104 and 200. The clip below is seed 202, the only run that held the broom for all 600 steps (12 s), in real time. I chose it to show what a full balance looks like. It is not a typical result.
-
-<div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-dqn-202-desktop.mp4"></video><figcaption><b>The only full-length balance among five runs</b>The same method as the previous clip, in another run. The broom stays up for the whole test.</figcaption></figure>
-</div>
-
-The median over seeds of each run's largest estimate was 4.1 million for the naive network and 61.7 for DQN. The game page shows 5 million and 65.4, which are maxima over seeds and test points, so the figures differ by design. Largest estimate means the largest value at a test point, and it does not prove that growth never stops.
-
-![Three charts from Breaking Bellman. Score per test episode stays near 10 of 200. The predicted value rises to the 10,000 chart ceiling while the value earned stays near 0. The largest absolute Q value rises past one million on a log scale.](/assets/robotics/the-deadly-triad/naive-charts.png "Level Values explode, naive network, 5 seeds (101 to 505), 20,000 steps. Top: the score stays near 9 of 200. Middle: the predicted value rises to the chart ceiling of 10,000 while the value earned stays near 0. Bottom: the largest estimate, on a log scale, reaches 5 million. Simulation.")
-
-![Three charts from Breaking Bellman comparing two runs. The dashed run is the naive network. The solid run, with replay and a frozen copy, keeps the largest Q near 65 and reaches a score of about 150.](/assets/robotics/the-deadly-triad/naive-vs-dqn-charts.png "Dashed: the naive network. Solid: replay and a frozen copy (DQN). The largest estimate stays near 65 and the score ends at 143 of 200. The score is noisy and falls after an early peak near 200. Simulation.")
-
-![The game's comparison panel: the new run scores 143 of 200 with largest Q 65.4, against the pinned naive run at 9 of 200 and 5 million. The sentence differs in three words.](/assets/robotics/the-deadly-triad/naive-vs-dqn-words.png "The game lists the three words that changed: learn from random old moves, and choose and score the next action with a frozen copy. Simulation.")
+![Three charts from Breaking Bellman comparing two runs. The dashed run is the naive network. The solid run, with replay and a frozen copy, keeps the largest Q near 65 and reaches a score of about 150.](/assets/robotics/the-deadly-triad/naive-vs-dqn-charts.png "Dashed: the naive network. Solid: replay and a frozen copy. The largest estimate stays near 65 and the score ends at 143 of 200. Simulation.")
 
 </details>
-
-## Which of the three is really to blame?
-
-[Sutton and Barto](http://incompleteideas.net/book/RLbook2020.pdf) name the three ideas the deadly triad. They write: "If any two elements of the deadly triad are present, but not all three, then instability can be avoided." That statement has a setting. [Tsitsiklis and Van Roy (1997)](https://www.mit.edu/~jnt/Papers/J063-97-bvr-td.pdf) prove that on-policy bootstrapping with a linear formula converges, and the same paper gives an example of failure with a nonlinear formula.
-
-The game agrees with the second part. I removed the off-policy idea: the same network, still guessing, but scoring the move it really made, as Sarsa does. Its estimates also grew into the millions.
-
-![The sentence panel of Breaking Bellman: a network, the move just made, one real reward and the action really taken next. The result reads: Does not work yet, score 9 of 200, largest Q 2M.](/assets/robotics/the-deadly-triad/on-policy-network.png "The same network with one word changed: the target uses the action really taken. The score is about 9 of 200 and the largest estimate is about 2 million. Simulation.")
-
-So in a network the triad is better understood as a matter of degree. The game's formula is a nonlinear network, and I did not test a linear one, so this does not contradict the proof for linear formulas. On a larger scale, [van Hasselt and colleagues (2018)](https://arxiv.org/abs/1812.02648) trained DQN variants on Atari across 336 settings. They call an estimate "soft-diverged" when it leaves the range any policy can earn. One-step Q-learning soft-diverged in 94% of runs, and trusting ten real rewards before the guess lowered that to 21%. The number of real rewards, the dial from the second problem, can act as a brake.
-
-## What the game shows, and what it does not
-
-The game shows that a network, a one-step guess and Q-learning with random moves can push estimates into the millions in a world whose limit is 100, and that replay with a frozen copy prevented it. Waiting for the whole walk failed where guessing succeeded. Cliff falls were the cost of exploring and not a sign of numbers going wrong. Two tidy stories failed: the off-policy idea was not needed for the blow-up in a network, and more real rewards in the target were not always better.
-
-It does not show whether guessing needs fewer samples in general, because the results were mixed. It did not measure the variance of targets, the updates needed on a fixed pile of data, a linear formula, a schedule over the number of real rewards, or whether random moves teach recovery. The results come from one game, a few seeds and one network design. Read them as demonstrations of mechanisms, not as measurements of how often each failure happens in real systems.
 
 <details id="source-note">
-<summary>How the clips and numbers were made</summary>
+<summary>How the clips, the corridor and the numbers were made</summary>
 
-The screenshots are real captures of the game page, built at commit [681cae3](https://github.com/Hadrien-Cornier/breaking-bellman/tree/681cae3820f05f8604d212c0ab048ebf0e017e73) and run in a browser on October 17, 2026. The page uses seeds 101, 202 and so on. Numbers in a screenshot caption are the page's own headline figures.
+The screenshots are real captures of the game page, built at commit [681cae3](https://github.com/Hadrien-Cornier/breaking-bellman/tree/681cae3820f05f8604d212c0ab048ebf0e017e73) and run in a browser on October 17, 2026. Other numbers come from the game's own `RLA.run` code at the same commit. Arms in a world share seeds. The run script and raw results are stored locally and are not published.
 
-Other numbers come from the game's own `RLA.run` code at the same commit, the code path that the page trains with. Arms in a world share seeds. The run script and raw results are stored locally and are not published.
+**Robot clips.** Each clip is a real recorded episode from those runs. A real browser draws it with the game's own `web/scenes.js` at the same commit, unmodified, using the game's own sprites and fonts. I replaced only the clock, so that the scene runs at a fixed 30 frames per second, and I encoded the frames with ffmpeg (H.264). The naive CartPole clip plays at quarter speed, because the real episode lasts 0.18 s. The waiting clip's final test is sped up by a factor of 6, because the robot stays at the start. All other clips play in real time.
 
-**Robot clips.** Each clip is a real recorded episode from those runs. A real browser draws it with the game's own `web/scenes.js` at the same commit, unmodified, using the game's own sprites and fonts. The scene code gets the logged data: the sensor values of a CartPole test, or the training walks, the test path and the greedy arrows of a cliff run. I replaced only the clock, so that the scene runs at a fixed 30 frames per second, and I encoded the frames with ffmpeg (H.264). The naive CartPole clip plays at quarter speed, because the real episode lasts 0.18 s. All other clips play in real time. Desktop and phone clips differ only in canvas size. The game stores ten training walks per run, spread over the run, and the cliff clips use the first and the last of those ten. Each clip is a single selected run, so it is an example and not an average.
+**Corridor.** The corridor is not a recorded run. It is a small program that follows the n-step TD pseudocode of Sutton and Barto, Section 7.1: eight situations, reward 1 on the last move, discount 1, step size 1, all values 0 at the start, no randomness. I checked its output against a separate script. The three rows differ only in $n$, which is 1, 3, and long enough to reach the end of the walk.
 
-**Cliff runs.** A 4 by 12 grid. A fall costs −100 and returns the robot to the start. 10,000 steps, 20 seeds, random moves with probability 0.1, table learning rate 0.5. The page shows 0.32 falls per walk for Q-learning in the second half of training. I recomputed the figure from the raw results as 0.318, counting the second half in training steps, which matches the page.
+**Steps to the threshold.** The first test point with a mean score at or above the threshold (−20 on the cliff, 150 on CartPole), per seed. The table shows the median over the seeds that reached it.
 
-**Steps to the threshold.** The first test point with a mean score at or above the threshold (−20 on the cliff, 150 on CartPole), per seed. The table shows the median over the seeds that reached it. Test points come every 250 steps on the cliff and every 500 steps on CartPole.
-
-**Not shown.** The runs measure no linear approximation, no recovery behavior, no schedule over the number of real rewards, no variance of the targets and no updates on fixed data.
+**Not tested.** Variance of targets, updates on a fixed set of data, a linear approximation, recovery after falls, and a schedule over the number of real rewards.
 
 </details>
 
 <script src="/assets/robotics/the-deadly-triad/triad-videos.js" defer></script>
+<script src="/assets/robotics/the-deadly-triad/corridor.js" defer></script>
