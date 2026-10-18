@@ -20,7 +20,7 @@
       {
         "part": 3,
         "slug": "rl-3-function-approximation",
-        "title": "Function approximation: learning about situations you never saw",
+        "title": "Function approximation: sharing what you learn",
         "question": "What does a robot gain, and what can it lose, when one formula replaces the table?",
         "levels": ["Too many cells"]
       },

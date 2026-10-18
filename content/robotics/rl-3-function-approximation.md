@@ -1,6 +1,6 @@
 ---
-title: 'Function approximation: learning about situations you never saw'
-description: 'Why a table learns only about the cells it visits, how a formula lets one visit teach a robot about situations it never saw, and what that sharing costs when one update moves many numbers at once.'
+title: 'Function approximation: sharing what you learn'
+description: 'How a formula teaches a robot about situations it never saw, and what the sharing costs.'
 date: '2026-10-18'
 draft: true
 series: 'Reinforcement learning, one idea at a time'
@@ -8,14 +8,16 @@ part: 3
 layout: essay
 ---
 
-A simulated robot balances a broom on a cart. Four continuous sensors, for the cart's position and speed and the broom's angle and turning speed, make a table row for every exact situation impossible. So the robot cuts each sensor's range into six slices and keeps one number per box: 1,296 boxes. The two robots below use the same target, the same data and the same training length. They differ in the store of numbers, a table or a small network, and each store keeps its default optimizer and step size. The clips only illustrate.
+Two simulated robots balance a broom on a cart. One stores its numbers in a table, the other in a small network.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cart-table-404" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-table-404-desktop.mp4"></video><figcaption><b>A table of 1,296 boxes: the broom falls after 31 steps</b>This is the greedy test of one real recorded run after 20,000 training steps, with no random moves, at half speed. At real speed the fall takes 0.6 seconds. The run is the median-length test of five. Simulation.</figcaption></figure>
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>A network with the same learning rule: the broom falls after 9 steps</b>One real recorded run, at quarter speed. The target, the random moves and the training length match the table. Each store keeps the game's own optimizer and step size, and I did not tune either. The clip does not diagnose the fall. Simulation.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>A network with the same learning rule: the broom falls after 9 steps</b>One real recorded run, at quarter speed. The target rule, the collection mode, the exploration schedule and the training budget match the table. The runs still gather different data, because their policies differ. Each store keeps the game's own optimizer and step size, and I did not tune either. The clip does not diagnose the fall. Simulation.</figcaption></figure>
 </div>
 
-The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). Both robots fall. The clips do not diagnose why. The rest of the article explains two issues that can lie behind such failures: a table fills slowly, and a formula couples its updates.
+The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). The clips only illustrate. Both robots fall, and the clips do not diagnose why. The rest of the article explains two issues that can lie behind such failures: a table fills slowly, and a formula couples its updates.
+
+The robot reads four continuous sensors, for the cart's position and speed and the broom's angle and turning speed. A table row for every exact situation is impossible, so the table cuts each sensor's range into six slices and keeps one number per box. That makes 1,296 boxes. Both robots use the same target rule, collection mode, exploration schedule and training budget, and each store keeps its default optimizer and step size.
 
 ## The question: what changes when a formula replaces the table
 
@@ -59,7 +61,7 @@ One visit moves one number in the table, four in the table of groups and sixteen
 
 ## What the game measured
 
-Two pairs of runs use the same learning rule, data and training length. They differ in the store of numbers, and each store keeps its default optimizer and step size. The score is the greedy robot's reward out of 200 in a test, averaged over runs.
+Two pairs of runs use the same target rule, collection mode, exploration schedule and training budget. They differ in the store of numbers, and each store keeps its default optimizer and step size. Their policies differ, so they gather different data. The score is the greedy robot's reward out of 200 in a test, averaged over runs.
 
 | Learning rule | Table | Network |
 | --- | --- | --- |
@@ -80,7 +82,7 @@ I cannot credit that 143 to the formula alone. No table run has replay or a froz
 
 A formula lets a robot value situations it has never seen. A full table does not share between distinct unvisited rows, though a table of coarse boxes already does within each box. The coarse table showed the gain in the game: 81 boxes scored best. The costs are real. A formula blurs, it guesses badly when its shape is wrong, one update moves many numbers, and the target moves with the weights. In my runs the formula alone did not score higher than the table. The gain I can show is in the tool above and in the count of unvisited boxes. The tool is a toy with no noise and a straight line. The game numbers come from five runs and one world.
 
-The next article asks which data the robot learns from, and why that decides whether the updates stay safe. For one fixed policy and a linear formula, the book shows that a bootstrapping method called semi-gradient TD converges. With other data, bootstrapping and a formula together may diverge.
+The next article asks which data the robot learns from, and why that decides whether the updates stay safe. For predicting values under one fixed policy, with on-policy data, a linear formula and step sizes that shrink in the usual way, the book shows that a bootstrapping method called semi-gradient TD converges. With other data, bootstrapping and a formula together may diverge.
 
 <details>
 <summary>Source checks and what each claim depends on</summary>
@@ -91,7 +93,7 @@ All section numbers are from Sutton and Barto, [*Reinforcement Learning: An Intr
 - **Coupling.** Section 9.1 says that in the tabular case the estimates are decoupled, since an update at one state affects no other, and that with genuine approximation an update at one state affects many others. The book adds, for the case of far more states than weights, that making one state's estimate more accurate invariably means making others' less accurate. The tool above has 16 situations and 2 weights, and four visits at situation 1 lowered the line's average error over all sixteen situations from 5.6 to 4.6, so the article states the trade-off as a possibility and not as a rule for every update. The book concludes that we must say which states we care most about, and it uses a state distribution $\mu(s)$ for that. The tool above does not weigh situations: it shows the average error over all sixteen with equal weight.
 - **The update.** Section 9.3 gives the stochastic gradient step, Eq. 9.7. It says that state aggregation is a special case, where the gradient is 1 for the component of the state's group and 0 for the others. Section 9.4 gives the linear form $\hat v(s,\mathbf{w}) = \mathbf{w}^\top \mathbf{x}(s)$ and the update in Eq. 9.9 and 9.10. Exercise 9.1 says that the tabular case is a special case of the linear one.
 - **Semi-gradient.** Section 9.3 says that bootstrapping targets depend on the weights, so these methods take into account the effect of changing the weights on the estimate, but ignore its effect on the target. The article uses the term only in the last paragraph.
-- **The convergence statement.** Section 9.4: semi-gradient TD(0) with linear features, for a fixed policy and the on-policy distribution, converges. The book says elsewhere that for other distributions, bootstrapping with function approximation may diverge (Chapter 11). Parts 4 and 5 treat that. This article only names it.
+- **The convergence statement.** Section 9.4: semi-gradient TD(0) with linear features, for a fixed policy and the on-policy distribution, converges. The proof box needs a step size small enough, and the book states elsewhere that the step size is reduced over time according to the usual conditions. The book says elsewhere that for other distributions, bootstrapping with function approximation may diverge (Chapter 11). Parts 4 and 5 treat that. This article only names it.
 - **The Q-learning target.** The target in the cost named "Targets move" is the same one-step target as in part 1, with a network in place of the table. The sentence that the error can feed itself is my reading of the book's list of issues, which I did not test alone. The mechanism is not verified.
 
 </details>
@@ -103,7 +105,7 @@ All numbers come from the game's own `RLA.run` code at commit [681cae3](https://
 
 **Setup.** Runs use 20,000 steps and seeds 101, 202, 303, 404 and 505. Random moves fall from 1.0 to 0.05 over the first 5,000 steps. The table uses one-step Q-learning with step size 0.1. The network has two hidden layers of 32 units, Adam, and step size 0.001. The score is the greedy policy's undiscounted reward over its first 200 counted steps, averaged over 3 test episodes and the last quarter of test points. It is not the reward of the single final test.
 
-**Score pairs.** Inside each pair the learning rule, data and training length match, and each store keeps its default optimizer and step size, so the pair is not a test of the store alone. Mean over five seeds, with the standard deviation across seeds:
+**Score pairs.** Inside each pair the target rule, collection mode, exploration schedule and training budget match, and each store keeps its default optimizer and step size. The two runs gather different data, because their policies differ. So the pair is not a test of the store alone. Mean over five seeds, with the standard deviation across seeds:
 
 | Rule | Table | Network |
 | --- | --- | --- |

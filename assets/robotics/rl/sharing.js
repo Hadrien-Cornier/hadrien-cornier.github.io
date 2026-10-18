@@ -1,4 +1,4 @@
-/* Sharing widget for "Function approximation: learning about situations you never saw".
+/* Sharing widget for "Function approximation: sharing what you learn".
    Mount point: <div class="tri-sharing"></div>. This is a mathematical illustration, not a game run.
    Setup: 16 situations in a row. The true value of situation i is v(i) = 5 + 3x + 1.5x^2 with x = (i - 7.5) / 7.5, so the values run from 3.5 to 9.5.
    Three learners start with every number at 0 and receive the same visits. A visit at situation i hands each learner the true value v(i) as its target.
