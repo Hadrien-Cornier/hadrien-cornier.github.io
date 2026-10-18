@@ -1,16 +1,18 @@
 ---
-title: 'Why bootstrapping exists, and what it costs'
-description: 'Why reinforcement learning learns from its own estimates, how that carries a reward from the end of a task back to the start, and why the same trick sits inside the deadly triad.'
+title: 'Bootstrapping: learning from your own guess'
+description: 'Why reinforcement learning learns from its own estimates, how that carries a reward from the end of a task back to the start, and what that guess costs.'
 date: '2026-10-17'
 draft: true
+series: 'Reinforcement learning, one idea at a time'
+part: 2
 layout: essay
 ---
 
 A robot learning to fold a shirt hears only at the end whether it worked. Which of its two hundred movements deserves the credit? Below, two robots on a cliff walk learn in different ways: one guesses the future as it goes, and the other waits for each walk to end. The clips only illustrate; the rest explains what the guess is for.
 
 <div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cliff-q-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cliff-q-202-desktop.mp4"></video><figcaption><b>A robot that guesses the future: it learns the path along the cliff</b>The first walk (several falls), a late walk, then the final test with no random moves. The arrows show the robot's favorite move in each cell. Every step costs 1 and a fall costs 100. Simulation, real recorded run.</figcaption></figure>
-<figure class="tri-clip"><video class="tri-video" data-clip="cliff-mc-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cliff-mc-202-desktop.mp4"></video><figcaption><b>A robot that waits for the end of each walk: after the same practice, it has not learned the path</b>The same world and the same number of steps. The first walk, a late walk, then the final test, sped up: the robot stays at the start and the walk ends at the step limit. Simulation, real recorded run.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cliff-q-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-q-202-desktop.mp4"></video><figcaption><b>A robot that guesses the future: it learns the path along the cliff</b>The first walk (several falls), a late walk, then the final test with no random moves. The arrows show the robot's favorite move in each cell. Every step costs 1 and a fall costs 100. Simulation, real recorded run.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cliff-mc-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-mc-202-desktop.mp4"></video><figcaption><b>A robot that waits for the end of each walk: after the same practice, it has not learned the path</b>The same world and the same number of steps. The first walk, a late walk, then the final test, sped up: the robot stays at the start and the walk ends at the step limit. Simulation, real recorded run.</figcaption></figure>
 </div>
 
 Both robots practiced for the same 10,000 steps. The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), a small game I made. They show the two styles and do not explain why one did better.
@@ -41,7 +43,7 @@ Bootstrapping removes the wait. After one step the robot knows one real reward, 
 
 $$V(s_t) \leftarrow V(s_t) + \alpha\,\bigl(\underbrace{r_t + \gamma\, V(s_{t+1})}_{\text{target}} - V(s_t)\bigr)$$
 
-In words: the target is what I just earned, plus my own current guess of everything that follows. The robot can update after every step. It learns a guess from a guess, like lifting itself by its own bootstraps.
+In words: the target is what I just earned, plus my own current guess of everything that follows. The robot can update after every step. It learns a guess from a guess, like lifting itself by its own bootstraps. Q-learning, the subject of the previous article, makes exactly this move on action values: its target is the reward plus its own best guess for the next situation.
 
 ## The made-up reward
 
@@ -81,7 +83,7 @@ Bootstrapping does not exist because rewards are rare. Suppose a reward arrives 
 
 ## The price: a guess built on a guess
 
-The target uses the robot's own number. In a table, where each situation has a separate entry, a wrong number gets pulled toward reality, because the guesses end at real rewards. Now let one set of weights produce the numbers for all situations, as a neural network does (**function approximation**), and let the target assume a different behavior from the one that collects the data (**off-policy learning**: Q-learning assumes the best next action while the robot also makes random moves). With bootstrapping these make the **deadly triad**, and a wrong guess can feed itself.
+The target uses the robot's own number. In a table, where each situation has a separate entry, a wrong number gets pulled toward reality, because the guesses end at real rewards. Now let one set of weights produce the numbers for all situations, as a neural network does (**function approximation**), and let the target assume a different behavior from the one that collects the data (**off-policy learning**: Q-learning assumes the best next action while the robot also makes random moves). The next two articles take these two apart. The last article puts them together with bootstrapping as the **deadly triad**, where a wrong guess can feed itself.
 
 The smallest case comes from Sutton and Barto. Two situations share one weight $w$. The first has estimated value $w$ and the second has $2w$. The only move goes from the first to the second, with reward 0, so the true value of both is 0. The target for the first is $\gamma \cdot 2w$, and the update is:
 
@@ -90,7 +92,7 @@ $$w \leftarrow w + \alpha\,(2\gamma w - w) = \bigl(1 + \alpha(2\gamma - 1)\bigr)
 In words: every update multiplies $w$ by a number above 1, so the estimate of something worth nothing grows without end. With $\gamma = 0.99$ and $\alpha = 0.1$ the factor is 1.098. Starting at 10, the estimate is about 25 after 10 updates and over 100,000 after 100.
 
 <div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>The price: the broom falls almost at once</b>A simulated robot balances a broom on a cart. Its network learned from one-step guesses (Q-learning), updating from each move as it happened, with random moves. There was no memory of old moves and no frozen copy. The real fall takes less than a fifth of a second, so the clip plays at quarter speed. Recorded game simulation.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>The price: the broom falls almost at once</b>A simulated robot balances a broom on a cart. Its network learned from one-step guesses (Q-learning), updating from each move as it happened, with random moves. There was no memory of old moves and no frozen copy. The real fall takes less than a fifth of a second, so the clip plays at quarter speed. Recorded game simulation.</figcaption></figure>
 </div>
 
 The clip is a recorded game simulation of that loop, not a physical robot. Its estimates grew into the millions in a world where the true value cannot pass 100, and the broom fell. Replaying old moves in random order and taking the target from a frozen copy of the network prevented this in the game.
@@ -149,14 +151,14 @@ Runs use 20,000 steps and seeds 101 to 505. Random moves fall from 1.0 to 0.05 o
 The naive network is one-step Q-learning on a live network. It updates from the latest move, makes random moves, and has no memory and no frozen copy. It scored about 9 of 200. In all 5 seeds the broom fell after 8 to 10 steps. The median over seeds of the largest estimate was 4.1 million. With replay and a frozen copy the score was 143 and the median of the largest estimate was 61.7. The five tests lasted 118, 600, 99, 104 and 272 steps. Four ended at the end of the rail, and only one held the broom for all 600 steps. That is the clip below.
 
 <div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-202" controls muted loop playsinline preload="none" src="/assets/robotics/the-deadly-triad/clips/cart-dqn-202-desktop.mp4"></video><figcaption><b>The same robot with a fix: the broom stays up</b>Old moves are replayed in random order, and the target comes from a frozen copy of the network. This run is the only one of five that held the broom for the full 12 seconds.</figcaption></figure>
+<figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-dqn-202-desktop.mp4"></video><figcaption><b>The same robot with a fix: the broom stays up</b>Old moves are replayed in random order, and the target comes from a frozen copy of the network. This run is the only one of five that held the broom for the full 12 seconds.</figcaption></figure>
 </div>
 
 The game page shows 5 million and 65.4, which are maxima over seeds and test points. A network with the Sarsa target scored 9 to 11 of 200, with a largest estimate near 2 million. Sarsa uses the action that the random-move behavior actually took next, where Q-learning uses the best next action. It also had no memory and no frozen copy. So changing that one choice did not prevent the blow-up in this network. Memory and the frozen copy are separate changes, and I did not test each alone beyond the arms listed in the source note.
 
-![Three charts from Breaking Bellman. Score per test episode stays near 10 of 200. The predicted value rises to the 10,000 chart ceiling while the value earned stays near 0. The largest absolute Q value rises past one million on a log scale.](/assets/robotics/the-deadly-triad/naive-charts.png "Level Values explode, naive network, 5 seeds, 20,000 steps. The score stays near 9 of 200 and the predicted value rises to the chart ceiling. Simulation.")
+![Three charts from Breaking Bellman. Score per test episode stays near 10 of 200. The predicted value rises to the 10,000 chart ceiling while the value earned stays near 0. The largest absolute Q value rises past one million on a log scale.](/assets/robotics/rl/naive-charts.png "Level Values explode, naive network, 5 seeds, 20,000 steps. The score stays near 9 of 200 and the predicted value rises to the chart ceiling. Simulation.")
 
-![Three charts from Breaking Bellman comparing two runs. The dashed run is the naive network. The solid run, with replay and a frozen copy, keeps the largest Q near 65 and reaches a score of about 150.](/assets/robotics/the-deadly-triad/naive-vs-dqn-charts.png "Dashed: the naive network. Solid: replay and a frozen copy. The largest estimate stays near 65 and the score ends at 143 of 200. Simulation.")
+![Three charts from Breaking Bellman comparing two runs. The dashed run is the naive network. The solid run, with replay and a frozen copy, keeps the largest Q near 65 and reaches a score of about 150.](/assets/robotics/rl/naive-vs-dqn-charts.png "Dashed: the naive network. Solid: replay and a frozen copy. The largest estimate stays near 65 and the score ends at 143 of 200. Simulation.")
 
 </details>
 
@@ -175,5 +177,5 @@ The screenshots are real captures of the game page, built at commit [681cae3](ht
 
 </details>
 
-<script src="/assets/robotics/the-deadly-triad/triad-videos.js" defer></script>
-<script src="/assets/robotics/the-deadly-triad/corridor.js" defer></script>
+<script src="/assets/robotics/rl/rl-videos.js" defer></script>
+<script src="/assets/robotics/rl/corridor.js" defer></script>

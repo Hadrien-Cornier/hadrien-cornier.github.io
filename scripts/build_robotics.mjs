@@ -213,20 +213,64 @@ ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
 ${footer}</main></body></html>\n`;
 }
+// A series plan lists every part of a series, written or not. content/robotics/series.json maps a series name to
+// {slug, intro, parts:[{part, slug, title, question, levels}]}. Parts without a published article show as "Coming" with no link.
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+function readSeriesPlan(sourceDir) {
+  const file = path.join(sourceDir, 'series.json');
+  if (!fs.existsSync(file)) return new Map();
+  let data;
+  try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (error) { throw new Error(`series.json must be valid JSON: ${error.message}`); }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('series.json must be an object');
+  const plan = new Map();
+  const hubs = new Set();
+  for (const [name, entry] of Object.entries(data)) {
+    if (!entry || typeof entry !== 'object' || !SLUG_PATTERN.test(entry.slug || '')) throw new Error(`series.json: ${name} needs a slug`);
+    if (hubs.has(entry.slug)) throw new Error(`series.json: duplicate hub slug ${entry.slug}`);
+    hubs.add(entry.slug);
+    if (typeof entry.intro !== 'string' || !entry.intro.trim()) throw new Error(`series.json: ${name} needs an intro`);
+    if (!Array.isArray(entry.parts) || !entry.parts.length) throw new Error(`series.json: ${name} needs parts`);
+    const numbers = new Set();
+    const slugs = new Set();
+    for (const part of entry.parts) {
+      if (!Number.isInteger(part.part) || part.part < 1 || numbers.has(part.part)) throw new Error(`series.json: ${name} has a bad or repeated part number`);
+      if (!SLUG_PATTERN.test(part.slug || '') || slugs.has(part.slug) || part.slug === entry.slug) throw new Error(`series.json: ${name} part ${part.part} has a bad or repeated slug`);
+      for (const field of ['title', 'question']) if (typeof part[field] !== 'string' || !part[field].trim()) throw new Error(`series.json: ${name} part ${part.part} needs a ${field}`);
+      if (part.levels !== undefined && (!Array.isArray(part.levels) || part.levels.some((level) => typeof level !== 'string'))) throw new Error(`series.json: ${name} part ${part.part} levels must be a list of names`);
+      numbers.add(part.part); slugs.add(part.slug);
+    }
+    plan.set(name, {...entry, parts:[...entry.parts].sort((a, b) => a.part - b.part)});
+  }
+  return plan;
+}
+const isPlanned = (part) => part.planned === true;
+const soonTag = '<span class="track-tag soon-tag">Coming</span>';
 function seriesBox(article) {
   if (!article.seriesArticles) return '';
-  const parts = article.seriesArticles.map((part) => part.slug === article.slug
-    ? `<li class="series-part${trackClass(part)}" aria-current="page">${escape(part.title)}${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`
-    : `<li class="series-part${trackClass(part)}"><a href="/robotics/${part.slug}/">${escape(part.title)}</a>${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`).join('');
-  const previous = article.seriesPrevious ? `<a rel="prev" href="/robotics/${article.seriesPrevious.slug}/">← Previous: ${escape(article.seriesPrevious.title)}</a>` : '';
-  const next = article.seriesNext ? `<a rel="next" href="/robotics/${article.seriesNext.slug}/">Next: ${escape(article.seriesNext.title)} →</a>` : '';
-  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+  const parts = article.seriesArticles.map((part) => isPlanned(part)
+    ? `<li class="series-part series-part-planned">${escape(part.title)}${soonTag}</li>`
+    : part.slug === article.slug
+      ? `<li class="series-part${trackClass(part)}" aria-current="page">${escape(part.title)}${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`
+      : `<li class="series-part${trackClass(part)}"><a href="/robotics/${part.slug}/">${escape(part.title)}</a>${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`).join('');
+  const neighbour = (part, rel, label, arrow) => !part ? ''
+    : isPlanned(part) ? `<span class="series-soon">${rel === 'prev' ? '← ' : ''}${label}: ${escape(part.title)} (coming)${rel === 'next' ? ' →' : ''}</span>`
+    : `<a rel="${rel}" href="/robotics/${part.slug}/">${rel === 'prev' ? '← ' : ''}${label}: ${escape(part.title)}${rel === 'next' ? ' →' : ''}</a>`;
+  const previous = neighbour(article.seriesPrevious, 'prev', 'Previous');
+  const next = neighbour(article.seriesNext, 'next', 'Next');
+  const name = article.seriesHub ? `<a href="/robotics/${article.seriesHub}/">${escape(article.series)}</a>` : escape(article.series);
+  return `<nav class="series-box${article.seriesHub ? ' series-box-end' : ''}" aria-label="Series"><p class="series-box-name">${name}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+}
+// A planned series keeps its page head short, so the first robot clip stays near the top. A one-line strip names the series and the part,
+// and the full box with the part list and the previous and next links sits after the article.
+function seriesStrip(article) {
+  if (!article.seriesHub) return '';
+  return `<p class="series-strip"><a href="/robotics/${article.seriesHub}/">${escape(article.series)}</a><span>Part ${article.part} of ${article.seriesArticles.length}</span></p>`;
 }
 function articlePage(article, root) {
   const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
-<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p></header>
-${seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
+<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p>${seriesStrip(article)}</header>
+${article.seriesHub ? '' : seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}${article.seriesHub ? seriesBox(article) : ''}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
 function articleUnits(articles) {
   const groups = new Map();
@@ -246,13 +290,18 @@ function articleCard(article) {
   return `<a class="report-card${trackClass(article)}" href="/robotics/${article.slug}/"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
 }
 function seriesBlock(unit, renderArticle, className = '') {
-  const count = `${unit.articles.length} ${unit.articles.length === 1 ? 'part' : 'parts'}`;
-  return `<section class="series-block${className ? ` ${className}` : ''}"><p class="series-block-eyebrow">Series / ${count}</p><h2>${escape(unit.series)}</h2><div class="series-block-parts">${unit.articles.map(renderArticle).join('')}</div></section>`;
+  const full = unit.articles[0].seriesArticles || unit.articles;
+  const planned = full.filter(isPlanned);
+  const hub = unit.articles[0].seriesHub;
+  const count = `${full.length} ${full.length === 1 ? 'part' : 'parts'}${planned.length ? ` · ${unit.articles.length} available` : ''}`;
+  const heading = hub ? `<a href="/robotics/${hub}/">${escape(unit.series)}</a>` : escape(unit.series);
+  const soon = planned.length ? `<p class="series-block-soon">Coming: ${planned.map((part) => `Part ${part.part}, ${escape(part.title)}`).join(' · ')}</p>` : '';
+  return `<section class="series-block${className ? ` ${className}` : ''}"><p class="series-block-eyebrow">Series / ${count}</p><h2>${heading}</h2><div class="series-block-parts">${unit.articles.map(renderArticle).join('')}</div>${soon}</section>`;
 }
 function otherEssaysHeading(units) {
   return units.some((unit) => unit.series) && units.some((unit) => !unit.series) ? '<p class="other-essays-heading">Other essays</p>' : '';
 }
-function attachSeries(articles) {
+function attachSeries(articles, plan = new Map()) {
   const groups = new Map();
   for (const article of articles) {
     if (!article.series) continue;
@@ -261,7 +310,25 @@ function attachSeries(articles) {
     group.push(article);
     groups.set(article.series, group);
   }
-  for (const group of groups.values()) {
+  for (const [name, group] of groups) {
+    const planned = plan.get(name);
+    if (planned) {
+      // The plan fixes each part's slug. A published article must sit where the plan puts it.
+      for (const article of group) {
+        const slot = planned.parts.find((part) => part.part === article.part);
+        if (!slot) throw new Error(`Part ${article.part} of ${name} is not in series.json`);
+        if (slot.slug !== article.slug) throw new Error(`Part ${article.part} of ${name} must have the slug ${slot.slug}`);
+      }
+      const full = planned.parts.map((slot) => group.find((article) => article.part === slot.part) || {planned:true, part:slot.part, slug:slot.slug, title:slot.title});
+      for (const article of group) {
+        const index = full.findIndex((part) => part.slug === article.slug);
+        article.seriesArticles = full;
+        article.seriesPrevious = full[index - 1] || null;
+        article.seriesNext = full[index + 1] || null;
+        article.seriesHub = planned.slug;
+      }
+      continue;
+    }
     group.sort((a, b) => a.part - b.part);
     group.forEach((article, index) => {
       article.seriesArticles = group;
@@ -269,6 +336,19 @@ function attachSeries(articles) {
       article.seriesNext = group[index + 1] || null;
     });
   }
+}
+function seriesHubPage(name, plan, articles, root) {
+  const bySlug = new Map(articles.map((article) => [article.slug, article]));
+  const available = plan.parts.filter((part) => bySlug.has(part.slug)).length;
+  const items = plan.parts.map((part) => {
+    const article = bySlug.get(part.slug);
+    const levels = part.levels?.length ? `<p class="hub-levels">Game ${part.levels.length === 1 ? 'level' : 'levels'}: ${part.levels.map(escape).join(', ')}</p>` : '';
+    const title = article ? `<a href="/robotics/${part.slug}/">${escape(article.title)}</a>` : `${escape(part.title)}${soonTag}`;
+    return `<li class="hub-part${article ? '' : ' hub-part-planned'}"><span class="hub-part-number">Part ${part.part}</span><div><h2>${title}</h2><p class="hub-question">${escape(part.question)}</p>${levels}</div></li>`;
+  }).join('');
+  return shell({title:name, description:plan.intro, pathname:`/robotics/${plan.slug}/`, root, content:`
+<header class="robotics-header"><a class="eyebrow" href="/#writing">Writing / Robotics / Series</a><h1>${escape(name)}</h1><p class="series-intro">${escape(plan.intro)}</p><p class="post-meta"><span>${plan.parts.length} parts</span><span>${available} available</span></p></header>
+<section class="report-list series-hub" aria-label="Parts of the series"><ol class="hub-parts">${items}</ol></section>`});
 }
 function landingPage(articles, root) {
   const units = articleUnits(articles);
@@ -376,11 +456,21 @@ export function build(root = ROOT) {
   });
   const articles = allArticles.filter((article) => article.draft !== true).map(({source, slug}) => ({...renderArticle(source, root), slug}))
     .sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
-  attachSeries(articles);
+  const plans = readSeriesPlan(sourceDir);
+  attachSeries(articles, plans);
   // Render everything first. A malformed article cannot leave a half-built series.
   const pages = articles.map((article) => [path.join(root, 'robotics', article.slug, 'index.html'), articlePage(article, root)]);
   const redirects = readRedirects(sourceDir, new Set(articles.map((article) => article.slug)));
   for (const {slug, target} of redirects) pages.push([path.join(root, 'robotics', slug, 'index.html'), redirectPage(target)]);
+  // A series hub exists only while at least one of its parts is published.
+  const hubs = [];
+  for (const [name, plan] of plans) {
+    if (!plan.parts.some((part) => articles.some((article) => article.slug === part.slug))) continue;
+    if (articles.some((article) => article.slug === plan.slug)) throw new Error(`Series hub ${plan.slug} has the same slug as an article`);
+    if (redirects.some((item) => item.slug === plan.slug)) throw new Error(`Series hub ${plan.slug} has the same slug as a redirect`);
+    hubs.push({slug:plan.slug, updated:articles.filter((article) => article.series === name).map((article) => article.updated).sort().at(-1)});
+    pages.push([path.join(root, 'robotics', plan.slug, 'index.html'), seriesHubPage(name, plan, articles, root)]);
+  }
   pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);
   pages.push([path.join(root, 'index.html'), homePage(articles, root)]);
   for (const [filename, page] of pages) { fs.mkdirSync(path.dirname(filename), {recursive:true}); fs.writeFileSync(filename, page); }
@@ -397,12 +487,12 @@ export function build(root = ROOT) {
   let entries = '';
   if (!preserved.includes(`<loc>${ORIGIN}/</loc>`)) entries += `  <url>\n    <loc>${ORIGIN}/</loc>\n    <changefreq>monthly</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
   if (fs.existsSync(path.join(root, 'about.html')) && !preserved.includes(`<loc>${ORIGIN}/about.html</loc>`)) entries += `  <url>\n    <loc>${ORIGIN}/about.html</loc>\n    <changefreq>monthly</changefreq>\n  </url>\n`;
-  entries += [{slug:'', updated:articles.map((article) => article.updated).sort().at(-1)}, ...articles.map((article) => ({slug:`${article.slug}/`, updated:article.updated}))].map(({slug, updated}) => `  <url>\n    <loc>${ORIGIN}/robotics/${slug}</loc>${updated ? `\n    <lastmod>${updated}</lastmod>` : ''}\n    <changefreq>monthly</changefreq>\n  </url>\n`).join('');
+  entries += [{slug:'', updated:articles.map((article) => article.updated).sort().at(-1)}, ...hubs.map((hub) => ({slug:`${hub.slug}/`, updated:hub.updated})), ...articles.map((article) => ({slug:`${article.slug}/`, updated:article.updated}))].map(({slug, updated}) => `  <url>\n    <loc>${ORIGIN}/robotics/${slug}</loc>${updated ? `\n    <lastmod>${updated}</lastmod>` : ''}\n    <changefreq>monthly</changefreq>\n  </url>\n`).join('');
   if (!preserved.includes('</urlset>')) throw new Error('Expected sitemap urlset');
   fs.writeFileSync(sitemapFile, preserved.replace('</urlset>', `${entries}</urlset>`));
   // Remove only obsolete HTML bearing this builder's ownership marker.
   // Other files inside an old report directory belong to their author and stay intact.
-  const published = new Set([...articles.map((article) => article.slug), ...redirects.map((item) => item.slug)]);
+  const published = new Set([...articles.map((article) => article.slug), ...redirects.map((item) => item.slug), ...hubs.map((hub) => hub.slug)]);
   const outputDir = path.join(root, 'robotics');
   for (const entry of fs.readdirSync(outputDir, {withFileTypes:true})) {
     if (!entry.isDirectory() || published.has(entry.name)) continue;

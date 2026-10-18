@@ -334,3 +334,55 @@ test('essay presentation keeps a centered reading path and loads figure styles o
   assert.equal(renderArticle(essay).components.futures,true);
   assert.throws(()=>renderArticle(essay.replace('layout: essay','layout: invalid')),/layout must be essay/);
 });
+
+test('a series plan shows unwritten parts as coming, with no links, and builds a hub', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-plan-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const part = (slug, part, title, question) => ({part, slug, title, question, levels:['Level ' + part]});
+    fs.writeFileSync(path.join(sourceDir, 'series.json'), JSON.stringify({'Plan series':{slug:'plan-hub', intro:'Plan intro.', parts:[
+      part('plan-a', 1, 'First part', 'Question one?'), part('plan-b', 2, 'Second part', 'Question two?'), part('plan-c', 3, 'Third part', 'Question three?'),
+    ]}}));
+    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\n${metadata}---\n\n${title} body.`;
+    fs.writeFileSync(path.join(sourceDir, 'plan-b.md'), report('Second part', '2026-10-18', 'series: Plan series\npart: 2\n'));
+    build(root);
+    const second = fs.readFileSync(path.join(root, 'robotics/plan-b/index.html'), 'utf8');
+    assert.match(second, /Part 2 of 3/);
+    assert.match(second, /<li class="series-part series-part-planned">First part<span class="track-tag soon-tag">Coming<\/span><\/li>/);
+    assert.match(second, /<span class="series-soon">← Previous: First part \(coming\)<\/span>/);
+    assert.match(second, /<span class="series-soon">Next: Third part \(coming\) →<\/span>/);
+    assert.doesNotMatch(second, /href="\/robotics\/plan-a\/"|href="\/robotics\/plan-c\/"/);
+    assert.match(second, /<p class="series-box-name"><a href="\/robotics\/plan-hub\/">Plan series<\/a><\/p>/);
+    const hub = fs.readFileSync(path.join(root, 'robotics/plan-hub/index.html'), 'utf8');
+    assert.match(hub, /Question one\?/);
+    assert.match(hub, /<h2><a href="\/robotics\/plan-b\/">Second part<\/a><\/h2>/);
+    assert.doesNotMatch(hub, /href="\/robotics\/plan-a\/"/);
+    const landing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
+    assert.match(landing, /Series \/ 3 parts · 1 available/);
+    assert.match(landing, /Coming: Part 1, First part · Part 3, Third part/);
+    assert.match(fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8'), /\/robotics\/plan-hub\//);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});
+
+test('a series plan builds no hub while every part is a draft, and rejects a misplaced slug', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-plan-draft-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    fs.writeFileSync(path.join(sourceDir, 'series.json'), JSON.stringify({'Plan series':{slug:'plan-hub', intro:'Plan intro.', parts:[
+      {part:1, slug:'plan-a', title:'First part', question:'Question one?'},
+    ]}}));
+    const report = (metadata) => `---\ntitle: Part\ndescription: Part description.\ndate: 2026-10-18\n${metadata}---\n\nBody.`;
+    fs.writeFileSync(path.join(sourceDir, 'plan-a.md'), report('draft: true\nseries: Plan series\npart: 1\n'));
+    build(root);
+    assert.equal(fs.existsSync(path.join(root, 'robotics/plan-hub/index.html')), false);
+    fs.writeFileSync(path.join(sourceDir, 'plan-a.md'), report('series: Plan series\npart: 2\n'));
+    assert.throws(() => build(root), /Part 2 of Plan series is not in series.json/);
+    fs.writeFileSync(path.join(sourceDir, 'plan-a.md'), report('series: Plan series\npart: 1\n'));
+    fs.renameSync(path.join(sourceDir, 'plan-a.md'), path.join(sourceDir, 'plan-z.md'));
+    assert.throws(() => build(root), /must have the slug plan-a/);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});

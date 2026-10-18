@@ -1,4 +1,4 @@
-/* Playback for the recorded robot clips in "The deadly triad".
+/* Playback for the recorded robot clips in "the RL series".
    Mount point: <video class="tri-video" data-clip="NAME" controls muted loop playsinline preload="none" src="clips/NAME-desktop.mp4">.
    Narrow screens get the NAME-phone.mp4 variant. A clip plays while it is on screen and pauses when it leaves.
    With prefers-reduced-motion, or without IntersectionObserver, a clip does not start by itself. The controls always work. */
@@ -6,7 +6,7 @@
   'use strict';
   var narrow = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var base = '/assets/robotics/the-deadly-triad/clips/';
+  var base = '/assets/robotics/rl/clips/';
   var css = '' +
     '.tri-clips{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;margin:28px 0 34px}' +
     '.tri-clip{margin:0;border:1px solid var(--line,#dcded6);background:#fff}' +
