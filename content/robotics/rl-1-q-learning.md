@@ -8,46 +8,46 @@ part: 1
 layout: essay
 ---
 
-A robot walks into a casino with ten slot machines. Each pays a hidden average plus noise, so one pull says little. The robot has a thousand pulls and keeps one number per machine: the average payout it has seen so far. Below, two robots keep the same table and differ in one rule. The clips only illustrate; the rest explains why.
+The first reinforcement learning problem most people hear about is the multi-armed bandit. Imagine a casino with ten slot machines, each paying a hidden average plus some noise, so that one pull tells you very little. You have a thousand pulls to spend, and the natural thing to do is keep one number per machine, the average payout you have seen from it so far. Below, two robots keep exactly the same table and differ in one rule.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="slots-greedy-505" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/slots-greedy-505-desktop.mp4"></video><figcaption><b>A robot that always pulls the machine with the largest number: it never leaves its first pick</b>The counter on the machine shows its pulls. At the end, gold is each machine's true average payout, blue is what the robot believes, and the crown marks the best machine. Simulation, one real recorded run.</figcaption></figure>
 <figure class="tri-clip"><video class="tri-video" data-clip="slots-eps-505" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/slots-eps-505-desktop.mp4"></video><figcaption><b>The same robot, same machines, same table, with one pull in ten at random: it finds the best machine</b>The only change is the random pulls. Simulation, one real recorded run.</figcaption></figure>
 </div>
 
-The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), a small game I made. They show the two rules. The next sections explain why the first one gets stuck.
+The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), a small game I made. They show the two rules side by side, and why the first one gets stuck comes straight out of the table.
 
 ## The question: one table, two jobs
 
-The question for this article is: how can one table of numbers tell a robot both how good a situation is and what to do in it? Two ideas answer it. The table holds a number for each action and not only for each situation. And the robot reads its behavior straight from the table.
+So how can one table of numbers tell a robot both how good a situation is and what to do in it? Two ideas answer that. The table holds a number for each action and not only for each situation, and then the robot reads its behavior straight off the table.
 
 ## A number for each action
 
-A number for "the casino" cannot tell the robot which machine to pull. A number for each machine can. The payout the robot expects from pulling a machine is its **action value**, written $Q(a)$. After each pull the robot nudges that machine's number toward the payout it just saw:
+A number for "the casino" can't tell you which machine to pull, but a number for each machine can. The payout you expect from pulling a machine is its **action value**, written $Q(a)$. After each pull you nudge that machine's number toward the payout you just saw:
 
 $$Q(a) \leftarrow Q(a) + \tfrac{1}{n}\,\bigl(r - Q(a)\bigr)$$
 
-In words: move the number a little toward what you just got, by a smaller step each time. Here $r$ is the payout and $n$ counts the pulls of this machine. With this step size the number ends as the plain average of the payouts.
+In words, you move the number a little toward what you just got, and the step gets smaller each time. Here $r$ is the payout and $n$ counts the pulls of this machine, so with this step size the number ends up as the plain average of the payouts.
 
 ## The table is the policy
 
-A **policy** is a rule for what to do. Here the rule is greedy: pull the machine with the largest number. It needs no list of instructions and no model of how the machines work. The numbers say how good each choice looks, and the largest one says what to do. One table holds both.
+A **policy** is just a rule for what to do, and here the rule is greedy: pull the machine with the largest number. It needs no list of instructions and no model of how the machines work. The numbers say how good each choice looks and the largest one says what to do, so one table holds both.
 
 ## Why the first robot is stuck
 
-Every number starts at zero. Machines are tied, so the first pull goes to one of them at random. If it pays anything above zero, that machine's number rises above all the others, which still read zero. The robot pulls it again. As long as that number stays above zero, no other machine gets a pull, so their numbers never get a chance to correct. The robot settles on the first machine whose number stays above zero, and it never learns what the others pay. In the first clip it settled on a machine that pays a little above zero, while another pays far more.
+Every number starts at zero, so the machines are tied and the first pull goes to one of them at random. If it pays anything above zero, that machine's number rises above all the others, which still read zero, and the robot pulls it again. As long as that number stays above zero no other machine gets a pull, so their numbers never get a chance to correct. The robot settles on the first machine whose number stays above zero and never learns what the others pay. In the first clip it settled on a machine that pays a little above zero, while another pays far more.
 
-The fix is to keep trying machines that do not look best. In the second clip, one pull in ten goes to a random machine. Averaged over 200 runs, the greedy robot spent about a third of its last 200 pulls on the best machine, and the robot with random tries spent about three quarters. Three quarters and not all, because one pull in ten is random on purpose.
+The fix is to keep trying machines that don't look best. In the second clip, one pull in ten goes to a random machine. Averaged over 200 runs, the greedy robot spent about a third of its last 200 pulls on the best machine, and the robot with random tries spent about three quarters. It isn't all of them because one pull in ten is random on purpose.
 
 ## What slot machines leave out
 
-Slot machines have one situation. Pulling a machine never changes what you can do next. Real tasks have steps: a move changes where the robot is, and what it can do from there. So the slot machines show only two ideas, a number per action and a policy read from the table, plus the need for random tries. They do not show how to learn in a task with steps.
+Slot machines have only one situation, since pulling a machine never changes what you can do next. Real tasks have steps, where a move changes where the robot is and what it can do from there. So the slot machines show only two ideas, a number per action and a policy read from the table, plus the need for random tries, and they don't show how to learn in a task with steps.
 
 For that, the table gets a row for each situation $s$ and a column for each action $a$. The number $Q(s,a)$ is the return the robot expects if it takes action $a$ in situation $s$ and then acts well afterwards. The **return** is the reward collected from now on, with later rewards counted a little less. Q-learning, proposed by Watkins in 1989, updates it like this:
 
 $$\begin{aligned}\text{target} &= r + \gamma \max_{a'} Q(s',a') \\ Q(s,a) &\leftarrow Q(s,a) + \alpha\,\bigl(\text{target} - Q(s,a)\bigr)\end{aligned}$$
 
-In words: the robot takes $a$ in $s$, gets a reward $r$ and lands in a new situation $s'$. It looks at the row of $s'$ and finds the largest number there, its own best guess of what it can get from that situation. The target is the reward plus that guess, and the robot moves $Q(s,a)$ a little toward it. Here $\alpha$ (alpha) is the step size and $\gamma$ (gamma) is the discount, a number just below 1. A slot machine is the special case where no next row exists. The next article explains why a guess is a fair target and what it costs.
+In words, the robot takes $a$ in $s$, gets a reward $r$ and lands in a new situation $s'$. It then looks at the row of $s'$ and finds the largest number there, which is its own best guess of what it can get from that situation. The target is the reward plus that guess, and the robot moves $Q(s,a)$ a little toward it. Here $\alpha$ (alpha) is the step size and $\gamma$ (gamma) is the discount, a number just below 1. A slot machine is just the special case where no next row exists. The next article explains why a guess makes a fair target and what it costs.
 
 ## What a finished table holds
 
@@ -55,31 +55,31 @@ Call the best possible numbers $Q^*$: for each situation and action, the return 
 
 $$V^*(s) = \max_a Q^*(s,a)$$
 
-In words: the value of a situation is the number of its best action. The best policy takes, in every situation, the action with the largest $Q^*$. Watkins and Dayan proved in 1992 that the table above converges to $Q^*$ with probability 1, under conditions that include these three: the table keeps one separate number per pair, every action is tried in every situation again and again, and the step sizes shrink in a particular way. In the limit, the greedy policy of the table is an optimal policy.
+In words, the value of a situation is the number of its best action, and the best policy takes the action with the largest $Q^*$ in every situation. Watkins and Dayan proved in 1992 that the table above converges to $Q^*$ with probability 1, under conditions that include these three: the table keeps one separate number per pair, every action is tried in every situation again and again, and the step sizes shrink in a particular way. In the limit, the greedy policy of the table is an optimal policy.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cliff-table-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-table-202-desktop.mp4"></video><figcaption><b>A finished table on a cliff walk: the robot follows the largest number in each cell</b>Arrows show the move with the largest number in each cell. The robot walks them with no random moves, from the start at the bottom left to the flag. Simulation, one real recorded run.</figcaption></figure>
 </div>
 
-I checked this on the cliff walk. A separate script computed the exact optimal values for the grid. Along the best route, the recorded tables matched them. In a few cells off the route, the favorite move was still not the best one. So a table the robot has trained is close to $Q^*$ where it has practiced, and not everywhere. That difference matters in the next section.
+I checked this on the cliff walk. A separate script computed the exact optimal values for the grid, and along the best route the recorded tables matched them. In a few cells off the route the favorite move still wasn't the best one, so a table the robot has trained is close to $Q^*$ where it has practiced and not everywhere. That difference matters in the next section.
 
 ## When the largest number lies: the mirage
 
-Here is a world where the largest number misleads. There are two doors. The right door ends the episode with reward 0. The left door leads to ten slot machines, each paying on average $-0.1$ with noise, and then the episode ends. So the left door is a little worse than the right one. The robot uses the table above, with one random move in ten.
+Let's build a world where the largest number misleads. There are two doors. The right door ends the episode with reward 0, and the left door leads to ten slot machines, each paying on average $-0.1$ with noise, and then the episode ends. So the left door is a little worse than the right one, and the robot uses the table above with one random move in ten.
 
-Each machine's number is a noisy average of a few payouts. By luck, some of the ten read high. The target for the left door uses the largest of the ten, and the largest of ten noisy numbers is the luckiest one. It sits above the true value of $-0.1$, so the left door looks good.
+Each machine's number is a noisy average of a few payouts, so by luck some of the ten read high. The target for the left door uses the largest of the ten, and the largest of ten noisy numbers is the luckiest one. It sits above the true value of $-0.1$, which makes the left door look good.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="mirage-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/mirage-202-desktop.mp4"></video><figcaption><b>The robot goes through the worse door most of the time at first, then drifts to the better one</b>One episode per door choice. The labels show each door's share of the episodes so far. Simulation, one real recorded run.</figcaption></figure>
 </div>
 
-Averaged over 300 runs, the robot took the left door in about 85% of episodes during the first tenth of each run. By the end it was about 11%, and random tries alone account for about 5%. Even then, the average estimate for the left door was still above the true $-0.1$. Sutton and Barto call this **maximization bias** and use this setup as their Example 6.7. Their fix, Double Q-learning, uses one table to choose the machine and another to rate it. I did not re-run that fix for this article.
+Averaged over 300 runs, the robot took the left door in about 85% of episodes during the first tenth of each run. By the end that was down to about 11%, and random tries alone account for about 5%. Even then the average estimate for the left door was still above the true $-0.1$. Sutton and Barto call this **maximization bias** and use this setup as their Example 6.7, and their fix, Double Q-learning, uses one table to choose the machine and another to rate it. I didn't re-run that fix for this article.
 
 ## What this shows, and what it does not
 
-The answer to the question is this. One table of numbers per action tells the robot how good each choice looks and, by taking the largest number, what to do. If the table is finished, the largest number in a row is also the value of that situation, and the greedy rule is the best policy. If the table is not finished, or its numbers are noisy, the largest number is only a guess, and it tends to be too high. The robot still needs random tries, so that no number is left uncorrected.
+So what does one table of numbers per action buy you? It tells the robot how good each choice looks and, by taking the largest number, what to do. If the table is finished, the largest number in a row is also the value of that situation and the greedy rule is the best policy. If the table isn't finished, or its numbers are noisy, the largest number is only a guess, and it tends to be too high. That's why the robot still needs random tries, so that no number is left uncorrected.
 
-The slot machines show the table, the greedy rule and the need for tries. They do not show sequential learning. The cliff and the mirage carry that part. I did not test the mirage's cause beyond the book's explanation, and the clips are single recorded runs. The convergence result needs a table and tries that never stop. Practical methods work with limited data and often replace the table with a formula, and they lose that guarantee. Bootstrapping, the subject of the next article, does not remove the conditions: Q-learning still needs every action tried again and again, and suitable step sizes.
+The slot machines show the table, the greedy rule and the need for tries, but they don't show sequential learning. The cliff and the mirage carry that part. I did not test the mirage's cause beyond the book's explanation, and the clips are single recorded runs. The convergence result needs a table and tries that never stop, while practical methods work with limited data and often replace the table with a formula, and they lose that guarantee. Bootstrapping, the subject of the next article, doesn't remove the conditions: Q-learning still needs every action tried again and again, and suitable step sizes.
 
 <details>
 <summary>Source checks and what each claim depends on</summary>

@@ -8,28 +8,28 @@ part: 3
 layout: essay
 ---
 
-Two simulated robots balance a broom on a cart. One stores its numbers in a table, the other in a small network.
+Every method in this series has to keep its numbers somewhere. Suppose you want a robot to learn to balance a broom on a cart, and you can store what it learns in a table of boxes or in a small neural network. Below, two simulated robots balance a broom on a cart, one with each.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cart-table-404" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-table-404-desktop.mp4"></video><figcaption><b>A table of 1,296 boxes: the broom falls after 31 steps</b>This is the greedy test of one real recorded run after 20,000 training steps, with no random moves, at half speed. At real speed the fall takes 0.6 seconds. The run is the median-length test of five. Simulation.</figcaption></figure>
 <figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>A network with the same learning rule: the broom falls after 9 steps</b>One real recorded run, at quarter speed. The target rule, the collection mode, the exploration schedule and the training budget match the table. The runs still gather different data, because their policies differ. Each store keeps the game's own optimizer and step size, and I did not tune either. The clip does not diagnose the fall. Simulation.</figcaption></figure>
 </div>
 
-The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). The clips only illustrate. Both robots fall, and the clips do not diagnose why. The rest of the article explains two issues that can lie behind such failures: a table fills slowly, and a formula couples its updates.
+The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). Both robots fall, and the clips don't diagnose why. Two issues can lie behind failures like these: a table fills slowly, and a formula couples its updates.
 
-The robot reads four continuous sensors, for the cart's position and speed and the broom's angle and turning speed. A table row for every exact situation is impossible, so the table cuts each sensor's range into six slices and keeps one number per box. That makes 1,296 boxes. Both robots use the same target rule, collection mode, exploration schedule and training budget, and each store keeps its default optimizer and step size.
+The robot reads four continuous sensors, which give the cart's position and speed and the broom's angle and turning speed. A table row for every exact situation is impossible, so the table cuts each sensor's range into six slices and keeps one number per box, which makes 1,296 boxes. Both robots use the same target rule, collection mode, exploration schedule and training budget, and each store keeps its default optimizer and step size.
 
 ## The question: what changes when a formula replaces the table
 
-The question for this article is: what does a robot gain, and what can it lose, when one formula replaces the table? A formula lets one visit teach the robot about situations it never saw. The same fact has a price: one update now moves many numbers, including the numbers that the next target is built from.
+So what does a robot gain, and what can it lose, when one formula replaces the table? The gain is that one visit can teach it about situations it never saw. The price comes from the same fact, which is that one update now moves many numbers, including the ones the next target is built from.
 
 ## Why a table runs out of cells
 
-A table learns only about the cells it visits. A visit to one cell says nothing about the box next to it. I counted this in the game's own level. In 20,000 training steps, the table robot ever stood in about 8% of its 1,296 boxes, and in five runs the count ran from 94 to 122 boxes. Six to eight boxes held half of all the visits.
+A table learns only about the cells it visits, and a visit to one cell says nothing about the box next to it. I counted this in the game's own level. In 20,000 training steps the table robot ever stood in about 8% of its 1,296 boxes, and across five runs the count ran from 94 to 122 boxes. Six to eight boxes held half of all the visits.
 
-Slicing finer makes the count worse. With 12 slices per sensor the table has 20,736 boxes, and the robot visited about 2.3% of them. Its score, out of 200, was 55, about the same as the 50 of the six-slice table. Slicing coarser helped. With 3 slices per sensor the table has 81 boxes and scored 92. All five of those runs scored higher than any run with 6 slices. Only the number of slices changed.
+Slicing finer makes the count worse. With 12 slices per sensor the table has 20,736 boxes and the robot visited about 2.3% of them, and its score out of 200 was 55, about the same as the 50 of the six-slice table. Slicing coarser helped. With 3 slices per sensor the table has 81 boxes and scored 92, and all five of those runs scored higher than any run with 6 slices. Only the number of slices changed.
 
-A coarse table is already a way to share. Every situation inside a box gets the same number, so a visit to one situation teaches the robot about all of them. It is the simplest formula: a number that stays flat inside a box. Sharing fills the table with data, and it blurs, because two different situations in one box look the same.
+A coarse table is already a way to share. Every situation inside a box gets the same number, so a visit to one situation teaches the robot about all of them, and you can think of it as the simplest formula, a number that stays flat inside a box. Sharing fills the table with data, and it also blurs, because two different situations in one box look the same.
 
 ## A formula shares by design
 
@@ -37,52 +37,52 @@ A formula can share in a smoother way. The robot keeps a short list of **weights
 
 $$\hat v(s) = \mathbf{w}^\top \mathbf{x}(s)$$
 
-In words: describe the situation with a few numbers, multiply each by its weight and add up. A line is the simplest case. The features are 1 and the position along the row, and the two weights are the line's height and its slope. Learning now changes the weights, not one number per situation. The update is:
+In words, you describe the situation with a few numbers, multiply each by its weight and add up. A line is the simplest case, with the features 1 and the position along the row, and the two weights are the line's height and its slope. Learning now changes the weights and not one number per situation, and the update is:
 
 $$\mathbf{w} \leftarrow \mathbf{w} + \alpha\,\bigl(\text{target} - \hat v(s)\bigr)\,\mathbf{x}(s)$$
 
-In words: measure how far the estimate at the visited situation is from the target, then move each weight toward closing that gap, in proportion to how much it counted there. A table is the special case where $\mathbf{x}(s)$ holds a 1 in the slot of $s$ and a 0 in every other slot. Then only one number moves. A neural network uses the same idea with many more weights.
+In words, you measure how far the estimate at the visited situation is from the target, and then move each weight toward closing that gap, in proportion to how much it counted there. A table is the special case where $\mathbf{x}(s)$ holds a 1 in the slot of $s$ and a 0 in every other slot, so only one number moves, and a neural network uses the same idea with many more weights.
 
-The tool below shows the three ways to store a value. It is a mathematical illustration, not a game run. Sixteen situations stand in a row, and their true values rise along a curve. Three learners receive the same visits. Each visit hands the true value as the target, there is no noise, and every number starts at 0. Try visiting only situations 1 to 4, then look at the right end.
+The tool below shows three ways to store a value, as a mathematical illustration and not a game run. Sixteen situations stand in a row and their true values rise along a curve, and three learners receive the same visits. Each visit hands over the true value as the target, there's no noise, and every number starts at 0. Try visiting only situations 1 to 4 and then look at the right end.
 
 <div class="tri-sharing"><noscript>With JavaScript on, this tool shows three learners that receive the same visits. After visits at situations 3, 3, 8, 8, 13, 13, 13, 1, 16 and 6, the average error over all sixteen situations is 4.7 for the table, 2.7 for the table of groups and 0.67 for the line.</noscript></div>
 
-One visit moves one number in the table, four in the table of groups and sixteen in the line. After ten visits at mixed situations, the average error is 4.7 for the table, 2.7 for the groups and 0.67 for the line. The line has learned about situations it never saw.
+One visit moves one number in the table, four in the table of groups and sixteen in the line. After ten visits at mixed situations the average error is 4.7 for the table, 2.7 for the groups and 0.67 for the line, so the line has learned about situations it never saw.
 
 ## What the sharing costs
 
-**The formula is not exact.** The true values curve and the line is straight. After many visits to every situation, the table is right and the groups are off by 0.4 on average. The line is off by 0.64. A formula can only be as right as its shape allows.
+**The formula is not exact.** The true values curve and the line is straight, so after many visits to every situation the table is right, the groups are off by 0.4 on average and the line is off by 0.64. A formula can only be as right as its shape allows.
 
-**Far guesses can be wrong.** Visit only situations 1 to 4 many times. The line fits them, then guesses the value at situation 16 to be 2.2, against a true value of 9.5. Sharing helps only when the shape of the formula matches the shape of the world.
+**Far guesses can be wrong.** Visit only situations 1 to 4 many times and the line fits them, and then it guesses the value at situation 16 to be 2.2, against a true value of 9.5. Sharing helps only when the shape of the formula matches the shape of the world.
 
-**Updates now couple.** In a table, a visit changes one number and nothing else. With weights, a visit changes the estimate at every situation that shares those weights. That can improve several situations at once, as the tool shows, and it can worsen others when they pull the weights in different directions. Sutton and Barto describe the trade-off for a formula with far fewer weights than situations: it is not possible to get every value exactly right, so the robot must decide which situations matter most. A table never had to.
+**Updates now couple.** In a table a visit changes one number and nothing else, while with weights a visit changes the estimate at every situation that shares those weights. That can improve several situations at once, as the tool shows, and it can worsen others when they pull the weights in different directions. Sutton and Barto describe the trade-off for a formula with far fewer weights than situations. It isn't possible to get every value exactly right, so the robot must decide which situations matter most, and a table never had to.
 
-**Targets move.** In part 2 the target was a reward plus the robot's own estimate of the next situation. In a table, an update leaves the other entries unchanged, so it changes its own target only when the next situation is the same entry. With a formula, an update can change the estimates at other entries too. The robot raises the estimate at situation $s$, the same weights raise the estimate at the next situation $s'$, and the next target is built from that estimate. The error can feed itself. The book names this issue. I did not test it alone.
+**Targets move.** In part 2 the target was a reward plus the robot's own estimate of the next situation. In a table an update leaves the other entries unchanged, so it changes its own target only when the next situation is the same entry. With a formula an update can change the estimates at other entries too. The robot raises the estimate at situation $s$, the same weights raise the estimate at the next situation $s'$, and the next target is built from that estimate, so the error can feed itself. The book names this issue, and I didn't test it alone.
 
 ## What the game measured
 
-Two pairs of runs use the same target rule, collection mode, exploration schedule and training budget. They differ in the store of numbers, and each store keeps its default optimizer and step size. Their policies differ, so they gather different data. The score is the greedy robot's reward out of 200 in a test, averaged over runs.
+Two pairs of runs use the same target rule, collection mode, exploration schedule and training budget. They differ in the store of numbers, and each store keeps its default optimizer and step size, so their policies differ and they gather different data. The score is the greedy robot's reward out of 200 in a test, averaged over runs.
 
 | Learning rule | Table | Network |
 | --- | --- | --- |
 | One-step guesses (Q-learning) | 50.4 | 9.4 (largest estimate 2.1 million) |
 | Waiting for the real return | 95.4 | 33.9 |
 
-The network scored lower in both rows. Waiting uses no guessed target, so a moving target cannot be the only reason. Changing from a table to a network, each with its default optimizer and step size, lowered the score here. I did not isolate the cause, and I did not tune the step sizes, so the table shows these settings and not a law.
+The network scored lower in both rows. Waiting uses no guessed target, so a moving target can't be the only reason. Changing from a table to a network, each with its default optimizer and step size, lowered the score here. I didn't isolate the cause and I didn't tune the step sizes, so the table shows these settings and not a law.
 
-Part 2 showed a network that held the broom, with replay and a frozen copy of the network. It scored 143 with a largest estimate near 62.
+Part 2 showed a network that held the broom, using replay and a frozen copy of the network. It scored 143 with a largest estimate near 62.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-dqn-101-desktop.mp4"></video><figcaption><b>A network with replay and a frozen copy: the broom stays up for 118 steps</b>One real recorded run at real speed, the median-length test of five. The robot also differs from the table in the way it takes its data and in the copy it builds targets from, so this is not a fair comparison with the table. Simulation.</figcaption></figure>
 </div>
 
-I cannot credit that 143 to the formula alone. No table run has replay or a frozen copy. The same network with replay and no frozen copy scored 91, with a largest estimate of about 31,000. So those two fixes matter a great deal for a network. I did not run a table with them.
+I can't credit that 143 to the formula alone, because no table run has replay or a frozen copy. The same network with replay and no frozen copy scored 91, with a largest estimate of about 31,000, so those two fixes matter a great deal for a network. I didn't run a table with them.
 
 ## What this shows, and what it does not
 
-A formula lets a robot value situations it has never seen. A full table does not share between distinct unvisited rows, though a table of coarse boxes already does within each box. The coarse table showed the gain in the game: 81 boxes scored best. The costs are real. A formula blurs, it guesses badly when its shape is wrong, one update moves many numbers, and the target moves with the weights. In my runs the formula alone did not score higher than the table. The gain I can show is in the tool above and in the count of unvisited boxes. The tool is a toy with no noise and a straight line. The game numbers come from five runs and one world.
+A formula lets a robot value situations it has never seen. A full table doesn't share between distinct unvisited rows, though a table of coarse boxes already does within each box, and the coarse table showed the gain in the game, where 81 boxes scored best. The costs are real. A formula blurs, it guesses badly when its shape is wrong, one update moves many numbers, and the target moves with the weights. In my runs the formula alone did not score higher than the table, so the gain I can show is in the tool above and in the count of unvisited boxes. The tool is a toy with no noise and a straight line, and the game numbers come from five runs and one world.
 
-The next article asks which data the robot learns from, and why that decides whether the updates stay safe. For predicting values under one fixed policy, with on-policy data, a linear formula and step sizes that shrink in the usual way, the book shows that a bootstrapping method called semi-gradient TD converges. With other data, bootstrapping and a formula together may diverge.
+The next article asks which data the robot learns from, and why that decides whether the updates stay safe. For predicting values under one fixed policy, with on-policy data, a linear formula and step sizes that shrink in the usual way, the book shows that a bootstrapping method called semi-gradient TD converges, but with other data bootstrapping and a formula together may diverge.
 
 <details>
 <summary>Source checks and what each claim depends on</summary>

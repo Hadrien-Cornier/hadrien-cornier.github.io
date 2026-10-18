@@ -8,22 +8,22 @@ part: 2
 layout: essay
 ---
 
-A robot learning to fold a shirt hears only at the end whether it worked. Which of its two hundred movements deserves the credit? Below, two robots on a cliff walk learn in different ways: one guesses the future as it goes, and the other waits for each walk to end. The clips only illustrate; the rest explains what the guess is for.
+Imagine you are training a robot to fold a shirt, and all you get is one yes or no at the very end. Which of its two hundred movements deserves the credit? That is the credit assignment problem, and bootstrapping is one answer to it. Below, two robots on a cliff walk learn in different ways. One guesses the future as it goes, and the other waits for each walk to end.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cliff-q-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-q-202-desktop.mp4"></video><figcaption><b>A robot that guesses the future: it learns the path along the cliff</b>The first walk (several falls), a late walk, then the final test with no random moves. The arrows show the robot's favorite move in each cell. Every step costs 1 and a fall costs 100. Simulation, real recorded run.</figcaption></figure>
 <figure class="tri-clip"><video class="tri-video" data-clip="cliff-mc-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-mc-202-desktop.mp4"></video><figcaption><b>A robot that waits for the end of each walk: after the same practice, it has not learned the path</b>The same world and the same number of steps. The first walk, a late walk, then the final test, sped up: the robot stays at the start and the walk ends at the step limit. Simulation, real recorded run.</figcaption></figure>
 </div>
 
-Both robots practiced for the same 10,000 steps. The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), a small game I made. They show the two styles and do not explain why one did better.
+Both robots practiced for the same 10,000 steps. The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), a small game I made. They show the two styles and don't explain why one did better.
 
 ## The problem: credit that arrives late
 
-The robot wants a **value** $V(s)$ for every situation $s$ it can be in:
+To judge any of those movements you need a **value** $V(s)$ for every situation $s$ the robot can be in:
 
 $$V(s) = \mathbb{E}\bigl[\, r_t + \gamma\, r_{t+1} + \gamma^2\, r_{t+2} + \cdots \,\big|\, s_t = s \,\bigr]$$
 
-In words: the reward you expect to collect from now on, with later rewards counted a little less. Here $r_t$ is the reward at step $t$, $\gamma$ (gamma) is a number just below 1 that does the discounting, and $\mathbb{E}$ means the average over everything that could happen. In the shirt task, every one of the two hundred values has to come from one yes or no at the end.
+In words, it's the reward you expect to collect from now on, with later rewards counted a little less. Here $r_t$ is the reward at step $t$, $\gamma$ (gamma) is a number just below 1 that does the discounting, and $\mathbb{E}$ means the average over everything that could happen. In the shirt task, all two hundred values have to come from the one yes or no at the end.
 
 ## First answer: wait for the end
 
@@ -35,15 +35,15 @@ Then move each estimate a small step toward its own return:
 
 $$V(s_t) \leftarrow V(s_t) + \alpha\,\bigl(G_t - V(s_t)\bigr)$$
 
-In words: move your estimate a little toward what actually happened afterward. Here $T$ is the step where the fold ends and $\alpha$ (alpha) is the step size. This is called **Monte Carlo**. It never uses a guess, so its target is the true return. It has two costs. You learn nothing until the end, and a task that never ends leaves nothing to wait for. And one return is a noisy sample: luck at step 150 is credited to step 3, and only an average over many folds washes it out.
+In words, you move your estimate a little toward what actually happened afterward. Here $T$ is the step where the fold ends and $\alpha$ (alpha) is the step size. This is called **Monte Carlo**, and since it never uses a guess, its target is the true return. It has two costs. You learn nothing until the end, so a task that never ends leaves you nothing to wait for. And one return is a noisy sample, which means luck at step 150 gets credited to step 3, and only an average over many folds washes it out.
 
 ## Second answer: use your own guess
 
-Bootstrapping removes the wait. After one step the robot knows one real reward, $r_t$, and the situation it has reached, $s_{t+1}$. It already has an estimate for that situation. So it replaces everything after the next step with its current estimate:
+Bootstrapping removes the wait. After a single step you know one real reward, $r_t$, and the situation you have reached, $s_{t+1}$, and you already have an estimate for that situation. So let's replace everything after that step with your current estimate:
 
 $$V(s_t) \leftarrow V(s_t) + \alpha\,\bigl(\underbrace{r_t + \gamma\, V(s_{t+1})}_{\text{target}} - V(s_t)\bigr)$$
 
-In words: the target is what I just earned, plus my own current guess of everything that follows. The robot can update after every step. It learns a guess from a guess, like lifting itself by its own bootstraps. Q-learning, the subject of the previous article, makes exactly this move on action values: its target is the reward plus its own best guess for the next situation.
+In words, the target is what you just earned plus your own current guess of everything that follows, so you can update after every step. It's a guess learned from a guess, a bit like lifting yourself by your own bootstraps. Q-learning, the subject of the previous article, makes exactly this move on action values, with a target that is the reward plus its own best guess for the next situation.
 
 ## The made-up reward
 
@@ -51,55 +51,55 @@ The gap inside that update is called the **TD error** (temporal difference error
 
 $$\delta_t = r_t + \gamma\, V(s_{t+1}) - V(s_t)$$
 
-In words: the real reward, plus how much better the next situation looks than the current one. Read it as a reward the robot makes up for itself on every step. On a step with zero real reward, $\delta_t$ is positive when the discounted estimate of the next situation is higher than the estimate of the current one. Once the estimates carry some knowledge of the reward at the end, that single reward can show up as a signal on earlier movements. On the first walk, with every estimate at zero, only the last step has one. If the estimates did not change during a walk, the real return minus the current estimate would equal the sum of the made-up rewards along the rest of the walk: $G_t - V(s_t) = \sum_k \gamma^{k-t}\,\delta_k$.
+In words, it's the real reward plus how much better the next situation looks than the current one, and you can read it as a reward the robot makes up for itself on every step. On a step with zero real reward, $\delta_t$ is positive when the discounted estimate of the next situation is higher than the estimate of the current one. Once the estimates carry some knowledge of the reward at the end, that single reward can show up as a signal on earlier movements, though on the first walk, with every estimate at zero, only the last step has one. And if the estimates didn't change during a walk, the real return minus the current estimate would equal the sum of the made-up rewards along the rest of the walk: $G_t - V(s_t) = \sum_k \gamma^{k-t}\,\delta_k$.
 
-The made-up reward is not the task's reward. It is built from the current estimate, so it changes whenever the estimate does. It resembles reward shaping: Ng, Harada and Russell (1999) showed that adding $\gamma\Phi(s') - \Phi(s)$ to the reward, for a fixed $\Phi$, leaves the best behavior unchanged. The TD error has this form when $\Phi = V$, but $V$ moves during learning, so the guarantee does not carry over.
+The made-up reward isn't the task's reward. It's built from the current estimate, so it changes whenever the estimate does. It resembles reward shaping, where Ng, Harada and Russell (1999) showed that adding $\gamma\Phi(s') - \Phi(s)$ to the reward, for a fixed $\Phi$, leaves the best behavior unchanged. The TD error has this form when $\Phi = V$, but $V$ moves during learning, so the guarantee doesn't carry over.
 
 ## How the credit trickles back
 
-Eight situations in a row, reward 1 on the last move, nothing else. Press the button to send the robot down again. A red cell means the learner knows a reward is coming from there.
+Picture eight situations in a row, with reward 1 on the last move and nothing else. Press the button to send the robot down the row again, and a red cell means the learner knows a reward is coming from there.
 
 <div class="tri-corridor"><noscript>Without scripts: after walk 1, waiting credits all 8 states, three-step credits the last 3, one-step credits the last 1. After walk 3, three-step has all 8. One-step needs 8 walks.</noscript></div>
 
-Waiting credits every situation after the first walk. The one-guess learner credits only the last, the only place a real reward exists. On the next walk the second to last can borrow the guess of the last, and so on. The reward trickles back one link per walk. The made-up reward $\delta$ in the row under the first learner marks the front: it is positive where the next walk will teach something new.
+Waiting credits every situation after the first walk. The learner that uses one guess credits only the last situation, because that's the only place a real reward exists. On the next walk the second to last can borrow the guess of the last, and so on, so the reward trickles back one link per walk. The made-up reward $\delta$ in the row under the first learner marks the front, since it's positive where the next walk will teach something new.
 
-Between the two sits a dial: use $n$ real rewards, then a guess.
+Between the two sits a dial where you use $n$ real rewards and then a guess:
 
 $$G_{t:t+n} = r_t + \gamma\, r_{t+1} + \cdots + \gamma^{n-1}\, r_{t+n-1} + \gamma^{n}\, V(s_{t+n})$$
 
-In words: add the next $n$ real rewards, then the discounted guess for the situation $n$ steps ahead. With $n = 1$ this is the guess above, and with $n$ as long as the walk it is waiting. The middle row uses $n = 3$ and finishes in 3 walks instead of 8. Eligibility traces blend all these $n$.
+In words, you add the next $n$ real rewards and then the discounted guess for the situation $n$ steps ahead. With $n = 1$ this is the guess above, and with $n$ as long as the walk it's waiting. The middle row uses $n = 3$ and finishes in 3 walks instead of 8, and eligibility traces blend all these $n$ together.
 
-The corridor does not show the guess winning. With no randomness and a step size of 1, this is the best case for waiting. The trickle's speed also depends on update order: a learner that updates backward after each walk, or uses traces, carries credit further in one pass. The guess was not invented to win this race.
+The corridor doesn't show the guess winning. With no randomness and a step size of 1 it's the best case for waiting, and the trickle's speed also depends on update order, since a learner that updates backward after each walk, or uses traces, carries credit further in one pass. The guess wasn't invented to win this race.
 
 ## What the guess buys
 
-**It lets learners share what they know.** Sutton and Barto give a small example: eight recorded walks through two situations, A and B. One walk goes from A to B and ends with no reward at all. Seven walks start at B: six end with reward 1 and one ends with 0. The value of B is clearly 3/4. What is the value of A? If the learner reuses this data until its estimates settle, waiting says 0, because the one walk through A returned 0. Guessing says A leads to B, and B is worth 3/4, so A is worth 3/4. The guess shares what was learned about B with every situation that leads to B. If the world is Markov (the next situation depends only on the current one), the shared answer is the better one. This holds for repeated reuse of the data, and a single online pass would not give these numbers. Which method learns faster has no general proof, though in practice the guess has usually won on noisy tasks.
+**It lets learners share what they know.** Sutton and Barto give a small example with eight recorded walks through two situations, A and B. One walk goes from A to B and ends with no reward at all, and seven walks start at B, six ending with reward 1 and one ending with 0. So the value of B is clearly 3/4, and the question is what A is worth. If the learner reuses this data until its estimates settle, waiting says 0, because the one walk through A returned 0. Guessing says A leads to B and B is worth 3/4, so A is worth 3/4, which means the guess shares what was learned about B with every situation that leads to B. If the world is Markov (the next situation depends only on the current one), the shared answer is the better one. That holds for repeated reuse of the data, and a single online pass wouldn't give these numbers. Which method learns faster has no general proof, though in practice the guess has usually won on noisy tasks.
 
-**It learns while the task runs.** The robot does not need the walk to end, so it can learn in a task with very long walks or one that never ends. Its target also holds one random reward and not two hundred. Sutton and Barto call the one-step target often superior in variance, though it introduces bias, because the guess can be wrong.
+**It learns while the task runs.** The robot doesn't need the walk to end, so it can learn in a task with very long walks or one that never ends, and its target holds one random reward instead of two hundred. Sutton and Barto call the one-step target often superior in variance, though it introduces bias because the guess can be wrong.
 
 ## A reward on every step does not remove the problem
 
-Bootstrapping does not exist because rewards are rare. Suppose a reward arrives on every step. It still speaks only about the step just taken, while the value is about everything that step leads to: a step that costs 1 can lead along a safe path or toward a cliff five steps later. The estimate of the future supplies that delayed consequence, whether rewards are rare or frequent. The cliff clips are pictures, not proof: I did not test why the waiting robot failed there.
+Bootstrapping doesn't exist because rewards are rare. Suppose a reward arrives on every step. It still speaks only about the step you just took, while the value is about everything that step leads to, so a step that costs 1 can lead along a safe path or toward a cliff five steps later. The estimate of the future supplies that delayed consequence whether rewards are rare or frequent. The cliff clips are pictures and not proof, and I didn't test why the waiting robot failed there.
 
 ## The price: a guess built on a guess
 
-The target uses the robot's own number. In a table, where each situation has a separate entry, a wrong number gets pulled toward reality, because the guesses end at real rewards. Now let one set of weights produce the numbers for all situations, as a neural network does (**function approximation**), and let the target assume a different behavior from the one that collects the data (**off-policy learning**: Q-learning assumes the best next action while the robot also makes random moves). The next two articles take these two apart. The last article puts them together with bootstrapping as the **deadly triad**, where a wrong guess can feed itself.
+The target uses the robot's own number. In a table, where each situation has a separate entry, a wrong number gets pulled toward reality because the guesses end at real rewards. But now let one set of weights produce the numbers for all situations, as a neural network does (**function approximation**), and let the target assume a different behavior from the one that collects the data (**off-policy learning**, where Q-learning assumes the best next action while the robot also makes random moves). The next two articles take these two apart, and the last one puts them together with bootstrapping as the **deadly triad**, where a wrong guess can feed itself.
 
-The smallest case comes from Sutton and Barto. Two situations share one weight $w$. The first has estimated value $w$ and the second has $2w$. The only move goes from the first to the second, with reward 0, so the true value of both is 0. The target for the first is $\gamma \cdot 2w$, and the update is:
+The smallest case comes from Sutton and Barto. Two situations share one weight $w$, so the first has estimated value $w$ and the second has $2w$. The only move goes from the first to the second, with reward 0, which makes the true value of both 0. The target for the first is $\gamma \cdot 2w$, and the update is:
 
 $$w \leftarrow w + \alpha\,(2\gamma w - w) = \bigl(1 + \alpha(2\gamma - 1)\bigr)\,w$$
 
-In words: every update multiplies $w$ by a number above 1, so the estimate of something worth nothing grows without end. With $\gamma = 0.99$ and $\alpha = 0.1$ the factor is 1.098. Starting at 10, the estimate is about 25 after 10 updates and over 100,000 after 100.
+In words, every update multiplies $w$ by a number above 1, so the estimate of something worth nothing grows without end. With $\gamma = 0.99$ and $\alpha = 0.1$ the factor is 1.098, and starting at 10 the estimate is about 25 after 10 updates and over 100,000 after 100.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>The price: the broom falls almost at once</b>A simulated robot balances a broom on a cart. Its network learned from one-step guesses (Q-learning), updating from each move as it happened, with random moves. There was no memory of old moves and no frozen copy. The real fall takes less than a fifth of a second, so the clip plays at quarter speed. Recorded game simulation.</figcaption></figure>
 </div>
 
-The clip is a recorded game simulation of that loop, not a physical robot. Its estimates grew into the millions in a world where the true value cannot pass 100, and the broom fell. Replaying old moves in random order and taking the target from a frozen copy of the network prevented this in the game.
+The clip is a recorded game simulation of that loop and not a physical robot. Its estimates grew into the millions in a world where the true value can't pass 100, and the broom fell. In the game, replaying old moves in random order and taking the target from a frozen copy of the network prevented this.
 
 ## What this shows, and what it does not
 
-The guess let one robot learn a path that a waiting robot did not find, and it let a network push its estimates beyond any possible reward. It does not show that guessing is faster in general, how often the blow-up happens in real systems, or why the waiting robot failed.
+The guess let one robot learn a path that a waiting robot didn't find, and it let a network push its estimates beyond any possible reward, but none of that shows that guessing is faster in general, how often the blow-up happens in real systems, or why the waiting robot failed.
 
 <details>
 <summary>Source checks and what each claim depends on</summary>

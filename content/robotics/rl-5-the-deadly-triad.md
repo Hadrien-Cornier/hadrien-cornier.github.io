@@ -8,67 +8,67 @@ part: 5
 layout: essay
 ---
 
-Two simulated robots balance a broom on a cart, and both learn with a neural network. One of them also keeps a memory of old moves and a frozen copy of its network.
+Bootstrapping, function approximation and off-policy learning each solve a real problem, and Sutton and Barto call the combination of all three the deadly triad. Suppose you train a neural network to balance a broom on a cart with all three at work. Below, two simulated robots do exactly that, and one of them also keeps a memory of old moves and a frozen copy of its network.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>No memory, no frozen copy: the broom falls after 9 steps</b>The greedy test of one real recorded run, at quarter speed because the real fall takes under a fifth of a second. At the end of training this robot's largest estimate was about 2.2 million, in a world where no estimate above 100 can be right. Simulation.</figcaption></figure>
 <figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-dqn-202-desktop.mp4"></video><figcaption><b>Memory and a frozen copy: the broom stays up</b>The greedy test of one real recorded run, 12 seconds. Its largest estimate at the end was about 60. This is the best of five runs: in the other four tests the cart reached the end of the rail after 99 to 272 steps. Simulation.</figcaption></figure>
 </div>
 
-The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). They illustrate and do not explain. The rest of the article follows a mechanism in a small case, and then compares robots that differ in one component at a time.
+The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). They show what happens and not why, so let's follow the mechanism in a small case first and then compare robots that differ in one component at a time.
 
 ## The question: how do three good ideas make errors grow
 
-The question for this article is: how can bootstrapping, a shared formula and an off-policy target amplify each other's errors, when each exists for a good reason? Parts 2 to 4 introduced them. **Bootstrapping** puts the robot's own guess inside the target, so it learns before a walk ends. **Function approximation** lets one formula produce every number, so one visit teaches about situations never seen. **Off-policy learning** lets the target describe a different rule from the one that acts, so a robot can aim at the greedy rule while it explores. Together they are the **deadly triad** of Sutton and Barto. The book shows the danger in planning with a fully known world, so it needs neither noisy data nor the choice of actions.
+How can bootstrapping, a shared formula and an off-policy target amplify each other's errors when each of them exists for a good reason? Parts 2 to 4 introduced them. **Bootstrapping** puts the robot's own guess inside the target, so it learns before a walk ends. **Function approximation** lets one formula produce every number, so one visit teaches it about situations it never saw. And **off-policy learning** lets the target describe a different rule from the one that acts, so a robot can aim at the greedy rule while it explores. Together they are the **deadly triad** of Sutton and Barto, and the book shows the danger in planning with a fully known world, so it needs neither noisy data nor the choice of actions.
 
 ## The smallest case: two situations that share a number
 
-A walk goes from situation A to situation B and ends. Every reward is 0, so both true values are 0. The robot shares one weight $w$: its estimate for A is $w$ and for B is $2w$. Updating A moves $w$ toward the target for A:
+Take a walk that goes from situation A to situation B and ends. Every reward is 0, so both true values are 0, and the robot shares one weight $w$, with an estimate of $w$ for A and $2w$ for B. Updating A moves $w$ toward the target for A:
 
 $$w \leftarrow w + \alpha\,\bigl(\gamma \cdot 2w - w\bigr)$$
 
-In words: the target for A is the discount $\gamma$ times the estimate for B, and the estimate for A moves toward it by a fraction $\alpha$ (the step size). The gap is $(2\gamma - 1)\,w$, which is positive for any positive $w$ when $\gamma$ is above one half. So every update raises $w$, which also raises the estimate for B and with it the next target. A round is one walk: one update at A and, when B is also updated, one update at B after it. Part 2 gave the multiplier, $1 + \alpha(2\gamma - 1)$ for each update at A, which is 1.098 for $\gamma = 0.99$ and $\alpha = 0.1$.
+In words, the target for A is the discount $\gamma$ times the estimate for B, and the estimate for A moves toward it by a fraction $\alpha$ (the step size). The gap is $(2\gamma - 1)\,w$, which is positive for any positive $w$ when $\gamma$ is above one half, so every update raises $w$, and that also raises the estimate for B and with it the next target. A round is one walk, meaning one update at A and, when B is also updated, one update at B after it. Part 2 gave the multiplier, $1 + \alpha(2\gamma - 1)$ for each update at A, which is 1.098 for $\gamma = 0.99$ and $\alpha = 0.1$.
 
-Three links make the loop, and removing one breaks it.
+Three links make the loop, and removing any one of them breaks it.
 
-- **The guess.** With the real return, 0, as the target, $w$ moves toward 0.
-- **The shared number.** With separate numbers, an update at A leaves B's number alone, and the target stays put.
-- **The missing pull-back.** B's own update has a target of 0, because its next step ends the walk. It pushes $w$ down about four times as hard as A's update pushes it up. If B is updated after every update of A, with the settings below, $w$ shrinks. If B is never updated, nothing opposes the growth.
+- **The guess.** If the target is the real return, 0, then $w$ moves toward 0.
+- **The shared number.** With separate numbers, an update at A leaves B's number alone and the target stays put.
+- **The missing pull-back.** B's own update has a target of 0, because its next step ends the walk, and it pushes $w$ down about four times as hard as A's update pushes it up. If B is updated after every update of A, with the settings below, $w$ shrinks, and if B is never updated nothing opposes the growth.
 
-The third link is a mismatch in which updates happen. The toy has no choice of actions, so it is not an off-policy task but an analogue. Part 4 defined off-policy learning as a target that describes a different rule from the one that acts, which lets updates visit situations in other proportions than that rule would. Here I take the extreme case and leave B out.
+The third link is a mismatch in which updates happen. The toy has no choice of actions, so it isn't an off-policy task but an analogue. Part 4 defined off-policy learning as a target that describes a different rule from the one that acts, which lets updates visit situations in other proportions than that rule would, and here I take the extreme case and leave B out.
 
 ## Try the switches
 
-Each box turns one link on or off. The chart shows the estimate for A over 100 rounds, on a log scale. Each round updates A once, and B is also updated once when the third box is off. The third box is the missing pull-back, not a full off-policy setting.
+Each box turns one link on or off, and the chart shows the estimate for A over 100 rounds on a log scale. Each round updates A once, and B is also updated once when the third box is off. That third box is the missing pull-back and not a full off-policy setting.
 
 <div class="tri-switches"><noscript>With all three links on, the estimate for A grows from 10 to 25.5 after 10 rounds and to about 115,000 after 100. With any one link off it does not grow: it shrinks toward 0, or, with separate numbers and B never updated, it settles at 19.8.</noscript></div>
 
-Only the setting with all three on grows. Of the other seven, one is bounded but wrong: with separate numbers and B never updated, A settles at 19.8, a copy of a number that no update corrects.
+Only the setting with all three on grows. Of the other seven, one is bounded but wrong, since with separate numbers and B never updated A settles at 19.8, a copy of a number that no update corrects.
 
-This is a fragment, and the repeated multiplier shows growth only in the fragment, not in a network in a full task. The off-policy result comes from the book's complete seven-state task, with a behavior rule and a different target rule: there the same combination diverges for any positive step size, and changing only the distribution of its expected updates to the on-policy one restores convergence.
+This is a fragment, and the repeated multiplier shows growth only in the fragment and not in a network in a full task. The off-policy result comes from the book's complete seven-state task, with a behavior rule and a different target rule. There the same combination diverges for any positive step size and changing only the distribution of its expected updates to the on-policy one restores convergence.
 
 ## What the robots measured
 
-The toy shows a mechanism. It does not predict what a network does or why one blows up. So I compared robots on the balance task, five runs of 20,000 steps each, starting from the network with the Q-learning target, the one that blew up. Each network arm changes one recorded setting of that network. The table also changes the optimizer and step size, as part 3 says. No estimate above 100 can be right in this task, so I compare the largest estimate at the end with that bound.
+The toy shows a mechanism, but it doesn't predict what a network does or why one blows up. So I compared robots on the balance task, five runs of 20,000 steps each, starting from the network with the Q-learning target, the one that blew up. Each network arm changes one recorded setting of that network, and the table also changes the optimizer and step size, as part 3 says. No estimate above 100 can be right in this task, so I compare the largest estimate at the end with that bound.
 
-- **Table**, same guess and target, no sharing: score 50.4 of 200, largest estimate 30.
-- **Network with real returns**, no guess: score 33.9, largest estimate 18.
-- **Network, one-step guess, Q-learning target**, all three links: score 9.4, largest estimate 2.1 million.
-- **Network, one-step guess, Sarsa target**, the on-policy target: score 9.4, largest estimate 0.92 million.
+- **Table**, with the same guess and target but no sharing, scored 50.4 of 200 and had a largest estimate of 30.
+- **Network with real returns**, with no guess, scored 33.9 and had a largest estimate of 18.
+- **Network, one-step guess, Q-learning target**, with all three links, scored 9.4 and had a largest estimate of 2.1 million.
+- **Network, one-step guess, Sarsa target**, the on-policy target, scored 9.4 and had a largest estimate of 0.92 million.
 
-Removing the shared formula or the guess removed the blow-up. Changing the target to the on-policy one did not. A stable estimate is not a good policy either: the table is stable and scores 50 of 200. The toy suggests a mechanism that could act in a network: an update at one situation also changes the numbers of similar situations, including the next one, whose number is the target. The DQN authors give a similar account. It is a possible mechanism, not a measurement.
+Removing the shared formula or the guess removed the blow-up, and changing the target to the on-policy one did not. A stable estimate isn't a good policy either, since the table is stable and scores 50 of 200. The toy suggests a mechanism that could act in a network, where an update at one situation also changes the numbers of similar situations, including the next one, whose number is the target. The DQN authors give a similar account. It's a possible mechanism and not a measurement.
 
 ## What the repairs do
 
 Two repairs from DQN are a memory of old moves, replayed in random order, and a frozen copy of the network that computes the targets. The frozen copy delays the effect of an update on the target, and the authors say that makes divergence "much more unlikely", not impossible. The memory keeps the current estimates from deciding alone what the next updates see. Neither removes bootstrapping, sharing or the off-policy target, and replay makes the data more off-policy.
 
-In the game, the memory without the frozen copy still ended far above 100: median 31,000, from 800 to 75,000, with a score of 90.6. With the Sarsa target and the memory the median was 263, from 67 to 1,780, and the score 70.0. Only the memory and the frozen copy together ended between 60 and 65, with a score of 143, not 200. I did not run the frozen copy alone.
+In the game, the memory without the frozen copy still ended far above 100, with a median of 31,000, a range from 800 to 75,000 and a score of 90.6. With the Sarsa target and the memory the median was 263, from 67 to 1,780, and the score was 70.0. Only the memory and the frozen copy together ended between 60 and 65, with a score of 143 and not 200. I didn't run the frozen copy alone.
 
-On Atari, van Hasselt and colleagues found the same shape. Q-learning soft-diverged, with an estimate above 100, in 61 percent of its runs across their settings. These are finite excursions seen in finite runs. Values often passed a million and then fell back. The authors report no unbounded divergence, which in their runs means no floating-point NaNs. It does not show that the true iterates stay bounded. The growth without end in the toy is a statement about repeated multiplication, a different thing from an observed excursion. Target networks lowered the rate, and heavier prioritised replay, which is more off-policy, raised it. These repairs reduce the loop and do not prove it away.
+On Atari, van Hasselt and colleagues found the same shape. Q-learning soft-diverged, with an estimate above 100, in 61 percent of its runs across their settings. Those are finite excursions seen in finite runs, since values often passed a million and then fell back. The authors report no unbounded divergence, which in their runs means no floating-point NaNs, but that doesn't show the true iterates stay bounded. The growth without end in the toy is a statement about repeated multiplication, which is a different thing from an observed excursion. Target networks lowered the rate, and heavier prioritised replay, which is more off-policy, raised it. So these repairs reduce the loop and don't prove it away.
 
 ## What I could not explain
 
-Two of three does not guarantee stability here. The book says that if any two elements are present but not all three, instability can be avoided, and the analysis around that sentence is for linear formulas. My Sarsa network has the guess and the network, and no off-policy target, and still blew up. Tsitsiklis and Van Roy proved convergence for on-policy learning with a linear formula, gave a nonlinear example of divergence that they call somewhat contrived, and left neural networks open. So the guarantee does not cover my network. It does not tell me why the network blew up, and I do not know.
+Two of three doesn't guarantee stability here. The book says that if any two elements are present but not all three, instability can be avoided, and the analysis around that sentence is for linear formulas. My Sarsa network has the guess and the network and no off-policy target, and it still blew up. Tsitsiklis and Van Roy proved convergence for on-policy learning with a linear formula, gave a nonlinear example of divergence that they call somewhat contrived, and left neural networks open. So the guarantee doesn't cover my network, and it doesn't tell me why the network blew up. I don't know.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cart-sarsa-net-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-sarsa-net-101-desktop.mp4"></video><figcaption><b>The Sarsa target with a network: the broom falls after 10 steps</b>The same task and budget, with no memory of old moves and no frozen copy. At the end of this run the largest estimate was about 1.0 million. I did not find out why. Quarter speed. Simulation, one real recorded run.</figcaption></figure>
@@ -76,11 +76,11 @@ Two of three does not guarantee stability here. The book says that if any two el
 
 ## What this shows, and what it does not
 
-The two-situation case shows a loop: a guess, a shared number and a missing pull-back make an estimate grow. In the game, removing the shared formula or the guess removed the blow-up, the on-policy target did not, and the repairs reduced it. The results do not show that the triad is the cause in the network, that two of three is safe for networks, or how the repairs behave elsewhere. It is one task, one network and five runs per arm.
+The two-situation case shows a loop in which a guess, a shared number and a missing pull-back make an estimate grow. In the game, removing the shared formula or the guess removed the blow-up, the on-policy target did not, and the repairs reduced it. The results don't show that the triad is the cause in the network, that two of three is safe for networks, or how the repairs behave elsewhere, and they come from one task, one network and five runs per arm.
 
-One cheap check follows: when rewards are bounded, compare the largest estimate with the highest return the task allows. Above that bound the estimates are wrong, even when the score looks fine.
+There is one cheap check to take from this. When rewards are bounded, compare the largest estimate with the highest return the task allows, because above that bound the estimates are wrong even when the score looks fine.
 
-The series gave five answers. A table of action values estimates how good each move is, and taking its largest entry chooses a greedy action. The optimal values, $Q^*$, are the relationship that part 1 explained under its convergence conditions; finishing a run does not by itself give them. Bootstrapping builds a number from other numbers. A formula lets numbers share. A target can describe a rule that is not the one acting. Together they let errors feed on errors.
+Looking back over the series, a table of action values estimates how good each move is, and taking its largest entry chooses a greedy action. The optimal values, $Q^*$, are the relationship that part 1 explained under its convergence conditions, and finishing a run doesn't by itself give them. Bootstrapping builds a number from other numbers, a formula lets numbers share, and a target can describe a rule that isn't the one acting. Together they let errors feed on errors.
 
 <details>
 <summary>Source checks and what each claim depends on</summary>

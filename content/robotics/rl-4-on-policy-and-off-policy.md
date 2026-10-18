@@ -8,70 +8,70 @@ part: 4
 layout: essay
 ---
 
-Two simulated robots walk along a cliff to a flag. Both keep the same table. One word of the update differs.
+Suppose you are teaching a robot to walk along a cliff to a flag, and it learns with a table of numbers. The update has a target inside it, and that target has to assume some way of acting after the next step. Below, two simulated robots keep the same table and differ in one word of the update, the word that picks that assumption.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="cliff-q-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-q-202-desktop.mp4"></video><figcaption><b>Q-learning: it learns the edge path and still falls on the way</b>The first walk, a late walk, then the final test with no random moves. The arrows show the favorite move in each cell. In this late walk the robot falls once. Simulation, one real recorded run.</figcaption></figure>
 <figure class="tri-clip"><video class="tri-video" data-clip="cliff-sarsa-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-sarsa-101-desktop.mp4"></video><figcaption><b>Sarsa: it keeps away from the edge while it learns</b>The same three phases: a first walk, a late walk and the final test. Here the late walk has no fall, and the final test takes the top row. This is another run, from a different seed. The falls per walk over 20 runs are in the text. Simulation, one real recorded run.</figcaption></figure>
 </div>
 
-The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). A step costs 1, a fall costs 100 and sends the robot back to the start, and each robot makes a random move one time in ten while it learns. The rest of the article explains the one word.
+The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). A step costs 1, a fall costs 100 and sends the robot back to the start, and each robot makes a random move one time in ten while it learns. So which word makes the difference?
 
 ## The question: whose behavior does the target describe
 
-The question for this article is: should a learner's target describe the behavior that collects the data, or a better behavior? Two terms make the question exact. A **policy** is a rule for acting. The **behavior policy** is the rule that picks the robot's actions, so it decides which data arrive. Here it is: take the action with the largest number, but one time in ten move at random. The **target policy** is the rule that the update's target describes. If both are the same rule, learning is **on-policy**. If they differ, it is **off-policy**.
+Should a learner's target describe the behavior that collects the data, or a better behavior? Two terms make that question exact. A **policy** is a rule for acting, and the **behavior policy** is the rule that picks the robot's actions, so it decides which data arrive. Here it is: take the action with the largest number, but one time in ten move at random. The **target policy** is the rule that the update's target describes. If both are the same rule, learning is **on-policy**, and if they differ it is **off-policy**.
 
 ## Two targets
 
-Part 1 gave the Q-learning target. After it takes action $a$ in situation $s$, the robot lands in $s'$ and looks at the row of $s'$:
+Part 1 gave the Q-learning target. After the robot takes action $a$ in situation $s$ it lands in $s'$ and looks at the row of $s'$:
 
 $$\text{target} = r + \gamma \max_{a'} Q(s',a')$$
 
-In words: assume that from $s'$ the robot takes the action with the largest number. That describes a robot that never moves at random. The target policy is the greedy rule, and the behavior policy is the greedy rule with random moves. So Q-learning is off-policy.
+In words, the target assumes that from $s'$ the robot takes the action with the largest number, which describes a robot that never moves at random. The target policy is the greedy rule and the behavior policy is the greedy rule with random moves, so Q-learning is off-policy.
 
-Sarsa changes one word. It uses the action that the robot really takes next, random moves included:
+Sarsa changes one word and uses the action that the robot really takes next, random moves included:
 
 $$\begin{aligned}\text{target} &= r + \gamma\, Q(s',a') \\ a' &= \text{the action taken next}\end{aligned}$$
 
-In words: the guess describes the robot that is really acting. The target policy equals the behavior policy, so Sarsa is on-policy. The name comes from the sequence state, action, reward, state, action.
+In words, the guess describes the robot that is really acting. The target policy equals the behavior policy, so Sarsa is on-policy, and the name comes from the sequence state, action, reward, state, action.
 
-Off-policy does not mean replay or old data. Q-learning is off-policy even when it learns from each move right after the move. The data come from the current robot, and the target still describes a different rule. What matters is the gap between the rule that acts and the rule that the target describes.
+Off-policy doesn't mean replay or old data. Q-learning is off-policy even when it learns from each move right after the move, because the data come from the current robot and the target still describes a different rule. What matters is the gap between the rule that acts and the rule that the target describes.
 
 ## What the cliff shows
 
-A fall sends the robot back to the start. The shortest route takes 13 steps and runs along the row next to the cliff. One random move there can push the robot over the edge.
+A fall sends the robot back to the start. The shortest route takes 13 steps and runs along the row next to the cliff, where one random move can push the robot over the edge.
 
-I ran 20 robots of each kind for 10,000 steps, with the table and one random move in ten. In the second half of training, Q-learning fell 0.318 times per walk, and Sarsa fell 0.061 times per walk.
+I ran 20 robots of each kind for 10,000 steps, with the table and one random move in ten. In the second half of training Q-learning fell 0.318 times per walk, and Sarsa fell 0.061 times per walk.
 
-The tables show why. Look at the column in the middle of the grid. For Q-learning, the largest number in the cell next to the cliff is the best of the three rows: -6.8, against -8.2 in the top row. For Sarsa, the order flips: -14.0 next to the cliff and -11.9 in the top row. The Sarsa number counts the falls that random moves cause, so it ranks the edge below the top row.
+The tables show why if you look at the column in the middle of the grid. For Q-learning the largest number in the cell next to the cliff is the best of the three rows, -6.8 against -8.2 in the top row. For Sarsa the order flips, with -14.0 next to the cliff and -11.9 in the top row. The Sarsa number counts the falls that random moves cause, so it ranks the edge below the top row.
 
-The finished robots show the price. In the final test with no random moves, all 20 Q-learning robots walk the 13-step edge route. Of the 20 Sarsa robots, 12 reach the flag along the top row in 17 or 19 steps, and 8 do not reach the flag in 200 steps. I did not examine why. Averaged over the last quarter of the tests and over the runs, the score was -13 for Q-learning and -82 for Sarsa. Describing the acting robot bought fewer falls while learning. It cost a longer route, and a worse final test in these runs.
+The finished robots show the price. In the final test with no random moves, all 20 Q-learning robots walk the 13-step edge route. Of the 20 Sarsa robots, 12 reach the flag along the top row in 17 or 19 steps and 8 don't reach the flag in 200 steps, and I didn't examine why. Averaged over the last quarter of the tests and over the runs, the score was -13 for Q-learning and -82 for Sarsa. So describing the acting robot bought fewer falls while learning, and it cost a longer route and a worse final test in these runs.
 
 ## The target follows the behavior
 
-Now change only the behavior: remove the random moves. Sarsa then learns the 13-step edge route in all 20 runs and, in the second half of training, falls 0.000 times per walk. Its target describes a robot that no longer slips, so the edge is safe again. Q-learning ends on the same route, because its target never described the random moves.
+Now change only the behavior and remove the random moves. Sarsa then learns the 13-step edge route in all 20 runs and, in the second half of training, falls 0.000 times per walk, because its target now describes a robot that no longer slips and so the edge is safe again. Q-learning ends on the same route, since its target never described the random moves.
 
-Without random moves, the robots still try untested actions, because the table starts at zero and an untested action looks as good as any other. So this is not a robot that never explores.
+Without random moves the robots still try untested actions, because the table starts at zero and an untested action looks as good as any other, so this isn't a robot that never explores.
 
-The two words answer different questions. Sarsa answers: how good is this situation if I keep acting the way I act now? Its number changes when the behavior changes, even in the limit. Q-learning answers: how good is this situation if I act greedily from here on? Its target uses the current largest number in the next row, not a known best action. Under the book's conditions, including that every pair is tried often enough, the numbers it aims at are the optimal ones, whatever behavior collects the data. A finite table is not at that point yet. How close it gets, and where it is wrong, still depends on which data the behavior collected.
+The two words answer different questions. Sarsa asks how good a situation is if the robot keeps acting the way it acts now, so its number changes when the behavior changes, even in the limit. Q-learning asks how good a situation is if the robot acts greedily from here on, and its target uses the current largest number in the next row, not a known best action. Under the book's conditions, including that every pair is tried often enough, the numbers it aims at are the optimal ones, whatever behavior collects the data. A finite table isn't at that point yet, and how close it gets and where it is wrong still depends on which data the behavior collected.
 
-A third word sits between them. Expected Sarsa averages the next row by the probabilities of the behavior, instead of using one sampled action. In these runs it fell 0.038 times per walk, and all 20 robots reached the flag in 15 steps. In the book it is on-policy in the cliff results. If its target policy is the greedy rule, it is exactly Q-learning. So the target policy is a choice, not a switch.
+A third word sits between them. Expected Sarsa averages the next row by the probabilities of the behavior instead of using one sampled action. In these runs it fell 0.038 times per walk and all 20 robots reached the flag in 15 steps. In the book it is on-policy in the cliff results, and if its target policy is the greedy rule it is exactly Q-learning, so the target policy is a choice and not a switch.
 
 ## Which target to choose
 
-The choice depends on which robot you care about. If random moves stay on, as for a real arm that must keep exploring and where every fall is a crash, a target that describes that robot measures the falls you will pay. If the robot will act greedily later, a target that describes the greedy rule finds the best route for it. The book notes that both methods would converge to the optimal policy if the random moves were gradually reduced. In my runs the random moves stayed at one in ten, and I did not test a reduction.
+The choice depends on which robot you care about. If random moves stay on, as for a real arm that must keep exploring and where every fall is a crash, a target that describes that robot measures the falls you'll pay for. If the robot will act greedily later, a target that describes the greedy rule finds the best route for it. The book notes that both methods would converge to the optimal policy if the random moves were gradually reduced, but in my runs the random moves stayed at one in ten and I didn't test a reduction.
 
 ## What I could not explain
 
-A target that matches the behavior does not make learning safe. I ran the Sarsa target with the neural network on the balance task of part 3, with one-step updates, no memory of old moves and no frozen copy. The score was 9.4 of 200. The largest estimate at the end was between 0.8 and 1.9 million in the five runs, and the discounted return can be at most 100 in this world, so any estimate far above 100 is wrong. The network with the Q-learning target ended at 9.4 and 2.1 million. So changing the target to describe the acting robot did not stop the blow-up in this network.
+A target that matches the behavior doesn't make learning safe. I ran the Sarsa target with the neural network on the balance task of part 3, with one-step updates, no memory of old moves and no frozen copy, and the score was 9.4 of 200. The largest estimate at the end was between 0.8 and 1.9 million in the five runs, and the discounted return can be at most 100 in this world, so any estimate far above 100 is wrong. The network with the Q-learning target ended at 9.4 and 2.1 million, which means changing the target to describe the acting robot did not stop the blow-up in this network.
 
-The book proves convergence for on-policy updates with a linear formula, under conditions. My network is not linear, and its behavior changes as its estimates change. I do not know which difference matters here, and I offer no cause. Part 5 puts bootstrapping, a formula and off-policy data together.
+The book proves convergence for on-policy updates with a linear formula, under conditions. My network isn't linear and its behavior changes as its estimates change, and I don't know which of those differences matters here, so I offer no cause. Part 5 puts bootstrapping, a formula and off-policy data together.
 
 ## What this shows, and what it does not
 
-A target describes some policy. Q-learning describes the greedy rule, Sarsa describes the rule that acts, and the difference showed up as falls while learning, as the route each robot found, and as which cell looked best. Off-policy means that the target and the behavior differ. It does not mean replay or old data.
+A target describes some policy. Q-learning describes the greedy rule and Sarsa describes the rule that acts, and the difference showed up as falls while learning, as the route each robot found, and as which cell looked best. Off-policy means that the target and the behavior differ, and it doesn't mean replay or old data.
 
-On the cliff, 20 runs per kind and one setting say this: the on-policy target fell less while learning, and in my runs it finished worse. The evidence is one world, one random-move rate and 20 tables. The network result is a limit: an on-policy target did not make this network stable, and I did not find out why.
+On the cliff, 20 runs per kind and one setting say that the on-policy target fell less while learning and, in my runs, finished worse. The evidence is one world, one random-move rate and 20 tables. The network result is a limit, because an on-policy target didn't make this network stable and I didn't find out why.
 
 <details>
 <summary>Source checks and what each claim depends on</summary>
