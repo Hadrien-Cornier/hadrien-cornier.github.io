@@ -34,8 +34,8 @@
       {
         "part": 5,
         "slug": "rl-5-the-deadly-triad",
-        "title": "The deadly triad: when three good ideas run away together",
-        "question": "Why can bootstrapping, function approximation and off-policy learning make values run away together, when two of the three can often avoid it?",
+        "title": "The deadly triad",
+        "question": "How can bootstrapping, a shared formula and an off-policy target amplify each other's errors, when each exists for a good reason?",
         "levels": ["Values explode"]
       }
     ]
