@@ -12,6 +12,8 @@ resume_version = hashlib.sha256(resume_path.read_bytes()).hexdigest()[:12]
 resume_href = f'/out/resume.pdf?v={resume_version}'
 style_version = hashlib.sha256((ROOT / 'assets/site.css').read_bytes()).hexdigest()[:12]
 script_version = hashlib.sha256((ROOT / 'assets/site.js').read_bytes()).hexdigest()[:12]
+theme_script_version = hashlib.sha256((ROOT / 'assets/theme.js').read_bytes()).hexdigest()[:12]
+theme_head = (ROOT / 'scripts/templates/theme-head.html').read_text()
 
 def header(current):
     result = (ROOT / 'scripts/templates/header.html').read_text()
@@ -93,7 +95,7 @@ page = f'''<!doctype html>
 <meta name="description" content="Hadrien Cornier, engineering manager building and running data infrastructure and production ML. Leading seven engineers at Talroo in Austin.">
 <link rel="canonical" href="https://hadrien-cornier.github.io/about.html">
 <meta property="og:title" content="Hadrien Cornier | Data Infrastructure &amp; Production ML"><meta property="og:description" content="Engineering manager building and running data infrastructure and production ML. Leading seven engineers at Talroo."><meta property="og:type" content="website"><meta property="og:url" content="https://hadrien-cornier.github.io/about.html">
-<meta name="theme-color" content="#f7f6f2"><link rel="stylesheet" href="/assets/site.css?v={style_version}"><script src="/assets/site.js?v={script_version}" defer></script>
+<meta name="theme-color" content="#f7f6f2">{theme_head}<script src="/assets/theme.js?v={theme_script_version}" defer></script><link rel="stylesheet" href="/assets/site.css?v={style_version}"><script src="/assets/site.js?v={script_version}" defer></script>
 </head><body class="about-page"><a class="skip" href="#main">Skip to content</a>
 {header("about")}
 <main id="main"><section class="hero" aria-labelledby="name"><div class="hero-top"><p class="eyebrow"><span class="dot"></span>Austin, Texas</p><a class="resume-link" href="{resume_href}" download="Hadrien_Cornier_Resume.pdf">Resume PDF ↗</a></div><h1 id="name">Hadrien Cornier<span>.</span></h1><div class="hero-bottom"><h2>Engineering Manager<br><span class="hero-company">Talroo</span></h2><div><p class="intro">{esc(intro)}</p><div class="contact"><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a><a href="https://linkedin.com/in/hadrien-cornier">LinkedIn <span aria-hidden="true">↗</span></a></div></div></div></section>
@@ -110,7 +112,7 @@ notes_page = f'''<!doctype html>
 <title>Notes | Hadrien Cornier</title><meta name="description" content="Short notes by Hadrien Cornier on engineering, hiring, product strategy, and advertising.">
 <link rel="canonical" href="https://hadrien-cornier.github.io/notes.html"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="Notes | Hadrien Cornier"><meta property="og:description" content="Thoughts on engineering and business."><meta property="og:type" content="website"><meta property="og:url" content="https://hadrien-cornier.github.io/notes.html">
-<link rel="stylesheet" href="/assets/site.css?v={style_version}"></head><body><a class="skip" href="#main">Skip to content</a>
+{theme_head}<script src="/assets/theme.js?v={theme_script_version}" defer></script><link rel="stylesheet" href="/assets/site.css?v={style_version}"></head><body><a class="skip" href="#main">Skip to content</a>
 {header("notes")}
 <main id="main"><header class="notes-header"><p class="eyebrow">Hadrien Cornier</p><h1>Notes</h1><p>Thoughts on engineering, teams, and building useful things.</p></header>
 <div class="notes-layout"><nav class="notes-nav" aria-label="Notes">{notes_nav}<a class="profile-link" href="/about.html">About the author ↗</a></nav><div class="notes-content">{notes_html}</div></div>

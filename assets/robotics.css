@@ -94,21 +94,21 @@
 .article-body figcaption { color: var(--muted); font-size: 12px; line-height: 1.7; margin-top: 11px; padding: 0 2px; }
 .article-body blockquote { border-left: 2px solid var(--accent); margin: 26px 0; padding: 5px 23px; color: var(--muted); }
 .article-body blockquote > :last-child { margin-bottom: 0; }
-.article-body details { border: 1px solid var(--line); padding: 18px 23px; margin: 29px 0; background: #eeefe9; }
+.article-body details { border: 1px solid var(--line); padding: 18px 23px; margin: 29px 0; background: var(--surface); }
 .article-body summary { color: var(--ink); font-weight: 600; font-size: 15px; cursor: pointer; line-height: 1.5; }
 .article-body summary::marker { color: var(--accent); }
 .article-body details[open] summary { margin-bottom: 22px; }
 .article-body details > :last-child { margin-bottom: 0; }
-.article-body pre { overflow-x: auto; padding: 20px; border: 1px solid var(--line); background: #eeefe9; font-size: 13px; line-height: 1.65; }
+.article-body pre { overflow-x: auto; padding: 20px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; line-height: 1.65; }
 .article-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .83em; }
-.article-body :not(pre) > code { background: #eeefe9; padding: 2px 5px; }
+.article-body :not(pre) > code { background: var(--surface); padding: 2px 5px; }
 .article-body .katex { font-size: 1.07em; }
 .article-body .katex-display { overflow-x: auto; overflow-y: hidden; padding: 15px 2px; margin: 23px 0; }
 .article-body .katex-display > .katex { white-space: nowrap; }
 .article-body .table-scroll { max-width: 100%; overflow-x: auto; margin: 27px 0; border-top: 1px solid var(--line); }
 .article-body table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.6; }
 .article-body th, .article-body td { text-align: left; vertical-align: top; padding: 13px 15px; border-bottom: 1px solid var(--line); min-width: 105px; }
-.article-body th { color: var(--ink); background: #eeefe9; font-weight: 600; }
+.article-body th { color: var(--ink); background: var(--surface); font-weight: 600; }
 .article-body hr { border: 0; border-top: 1px solid var(--line); margin: 42px 0; }
 .article-body .series-return { margin-top: 54px; padding-top: 27px; border-top: 1px solid var(--line); font-size: 14px; }
 @media (max-width: 1050px) {

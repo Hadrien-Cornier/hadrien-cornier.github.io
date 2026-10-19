@@ -4,7 +4,18 @@
 <title>Six ways to choose the goal | Hadrien Cornier</title><meta name="description" content="One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC, is that formula with some terms set to zero.">
 <link rel="canonical" href="https://hadrien-cornier.github.io/robotics/so101-3-choosing-the-goal/"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="Six ways to choose the goal"><meta property="og:description" content="One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC, is that formula with some terms set to zero."><meta property="og:type" content="article"><meta property="og:url" content="https://hadrien-cornier.github.io/robotics/so101-3-choosing-the-goal/">
-<link rel="stylesheet" href="/assets/site.css?v=c72f6339d447"><link rel="stylesheet" href="/assets/vendor/katex/katex.min.css"><link rel="stylesheet" href="/assets/robotics.css?v=29321afaa448"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Six ways to choose the goal","description":"One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC, is that formula with some terms set to zero.","datePublished":"2026-10-04","dateModified":"2026-10-04","author":{"@type":"Person","name":"Hadrien Cornier","url":"https://hadrien-cornier.github.io"},"url":"https://hadrien-cornier.github.io/robotics/so101-3-choosing-the-goal/"}</script>
+<script>
+(() => {
+  let theme = 'dark';
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') theme = saved;
+  } catch (_) {}
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+})();
+</script>
+<script src="/assets/theme.js?v=1d3543536dc9" defer></script><link rel="stylesheet" href="/assets/site.css?v=570e8c1af794"><link rel="stylesheet" href="/assets/vendor/katex/katex.min.css"><link rel="stylesheet" href="/assets/robotics.css?v=d3e43ff030d1"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Six ways to choose the goal","description":"One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC, is that formula with some terms set to zero.","datePublished":"2026-10-04","dateModified":"2026-10-04","author":{"@type":"Person","name":"Hadrien Cornier","url":"https://hadrien-cornier.github.io"},"url":"https://hadrien-cornier.github.io/robotics/so101-3-choosing-the-goal/"}</script>
 <script type="module" src="/assets/so101-widgets.js?v=42bd2764c5e8"></script>
 </head><body class="robotics"><a class="skip" href="#main">Skip to content</a>
 <header class="topbar">
@@ -15,6 +26,7 @@
     <a href="/notes.html">Notes</a>
     <a href="/about.html">About</a>
   </nav>
+  <button type="button" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="true">Dark mode</button>
   <a class="header-github" href="https://github.com/Hadrien-Cornier">GitHub <span aria-hidden="true">↗</span></a>
 </header>
 <main id="main" class="robotics-main">

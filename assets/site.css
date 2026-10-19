@@ -10,6 +10,37 @@
   --serif: Georgia, 'Times New Roman', serif;
 }
 * { box-sizing: border-box; }
+:root:not([data-theme="light"]) {
+  color-scheme: dark;
+  --paper: #191c19;
+  --ink: #e8e9e2;
+  --muted: #adb5a7;
+  --accent: #ee9879;
+  --line: #41483e;
+  --white: #242922;
+  --surface: #272d25;
+}
+:root[data-theme="light"] { color-scheme: light; --surface: #eeefe9; }
+.theme-toggle { flex-shrink: 0; padding: 7px 10px; min-height: 36px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 12px; white-space: nowrap; }
+.theme-toggle:hover { border-color: var(--accent); }
+/* Fixed-color illustrations retain their original palette on a light card. */
+:root:not([data-theme="light"]) :is(.control-playground, .arm-demo, .robotics-timeline, .rf-figure, .robotics-market, .dex-demo, .so101-widget, .article-body svg[role="img"]) {
+  color-scheme: light;
+  --paper: #f7f6f2;
+  --ink: #242622;
+  --muted: #656b62;
+  --accent: #b44c2c;
+  --line: #dcded6;
+  --white: #fff;
+  --surface: #eeefe9;
+  color: var(--ink);
+}
+:root:not([data-theme="light"]) .article-body svg[role="img"] { background: #f7f6f2; }
+:root:not([data-theme="light"]) .track-hardware { --accent: #8ac6e7; }
+:root:not([data-theme="light"]) :is(.track-tag, .series-box .series-part.track-hardware, .series-box .series-part.track-hardware a) { color: #8ac6e7; border-color: #8ac6e7; }
+:root:not([data-theme="light"]) .monogram { color: var(--paper); }
+:root:not([data-theme="light"]) .skip { color: var(--paper); }
+:root:not([data-theme="light"]) ::selection { background: #694634; color: #fff; }
 html { scroll-behavior: smooth; scroll-padding-top: 30px; }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
 ::selection { background: #efd4c7; color: var(--ink); }

@@ -4,7 +4,18 @@
 <title>What information can a reinforcement learner use? | Hadrien Cornier</title><meta name="description" content="A short model for the words in Breaking Bellman: data weight, real rewards, and the guess that follows.">
 <link rel="canonical" href="https://hadrien-cornier.github.io/robotics/what-information-can-a-reinforcement-learner-use/"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="What information can a reinforcement learner use?"><meta property="og:description" content="A short model for the words in Breaking Bellman: data weight, real rewards, and the guess that follows."><meta property="og:type" content="article"><meta property="og:url" content="https://hadrien-cornier.github.io/robotics/what-information-can-a-reinforcement-learner-use/">
-<link rel="stylesheet" href="/assets/site.css?v=c72f6339d447"><link rel="stylesheet" href="/assets/vendor/katex/katex.min.css"><link rel="stylesheet" href="/assets/robotics.css?v=29321afaa448"><link rel="stylesheet" href="/assets/robotics-futures.css?v=da8677dcd026"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"What information can a reinforcement learner use?","description":"A short model for the words in Breaking Bellman: data weight, real rewards, and the guess that follows.","datePublished":"2026-10-16","dateModified":"2026-10-16","author":{"@type":"Person","name":"Hadrien Cornier","url":"https://hadrien-cornier.github.io"},"url":"https://hadrien-cornier.github.io/robotics/what-information-can-a-reinforcement-learner-use/"}</script>
+<script>
+(() => {
+  let theme = 'dark';
+  try {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'light' || saved === 'dark') theme = saved;
+  } catch (_) {}
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+})();
+</script>
+<script src="/assets/theme.js?v=1d3543536dc9" defer></script><link rel="stylesheet" href="/assets/site.css?v=570e8c1af794"><link rel="stylesheet" href="/assets/vendor/katex/katex.min.css"><link rel="stylesheet" href="/assets/robotics.css?v=d3e43ff030d1"><link rel="stylesheet" href="/assets/robotics-futures.css?v=da8677dcd026"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"What information can a reinforcement learner use?","description":"A short model for the words in Breaking Bellman: data weight, real rewards, and the guess that follows.","datePublished":"2026-10-16","dateModified":"2026-10-16","author":{"@type":"Person","name":"Hadrien Cornier","url":"https://hadrien-cornier.github.io"},"url":"https://hadrien-cornier.github.io/robotics/what-information-can-a-reinforcement-learner-use/"}</script>
 </head><body class="robotics"><a class="skip" href="#main">Skip to content</a>
 <header class="topbar">
   <a class="wordmark" href="/" aria-label="Hadrien Cornier home"><span class="monogram" aria-hidden="true">hc</span><span>Hadrien Cornier</span></a>
@@ -14,6 +25,7 @@
     <a href="/notes.html">Notes</a>
     <a href="/about.html">About</a>
   </nav>
+  <button type="button" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="true">Dark mode</button>
   <a class="header-github" href="https://github.com/Hadrien-Cornier">GitHub <span aria-hidden="true">↗</span></a>
 </header>
 <main id="main" class="robotics-main">

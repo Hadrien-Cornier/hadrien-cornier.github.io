@@ -55,6 +55,8 @@ export function homePapers(root = ROOT) {
 }
 function shell(root, {title, description, pathname, content, slug}) {
   const canonical = `${ORIGIN}${pathname}`;
+  const themeHead = fs.readFileSync(localOrShared(root, 'scripts/templates/theme-head.html'), 'utf8');
+  const themeScript = `<script src="/assets/theme.js?v=${version(root, 'assets/theme.js')}" defer></script>`;
   const tokens = {writing_current:'', papers_current:' aria-current="page"', notes_current:'', about_current:'', resume_href:'/out/resume.pdf', site_css:'/assets/site.css'};
   const assets = slug ? `<link rel="stylesheet" href="/assets/papers-${slug}.css?v=${version(root, `assets/papers-${slug}.css`)}"><script type="module" src="/assets/papers-${slug}.js?v=${version(root, `assets/papers-${slug}.js`)}"></script>` : '';
   return `<!doctype html>
@@ -62,7 +64,7 @@ ${MARKER}
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}"><link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${slug ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="/assets/site.css?v=${version(root, 'assets/site.css')}"><link rel="stylesheet" href="/assets/papers.css?v=${version(root, 'assets/papers.css')}">${assets}
+${themeHead}${themeScript}<link rel="stylesheet" href="/assets/site.css?v=${version(root, 'assets/site.css')}"><link rel="stylesheet" href="/assets/papers.css?v=${version(root, 'assets/papers.css')}">${assets}
 </head><body class="papers-page"><a class="skip" href="#main">Skip to content</a>
 ${template(root, 'header.html', tokens)}
 <main id="main" class="papers-main">${content}
