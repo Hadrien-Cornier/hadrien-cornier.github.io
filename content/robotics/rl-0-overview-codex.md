@@ -6,6 +6,8 @@ draft: true
 series: 'Reinforcement learning, Codex trial'
 part: 0
 layout: essay
+thumbnail: '/assets/robotics/rl-codex/thumbnails/part0.png'
+thumbnailAlt: 'A lucky first result can trap a greedy choice'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl-codex/family-tree.css">
@@ -158,6 +160,8 @@ Let $n$ be the backup length and $k$ index the rewards from 0 to $n-1$. $S_{t+n}
 $$\text{target} = \sum_{k=0}^{n-1}\gamma^k R_{t+k+1} + \gamma^n V(S_{t+n})$$
 
 Here $V$ estimates state values. **Use:** longer backups. **Needs:** stored transitions. **Cost:** waiting $n$ steps. At an episode's end, shorten the return and omit the terminal guess.
+
+A related question is which actions deserve more credit than the policy's usual choices. **Generalized Advantage Estimation (GAE)** estimates that advantage by mixing return lengths. [Part 2](/robotics/rl-2-bootstrapping-codex/#sec-gae) connects it to the same short-versus-long return tradeoff.
 
 **On the drawing, 4a:** real rewards come first, then a guess. The six-step episode and $n=3$ are illustrative.
 

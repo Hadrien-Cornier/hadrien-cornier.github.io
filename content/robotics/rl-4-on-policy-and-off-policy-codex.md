@@ -6,6 +6,8 @@ draft: true
 series: 'Reinforcement learning, Codex trial'
 part: 4
 layout: essay
+thumbnail: '/assets/robotics/rl-codex/thumbnails/part4.png'
+thumbnailAlt: 'A short edge route exposes exploratory downward actions to a cliff; an upper detour leaves a recovery cell'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl-codex/series.css">
@@ -143,6 +145,10 @@ Here `terminal` means the episode ended, so there is no remaining value to boots
 - **Off-policy benefit:** collection and the policy being learned about can differ.
 - **Coverage cost:** missing actions or states leave parts of the question unsupported.
 - **Approximation limit:** shared predictions can feed changes back into their own targets.
+
+### From action credit to a policy update
+
+How do we turn those values into a better action rule? [Generalized Advantage Estimation (GAE)](/robotics/rl-2-bootstrapping-codex/#sec-gae) estimates whether an action did better or worse than the policy's state-value baseline, using a mixture of return lengths. **Proximal Policy Optimization (PPO)** can use that credit to train the policy. Its clipped objective limits the incentive to change an action's probability too far relative to the policy that collected the rollout. Clipping does not impose a hard bound on the policy step. GAE supplies action credit; PPO clipping shapes the update incentive. [Spinning Up's PPO explanation](https://spinningup.openai.com/en/latest/algorithms/ppo.html).
 
 [Part 5: the deadly triad](/robotics/rl-5-the-deadly-triad-codex/) follows that feedback all the way to a growing number.
 

@@ -6,6 +6,8 @@ draft: true
 series: 'Reinforcement learning, Codex trial'
 part: 3
 layout: essay
+thumbnail: '/assets/robotics/rl-codex/thumbnails/part3.png'
+thumbnailAlt: 'Training A changes predictions at A and unvisited B'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl-codex/series.css">

@@ -6,6 +6,8 @@ draft: true
 series: 'Reinforcement learning, Codex trial'
 part: 2
 layout: essay
+thumbnail: '/assets/robotics/rl-codex/thumbnails/part2.png'
+thumbnailAlt: 'Zero rewards before the final reward'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl-codex/series.css">
@@ -178,6 +180,58 @@ The discount shrinks a given endpoint error as the horizon grows. The endpoint i
 - **Coupled values.** Shared parameters can move the target during learning; off-policy data adds another stability concern.
 
 <figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 230" role="img" aria-labelledby="b2-h-title"><title id="b2-h-title">Increasing the backup replaces guesses with observed rewards</title><defs><marker id="b2-h-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#656b62"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="25">Blue: observed · rust: guessed</text><rect x="20" y="48" width="35" height="25" fill="#d7e5ee"/><rect x="55" y="48" width="220" height="25" fill="#e7c5b8"/><text x="20" y="96">One step: short wait, long guess</text><rect x="20" y="117" width="180" height="25" fill="#d7e5ee"/><rect x="200" y="117" width="75" height="25" fill="#e7c5b8"/><text x="20" y="165">More steps: more observations</text><path d="M30 190H265" stroke="#656b62" stroke-width="2" marker-end="url(#b2-h-arr)"/><text x="22" y="218">Longer horizon → longer wait</text></g></svg><figcaption>Target-composition view. Fixed: one future episode. The backup endpoint moves later. Compare observed and guessed portions; bar lengths carry no measured variance claim.</figcaption></figure>
+
+<h3 id="sec-gae">Give actions credit</h3>
+
+Suppose we now want to improve the policy. A good outcome alone doesn't tell us whether an action helped: perhaps the starting state was already promising. The **advantage** compares an action's expected return with the policy's usual return from that state:
+
+$$A_\pi(s,a)=Q_\pi(s,a)-V_\pi(s).$$
+
+Here $Q_\pi$ means taking $a$ first, then following $\pi$; $V_\pi$ averages over the policy's first action too. These are true policy values. **Generalized Advantage Estimation (GAE)** estimates this action credit from experience, using an approximate state value $V$.
+
+Collect a rollout with a fixed policy, then freeze both the data and $V$ while calculating advantages. For one segment ending at $S_H$, let $H$ count its transitions and $\ell$ count steps ahead. Using our reward convention, the one-step TD error and finite GAE estimate are
+
+$$\begin{aligned}
+\delta_t&=R_{t+1}+\gamma V(S_{t+1})-V(S_t),\\
+\hat A_t&=\sum_{\ell=0}^{H-t-1}(\gamma\lambda)^\ell\delta_{t+\ell}.
+\end{aligned}$$
+
+The parameter $\lambda$, between 0 and 1, controls how strongly later errors contribute. For any one return length, adding its TD errors with powers of $\gamma$ cancels the intermediate value estimates. What remains is a return estimate minus the starting value. GAE is equivalently a geometrically weighted mixture of these estimates at different return lengths, with the remaining weight on the longest available return. [Schulman et al., Section 3, equations 14–16](https://arxiv.org/html/1506.02438v6#S3).
+
+This is our earlier horizon tradeoff applied to action credit. Shorter returns rely more on a potentially biased guessed tail. Longer returns include more observed rewards and transitions, which can add noise. GAE blends the lengths instead of choosing just one. Its bias and variance still depend on value accuracy and the task; changing $\lambda$ gives no universal variance guarantee.
+
+For a small terminal example, take three transitions with $\gamma=1$, rewards $(R_1,R_2,R_3)=(0,0,4)$ and frozen values $(V(S_0),V(S_1),V(S_2),V(S_3))=(2,2,1,0)$. The errors are $(0,-1,3)$. With $\lambda=0.5$, each later error gets half the previous weight when crediting action $A_0$:
+
+| TD error | Weight | Credit |
+| --- | ---: | ---: |
+| $\delta_0=0$ | 1 | 0 |
+| $\delta_1=-1$ | 0.5 | −0.5 |
+| $\delta_2=3$ | 0.25 | 0.75 |
+| **Total** | | **0.25** |
+
+At $\lambda=0$, only $\delta_0$ remains, giving 0. At $\lambda=1$, the sum gives $4-2=2$: completed return minus starting value. Likewise, $\lambda=0.95$ is a decay factor, not a 95% full-return / 5% one-step mixture. Each successive TD error receives another factor of $\gamma\lambda$.
+
+The same sum has a short backward recurrence:
+
+$$\hat A_H=0,\qquad \hat A_t=\delta_t+\gamma\lambda\hat A_{t+1}.$$
+
+Split the batch at every episode reset. For each segment, use the last actual observation as $S_H$. Set $V(S_H)=0$ only at a true terminal state. A time limit that truncates an ongoing task, or a rollout cutoff, keeps its bootstrap value; the trace still stops at the boundary. This matches the boundary handling in [Spinning Up's `finish_path`](https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/ppo.py).
+
+```text
+# One segment, with frozen values and no episode reset inside it.
+endpoint = 0 if true_terminal else V(last_actual_observation)
+v[H] = endpoint
+advantage[H] = 0
+for t = H-1 down to 0:
+    delta = R_(t+1) + gamma * v[t+1] - v[t]
+    advantage[t] = delta + gamma * lambda * advantage[t+1]
+```
+
+Here `v[t]` stores the frozen $V(S_t)$. At $\lambda=1$, cancellation gives
+
+$$\hat A_t=\sum_{\ell=0}^{H-t-1}\gamma^\ell R_{t+\ell+1}+\gamma^{H-t}V(S_H)-V(S_t).$$
+
+Only a true terminal endpoint removes that tail. A truncated return still includes it.
 
 The next question is how to store values when almost every state is new. [Part 3: function approximation](/robotics/rl-3-function-approximation-codex/) replaces separate table entries with shared weights.
 
