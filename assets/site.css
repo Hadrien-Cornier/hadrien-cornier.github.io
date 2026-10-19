@@ -113,6 +113,8 @@ main { width: min(1200px, calc(100% - 112px)); margin: auto; }
 .demo-caption output { color: var(--ink); margin-left: 5px; }
 .demo-caption a { color: var(--accent); }
 .demo-units { color: var(--muted, #656c5e); font-size: 9px; margin-top: 8px; }
+:root:not([data-theme="light"]) .arm-demo #demo-grid circle { fill: var(--line); }
+:root:not([data-theme="light"]) .arm-demo #axis-arrow path { stroke: var(--muted); }
 /* The full biography remains a separate page, with its original section links. */
 .hero { padding: 65px 0 55px; border-bottom: 1px solid var(--line); margin-bottom: 60px; }
 .hero-top { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
