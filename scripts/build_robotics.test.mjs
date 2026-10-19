@@ -107,9 +107,15 @@ test('only articles with a timeline load its small runtime script', () => {
     const plainPage = fs.readFileSync(path.join(root, 'robotics/plain/index.html'), 'utf8');
     const geometryPage = fs.readFileSync(path.join(root, 'robotics/geometry/index.html'), 'utf8');
     const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    for (const page of [componentPage, plainPage, geometryPage, home]) {
+      assert.match(page, /class="theme-toggle"[^>]*aria-pressed="true"/);
+      assert.equal((page.match(/src="\/assets\/theme\.js\?/g) ?? []).length, 1);
+      assert.ok(page.indexOf("let theme = 'dark'") < page.indexOf('<link rel="stylesheet"'));
+      assert.ok(page.indexOf("let theme = 'dark'") > page.indexOf('<head>'));
+    }
     assert.match(componentPage, /<script src="\/assets\/robotics-timeline.js\?v=[a-f0-9]+" defer><\/script>/);
     assert.doesNotMatch(componentPage, /<script src="\/assets\/site.js/);
-    assert.doesNotMatch(plainPage, /<script[^>]*src=/);
+    assert.doesNotMatch(plainPage, /<script[^>]*src="(?!\/assets\/theme\.js\?)/);
     assert.doesNotMatch(home, /robotics-timeline.js/);
     assert.match(home, /<script type="module" src="\/assets\/control-playground.js\?v=[a-f0-9]+"><\/script>/);
     assert.match(geometryPage, /<script src="\/assets\/arm-geometry.js\?v=[a-f0-9]+" defer><\/script>/);
@@ -143,7 +149,7 @@ test('build preserves sitemap entries and creates repeatable offline pages', () 
     assert.doesNotMatch(home, /href="\/robotics\/from-joint-angles-to-a-moving-arm\/"/);
     assert.match(home, /href="#writing">Explore the writing/);
     assert.doesNotMatch(home, /href="\/robotics\/how-robot-control-is-changing\/"/);
-    assert.doesNotMatch(page, /<script[^>]*src=|https?:\/\/[^"\s]+\.css/);
+    assert.doesNotMatch(page, /<script[^>]*src="(?!\/assets\/theme\.js\?)|https?:\/\/[^"\s]+\.css/);
     build(root);
     assert.equal(fs.readFileSync(path.join(root,'robotics/example/index.html'),'utf8'), page);
     assert.equal(fs.readFileSync(path.join(root,'index.html'),'utf8'), home);
@@ -368,7 +374,7 @@ test('the search index carries title, description, tags, date and url but never 
     assert.doesNotMatch(listing, /Draft report|hidden<\/span>/);
     const page = fs.readFileSync(path.join(root, 'robotics/published/index.html'), 'utf8');
     assert.match(page, /<a class="tag-chip" href="\/robotics\/#tag-so-101">so-101<\/a>/);
-    assert.doesNotMatch(page, /<script[^>]*src=/);
+    assert.doesNotMatch(page, /<script[^>]*src="(?!\/assets\/theme\.js\?)/);
     build(root);
     assert.equal(fs.readFileSync(indexFile, 'utf8'), JSON.stringify(index, null, 2) + '\n');
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
