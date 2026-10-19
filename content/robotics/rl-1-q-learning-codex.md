@@ -18,6 +18,8 @@ A move costs one point, a fall costs a hundred, and the goal lies beyond a cliff
 
 **Codex trial · Part 1.** [Part 0: why these methods exist](/robotics/rl-0-overview-codex/). The pinned drawing follows the explanation; the replay shows one recorded run.
 
+**Reading goal:** read one table row, calculate the update from −0.5 to −0.9975, then distinguish a good route from a converged table.
+
 <nav class="rc-route" aria-label="Reading route"><b>Route</b> <a href="#sec-world" data-go="sec-world">World</a><span>&rarr;</span><a href="#sec-table" data-go="sec-table">Table</a><span>&rarr;</span><a href="#sec-readouts" data-go="sec-readouts">Readouts</a><span>&rarr;</span><a href="#sec-update" data-go="sec-update">Update</a><span>&rarr;</span><a href="#sec-credit" data-go="sec-credit">Credit</a><span>&rarr;</span><a href="#sec-limits" data-go="sec-limits">Limits</a></nav>
 
 <div class="rc-mark" id="sec-world" data-panel="world" data-view="world" data-title="The world"></div>
@@ -72,6 +74,8 @@ Drag the replay slider to watch the same table change, or step one update at a t
 <div class="rc-mark" id="sec-readouts" data-panel="readouts" data-view="readouts" data-title="Two readouts"></div>
 
 ## Two readouts of one table
+
+The robot needs both a prediction and a choice. At the start, the table says up is worth −12.25 and right is worth −112.13. Its value readout is −12.25; its action readout is up.
 
 Read $Q(s,a)$ as the learned score for action $a$ in state $s$. The readout $V_Q(s)$ keeps the largest score; the policy $\pi_Q(s)$ keeps its action. The operator $\max$ returns a number, while $\arg\max$ returns an action, with a fixed rule for ties. A star marks the optimal quantities: $q_*$ is the optimal action value, $v_*$ the optimal state value and $\pi_*$ an optimal action choice. A subscript $Q$ means a readout of the current learned table; it need not be optimal.
 
@@ -160,7 +164,7 @@ Update 6 is drawn on panel 4 of the canvas.
 
 ## Credit travels backward
 
-Let $\text{target}_{24}$ mean the target formed at update 24; the cell pair in $Q$ is a row-column coordinate followed by its action. These values are read from the same recorded update log. On panel 5, update 19 lowers (2,0)'s last zero entry, changing its row maximum to −0.5. At update 24, the neighboring left move reads that number:
+How does a cost at one cell reach a choice made before arrival? At update 19, cell (2,0)'s last zero entry falls, making its row maximum −0.5. At update 24, the left move from (2,1) reads that changed maximum. Let $\text{target}_{24}$ denote this update's target; a cell pair in $Q$ is a row-column coordinate followed by its action. These numbers come from the recorded update log:
 
 $$\begin{aligned}
 \text{target}_{24} &= -1 + 0.99(-0.5) = -1.495 \\
@@ -211,7 +215,9 @@ The count compares learned row maxima with value iteration: absolute error $<10^
 
 ## When it converges
 
-A finite run can find a route before all values settle. For the asymptotic guarantee, let $n$ count the learner's updates, $Q_n$ be the current table and $q_*$ the optimal table. For a given pair, let $k$ count its own updates and $\alpha_k$ its step sizes. The sum $\sum_k$ adds over those visits; $\infty$ means unbounded total and $\to$ means convergence. Each pair needs unlimited total adjustment but finite accumulated squared step size. For example, $\alpha_k=1/(k+1)$ satisfies both:
+A route can work while other entries remain wrong. The guarantee concerns the entire table after indefinitely many updates. It needs three things: a fixed finite task, continued visits to every pair, and a step size that shrinks without stopping learning.
+
+Let $n$ count all updates, $Q_n$ be the current table and $q_*$ the optimal table. For each state-action pair, $k$ counts its own updates and $\alpha_k$ its step sizes. The first sum below requires unlimited total adjustment; the second limits accumulated squared step size. For example, $\alpha_k=1/(k+1)$ satisfies both. The arrow $\to$ means convergence:
 
 $$\begin{aligned} &\sum_k \alpha_k = \infty, \quad \sum_k \alpha_k^2 < \infty \\ &\Longrightarrow\; Q_n(s,a) \to q_*(s,a) \ \text{with probability 1} \end{aligned}$$
 

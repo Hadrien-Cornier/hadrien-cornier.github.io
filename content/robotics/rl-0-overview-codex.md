@@ -20,6 +20,8 @@ You win a game after a hundred moves. Which earlier choices deserve credit, and 
 
 Throughout, $s$ is a state, $a$ an action, $r$ a reward and $s'$ the next state. A **policy** $\pi$ picks actions; the **discount** $\gamma$ reduces later rewards. $\mathbb{E}$ means average, $\max$ the largest value, and $\arg\max$ the action attaining it. A prime marks the next state or action; a time subscript locates a quantity in the sequence. In equations, $\sum$ adds the indexed terms and $\leftarrow$ replaces the old estimate with the expression on its right.
 
+**Reading goal:** follow one problem at a time: delayed rewards lead to value estimates; imperfect targets lead to different methods; sharing estimates creates the stability question. Use the family tree to pick a branch, then open its worked explanation.
+
 <nav class="rc-route" aria-label="Reading routes"><b>Why values?</b> <a href="#sec-credit" data-go="sec-credit">Credit</a><span>&rarr;</span><a href="#sec-defs" data-go="sec-defs">Definitions</a><span>&rarr;</span><a href="#sec-bellman1" data-go="sec-bellman1">Bellman</a><br/><b>Which method?</b> <a href="#sec-tree" data-go="sec-tree">Problem map</a><span>&rarr;</span><a href="#sec-horizons" data-go="sec-horizons">Waiting</a><span>&rarr;</span><a href="#sec-behavior" data-go="sec-behavior">Exploration</a><span>&rarr;</span><a href="#sec-double" data-go="sec-double">Noise</a><span>&rarr;</span><a href="#sec-sharing" data-go="sec-sharing">Scale</a></nav>
 
 <div class="rc-mark" id="sec-defs" data-panel="defs" data-num="1" data-view="defs" data-title="Symbols"></div>
@@ -97,7 +99,9 @@ $$Q(a) \leftarrow Q(a) + \tfrac{1}{n(a)}\bigl(r - Q(a)\bigr)$$
 </ol>
 </div>
 
-The factor $1/n(a)$ makes this a running sample average: each new payout receives one equal share of the updated mean. [Sutton and Barto, §2.4](http://incompleteideas.net/book/RLbook2020.pdf). Greedy picks the largest estimate and can stay with a lucky early choice. With $\varepsilon=0.1$, one pull in ten explores, so other estimates get a chance to improve.
+The factor $1/n(a)$ makes this a running sample average: each new payout receives one equal share of the updated mean.
+
+For example, a machine with two payouts totaling 4 has estimate 2. A third payout of −1 gives $2+(-1-2)/3=1$, the mean of all three payouts. The table stores that running mean, not the latest reward. [Sutton and Barto, §2.4](http://incompleteideas.net/book/RLbook2020.pdf). Greedy picks the largest estimate and can stay with a lucky early choice. With $\varepsilon=0.1$, one pull in ten explores, so other estimates get a chance to improve.
 
 <div class="tri-clips">
 <figure class="tri-clip"><video class="tri-video" data-clip="slots-greedy-505" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/slots-greedy-505-desktop.mp4"></video><figcaption><b>ε = 0: it never leaves its first pick</b>Gold: true average. Blue: belief. Crown: best machine. One recorded run.</figcaption></figure>
@@ -118,7 +122,7 @@ The factor $1/n(a)$ makes this a running sample average: each new payout receive
 
 ## Training the Q function
 
-With several states, a good choice can pay later. $Q(s,a)$ estimates that return. A **target** is the return we train it toward. For tables, the update below moves one estimate a fraction $\alpha$, the step size, toward its target. Keeping the target fixed for that update makes the residual smaller. The next three sections change what supplies that target; n-step TD also works on state values $V(s)$. [Sutton and Barto, §6.5](http://incompleteideas.net/book/RLbook2020.pdf).
+A move can earn zero now and still be the only way to reach a later reward. Updating from the immediate reward alone would miss that choice. With several states, $Q(s,a)$ estimates the return after action $a$ in state $s$. A **target** is the return we train it toward. For tables, the update below moves one estimate a fraction $\alpha$, the step size, toward its target. Keeping the target fixed for that update makes the residual smaller. The next three sections change what supplies that target; n-step TD also works on state values $V(s)$. [Sutton and Barto, §6.5](http://incompleteideas.net/book/RLbook2020.pdf).
 
 <div class="algo">
 <div class="algo-title">The tabular action-value update</div>
@@ -132,6 +136,8 @@ With several states, a good choice can pay later. $Q(s,a)$ estimates that return
 </div>
 
 <div class="rc-mark" id="sec-horizons" data-panel="horizons" data-num="4a" data-view="horizons" data-title="How long before a guess?"></div>
+
+For one illustrative update, the old entry is 2, the target is 6 and $\alpha=0.25$. The new entry is $2+0.25(6-2)=3$. The loop changes one number; the choice of target decides what future that number learns.
 
 ### How long before a guess?
 
@@ -406,6 +412,8 @@ On-policy averaging cannot enlarge this norm; neither can the orthogonal project
 
 **Add off-policy sampling:** projection may now weight states by the behavior distribution, while the Bellman target follows $\pi$. The matched-norm argument can fail. The two-state example below shows the resulting feedback.
 
+**Read the bound:** if two candidate value vectors are distance 2 apart and $\gamma=0.9$, one projected Bellman map leaves them at most 1.8 apart. It compares two whole predictions under the same policy and state weighting. It does not say every noisy TD sample improves its estimate.
+
 <details class="dt-conditions">
 <summary>Conditions behind this prediction result</summary>
 <p>This is a fixed-policy prediction result. A finite irreducible, aperiodic chain supplies a stationary distribution and repeated on-policy visits. Rewards are bounded, the discount is below 1, and the fixed feature columns are linearly independent.</p>
@@ -444,6 +452,8 @@ Full rank gives one empirical least-squares minimizer. Choose $\eta$ below 2 div
 
 **Add bootstrapping:** replace the complete return with a target containing $v_w$ at a future state. Now the labels move with $w$. Treating them as constants during each update no longer gives gradient descent on the fixed regression above.
 
+**One fixed label:** take one feature equal to 1 and a corrected return label of 2. The loss is $(w-2)^2/2$. With batch step size $\eta=0.5$, weights $0,1,1.5,1.75$ approach 2 because the label stays 2. Bootstrapping would let that destination move with the predictions.
+
 <details class="dt-conditions">
 <summary>Conditions behind this regression example</summary>
 <p>Freeze the target and behavior policies, linear features and recorded data. Use independent finite-horizon episodes with bounded rewards and features. Behavior must cover the target actions and the starting states whose values are being fitted; corrected labels need finite variance for statistical claims.</p>
@@ -480,6 +490,8 @@ $$
 Taking a maximum and averaging cannot amplify the largest entrywise difference; discounting shrinks it. Thus $T_*$ has one fixed point, the optimal table. With enough visits and suitable step sizes, sampled Q-learning reaches it. [Watkins and Dayan's convergence theorem](https://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf).
 
 **Add function approximation:** a weight update can also change other states' values, including a value in the bootstrap target. The tabular Bellman operator still contracts, but that alone does not control the added shared fitting step. Its guarantee does not transfer to an arbitrary approximator.
+
+**Two separate entries:** if the successor maximum is 5, the reward is 0 and $\gamma=0.9$, the target is 4.5. Moving a predecessor from 2 toward 4.5 leaves the successor at 5 during that update. A shared weight can move both; a table entry cannot.
 
 <details class="dt-conditions">
 <summary>Conditions behind tabular convergence</summary>

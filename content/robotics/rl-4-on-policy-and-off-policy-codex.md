@@ -17,6 +17,8 @@ Your favorite route stays beside a cliff, but one random exploratory move can st
 
 **Codex trial · Part 4.** A value estimate gives credit to earlier actions for rewards that arrive later. But which later actions does it assume? That choice separates on-policy from off-policy learning. We can see the difference without changing the task, the rewards or the table.
 
+**Reading goal:** keep the next-state row fixed. Changing only the assumed future policy gives targets of 8, a sampled 8 or −10, and an average of 6.2.
+
 <nav class="rc-route" aria-label="Reading route"><a href="#sec-two-policies" data-go="sec-two-policies">Two policies, one task</a><a href="#sec-three-targets" data-go="sec-three-targets">One row, three targets</a><a href="#sec-cliff-risk" data-go="sec-cliff-risk">Exploration has a cost</a><a href="#sec-coverage" data-go="sec-coverage">Data must cover the question</a><a href="#sec-action-correction" data-go="sec-action-correction">Correcting action probabilities</a><a href="#sec-guarantees" data-go="sec-guarantees">Which guarantees survive?</a></nav>
 
 <div class="rc-mark" id="sec-two-policies" data-panel="policies" data-view="policies" data-title="Two policies, one task"></div>
@@ -27,6 +29,13 @@ Suppose you want the shortest route to a goal, and you occasionally try a random
 
 <figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Behavior produces a transition; target policy specifies the continuation used to value it"><defs><marker id="p4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="40" cy="65" r="23" fill="#d7e5ee" stroke="#242622"/><text x="40" y="71" text-anchor="middle">s</text><path d="M65 65H171" stroke="#2b6a8e" stroke-width="2" marker-end="url(#p4a)"/><text x="110" y="43" text-anchor="middle">b picks a</text><circle cx="200" cy="65" r="23" fill="#d7e5ee" stroke="#242622"/><text x="200" y="71" text-anchor="middle">s′</text><path d="M216 85Q256 115 265 148" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#p4a)"/><text x="158" y="119">π values</text><text x="158" y="140">the future</text><path d="M246 168H61Q40 168 40 94" fill="none" stroke="#2b6a8e" stroke-width="2" marker-end="url(#p4a)"/><text x="145" y="195" text-anchor="middle">credit returns to (s, a)</text></g></svg><figcaption>Decision view. Fixed: task and transition. Change: the policy assumed after arrival. Follow data forward and credit backward.</figcaption></figure>
 
+| At one illustrative state | Right | Down |
+| --- | ---: | ---: |
+| Behavior $b$: collects moves | 0.9 | 0.1 |
+| Target $\pi$: greedy continuation | 1 | 0 |
+
+Here a down move can enter the data even though the future being valued always chooses right. The next section keeps this row and makes the consequences numerical.
+
 If the target and behavior rules match, learning is **on-policy**. If they differ, it is **off-policy**. Q-learning can learn after every fresh move and still be off-policy: an exploratory rule acts, while the target assumes greedy continuation. Old data aren't required.
 
 Separating the rules is useful when exploration helps collect information but you want values for a different eventual behavior. It also creates an obligation: the collected data must support the future you're asking about. [Sutton and Barto, §5.5](http://incompleteideas.net/book/RLbook2020.pdf).
@@ -34,6 +43,8 @@ Separating the rules is useful when exploration helps collect information but yo
 <div class="rc-mark" id="sec-three-targets" data-panel="targets" data-view="targets" data-title="One row, three targets"></div>
 
 ## One row, three targets
+
+Should the backup use the best next move, the move actually drawn, or an average over the policy? Keep the estimates fixed to isolate that choice.
 
 At step $t$, take action $A_t$ in state $S_t$, receive reward $R_{t+1}$ and reach $S_{t+1}$. Let $Q(s,a)$ estimate discounted return after action $a$ in state $s$. The discount is $\gamma$, the positive learning rate is $\alpha$, and $Y_t$ is the target. An arrow means replacement:
 
@@ -81,6 +92,8 @@ For a visited state $s$ and candidate action $a$, that requirement is $\pi(a\mid
 
 ## Correcting action probabilities
 
+Suppose the data choose right and down equally, but the target chooses right four times as often as down. An unweighted average answers the wrong policy question. Importance weights correct each action's contribution to the average.
+
 At one fixed state $s$, let $A$ be an action sampled from $b$. Let $f(s,a)$ be any fixed quantity attached to action $a$, and let $\rho(a\mid s)=\pi(a\mid s)/b(a\mid s)$ be its **importance ratio**, where the denominator is positive for target actions. The symbols $\mathbb E$ and $\sum$ mean expectation and sum over actions; $A\sim b$ means sampling $A$ from behavior at this fixed state.
 
 $$\mathbb E_{A\sim b}[\rho(A\mid s)f(s,A)]=\sum_a\pi(a\mid s)f(s,a).$$
@@ -90,6 +103,13 @@ The reason is cancellation: multiplying behavior probability by the ratio leaves
 <figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Equal behavior action probabilities become target weights point eight and point two after multiplying by ratios"><defs><marker id="p4e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="25" text-anchor="middle">b samples each action: 0.5</text><path d="M150 38L75 77M150 38L225 77" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#p4e)"/><text x="75" y="103" text-anchor="middle">right</text><text x="225" y="103" text-anchor="middle">down</text><path d="M75 112V152M225 112V152" stroke="#2b6a8e" stroke-width="2" marker-end="url(#p4e)"/><text x="75" y="141" text-anchor="middle">× 1.6</text><text x="225" y="141" text-anchor="middle">× 0.4</text><text x="75" y="179" text-anchor="middle">weight 0.8</text><text x="225" y="179" text-anchor="middle">weight 0.2</text><text x="150" y="209" text-anchor="middle">target action proportions</text></g></svg><figcaption>Probability view. Fixed: state and action quantities. Change: contribution of each sampled action. Compare equal sampling with unequal target weights.</figcaption></figure>
 
 For an illustrative calculation, take behavior probabilities $(0.5,0.5)$, target probabilities $(0.8,0.2)$ and quantities $(10,-10)$. The ratios are $1.6$ and $0.4$. Then $0.5(1.6)(10)+0.5(0.4)(-10)=6$, matching $0.8(10)+0.2(-10)$.
+
+| Action | Behavior | Target | Ratio | Quantity | Weighted contribution |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Right | 0.5 | 0.8 | 1.6 | 10 | 8 |
+| Down | 0.5 | 0.2 | 0.4 | −10 | −2 |
+
+Add the last column to recover 6. Each contribution is behavior probability × ratio × quantity; it is not a new transition or reward.
 
 This is a conditional, one-step action identity. Correcting a whole multi-step return needs the appropriate sequence of ratios, coverage and variance control. Rare behavior actions can receive huge weights. The arithmetic doesn't repair an omitted state or establish convergence for a nonlinear bootstrap learner. [§5.5](http://incompleteideas.net/book/RLbook2020.pdf).
 

@@ -17,6 +17,8 @@ A sensor reports a position you have never visited. A separate table row has lea
 
 **Codex trial · Part 3.** [Previously: bootstrapping](/robotics/rl-2-bootstrapping-codex/).
 
+**Reading goal:** see one example change two states, calculate what the model cannot represent, then watch the next target move after fitting the current one.
+
 <nav class="rc-route" aria-label="Reading route"><a href="#sec-scale" data-go="sec-scale">The table grows</a><a href="#sec-linear" data-go="sec-linear">One update shares learning</a><a href="#sec-alias" data-go="sec-alias">Sharing can erase distinctions</a><a href="#sec-semigradient" data-go="sec-semigradient">Hold the target still</a><a href="#sec-moving" data-go="sec-moving">The target moves next time</a><a href="#sec-network" data-go="sec-network">Networks need steadier targets</a></nav>
 
 <div class="rc-mark" id="sec-scale" data-panel="scale" data-view="scale" data-title="The table grows"></div>
@@ -41,6 +43,8 @@ Why approximation helps: a compact rule can reuse one observation across several
 
 ## One update shares learning
 
+A new table row starts empty even when a similar state was just trained. To reuse that example, make both predictions depend on the same adjustable numbers.
+
 Instead of storing a value for every state, store a few **weights**. Let $s$ denote a state, $x(s)$ its fixed vector of numerical features, and $w$ the weight vector of the same length. The superscript $\top$ turns a column vector into a row; $w^\top x(s)$ multiplies corresponding coordinates and adds them. $\hat v(s,w)$ is the approximate state value, with the hat marking an estimate. An assignment arrow replaces the old weights:
 
 $$\hat v(s,w)=w^\top x(s).$$
@@ -50,6 +54,12 @@ For two states named A and B, choose features $x(\mathrm A)=(1,1)^\top$ and $x(\
 $$w\leftarrow w+\alpha[y-\hat v(\mathrm A,w)]x(\mathrm A).$$
 
 The error is 2, so both weights become 0.2. A's prediction becomes 0.4 and B's becomes 0.6, despite receiving no example from B. If B's target is 3, its prediction has moved closer too.
+
+| After training only A once | A: features (1, 1) | B: features (1, 2) |
+| --- | ---: | ---: |
+| Before | 0 | 0 |
+| After | 0.4 | 0.6 |
+| Supplied comparison target | 2 | 3 |
 
 Why it works: each weight affects every input using that feature. The update follows the direction that reduces A's squared error locally. Useful transfer to B depends on its features and target. [Sutton and Barto, Sections 9.3–9.4](http://incompleteideas.net/book/RLbook2020.pdf).
 
@@ -94,7 +104,7 @@ The reason this repair helps is concrete: different feature vectors allow differ
 
 ## Hold the target still
 
-In reinforcement learning, the training target often contains another prediction. That changes the meaning of the gradient update.
+Suppose the model predicts 0.4 here and 0.6 at the successor. With reward 0 and discount 0.9, the current target is 0.54. Fitting 0.4 toward 0.54 is straightforward; differentiating through the calculation that produced 0.54 is a different update. Semi-gradient TD holds that target number fixed for this derivative.
 
 Let $t$ count transitions, $S_t$ be the current state and $R_{t+1}$ the reward after action $A_t$. Let $w_t$ be the current weights and $\gamma$ the discount, between 0 and 1. Define the one-step target $y_t$ using those weights, with terminal value zero:
 
@@ -135,6 +145,12 @@ $$w_{t+1}=(0.2,0.2)^\top+0.1(0.14)(1,1)^\top
 Afterward, A predicts 0.428 and B predicts 0.642. If we train on that same transition again, the next target becomes
 
 $$y_{t+1}=0+0.9(0.642)=0.5778.$$
+
+| Same replayed A → B transition | Before | After one update |
+| --- | ---: | ---: |
+| Prediction at A | 0.4 | 0.428 |
+| Prediction at B | 0.6 | 0.642 |
+| Target from B | 0.54 | 0.5778 |
 
 The target moved from 0.54 to 0.5778 because the update also raised B's value. In a table, updating A would leave B's separate entry unchanged.
 

@@ -17,6 +17,8 @@ Seven moves pay nothing; the eighth pays one. How can the first move learn about
 
 **Codex trial · Part 2.** [Previously: the Q table](/robotics/rl-1-q-learning-codex/).
 
+**Reading goal:** in the same eight-state corridor, compare one completed-return pass with eight forward TD walks and three walks of three-step TD. The update order stays explicit throughout.
+
 <nav class="rc-route" aria-label="Reading route"><a href="#sec-late" data-go="sec-late">A late reward</a><a href="#sec-mc" data-go="sec-mc">Wait for the return</a><a href="#sec-td" data-go="sec-td">Borrow the next estimate</a><a href="#sec-corridor" data-go="sec-corridor">Credit travels backward</a><a href="#sec-nstep" data-go="sec-nstep">Look several steps ahead</a><a href="#sec-horizon" data-go="sec-horizon">Choose the horizon</a></nav>
 
 <div class="rc-mark" id="sec-late" data-panel="late" data-view="late" data-title="A late reward"></div>
@@ -41,7 +43,7 @@ In this deterministic corridor, with no discounting, every nonterminal state is 
 
 ## Wait for the return
 
-You can finish the walk and use what actually happened. This is episodic **Monte Carlo prediction**. Let $V(s)$ be the current estimate of $v_\pi(s)$ and $\alpha$ a step size greater than zero and at most 1. The arrow $\leftarrow$ replaces an estimate; brackets group the target-minus-estimate error. For each visited state, move its estimate toward its completed return:
+The first seven rewards are zero, so none alone explains why the first state is valuable. Finish the walk and add what actually happened afterward. This is episodic **Monte Carlo prediction**. Let $V(s)$ be the current estimate of $v_\pi(s)$ and $\alpha$ a step size greater than zero and at most 1. The arrow $\leftarrow$ replaces an estimate; brackets group the target-minus-estimate error. For each visited state, move its estimate toward its completed return:
 
 $$V(S_t)\leftarrow V(S_t)+\alpha[G_t-V(S_t)].$$
 
@@ -97,6 +99,15 @@ An update can start immediately and still carry new credit slowly. Return to the
 
 On the first walk, the first seven targets are zero. Only the last state sees reward 1. On the second walk, state 7 reads the now-correct value at state 8. State 6 already updated before that happened, so it waits another walk.
 
+| After a complete walk | States with value 1 under forward TD(0) |
+| --- | --- |
+| 1 | 8 |
+| 2 | 7, 8 |
+| 3 | 6, 7, 8 |
+| 8 | 1 through 8 |
+
+The displayed formula below names this same pattern; it introduces no extra learning rule.
+
 Let $m$ count completed walks and $i$, from 1 to 8, identify a corridor state. Write $V_m(i)$ for its estimate after walk $m$, including $m=0$ before learning. The cases below assign 1 to the last $m$ states and 0 to the others:
 
 $$V_m(i)=\begin{cases}1,&i>8-m,\\0,&i\leq8-m,\end{cases}\qquad 0\leq m\leq8.$$
@@ -151,6 +162,8 @@ The discount shrinks a given endpoint error as the horizon grows. The endpoint i
 | Monte Carlo | Policy value | Full return | Episodes are too long | Bootstrap sooner | [Ch. 5](http://incompleteideas.net/book/RLbook2020.pdf) |
 | TD(0) | Policy value | One reward + guess | Credit moves slowly | Extend backup | [Ch. 6](http://incompleteideas.net/book/RLbook2020.pdf) |
 | n-step TD | Policy value | Several rewards + guess | Targets wait or fluctuate | Tune horizon | [Ch. 7](http://incompleteideas.net/book/RLbook2020.pdf) |
+
+**In this corridor:** Monte Carlo waits for 8 rewards and credits all states after walk 1. TD(0) starts after 1 reward but needs 8 forward walks to credit state 1. Three-step TD waits for up to 3 rewards and needs 3 walks. These counts hold for zero initialization and unit discount and step size; they are not a stochastic performance ranking.
 
 **Bootstrapping buys:**
 
