@@ -379,3 +379,37 @@ test('the search index carries title, description, tags, date and url but never 
     assert.equal(fs.readFileSync(indexFile, 'utf8'), JSON.stringify(index, null, 2) + '\n');
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
+
+test('a section gets its own index page, a labelled card, and a sitemap entry; unknown sections fail', () => {
+  const withSection = (section) => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\n${section}---\nBody.`);
+  assert.equal(withSection("section: 'recent-papers'\n").section, 'recent-papers');
+  assert.equal(withSection('').section, undefined);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-section-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    fs.writeFileSync(path.join(sourceDir, 'a-paper.md'), "---\ntitle: A paper\ndescription: About a paper.\ndate: 2026-09-26\nsection: 'recent-papers'\n---\n\nBody.");
+    fs.writeFileSync(path.join(sourceDir, 'plain.md'), '---\ntitle: Plain essay\ndescription: Not a paper.\ndate: 2026-09-25\n---\n\nBody.');
+    build(root);
+    const index = fs.readFileSync(path.join(root, 'robotics/recent-papers/index.html'), 'utf8');
+    assert.match(index, /<h1>Recent papers I find fascinating\.<\/h1>/);
+    assert.match(index, /href="\/robotics\/a-paper\/"/);
+    assert.doesNotMatch(index, /Plain essay/);
+    const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
+    assert.match(listing, /<a class="section-link" href="\/robotics\/recent-papers\/">/);
+    assert.match(listing, /Plain essay/);
+    const paper = fs.readFileSync(path.join(root, 'robotics/a-paper/index.html'), 'utf8');
+    assert.match(paper, /<a class="eyebrow" href="\/robotics\/recent-papers\/">Writing \/ Recent papers<\/a>/);
+    const plain = fs.readFileSync(path.join(root, 'robotics/plain/index.html'), 'utf8');
+    assert.match(plain, /<a class="eyebrow" href="\/#writing">Writing \/ Robotics<\/a>/);
+    assert.match(fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8'), /\/robotics\/recent-papers\//);
+    build(root);
+    assert.equal(fs.readFileSync(path.join(root, 'robotics/recent-papers/index.html'), 'utf8'), index);
+    fs.unlinkSync(path.join(sourceDir, 'a-paper.md'));
+    build(root);
+    assert.ok(!fs.existsSync(path.join(root, 'robotics/recent-papers/index.html')));
+    fs.writeFileSync(path.join(sourceDir, 'bad.md'), "---\ntitle: Bad\ndescription: Bad.\ndate: 2026-09-26\nsection: 'nope'\n---\nBody.");
+    assert.throws(() => build(root), /section must be one of/);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});

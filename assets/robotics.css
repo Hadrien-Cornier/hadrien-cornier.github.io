@@ -641,3 +641,9 @@ a.tag-chip:hover { border-color: var(--accent); color: var(--accent); text-decor
 
 .article-body .aspire-bar { display: block; height: 12px; min-width: 2px; background: var(--accent); }
 .article-body .aspire-bar-base { background: var(--muted); }
+
+.section-links { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 28px; }
+.section-link { display: inline-flex; align-items: baseline; gap: 10px; min-width: 0; padding: 11px 15px; border: 1px solid var(--line); border-left: 3px solid var(--accent); color: var(--ink); text-decoration: none; }
+.section-link:hover { border-color: var(--accent); }
+.section-link-name { font-weight: 600; }
+.section-link-count { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .7px; }

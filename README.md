@@ -56,6 +56,10 @@ date: '2026-09-26'
 ---
 ```
 
+Add `section: 'recent-papers'` to file an essay under Recent papers. The builder writes the
+shelf's index at `/robotics/recent-papers/`, links it from the Robotics page, and labels the
+essay's cards and header. Section names live in `SECTIONS` in `scripts/build_robotics.mjs`.
+
 Use level-two and level-three headings for the table of contents. Set `layout: essay`
 for a centered reading column without a contents sidebar. The title supplies the
 level-one heading. Standard Markdown handles links, lists, tables, and code. Use `$q_1$`
