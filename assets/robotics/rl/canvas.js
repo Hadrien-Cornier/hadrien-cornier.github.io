@@ -12,12 +12,13 @@
     var views = JSON.parse(svg.getAttribute('data-views')), whole = svg.getAttribute('data-whole').split(' ').map(Number);
     var marks = [].slice.call(rc.querySelectorAll('.rc-mark')), where = stage.querySelector('.rc-where'), reset = stage.querySelector('.rc-reset');
     var cam = null, target = null, raf = 0, idx = -1, hold = false, holdAt = -1, tick = 0;
+    function label(i) { var n = marks[i].getAttribute('data-num'); if (n === null) n = String(i + 1); return (n ? n + '. ' : '') + marks[i].getAttribute('data-title'); }
     var nav = document.createElement('div'); nav.className = 'rc-nav';
     var prev = document.createElement('button'), next = document.createElement('button'), sel = document.createElement('select');
     prev.type = next.type = 'button'; prev.textContent = '◀'; next.textContent = '▶';
     prev.setAttribute('aria-label', 'Previous panel'); next.setAttribute('aria-label', 'Next panel'); sel.setAttribute('aria-label', 'Contents');
     var o0 = document.createElement('option'); o0.value = '-1'; o0.textContent = 'Contents: whole canvas'; sel.appendChild(o0);
-    marks.forEach(function (m, i) { var o = document.createElement('option'); o.value = String(i); o.textContent = (i + 1) + '. ' + m.getAttribute('data-title'); sel.appendChild(o); });
+    marks.forEach(function (m, i) { var o = document.createElement('option'); o.value = String(i); o.textContent = label(i); sel.appendChild(o); });
     nav.appendChild(prev); nav.appendChild(sel); nav.appendChild(next); body.insertBefore(nav, body.firstChild);
     var view = svg.parentNode;
     function size() { return [Math.max(1, view.clientWidth), Math.max(1, view.clientHeight)]; }
@@ -34,12 +35,12 @@
       })(performance.now());
     }
     function apply(i, instant) {
-      idx = i; sel.value = String(i); var s = size(), panel = null, v = whole, label = 'Whole canvas';
-      if (i >= 0) { var m = marks[i]; panel = m.getAttribute('data-panel'); var vn = m.getAttribute('data-view'); v = (s[0] / s[1] < 1 && views[vn + '_p']) || views[vn] || views[panel]; label = (i + 1) + '. ' + m.getAttribute('data-title'); }
+      idx = i; sel.value = String(i); var s = size(), panel = null, v = whole, whereLabel = 'Whole canvas';
+      if (i >= 0) { var m = marks[i]; panel = m.getAttribute('data-panel'); var vn = m.getAttribute('data-view'); v = (s[0] / s[1] < 1 && views[vn + '_p']) || views[vn] || views[panel]; whereLabel = label(i); }
       [].forEach.call(svg.querySelectorAll('.rc-panel'), function (g) { g.classList.toggle('is-active', g.getAttribute('data-panel') === panel); });
       rc.classList.toggle('is-zoomed', panel !== null);
       rc.setAttribute('data-active-panel', panel || 'whole'); rc.setAttribute('data-active-index', String(i)); rc.setAttribute('data-active-view', i >= 0 ? marks[i].getAttribute('data-view') : 'whole');
-      where.textContent = label; goCam(fit(v, s[0], s[1]), instant);
+      where.textContent = whereLabel; goCam(fit(v, s[0], s[1]), instant);
     }
     function topEdge() { var d = window.matchMedia('(min-width: 1000px)').matches; return d ? window.innerHeight * 0.36 : stage.getBoundingClientRect().bottom + nav.offsetHeight + 110; }
     function current() { var lim = topEdge(), k = -1; for (var i = 0; i < marks.length; i++) { if (marks[i].getBoundingClientRect().top <= lim) k = i; } return k; }
