@@ -350,6 +350,7 @@ function previewImage(article, root) {
   }
   const preferred = {
     'from-joint-angles-to-a-moving-arm':'/assets/robotics/arm-control/v3/franka_joint_names.png',
+    'why-cant-robots-remember':'/assets/robotics/why-cant-robots-remember/memer-object-search.png',
   }[article.slug];
   const src = preferred || article.body.match(/<img\s[^>]*src="([^"]+)"/)?.[1];
   if (!src || !src.startsWith('/assets/robotics/') || src.includes('..')) return '';

@@ -122,7 +122,7 @@ Take the hall again. The policy reads a short window directly. Everything older 
 
 ## The two models I started from
 
-I first wrote "Robostroll" for a navigation model I remembered as seeing only a few frames. The model I mean is Mistral's [Robostral Navigate](https://arxiv.org/abs/2607.20785). The match comes from the name and the single-camera navigation topic.
+I first wrote "Robostroll" for a navigation model I remembered as seeing only a few frames. The closest match I found is Mistral's [Robostral Navigate](https://arxiv.org/abs/2607.20785), going by the name and the single-camera navigation topic.
 
 Its paper says the model reads "a history of monocular RGB frames". It never says how long that history is. My memory of "a few frames" is not backed by the paper, and the training recipe suggests long histories are the point: each step is trained to see all the frames before it. On R2R-CE (unseen validation, a single RGB camera, no depth) the paper reports 77.4 percent success. Mistral's launch post reports 76.6 percent on the same split, probably from an earlier checkpoint. That is my inference.
 
@@ -197,8 +197,6 @@ That is across-task, procedural memory. It remembers how to recover from a plann
 A person walking that hall does not replay the last six seconds. We also don't write ourselves a note for every door. We seem to keep a few facts, like "second door" and "box" and "home is behind me", and we get them back when needed. This is an analogy, not neuroscience, and I don't claim anyone has shown a robot should copy it.
 
 ## My read
-
-This part is my opinion, and the writer's inference, so edit it freely.
 
 - **There is no accepted answer yet.** In what I read, no system keeps one shape of memory and wins across tasks. RoboMME's best average is 44.51 against 90.5 for humans.
 - **Robots are not empty-headed.** Maps in ViNT and NoMaD, recurrence, key frames and skill libraries all count as memory. "Robots can't remember" is wrong. "Robots have no shared way to remember" is closer.
