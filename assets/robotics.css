@@ -638,3 +638,6 @@ a.tag-chip:hover { border-color: var(--accent); color: var(--accent); text-decor
   .tag-row { margin-top: 12px; }
 }
 @media print { .article-filter { display: none; } }
+
+.article-body .aspire-bar { display: block; height: 12px; min-width: 2px; background: var(--accent); }
+.article-body .aspire-bar-base { background: var(--muted); }
