@@ -30,13 +30,13 @@ Coding agents have the same gap. They don't learn on the job. Each session start
 
 I don't think that is where agents end up. A coworker who learns your codebase, your customers and your habits gets better every week. Maybe the end state is a model fine-tuned on the company.
 
-OpenAI is moving the other way, at least on its public platform. Its [deprecations page](https://developers.openai.com/api/docs/deprecations) says that since 7 May 2026 organizations that never fine-tuned a model can't start. From 6 January 2027, active customers can't create new fine-tuning jobs. A model that is already tuned keeps serving until its base model is retired.
+OpenAI is moving the other way on its self-serve fine-tuning platform. Its [deprecations page](https://developers.openai.com/api/docs/deprecations) says that since 7 May 2026 organizations that never fine-tuned a model can't start there. From 6 January 2027, active customers can't create new jobs on it. A model that is already tuned keeps serving until its base model is retired.
 
 The page gives no reason. My guess is batching. A provider can serve requests from every customer on one shared model at once, which is far more efficient than hosting a separate model for each company. That is my reading, not something OpenAI said.
 
 ## Robots have it worse
 
-Most robots don't even have a memory file. A robot is controlled by a policy, a network that turns the current camera frames and an instruction into the next action. The classic policy papers keep nothing beyond the last frame or two. There is no textbook to reread.
+Most robots don't even have a memory file. A robot is controlled by a policy, a network that turns the current camera frames and an instruction into the next action. Many standard policies use only the current frame or a short fixed history, with no persistent episode memory. There is no textbook to reread.
 
 Some systems do better. RT-1 reads six frames. ViNT and NoMaD build a graph of places they have seen. MemER and the RoboMME systems keep key frames or text notes. They are the exceptions, and the rest of this article looks at what they store and what it costs.
 
