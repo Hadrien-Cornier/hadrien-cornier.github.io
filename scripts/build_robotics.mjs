@@ -26,7 +26,7 @@ export function dateValue(value, field) {
 }
 function validateSeriesMetadata(data) {
   if (data.series !== undefined && (typeof data.series !== 'string' || !data.series.trim())) throw new Error('series must be a non-empty string');
-  if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 1)) throw new Error('part must be a positive integer');
+  if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 0)) throw new Error('part must be a non-negative integer');
   if (data.series && data.part === undefined) throw new Error('part is required when series is set');
   if (data.track !== undefined && !TRACKS[data.track]) throw new Error(`track must be one of: ${Object.keys(TRACKS).join(', ')}`);
   if (data.track !== undefined && !data.series) throw new Error('track requires series');
@@ -233,7 +233,7 @@ function readSeriesPlan(sourceDir) {
     const numbers = new Set();
     const slugs = new Set();
     for (const part of entry.parts) {
-      if (!Number.isInteger(part.part) || part.part < 1 || numbers.has(part.part)) throw new Error(`series.json: ${name} has a bad or repeated part number`);
+      if (!Number.isInteger(part.part) || part.part < 0 || numbers.has(part.part)) throw new Error(`series.json: ${name} has a bad or repeated part number`);
       if (!SLUG_PATTERN.test(part.slug || '') || slugs.has(part.slug) || part.slug === entry.slug) throw new Error(`series.json: ${name} part ${part.part} has a bad or repeated slug`);
       for (const field of ['title', 'question']) if (typeof part[field] !== 'string' || !part[field].trim()) throw new Error(`series.json: ${name} part ${part.part} needs a ${field}`);
       if (part.levels !== undefined && (!Array.isArray(part.levels) || part.levels.some((level) => typeof level !== 'string'))) throw new Error(`series.json: ${name} part ${part.part} levels must be a list of names`);
@@ -244,6 +244,8 @@ function readSeriesPlan(sourceDir) {
   return plan;
 }
 const isPlanned = (part) => part.planned === true;
+// A series may open with a part 0 (an overview), so the total is the highest part number and not the number of articles.
+const seriesTotal = (article) => Math.max(...article.seriesArticles.map((part) => part.part));
 const soonTag = '<span class="track-tag soon-tag">Coming</span>';
 function seriesBox(article) {
   if (!article.seriesArticles) return '';
@@ -258,13 +260,13 @@ function seriesBox(article) {
   const previous = neighbour(article.seriesPrevious, 'prev', 'Previous');
   const next = neighbour(article.seriesNext, 'next', 'Next');
   const name = article.seriesHub ? `<a href="/robotics/${article.seriesHub}/">${escape(article.series)}</a>` : escape(article.series);
-  return `<nav class="series-box${article.seriesHub ? ' series-box-end' : ''}" aria-label="Series"><p class="series-box-name">${name}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+  return `<nav class="series-box${article.seriesHub ? ' series-box-end' : ''}" aria-label="Series"><p class="series-box-name">${name}</p><p class="series-box-position">Part ${article.part} of ${seriesTotal(article)}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
 // A planned series keeps its page head short, so the first robot clip stays near the top. A one-line strip names the series and the part,
 // and the full box with the part list and the previous and next links sits after the article.
 function seriesStrip(article) {
   if (!article.seriesHub) return '';
-  return `<p class="series-strip"><a href="/robotics/${article.seriesHub}/">${escape(article.series)}</a><span>Part ${article.part} of ${article.seriesArticles.length}</span></p>`;
+  return `<p class="series-strip"><a href="/robotics/${article.seriesHub}/">${escape(article.series)}</a><span>Part ${article.part} of ${seriesTotal(article)}</span></p>`;
 }
 function articlePage(article, root) {
   const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');

@@ -4,11 +4,18 @@
     "intro": "The main ideas of reinforcement learning, in the order that each one needs the one before. Each article asks one question and answers it with robots that learn, fail and get fixed in Breaking Bellman, a small browser game.",
     "parts": [
       {
+        "part": 0,
+        "slug": "rl-0-overview",
+        "title": "Reinforcement learning on one page",
+        "question": "What are the main ideas of reinforcement learning, and how do they connect?",
+        "levels": ["Ten slot machines"]
+      },
+      {
         "part": 1,
         "slug": "rl-1-q-learning",
-        "title": "Q-learning: one table for the value and the policy",
-        "question": "How can one table of numbers tell a robot both how good a situation is and what to do in it?",
-        "levels": ["Ten slot machines", "The cliff edge", "The mirage"]
+        "title": "Q-learning: a table that tells you what to do",
+        "question": "How does a table with one number per situation and move tell you what to do?",
+        "levels": ["The cliff edge", "The mirage"]
       },
       {
         "part": 2,

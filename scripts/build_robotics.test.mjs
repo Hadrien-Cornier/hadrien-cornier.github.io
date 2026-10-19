@@ -184,6 +184,25 @@ test('published reports disappear when drafted or deleted; unrelated files survi
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
 
+test('a series may open with part 0 and counts parts by their highest number', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-zero-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const report = (title, date, metadata) => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\n${metadata}---\n\n${title} body.`;
+    fs.writeFileSync(path.join(sourceDir, 'zero.md'), report('Overview', '2026-09-26', 'series: Arm series\npart: 0\n'));
+    fs.writeFileSync(path.join(sourceDir, 'one.md'), report('First idea', '2026-09-27', 'series: Arm series\npart: 1\n'));
+    build(root);
+    const zero = fs.readFileSync(path.join(root, 'robotics/zero/index.html'), 'utf8');
+    const one = fs.readFileSync(path.join(root, 'robotics/one/index.html'), 'utf8');
+    assert.match(zero, /Part 0 of 1/);
+    assert.match(zero, /rel="next" href="\/robotics\/one\/"/);
+    assert.match(one, /Part 1 of 1/);
+    assert.match(one, /rel="prev" href="\/robotics\/zero\/"/);
+  } finally { fs.rmSync(root, {recursive:true,force:true}); }
+});
+
 test('series validates metadata, orders parts, and omits draft parts', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-'));
   try {
@@ -217,7 +236,7 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
     assert.match(listingBlock, /report-part">Part 2</);
     assert.doesNotMatch(listing + home, /Unpublished part/);
     assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\n---\nBody.`), /part is required/);
-    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\npart: 0\n---\nBody.`), /positive integer/);
+    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\npart: -1\n---\nBody.`), /non-negative integer/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 
