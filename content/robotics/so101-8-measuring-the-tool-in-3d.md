@@ -1,6 +1,6 @@
 ---
 title: "How do I get the XYZ position of my robot's tool tip?"
-description: 'A drawing tablet measures a pen in a plane. Cameras, marker tracking, and laser trackers extend the view into space, with different costs and sources of error.'
+description: 'A $40 drawing tablet matches the accuracy of a $10,000 motion-capture system, as long as the pen stays on the page. Here is how to see the pen in space.'
 date: '2026-10-15'
 updated: '2026-10-17'
 series: 'From policy to action: the last mile of robotics control'
@@ -11,6 +11,8 @@ tags: ['so-101', 'measurement', 'sensors']
 How do I get the precise x, y, and z coordinates of the tip of my robot's gripper?
 
 I ask because I use an SO-101, a small robot arm, to build a smooth, precise controller, which is the program that turns a desired path into motor commands. I call it the drawing arm project, but drawing is only one showcase. The real goal is a controller that also works in space, and this post is about generalizing away from the XY plane. Right now the gripper holds a pen, and a Wacom drawing tablet, a flat sensor that reports where a pen touches it, measures the tip of that pen, called the nib. The tablet gives me x and y along its surface. What it can't give me is z, the height above that plane, so that is the question.
+
+The tablet is also the best deal in my setup. It cost about US$40 and reports the pen position to within ±0.25 mm, 133 times a second. OptiTrack, a motion-capture system, lists ±0.3 mm for its cameras, and four of them cost about US$10,000 before software. That makes the tablet a cheap, precise feedback signal for learning precise motions, as long as the pen touches it.
 
 <figure class="article-figure">
 <video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-reach-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm swinging down from above the table to touch the pen to the Wacom tablet, and later lifting the pen off the tablet and swinging back up.">
@@ -123,6 +125,16 @@ p_{\text{nib}} = t + Rr.
 $$
 
 An orientation error rotates that offset and shifts the estimated nib position, so a target close to the nib reduces this lever arm. Timing has a similar effect: a delayed sample describes where the tool was, so speed turns delay into apparent path error.
+
+### What the US$40 buys
+
+Inside its plane, the tablet sits in the same accuracy class as a motion-capture system that costs more than 200 times as much.
+
+- **Accuracy:** the tablet lists ±0.25 mm and OptiTrack PrimeX 13 lists ±0.3 mm. The tablet's figure is a tolerance bound and OptiTrack's is a typical value, so I read them as a tie, not a win.
+- **Price:** the tablet cost me about US$40. Four PrimeX 13 cameras cost US$9,996 at list price, plus US$1,148 for the Motive:Tracker software and key.
+- **Resolution:** Wacom lists 100 lines per mm, which is 0.01 mm. That is much finer than its accuracy, so the pen reports small moves that the sensor does not claim to place exactly.
+
+The tablet does not win everywhere. OptiTrack samples at 240 Hz against the tablet's 133, and it tracks in three dimensions. The Leica laser tracker is accurate to 0.021 mm at 1 m, more than ten times tighter than the tablet, and costs US$17k to 75k.
 
 ## Limits
 
