@@ -111,6 +111,16 @@ To compare these systems fairly, a few terms need defining. Rate counts samples 
 | Infrared motion capture: OptiTrack PrimeX | PrimeX 13: [±0.3 mm typical position accuracy](https://www.optitrack.com/cameras/primex-13/specs) | [240 Hz at full resolution](https://www.optitrack.com/cameras/primex-13/specs) | [4.2 ms listed camera latency](https://www.optitrack.com/cameras/primex-13/specs) | Vendor accuracy context: [9 × 9 m tracking area](https://www.optitrack.com/cameras/primex-13); camera overlap defines the usable volume | Marker positions; a rigid marker cluster supplies orientation | Estimate: about US$12k to 20k for 4 to 6 cameras. [PrimeX 13 starts at US$2,499 each](https://www.optitrack.com/cameras); [Motive:Tracker is US$999 plus a US$149 key](https://www.optitrack.com/software/motive/pricing). The rest is my allowance for a switch, calibration tools, markers, and mounts; requires camera calibration |
 | Laser tracker: Leica AT960 | [±(0.015 + 0.006L) mm](https://solutions-ds.com/wp-content/uploads/2017/06/Hexagon_MI_AT960_Brochure_EN.pdf) maximum permissible error, with distance L in meters | [1,000 Hz output](https://nexus.hexagon.com/home/product/laser-trackers-at960/) | No application-delay figure in the cited specifications | AT960-MR: [40 m diameter for reflector position; 20 m with the pose accessory](https://solutions-ds.com/wp-content/uploads/2017/06/Hexagon_MI_AT960_Brochure_EN.pdf) | Reflector center position; a dedicated target adds orientation | Estimate: about US$75k new or US$17k to 30k used, tracker only. [New AT960: US$74,900](https://dotsurveying.com/laser-tracker/leica-absolute-tracker-at960); used listings: [US$29,900](https://dotsurveying.com/laser-tracker) and [US$16,900 for an AT960-LR](https://www.ec21.com/product-details/Used-Leica-Absolute-Tracker-AT960--11606805.html). No target or software included; [rental rates are not published](https://rotatek.us/leica-laser-tracker-rental/); requires frame registration |
 
+### What the US$40 buys
+
+Inside its plane, the tablet sits in the same accuracy class as a motion-capture system that costs more than 200 times as much.
+
+- **Accuracy:** the tablet lists ±0.25 mm and OptiTrack PrimeX 13 lists ±0.3 mm. The tablet's figure is a tolerance bound and OptiTrack's is a typical value, so I read them as a tie, not a win.
+- **Price:** the tablet cost me about US$40. Four PrimeX 13 cameras cost US$9,996 at list price, plus US$1,148 for the Motive:Tracker software and key.
+- **Resolution:** Wacom lists 100 lines per mm, which is 0.01 mm. That is much finer than its accuracy, so the pen reports small moves that the sensor does not claim to place exactly.
+
+The tablet does not win everywhere. OptiTrack samples at 240 Hz against the tablet's 133, and it tracks in three dimensions. The Leica laser tracker is accurate to 0.021 mm at 1 m, more than ten times tighter than the tablet, and costs US$17k to 75k.
+
 ## From the sensor target to the nib
 
 <figure class="article-figure">
@@ -125,16 +135,6 @@ p_{\text{nib}} = t + Rr.
 $$
 
 An orientation error rotates that offset and shifts the estimated nib position, so a target close to the nib reduces this lever arm. Timing has a similar effect: a delayed sample describes where the tool was, so speed turns delay into apparent path error.
-
-### What the US$40 buys
-
-Inside its plane, the tablet sits in the same accuracy class as a motion-capture system that costs more than 200 times as much.
-
-- **Accuracy:** the tablet lists ±0.25 mm and OptiTrack PrimeX 13 lists ±0.3 mm. The tablet's figure is a tolerance bound and OptiTrack's is a typical value, so I read them as a tie, not a win.
-- **Price:** the tablet cost me about US$40. Four PrimeX 13 cameras cost US$9,996 at list price, plus US$1,148 for the Motive:Tracker software and key.
-- **Resolution:** Wacom lists 100 lines per mm, which is 0.01 mm. That is much finer than its accuracy, so the pen reports small moves that the sensor does not claim to place exactly.
-
-The tablet does not win everywhere. OptiTrack samples at 240 Hz against the tablet's 133, and it tracks in three dimensions. The Leica laser tracker is accurate to 0.021 mm at 1 m, more than ten times tighter than the tablet, and costs US$17k to 75k.
 
 ## Limits
 
