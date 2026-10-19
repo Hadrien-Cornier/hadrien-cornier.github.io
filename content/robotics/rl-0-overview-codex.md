@@ -7,7 +7,7 @@ series: 'Reinforcement learning, Codex trial'
 part: 0
 layout: essay
 thumbnail: '/assets/robotics/rl-codex/thumbnails/part0.png'
-thumbnailAlt: 'A lucky first result can trap a greedy choice'
+thumbnail_alt: 'A lucky first result can trap a greedy choice'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl-codex/family-tree.css">

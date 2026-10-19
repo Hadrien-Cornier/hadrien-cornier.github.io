@@ -7,7 +7,7 @@ series: 'Reinforcement learning, Codex trial'
 part: 5
 layout: essay
 thumbnail: '/assets/robotics/rl-codex/thumbnails/part5.png'
-thumbnailAlt: 'A shared update raises a next-state value, bootstrapping raises the target, and mismatched sampling misses a corrective update'
+thumbnail_alt: 'A shared update raises a next-state value, bootstrapping raises the target, and mismatched sampling misses a corrective update'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl-codex/series.css">

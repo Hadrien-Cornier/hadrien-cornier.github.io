@@ -7,7 +7,7 @@ series: 'Reinforcement learning, Codex trial'
 part: 1
 layout: essay
 thumbnail: '/assets/robotics/rl-codex/thumbnails/part1.png'
-thumbnailAlt: 'Expected Bellman maps shrink the worst table difference'
+thumbnail_alt: 'Expected Bellman maps shrink the worst table difference'
 ---
 
 <div class="rc" id="rc">

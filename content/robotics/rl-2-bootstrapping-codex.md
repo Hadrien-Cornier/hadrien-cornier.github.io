@@ -7,7 +7,7 @@ series: 'Reinforcement learning, Codex trial'
 part: 2
 layout: essay
 thumbnail: '/assets/robotics/rl-codex/thumbnails/part2.png'
-thumbnailAlt: 'Zero rewards before the final reward'
+thumbnail_alt: 'Zero rewards before the final reward'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl-codex/series.css">

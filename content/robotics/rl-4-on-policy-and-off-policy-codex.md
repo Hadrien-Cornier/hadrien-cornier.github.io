@@ -7,7 +7,7 @@ series: 'Reinforcement learning, Codex trial'
 part: 4
 layout: essay
 thumbnail: '/assets/robotics/rl-codex/thumbnails/part4.png'
-thumbnailAlt: 'A short edge route exposes exploratory downward actions to a cliff; an upper detour leaves a recovery cell'
+thumbnail_alt: 'A short edge route exposes exploratory downward actions to a cliff; an upper detour leaves a recovery cell'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl-codex/series.css">
