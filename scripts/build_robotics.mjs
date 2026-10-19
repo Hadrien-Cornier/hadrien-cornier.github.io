@@ -42,6 +42,27 @@ function validateTags(data) {
     seen.add(tag);
   }
 }
+// A section is a named shelf of essays with its own index page, for example the papers I find fascinating.
+// An essay joins one with `section: 'recent-papers'`. The index lives at /robotics/<section>/.
+const SECTIONS = {
+  'recent-papers': {
+    name: 'Recent papers',
+    eyebrow: 'Recent papers / robotics',
+    heading: 'Recent papers I find fascinating.',
+    intro: 'Short write-ups of new robotics papers that change how I think about the field. Each one says what the paper does, what it measured, and what I would check before trusting it.',
+    description: 'New robotics papers worth reading, explained with the setup behind every number.',
+  },
+};
+function validateSection(data) {
+  if (data.section !== undefined && !SECTIONS[data.section]) throw new Error(`section must be one of: ${Object.keys(SECTIONS).join(', ')}`);
+}
+// An optional card thumbnail is an image under /assets/ that the article already ships, with alt text.
+function validateThumbnail(data, root) {
+  if (data.thumbnail === undefined) return;
+  if (typeof data.thumbnail !== 'string' || !/^\/assets\/[\w./-]+$/.test(data.thumbnail) || data.thumbnail.includes('..')) throw new Error('thumbnail must be a path under /assets/');
+  if (!fs.existsSync(path.join(root, data.thumbnail))) throw new Error(`thumbnail file not found: ${data.thumbnail}`);
+  if (typeof data.thumbnail_alt !== 'string' || !data.thumbnail_alt.trim()) throw new Error('thumbnail needs thumbnail_alt text');
+}
 // A track marks a series part of a different kind (for example the hardware side of a control series).
 // It gives the part its own accent colour and a label wherever the series is listed.
 const TRACKS = {hardware:'Hardware'};
@@ -240,7 +261,7 @@ function seriesBox(article) {
 function articlePage(article, root) {
   const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
-<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p>${tagLinks(article.tags)}</header>
+<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}">${article.section ? `<a class="eyebrow" href="/robotics/${article.section}/">Writing / ${SECTIONS[article.section].name}</a>` : '<a class="eyebrow" href="/#writing">Writing / Robotics</a>'}<h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p>${tagLinks(article.tags)}</header>
 ${seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
 function articleUnits(articles) {
@@ -264,8 +285,9 @@ function tagLinks(tags) {
   return tags.length ? `<p class="post-tags">${tags.map((tag) => `<a class="tag-chip" href="/robotics/#tag-${tag}">${escape(tag)}</a>`).join('')}</p>` : '';
 }
 function articleCard(article) {
-  const part = article.series ? `<span class="report-part">Part ${article.part}${trackLabel(article)}</span>` : '';
-  return `<a class="report-card${trackClass(article)}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
+  const part = article.series ? `<span class="report-part">Part ${article.part}${trackLabel(article)}</span>` : article.section ? `<span class="report-part">${SECTIONS[article.section].name}</span>` : '';
+  const thumb = article.thumbnail ? `<span class="report-thumb"><img src="${escape(article.thumbnail)}" alt="${escape(article.thumbnail_alt)}" loading="lazy" decoding="async"></span>` : '';
+  return `<a class="report-card${trackClass(article)}${thumb ? ' has-thumb' : ''}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span>${thumb}<div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
 }
 function seriesBlock(unit, renderArticle, className = '') {
   const count = `${unit.articles.length} ${unit.articles.length === 1 ? 'part' : 'parts'}`;
@@ -305,6 +327,19 @@ function filterBar(articles) {
 <p class="filter-status" role="status" aria-live="polite"></p>
 </section>`;
 }
+function sectionLinks(articles) {
+  const links = Object.entries(SECTIONS).map(([slug, section]) => ({slug, section, count:articles.filter((article) => article.section === slug).length})).filter((item) => item.count);
+  if (!links.length) return '';
+  return `<nav class="section-links" aria-label="Sections">${links.map(({slug, section, count}) => `<a class="section-link" href="/robotics/${slug}/"><span class="section-link-name">${escape(section.name)}</span><span class="section-link-count">${count} ${count === 1 ? 'essay' : 'essays'}</span><span aria-hidden="true">↗</span></a>`).join('')}</nav>`;
+}
+function sectionPage(slug, articles, root) {
+  const section = SECTIONS[slug];
+  const items = articles.filter((article) => article.section === slug);
+  return shell({title:section.name, description:section.description, pathname:`/robotics/${slug}/`, root, content:`
+<header class="robotics-header"><p class="eyebrow">${section.eyebrow} / ${items.length} ${items.length === 1 ? 'essay' : 'essays'}</p><h1>${escape(section.heading)}</h1><p class="series-intro">${escape(section.intro)}</p></header>
+<section class="report-list" aria-label="${escape(section.name)}">${items.map(articleCard).join('\n')}</section>
+<p class="series-return"><a href="/robotics/">← All robotics essays</a></p>`});
+}
 function landingPage(articles, root) {
   const units = articleUnits(articles);
   const content = units.map((unit) => unit.series
@@ -312,7 +347,7 @@ function landingPage(articles, root) {
     : articleCard(unit.article)).join('\n');
   return shell({title:'Robotics', description:'Essays on robot learning, geometry, and control, with experiments and diagrams.', pathname:'/robotics/', root, search:true, content:`
 <header class="robotics-header"><p class="eyebrow">Essays &amp; explorations / ${articles.length} ${articles.length === 1 ? 'essay' : 'essays'}</p><h1>Learning robotics.</h1><p class="series-intro">Experiments, diagrams, and questions from learning how robots move, learn, and make decisions.</p></header>
-${filterBar(articles)}<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
+${sectionLinks(articles)}${filterBar(articles)}<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
 }
 function previewImage(article, root) {
   if (article.slug === 'how-robot-control-is-changing') {
@@ -408,6 +443,9 @@ export function build(root = ROOT) {
     const metadata = matter(source).data;
     validateSeriesMetadata(metadata);
     validateTags(metadata);
+    validateSection(metadata);
+    validateThumbnail(metadata, root);
+    if (SECTIONS[slug]) throw new Error(`Article filename ${name} collides with the ${slug} section index`);
     return {...metadata, slug, source};
   });
   const articles = allArticles.filter((article) => article.draft !== true).map(({source, slug}) => ({...renderArticle(source, root), slug}))
@@ -418,6 +456,8 @@ export function build(root = ROOT) {
   const redirects = readRedirects(sourceDir, new Set(articles.map((article) => article.slug)));
   for (const {slug, target} of redirects) pages.push([path.join(root, 'robotics', slug, 'index.html'), redirectPage(target)]);
   pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);
+  const sectionSlugs = Object.keys(SECTIONS).filter((slug) => articles.some((article) => article.section === slug));
+  for (const slug of sectionSlugs) pages.push([path.join(root, 'robotics', slug, 'index.html'), sectionPage(slug, articles, root)]);
   // The search bar reads this small index; drafts never reach it because they are not in articles.
   const searchIndex = articles.map((article) => ({title:article.title, description:article.description, tags:[...article.tags], date:article.date, url:`/robotics/${article.slug}/`}));
   pages.push([path.join(root, 'robotics', 'search-index.json'), `${JSON.stringify(searchIndex, null, 2)}\n`]);
@@ -436,12 +476,12 @@ export function build(root = ROOT) {
   let entries = '';
   if (!preserved.includes(`<loc>${ORIGIN}/</loc>`)) entries += `  <url>\n    <loc>${ORIGIN}/</loc>\n    <changefreq>monthly</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
   if (fs.existsSync(path.join(root, 'about.html')) && !preserved.includes(`<loc>${ORIGIN}/about.html</loc>`)) entries += `  <url>\n    <loc>${ORIGIN}/about.html</loc>\n    <changefreq>monthly</changefreq>\n  </url>\n`;
-  entries += [{slug:'', updated:articles.map((article) => article.updated).sort().at(-1)}, ...articles.map((article) => ({slug:`${article.slug}/`, updated:article.updated}))].map(({slug, updated}) => `  <url>\n    <loc>${ORIGIN}/robotics/${slug}</loc>${updated ? `\n    <lastmod>${updated}</lastmod>` : ''}\n    <changefreq>monthly</changefreq>\n  </url>\n`).join('');
+  entries += [{slug:'', updated:articles.map((article) => article.updated).sort().at(-1)}, ...sectionSlugs.map((slug) => ({slug:`${slug}/`, updated:articles.filter((article) => article.section === slug).map((article) => article.updated).sort().at(-1)})), ...articles.map((article) => ({slug:`${article.slug}/`, updated:article.updated}))].map(({slug, updated}) => `  <url>\n    <loc>${ORIGIN}/robotics/${slug}</loc>${updated ? `\n    <lastmod>${updated}</lastmod>` : ''}\n    <changefreq>monthly</changefreq>\n  </url>\n`).join('');
   if (!preserved.includes('</urlset>')) throw new Error('Expected sitemap urlset');
   fs.writeFileSync(sitemapFile, preserved.replace('</urlset>', `${entries}</urlset>`));
   // Remove only obsolete HTML bearing this builder's ownership marker.
   // Other files inside an old report directory belong to their author and stay intact.
-  const published = new Set([...articles.map((article) => article.slug), ...redirects.map((item) => item.slug)]);
+  const published = new Set([...articles.map((article) => article.slug), ...redirects.map((item) => item.slug), ...sectionSlugs]);
   const outputDir = path.join(root, 'robotics');
   for (const entry of fs.readdirSync(outputDir, {withFileTypes:true})) {
     if (!entry.isDirectory() || published.has(entry.name)) continue;
