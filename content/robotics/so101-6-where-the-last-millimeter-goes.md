@@ -6,6 +6,8 @@ draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 6
 tags: ['so-101', 'calibration', 'measurement']
+thumbnail: /assets/robotics/thumbnails/so101-6-where-the-last-millimeter-goes.jpg
+thumbnail_alt: 'Overhead view of the SO-101 arm drawing on the tablet.'
 ---
 
 ## Where the series stands

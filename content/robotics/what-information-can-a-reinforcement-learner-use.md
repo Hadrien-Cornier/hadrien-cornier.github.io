@@ -5,6 +5,8 @@ date: '2026-10-16'
 draft: false
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning']
+thumbnail: /assets/robotics/thumbnails/what-information-can-a-reinforcement-learner-use.jpg
+thumbnail_alt: 'The Breaking Bellman sentence builder shows a fixed share, four real rewards, live action selection, a frozen scorer, and refresh every 250 updates.'
 ---
 
 One high payout can increase the estimate for a door that loses money on average. How much can one payout change that estimate?

@@ -6,6 +6,8 @@ draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 7
 tags: ['so-101', 'machine-learning', 'control']
+thumbnail: /assets/robotics/thumbnails/so101-7-learning-between-and-during-strokes.jpg
+thumbnail_alt: 'Overhead view of the SO-101 arm drawing on the tablet.'
 ---
 
 ## Where the series stands

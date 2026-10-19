@@ -4,7 +4,7 @@ description: 'ASPIRE lets a coding agent debug robot programs from execution tra
 date: '2026-10-19'
 tags: ['code-as-policy', 'agents', 'skill-learning', 'nvidia']
 section: 'recent-papers'
-thumbnail: '/assets/robotics/can-you-zero-shot-robotics-with-a-coding-agent/loop-thumb.svg'
+thumbnail: /assets/robotics/thumbnails/can-you-zero-shot-robotics-with-a-coding-agent.jpg
 thumbnail_alt: 'Diagram of the ASPIRE loop: a coding agent writes a robot program, the engine runs it and records a trace, the agent repairs it, a verifier checks the fix, and the skill library keeps it.'
 ---
 

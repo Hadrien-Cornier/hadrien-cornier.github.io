@@ -5,7 +5,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { renderArticle, dateValue, build } from './build_robotics.mjs';
 
-const frontmatter = `---\ntitle: Test report\ndescription: A small teaching fixture.\ndate: 2026-09-26\n---\n\n`;
+function fixtureRoot(prefix) {
+  const root = fs.mkdtempSync(prefix);
+  fs.mkdirSync(path.join(root, 'assets'), {recursive:true});
+  fs.copyFileSync(new URL('./fixtures/thumbnail.svg', import.meta.url), path.join(root, 'assets/fixture-thumbnail.svg'));
+  return root;
+}
+
+const frontmatter = `---\ntitle: Test report\ndescription: A small teaching fixture.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n---\n\n`;
 const timelineFixture = fs.readFileSync(new URL('./fixtures/robotics-timeline.md', import.meta.url), 'utf8');
 const timelineData = JSON.parse(timelineFixture.match(/```robotics-timeline\n([\s\S]*?)\n```/)[1]);
 const timelineArticle = (data) => frontmatter + `\n\`\`\`robotics-timeline\n${JSON.stringify(data)}\n\`\`\`\n\n## First stage\n\n## Second stage\n\n## Third stage\n`;
@@ -95,7 +102,7 @@ test('timeline escapes author text, rejects unsafe sources, and reserves unique 
   assert.throws(() => renderArticle(timelineArticle(timelineData) + fence), /duplicate HTML ID/);
 });
 test('only articles with a timeline load its small runtime script', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-timeline-build-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-timeline-build-'));
   try {
     fs.mkdirSync(path.join(root, 'content/robotics'), {recursive:true});
     fs.writeFileSync(path.join(root, 'content/robotics/timeline.md'), timelineFixture);
@@ -124,7 +131,7 @@ test('only articles with a timeline load its small runtime script', () => {
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
 test('build preserves sitemap entries and creates repeatable offline pages', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-build-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-build-'));
   try {
     fs.mkdirSync(path.join(root, 'content/robotics'), {recursive:true});
     fs.writeFileSync(path.join(root,'content/robotics/example.md'), frontmatter + '## One\n\nAn equation $q=1$.');
@@ -157,7 +164,7 @@ test('build preserves sitemap entries and creates repeatable offline pages', () 
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 test('published reports disappear when drafted or deleted; unrelated files survive', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-transition-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-transition-'));
   try {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
@@ -191,12 +198,12 @@ test('published reports disappear when drafted or deleted; unrelated files survi
 });
 
 test('series validates metadata, orders parts, and omits draft parts', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-series-'));
   try {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
     fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
-    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\n${metadata}---\n\n${title} body.`;
+    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n${metadata}---\n\n${title} body.`;
     fs.writeFileSync(path.join(sourceDir, 'series-one.md'), report('Series part one', '2026-09-26', 'series: Arm series\npart: 1\n'));
     fs.writeFileSync(path.join(sourceDir, 'series-two.md'), report('Series part two', '2026-09-28', 'series: Arm series\npart: 2\n'));
     fs.writeFileSync(path.join(sourceDir, 'series-draft.md'), report('Unpublished part', '2026-09-29', 'draft: true\nseries: Arm series\npart: 3\n'));
@@ -222,18 +229,18 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
     assert.match(homeBlock, /writing-row-number">Part 1</);
     assert.match(listingBlock, /report-part">Part 2</);
     assert.doesNotMatch(listing + home, /Unpublished part/);
-    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\n---\nBody.`), /part is required/);
-    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\npart: 0\n---\nBody.`), /positive integer/);
+    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\n---\nBody.`), /part is required/);
+    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\npart: 0\n---\nBody.`), /positive integer/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 
 test('a hardware track part gets its own class and label in the series', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-track-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-series-track-'));
   try {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
     fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
-    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\n${metadata}---\n\n${title} body.`;
+    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n${metadata}---\n\n${title} body.`;
     fs.writeFileSync(path.join(sourceDir, 'control-part.md'), report('Control part', '2026-09-26', 'series: Arm series\npart: 1\n'));
     fs.writeFileSync(path.join(sourceDir, 'hardware-part.md'), report('Hardware part', '2026-09-28', 'series: Arm series\npart: 2\ntrack: hardware\n'));
     build(root);
@@ -245,21 +252,21 @@ test('a hardware track part gets its own class and label in the series', () => {
     assert.match(control, /<body class="robotics">/);
     assert.match(hardware, /Part 2 of 2 · Hardware/);
     assert.match(control, /<li class="series-part track-hardware"><a href="\/robotics\/hardware-part\/">Hardware part<\/a><span class="track-tag">Hardware<\/span>/);
-    assert.match(listing, /report-card track-hardware" href="\/robotics\/hardware-part\/"/);
+    assert.match(listing, /report-card track-hardware has-thumb" href="\/robotics\/hardware-part\/"/);
     assert.match(listing, /report-part">Part 2 · Hardware</);
-    assert.match(home, /writing-row track-hardware" href="\/robotics\/hardware-part\/"/);
-    assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nseries: Arm series\npart: 1\ntrack: wood\n---\nBody.`), /track must be one of: hardware/);
-    assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\ntrack: hardware\n---\nBody.`), /track requires series/);
+    assert.match(home, /writing-row writing-row-with-image track-hardware" href="\/robotics\/hardware-part\/"/);
+    assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\npart: 1\ntrack: wood\n---\nBody.`), /track must be one of: hardware/);
+    assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\ntrack: hardware\n---\nBody.`), /track requires series/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 
 test('published series reject duplicate part numbers', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-series-duplicate-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-series-duplicate-'));
   try {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
     fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
-    const report = (title) => `---\ntitle: ${title}\ndescription: Duplicate part.\ndate: 2026-09-26\nseries: Arm series\npart: 1\n---\nBody.`;
+    const report = (title) => `---\ntitle: ${title}\ndescription: Duplicate part.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\npart: 1\n---\nBody.`;
     fs.writeFileSync(path.join(sourceDir, 'one.md'), report('One'));
     fs.writeFileSync(path.join(sourceDir, 'two.md'), report('Two'));
     assert.throws(() => build(root), /Duplicate part 1 in series Arm series/);
@@ -276,7 +283,7 @@ test('SO-101 fences parse, escape their output, and load scripts only where used
   assert.throws(() => renderArticle(frontmatter + '\n```so101-widget\nnot JSON\n```'), /valid JSON/);
   assert.throws(() => renderArticle(frontmatter + '\n```so101-widget\n{"fallback":"Try it"}\n```'), /requires a type/);
   assert.throws(() => renderArticle(frontmatter + '\n```so101-widget\n{"type":"predict"}\n```'), /requires a fallback/);
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-widget-build-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-widget-build-'));
   try {
     fs.mkdirSync(path.join(root, 'content/robotics'), {recursive:true});
     fs.writeFileSync(path.join(root, 'content/robotics/widget.md'), widget);
@@ -291,7 +298,7 @@ test('SO-101 fences parse, escape their output, and load scripts only where used
 });
 
 test('redirects write small moved pages, survive cleanup, and reject bad targets', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-redirect-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-redirect-'));
   try {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
@@ -316,7 +323,7 @@ test('redirects write small moved pages, survive cleanup, and reject bad targets
 });
 
 test('essay presentation keeps a centered reading path and loads figure styles only where needed', t => {
-  const root=fs.mkdtempSync(path.join(os.tmpdir(),'robotics-essay-layout-'));
+  const root=fixtureRoot(path.join(os.tmpdir(),'robotics-essay-layout-'));
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   fs.mkdirSync(path.join(root,'content/robotics'),{recursive:true});
   fs.writeFileSync(path.join(root,'sitemap.xml'),'<urlset></urlset>');
@@ -342,7 +349,7 @@ test('essay presentation keeps a centered reading path and loads figure styles o
 });
 
 test('tags are optional but strict: 2 to 4 short lowercase tags, no duplicates', () => {
-  const withTags = (tags) => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\ntags: ${tags}\n---\nBody.`);
+  const withTags = (tags) => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\ntags: ${tags}\n---\nBody.`);
   assert.deepEqual(renderArticle(frontmatter).tags, []);
   assert.deepEqual(withTags("['robotics', 'so-101']").tags, ['robotics', 'so-101']);
   assert.throws(() => withTags('robotics'), /2 to 4/);
@@ -354,13 +361,13 @@ test('tags are optional but strict: 2 to 4 short lowercase tags, no duplicates',
 });
 
 test('the search index carries title, description, tags, date and url but never drafts', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-search-index-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-search-index-'));
   try {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
     fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
-    fs.writeFileSync(path.join(sourceDir, 'published.md'), '---\ntitle: Published report\ndescription: A published description.\ndate: 2026-09-26\ntags: [robotics, so-101]\n---\n\nBody.');
-    fs.writeFileSync(path.join(sourceDir, 'drafted.md'), '---\ntitle: Draft report\ndescription: A draft description.\ndate: 2026-09-27\ndraft: true\ntags: [robotics, hidden]\n---\n\nUnfinished.');
+    fs.writeFileSync(path.join(sourceDir, 'published.md'), '---\ntitle: Published report\ndescription: A published description.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\ntags: [robotics, so-101]\n---\n\nBody.');
+    fs.writeFileSync(path.join(sourceDir, 'drafted.md'), '---\ntitle: Draft report\ndescription: A draft description.\ndate: 2026-09-27\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\ndraft: true\ntags: [robotics, hidden]\n---\n\nUnfinished.');
     build(root);
     const indexFile = path.join(root, 'robotics/search-index.json');
     const index = JSON.parse(fs.readFileSync(indexFile, 'utf8'));
@@ -381,16 +388,16 @@ test('the search index carries title, description, tags, date and url but never 
 });
 
 test('a section gets its own index page, a labelled card, and a sitemap entry; unknown sections fail', () => {
-  const withSection = (section) => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\n${section}---\nBody.`);
+  const withSection = (section) => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n${section}---\nBody.`);
   assert.equal(withSection("section: 'recent-papers'\n").section, 'recent-papers');
   assert.equal(withSection('').section, undefined);
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-section-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-section-'));
   try {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
     fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
-    fs.writeFileSync(path.join(sourceDir, 'a-paper.md'), "---\ntitle: A paper\ndescription: About a paper.\ndate: 2026-09-26\nsection: 'recent-papers'\n---\n\nBody.");
-    fs.writeFileSync(path.join(sourceDir, 'plain.md'), '---\ntitle: Plain essay\ndescription: Not a paper.\ndate: 2026-09-25\n---\n\nBody.');
+    fs.writeFileSync(path.join(sourceDir, 'a-paper.md'), "---\ntitle: A paper\ndescription: About a paper.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nsection: 'recent-papers'\n---\n\nBody.");
+    fs.writeFileSync(path.join(sourceDir, 'plain.md'), '---\ntitle: Plain essay\ndescription: Not a paper.\ndate: 2026-09-25\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n---\n\nBody.');
     build(root);
     const index = fs.readFileSync(path.join(root, 'robotics/recent-papers/index.html'), 'utf8');
     assert.match(index, /<h1>Recent papers I find fascinating\.<\/h1>/);
@@ -409,13 +416,13 @@ test('a section gets its own index page, a labelled card, and a sitemap entry; u
     fs.unlinkSync(path.join(sourceDir, 'a-paper.md'));
     build(root);
     assert.ok(!fs.existsSync(path.join(root, 'robotics/recent-papers/index.html')));
-    fs.writeFileSync(path.join(sourceDir, 'bad.md'), "---\ntitle: Bad\ndescription: Bad.\ndate: 2026-09-26\nsection: 'nope'\n---\nBody.");
+    fs.writeFileSync(path.join(sourceDir, 'bad.md'), "---\ntitle: Bad\ndescription: Bad.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nsection: 'nope'\n---\nBody.");
     assert.throws(() => build(root), /section must be one of/);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
 
 test('a thumbnail shows on the index card, and a missing file or missing alt text fails', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-thumb-'));
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-thumb-'));
   try {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
@@ -424,11 +431,19 @@ test('a thumbnail shows on the index card, and a missing file or missing alt tex
     fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
     const essay = (extra) => `---\ntitle: With figure\ndescription: Has a thumbnail.\ndate: 2026-09-26\n${extra}---\n\nBody.`;
     fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay("thumbnail: '/assets/fig.svg'\nthumbnail_alt: 'A loop diagram.'\n"));
-    fs.writeFileSync(path.join(sourceDir, 'plain.md'), '---\ntitle: Plain essay\ndescription: No figure.\ndate: 2026-09-25\n---\n\nBody.');
+    fs.writeFileSync(path.join(sourceDir, 'plain.md'), '---\ntitle: Plain essay\ndescription: No figure.\ndate: 2026-09-25\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n---\n\nBody.');
     build(root);
     const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
     assert.match(listing, /class="report-card has-thumb"[^>]*><span class="report-date">[\s\S]*?<span class="report-thumb"><img src="\/assets\/fig\.svg" alt="A loop diagram\." loading="lazy"/);
-    assert.equal((listing.match(/report-thumb"/g) || []).length, 1);
+    assert.equal((listing.match(/report-thumb"/g) || []).length, 2);
+    const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(home, /src="\/assets\/fig\.svg" alt="A loop diagram\." width="720" height="424"/);
+    fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay(''));
+    assert.throws(() => build(root), /with-figure\.md: published article requires thumbnail and thumbnail_alt/);
+    fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay('draft: true\n'));
+    build(root); // Unfinished drafts need no thumbnail.
+    fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay("draft: true\nthumbnail: '/assets/missing.svg'\nthumbnail_alt: 'x'\n"));
+    assert.throws(() => build(root), /thumbnail file not found/);
     fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay("thumbnail: '/assets/missing.svg'\nthumbnail_alt: 'x'\n"));
     assert.throws(() => build(root), /thumbnail file not found/);
     fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay("thumbnail: '/assets/fig.svg'\n"));

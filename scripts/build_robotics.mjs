@@ -56,9 +56,12 @@ const SECTIONS = {
 function validateSection(data) {
   if (data.section !== undefined && !SECTIONS[data.section]) throw new Error(`section must be one of: ${Object.keys(SECTIONS).join(', ')}`);
 }
-// An optional card thumbnail is an image under /assets/ that the article already ships, with alt text.
+// Published cards require an article figure/frame under /assets/ and descriptive alt text.
 function validateThumbnail(data, root) {
-  if (data.thumbnail === undefined) return;
+  if (data.thumbnail === undefined) {
+    if (data.draft === true) return;
+    throw new Error('published article requires thumbnail and thumbnail_alt frontmatter');
+  }
   if (typeof data.thumbnail !== 'string' || !/^\/assets\/[\w./-]+$/.test(data.thumbnail) || data.thumbnail.includes('..')) throw new Error('thumbnail must be a path under /assets/');
   if (!fs.existsSync(path.join(root, data.thumbnail))) throw new Error(`thumbnail file not found: ${data.thumbnail}`);
   if (typeof data.thumbnail_alt !== 'string' || !data.thumbnail_alt.trim()) throw new Error('thumbnail needs thumbnail_alt text');
@@ -349,23 +352,8 @@ function landingPage(articles, root) {
 <header class="robotics-header"><p class="eyebrow">Essays &amp; explorations / ${articles.length} ${articles.length === 1 ? 'essay' : 'essays'}</p><h1>Learning robotics.</h1><p class="series-intro">Experiments, diagrams, and questions from learning how robots move, learn, and make decisions.</p></header>
 ${sectionLinks(articles)}${filterBar(articles)}<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
 }
-function previewImage(article, root) {
-  if (article.slug === 'how-robot-control-is-changing') {
-    const src = '/assets/robotics/modern-control/moved-target-preview.svg';
-    if (!fs.existsSync(path.join(root, src))) return '';
-    const version = createHash('sha256').update(fs.readFileSync(path.join(root, src))).digest('hex').slice(0, 12);
-    return `<img src="${src}?v=${version}" alt="Before a cube moves, the robot gripper surrounds it. After it moves, the same grasp closes at the old position." width="720" height="424" loading="lazy" decoding="async">`;
-  }
-  const preferred = {
-    'from-joint-angles-to-a-moving-arm':'/assets/robotics/arm-control/v3/franka_joint_names.png',
-  }[article.slug];
-  const src = preferred || article.body.match(/<img\s[^>]*src="([^"]+)"/)?.[1];
-  if (!src || !src.startsWith('/assets/robotics/') || src.includes('..')) return '';
-  const file = path.join(root, src);
-  if (!fs.existsSync(file)) return '';
-  const bytes = fs.readFileSync(file);
-  if (!bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) return '';
-  return `<img src="${escape(src)}" alt="" width="${bytes.readUInt32BE(16)}" height="${bytes.readUInt32BE(20)}" loading="lazy" decoding="async">`;
+function previewImage(article) {
+  return `<img src="${escape(article.thumbnail)}" alt="${escape(article.thumbnail_alt)}" width="720" height="424" loading="lazy" decoding="async">`;
 }
 function homeNotes(root) {
   const filename = path.join(root, 'content/notes.md');
@@ -444,7 +432,8 @@ export function build(root = ROOT) {
     validateSeriesMetadata(metadata);
     validateTags(metadata);
     validateSection(metadata);
-    validateThumbnail(metadata, root);
+    try { validateThumbnail(metadata, root); }
+    catch (error) { throw new Error(`${name}: ${error.message}`); }
     if (SECTIONS[slug]) throw new Error(`Article filename ${name} collides with the ${slug} section index`);
     return {...metadata, slug, source};
   });
