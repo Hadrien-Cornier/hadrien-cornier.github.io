@@ -8,34 +8,45 @@ thumbnail: '/assets/robotics/why-cant-robots-remember/memer-object-search.png'
 thumbnail_alt: 'Bar chart of MemER object search on a real robot: 32 of 60 objects retrieved with no history, 38 with 8 recent frames, 47 with 32 recent frames, and 59 with 8 key frames.'
 ---
 
-<figure class="article-figure">
-<svg viewBox="0 0 480 250" role="img" aria-labelledby="fig-open-t fig-open-d" style="display:block;width:100%;height:auto;max-width:560px;margin:0 auto" xmlns="http://www.w3.org/2000/svg"><title id="fig-open-t">A short window loses the start, a written note keeps it</title><desc id="fig-open-d">Seven frames in a row: start at the hall end, door 1, door 2, box, grab, turn, now. A window covering three frames slides from the first three to the last three. When it reaches the end, the start frame is no longer inside it, so a policy that reads only the window cannot say where home is. A note written when the start frame passed, home is the hall end, stays visible, so the same policy with the note can answer: back to the hall end.</desc><style>
-.mw-win{transform:translateX(256px)}.mw-p1{opacity:0}
-@media (prefers-reduced-motion: no-preference){
-.mw-win{animation:mw-slide 12s ease-in-out infinite}.mw-note{animation:mw-note 12s infinite}.mw-p1{animation:mw-p1 12s infinite}.mw-p2{animation:mw-p2 12s infinite}.mw-end{animation:mw-end 12s infinite}}
-@keyframes mw-slide{0%{transform:translateX(0);opacity:0}3%{transform:translateX(0);opacity:1}12%{transform:translateX(0)}55%{transform:translateX(256px)}94%{transform:translateX(256px);opacity:1}100%{transform:translateX(256px);opacity:0}}
-@keyframes mw-note{0%,4%{opacity:0}10%,94%{opacity:1}100%{opacity:0}}
-@keyframes mw-p1{0%,3%{opacity:0}6%,34%{opacity:1}40%,100%{opacity:0}}
-@keyframes mw-p2{0%,44%{opacity:0}50%,94%{opacity:1}100%{opacity:0}}
-@keyframes mw-end{0%,56%{opacity:0}62%,94%{opacity:1}100%{opacity:0}}
-</style><defs><marker id="fig-open-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9 z" fill="#242622"/></marker></defs><rect x="0.75" y="0.75" width="478.5" height="248.5" fill="#f1f2ed" stroke="#cfd1c8" stroke-width="1.5"/><g font-family="Arial, Helvetica, sans-serif" fill="#242622"><g class="mw-note"><rect x="16" y="10" width="190" height="42" fill="#f6e4dc" stroke="#b44c2c" stroke-width="1.5"/><text x="26" y="28" font-size="13.5" font-weight="700">Note written at t1:</text><text x="26" y="45" font-size="13.5">home = the hall end</text><path d="M45,82 V54" fill="none" stroke="#242622" stroke-width="1.6" marker-end="url(#fig-open-a)"/><text x="54" y="72" font-size="12.5" fill="#b44c2c" font-weight="700">key event</text></g><g class="mw-end"><path d="M208,31 H262" fill="none" stroke="#242622" stroke-width="1.6" marker-end="url(#fig-open-a)"/><rect x="264" y="10" width="200" height="42" fill="#fff" stroke="#2b6a8e" stroke-width="2"/><text x="274" y="28" font-size="13.5" font-weight="700" fill="#2b6a8e">With the note:</text><text x="274" y="45" font-size="13.5">back to the hall end</text></g><g stroke="#242622" stroke-width="1.5" fill="#fff"><rect x="17" y="84" width="58" height="50" stroke="#b44c2c" stroke-width="2.5"/><rect x="81" y="84" width="58" height="50"/><rect x="145" y="84" width="58" height="50"/><rect x="209" y="84" width="58" height="50"/><rect x="273" y="84" width="58" height="50"/><rect x="337" y="84" width="58" height="50"/><rect x="401" y="84" width="58" height="50"/></g><g font-size="11.5" fill="#656b62" text-anchor="middle"><text x="46" y="98">t1</text><text x="110" y="98">t2</text><text x="174" y="98">t3</text><text x="238" y="98">t4</text><text x="302" y="98">t5</text><text x="366" y="98">t6</text><text x="430" y="98">t7</text></g><g font-size="13.5" text-anchor="middle" font-weight="700"><text x="46" y="120">start</text><text x="110" y="120">door 1</text><text x="174" y="120">door 2</text><text x="238" y="120">box</text><text x="302" y="120">grab</text><text x="366" y="120">turn</text><text x="430" y="120">now</text></g><rect class="mw-win" x="11" y="78" width="198" height="62" fill="#2b6a8e" fill-opacity="0.12" stroke="#2b6a8e" stroke-width="3"/><rect x="16" y="156" width="190" height="52" fill="#fff" stroke="#242622" stroke-width="1.5"/><text x="26" y="175" font-size="13.5" font-weight="700" fill="#2b6a8e">Window only reads:</text><g class="mw-p1"><text x="26" y="196" font-size="13.5">start, door 1, door 2</text></g><g class="mw-p2"><text x="26" y="196" font-size="13.5">grab, turn, now</text></g><g class="mw-end"><path d="M208,182 H262" fill="none" stroke="#242622" stroke-width="1.6" marker-end="url(#fig-open-a)"/><rect x="264" y="156" width="200" height="52" fill="#fff" stroke="#b44c2c" stroke-width="2"/><text x="274" y="175" font-size="13.5" font-weight="700" fill="#b44c2c">Window only:</text><text x="274" y="196" font-size="13.5">home is... ?</text></g><text x="240" y="236" font-size="12" text-anchor="middle" fill="#656b62">Schematic of the idea. Not a measurement.</text></g></svg>
-<figcaption>The problem in one loop. A policy that reads only its last 3 frames loses the start. A note written at the key moment keeps it. The loop is a schematic, not a result from any paper. With a reduced-motion setting, you see the final frame.</figcaption>
+The classic robot policy is Leonard from *Memento*.
+
+Leonard can't form new memories. Everything he knows about the last hour sits in Polaroids, notes and tattoos, and he reads them to find out what he is doing. A policy that decides from its last frame or two is in a similar spot, and many of the systems below live this way.
+
+His workarounds look a lot like what robots try. A Polaroid with a caption is a text note. A photo he keeps because it matters is a key frame. The film also shows the catch: a note can be wrong or out of date. In a robot that is a stale entry.
+
+<figure class="video-embed">
+<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/Wyc9TpJxf4A" title="Memento, official restoration trailer" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+<figcaption>Memento (Christopher Nolan, 2000), official restoration trailer from Umbrella Entertainment. <a href="https://www.youtube.com/watch?v=Wyc9TpJxf4A">Watch on YouTube</a></figcaption>
 </figure>
+
+## Coding agents have no memory either
+
+Coding agents have the same gap. They don't learn on the job. Each session starts from the model's weights plus whatever notes and files you put in front of it. It is like a coworker who gets handed a huge textbook before every shift and remembers nothing outside of it.
+
+<figure class="article-figure">
+<svg viewBox="0 0 480 280" role="img" aria-labelledby="fig-day-t fig-day-d" style="display:block;width:100%;height:auto;max-width:560px;margin:0 auto" xmlns="http://www.w3.org/2000/svg"><title id="fig-day-t">What each worker knows at the start of each day</title><desc id="fig-day-d">Three rows, three days each. A coworker starts Monday with 2 pieces of knowledge, Tuesday with 3 and Wednesday with 5, because they keep what they learn. A coding agent starts every day with the same 4 notes it reads from a file and keeps nothing new. A robot policy starts every step with only its last 2 frames and has no notes file at all.</desc><rect x="0.75" y="0.75" width="478.5" height="278.5" fill="#f1f2ed" stroke="#cfd1c8" stroke-width="1.5"/><g font-family="Arial, Helvetica, sans-serif" fill="#242622"><text x="221" y="26" font-size="12.5" font-weight="700" text-anchor="middle">Monday</text><text x="321" y="26" font-size="12.5" font-weight="700" text-anchor="middle">Tuesday</text><text x="421" y="26" font-size="12.5" font-weight="700" text-anchor="middle">Wednesday</text><text x="14" y="64" font-size="13.5" font-weight="700">Coworker</text><text x="14" y="82" font-size="11.5" fill="#656b62">keeps what they learn</text><rect x="176" y="40" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="185" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="200" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="276" y="40" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="285" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="300" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="315" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="376" y="40" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="385" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="400" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="415" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="430" y="50" width="11" height="11" fill="#2b6a8e"/><rect x="445" y="50" width="11" height="11" fill="#2b6a8e"/><text x="14" y="134" font-size="13.5" font-weight="700">Coding agent</text><text x="14" y="152" font-size="11.5" fill="#656b62">rereads the same notes</text><rect x="176" y="110" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="185" y="120" width="11" height="11" fill="#8a8f86"/><rect x="200" y="120" width="11" height="11" fill="#8a8f86"/><rect x="215" y="120" width="11" height="11" fill="#8a8f86"/><rect x="230" y="120" width="11" height="11" fill="#8a8f86"/><rect x="276" y="110" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="285" y="120" width="11" height="11" fill="#8a8f86"/><rect x="300" y="120" width="11" height="11" fill="#8a8f86"/><rect x="315" y="120" width="11" height="11" fill="#8a8f86"/><rect x="330" y="120" width="11" height="11" fill="#8a8f86"/><rect x="376" y="110" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="385" y="120" width="11" height="11" fill="#8a8f86"/><rect x="400" y="120" width="11" height="11" fill="#8a8f86"/><rect x="415" y="120" width="11" height="11" fill="#8a8f86"/><rect x="430" y="120" width="11" height="11" fill="#8a8f86"/><text x="14" y="204" font-size="13.5" font-weight="700">Robot policy</text><text x="14" y="222" font-size="11.5" fill="#656b62">sees its last frames</text><rect x="176" y="180" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="185" y="190" width="11" height="11" fill="#b44c2c"/><rect x="200" y="190" width="11" height="11" fill="#b44c2c"/><rect x="276" y="180" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="285" y="190" width="11" height="11" fill="#b44c2c"/><rect x="300" y="190" width="11" height="11" fill="#b44c2c"/><rect x="376" y="180" width="90" height="54" fill="#fff" stroke="#242622" stroke-width="1.5"/><rect x="385" y="190" width="11" height="11" fill="#b44c2c"/><rect x="400" y="190" width="11" height="11" fill="#b44c2c"/><text x="240" y="262" font-size="11.5" text-anchor="middle" fill="#656b62">Each square is one piece of knowledge in hand when the day starts.</text></g></svg>
+<figcaption>What each worker knows when the day starts. The coworker adds to what they know every day. The coding agent starts from the same notes every day. The robot policy has no notes, only the last frames.</figcaption>
+</figure>
+
+I don't think that is where agents end up. A coworker who learns your codebase, your customers and your habits gets better every week. Maybe the end state is a model fine-tuned on the company.
+
+OpenAI is moving the other way, at least on its public platform. Its [deprecations page](https://developers.openai.com/api/docs/deprecations) says that since 7 May 2026 organizations that never fine-tuned a model can't start. From 6 January 2027, active customers can't create new fine-tuning jobs. A model that is already tuned keeps serving until its base model is retired.
+
+The page gives no reason. My guess is batching. A provider can serve requests from every customer on one shared model at once, which is far more efficient than hosting a separate model for each company. That is my reading, not something OpenAI said.
+
+## Robots have it worse
+
+Most robots don't even have a memory file. A robot is controlled by a policy, a network that turns the current camera frames and an instruction into the next action. The classic policy papers keep nothing beyond the last frame or two. There is no textbook to reread.
+
+Some systems do better. RT-1 reads six frames. ViNT and NoMaD build a graph of places they have seen. MemER and the RoboMME systems keep key frames or text notes. They are the exceptions, and the rest of this article looks at what they store and what it costs.
+
+## The hall problem
 
 Say you ask a robot to walk down a hall, take the second door on the left, pick up the blue box and bring it back to where it started. It does the first part. Now it holds the box. The first door is far behind, the starting point is out of sight, and the camera shows a box and a wall.
 
 Which way is home? Nothing in that frame says. The answer lives in something the robot saw a minute ago, so the real question is where a robot keeps it.
 
 In October 2026 there is no agreed answer. People are trying frames, text notes, vectors, a few saved key frames, maps and libraries of code. The papers disagree on which one wins, and the biggest benchmark I found for this says the winner changes with the task. That is why I wanted to write down where things stand today.
-
-If you've seen *Memento*, you know the shape of this problem. Leonard can't form new memories, so he lives in short windows. Everything he knows about the last hour sits in Polaroids, notes and tattoos. A policy that reads only its last few frames is in a similar spot, and many of the systems below live this way.
-
-His workarounds look a lot like what robots try. A Polaroid with a caption is a text note. A photo he keeps because it matters is a key frame. The film also shows the catch: a note can be wrong, or out of date. In a robot that is a stale entry. It's an analogy, nothing more, and it's a useful one.
-
-<figure class="video-embed">
-<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/Wyc9TpJxf4A" title="Memento, official restoration trailer" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<figcaption>Memento (Christopher Nolan, 2000), official restoration trailer from Umbrella Entertainment. <a href="https://www.youtube.com/watch?v=Wyc9TpJxf4A">Watch on YouTube</a></figcaption>
-</figure>
 
 ## Four things people call memory
 
@@ -104,7 +115,7 @@ Training costs too. Mistral's [Robostral Navigate](https://arxiv.org/abs/2607.20
 
 ### Copycat behavior
 
-The second problem has a name. Imagine an expert whose joint command is 0.10, 0.12, 0.14, 0.16, and so on (an invented example). A policy that sees two frames can work out the last command, and copying it is wrong by only 0.02 each step. The training loss looks great. Then the cup moves, and the policy keeps copying.
+The second problem has a name. Imagine an expert whose joint command is 0.10, 0.12, 0.14, 0.16, and so on. A policy that sees two frames can work out the last command, and copying it is wrong by only 0.02 each step. The training loss looks great. Then the cup moves, and the policy keeps copying.
 
 [Wen and colleagues](https://arxiv.org/abs/2010.14876) measured this on six simulated control tasks: the cloned policy's actions were easier to predict from its own past actions than the expert's were, in all six. [De Haan and colleagues](https://arxiv.org/abs/1905.11979) showed that handing a cloned policy its previous action can lower its validation error and its reward at the same time (Pong, Hopper and others).
 
@@ -134,7 +145,7 @@ So the cause depends on the model. The authors of ContextVLA read their result a
 
 </div>
 
-None of these numbers can be compared across rows. Each paper uses its own benchmark, robot, trial count and baselines, and RoboMME's numbers for MemER, SAM2Act+ and MemoryVLA are the RoboMME authors' own re-implementations.
+Each row comes from a different paper, with its own benchmark, robot, trial count and baselines. RoboMME's numbers for MemER, SAM2Act+ and MemoryVLA are the RoboMME authors' own re-implementations.
 
 ## Drawing the problem
 
@@ -183,7 +194,7 @@ The high-level model runs at about 1 Hz and writes a text subtask. A separate lo
 <video muted loop playsinline controls preload="metadata" aria-label="MemER's visualization of how the high-level model nominates key frames during an object search.">
 <source src="https://jen-pan.github.io/memer/static/videos/search_viz_compress.mp4" type="video/mp4">
 </video>
-<figcaption>MemER's own visualization of keyframe nomination during an object search. Video from the <a href="https://jen-pan.github.io/memer/">MemER project page</a>. The page states no license for its media, so I link it from there and do not copy it.</figcaption>
+<figcaption>MemER's own visualization of keyframe nomination during an object search. Video from the <a href="https://jen-pan.github.io/memer/">MemER project page</a>. Video credit: the MemER authors.</figcaption>
 </figure>
 
 ## Which design wins depends on the task
@@ -201,7 +212,7 @@ Reading it: a text note like "two cubes in" is enough to count cubes, and useles
 <video muted loop playsinline controls preload="metadata" aria-label="RoboMME task example: BinFill. Put two green cubes into the bin and press the button to stop.">
 <source src="https://robomme.github.io/video/BinFill.mp4" type="video/mp4">
 </video>
-<figcaption>RoboMME task example: BinFill. The instruction: put two green cubes into the bin and press the button to stop. Video from the <a href="https://robomme.github.io/">RoboMME project page</a>, which states no license for its videos. Code and data are Apache 2.0 and the paper is CC BY 4.0.</figcaption>
+<figcaption>RoboMME task example: BinFill. The instruction: put two green cubes into the bin and press the button to stop. Video from the <a href="https://robomme.github.io/">RoboMME project page</a>. Video credit: the RoboMME authors. Code and data are Apache 2.0 and the paper is CC BY 4.0.</figcaption>
 </figure>
 
 <figure class="article-figure">
@@ -217,16 +228,11 @@ Reading it: a text note like "two cubes in" is enough to count cubes, and useles
 
 That is across-task, procedural memory. It remembers how to recover from a planner error near a table edge. It does not remember where the box is in this room. The paper does not describe a map or an episodic store for the robot at run time, and whether the generated programs keep state between steps is not stated. Its authors list stale and redundant entries as open problems.
 
-## What humans do
+## Where it stands
 
-A person walking that hall does not replay the last six seconds. We also don't write ourselves a note for every door. We seem to keep a few facts, like "second door" and "box" and "home is behind me", and we get them back when needed. This is an analogy, not neuroscience, and I don't claim anyone has shown a robot should copy it.
+No system in what I read keeps one shape of memory and wins across tasks. RoboMME's best average is 44.51 percent against 90.5 for humans.
 
-## My read
-
-- **There is no accepted answer yet.** In what I read, no system keeps one shape of memory and wins across tasks. RoboMME's best average is 44.51 against 90.5 for humans.
-- **Robots are not empty-headed.** Maps in ViNT and NoMaD, recurrence, key frames and skill libraries all count as memory. "Robots can't remember" is wrong. "Robots have no shared way to remember" is closer.
-- **The unit of memory is the open question.** A frame, a sentence, a vector, a map cell and a skill each keep something the others lose.
-- **ASPIRE's way is clunky but readable.** A text note is easy to inspect and to fix. It is also exactly the kind of memory that goes stale.
+ASPIRE's skill library is one answer. To me it feels very clunky and not the most elegant solution. A text note is easy to read and fix, and it is also the kind of memory that goes stale.
 
 What I would watch next: benchmarks that test several memory types on one robot, like RoboMME does in simulation, and navigation models that say plainly how long their history is.
 
@@ -237,6 +243,6 @@ What I would watch next: benchmarks that test several memory types on one robot,
 - Robostral Navigate: paper 77.4 percent on R2R-CE unseen validation, launch post 76.6 percent. RxR-CE (English, unseen) 75.1 percent.
 - The HAMLET table comes from its Table 4. ContextVLA's one-to-eight-frame comparison is read from a bar chart, so treat the values as approximate.
 - RoboMME's row for MemER, SAM2Act+ and MemoryVLA reports the RoboMME authors' own re-implementations.
-- Videos are linked from each project page. None of the four project pages states a license for its videos.
+- Videos are linked from each project page and credited to its authors.
 
 </details>
