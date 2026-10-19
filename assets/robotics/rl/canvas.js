@@ -19,7 +19,8 @@
     var o0 = document.createElement('option'); o0.value = '-1'; o0.textContent = 'Contents: whole canvas'; sel.appendChild(o0);
     marks.forEach(function (m, i) { var o = document.createElement('option'); o.value = String(i); o.textContent = (i + 1) + '. ' + m.getAttribute('data-title'); sel.appendChild(o); });
     nav.appendChild(prev); nav.appendChild(sel); nav.appendChild(next); body.insertBefore(nav, body.firstChild);
-    function size() { return [Math.max(1, stage.clientWidth), Math.max(1, stage.clientHeight)]; }
+    var view = svg.parentNode;
+    function size() { return [Math.max(1, view.clientWidth), Math.max(1, view.clientHeight)]; }
     function vbStr(v) { return v.map(function (n) { return Math.round(n * 10) / 10; }).join(' '); }
     function draw(v) { cam = v; svg.setAttribute('viewBox', vbStr(v)); rc.setAttribute('data-viewbox', vbStr(v)); }
     function goCam(v, instant) {
