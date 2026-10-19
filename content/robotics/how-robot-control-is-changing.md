@@ -4,6 +4,7 @@ description: 'From copying a person to practicing and imagining: how a robot cho
 date: '2026-09-30'
 updated: '2026-10-05'
 draft: false
+tags: ['control', 'reinforcement-learning', 'industry']
 ---
 
 Ask a robot arm to pick up a small green block and put it in a tray. The camera sees the block. The arm starts reaching. Then someone moves the block a few centimetres to the right.

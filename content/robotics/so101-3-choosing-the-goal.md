@@ -5,6 +5,7 @@ date: '2026-10-04'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 3
+tags: ['so-101', 'control']
 ---
 
 [Part 1](/robotics/so101-1-target-and-goal/) ended with one equation for a joint of my arm, and one rule: the servo only makes torque from the gap between the goal and the joint, so every term of the equation needs a bit more gap. [Part 2](/robotics/so101-2-finer-than-the-sensor/) was about the reading the controller sees. This part is about the fixes.

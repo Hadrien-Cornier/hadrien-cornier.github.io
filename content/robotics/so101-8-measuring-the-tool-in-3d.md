@@ -5,6 +5,7 @@ date: '2026-10-15'
 updated: '2026-10-17'
 series: 'From policy to action: the last mile of robotics control'
 part: 8
+tags: ['so-101', 'measurement', 'sensors']
 ---
 
 How do I get the precise x, y, and z coordinates of the tip of my robot's gripper?

@@ -4,6 +4,7 @@ description: "If intelligence keeps getting cheaper, the robotics industry may s
 date: '2026-10-08'
 slug: 'robot-brains-robot-bodies'
 layout: essay
+tags: ['robotics', 'industry', 'ai']
 ---
 
 I find it useful to think about robotics through what is happening with language models. A capability that once required a research team can become something another company buys, adapts, and builds a business around. As that capability becomes easier to obtain, the advantage moves toward whatever remains difficult.
