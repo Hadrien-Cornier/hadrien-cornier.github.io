@@ -32,7 +32,7 @@ I don't think that is where agents end up. A coworker who learns your codebase, 
 
 OpenAI is moving the other way on its self-serve fine-tuning platform. Its [deprecations page](https://developers.openai.com/api/docs/deprecations) says that since 7 May 2026 organizations that never fine-tuned a model can't start there. From 6 January 2027, active customers can't create new jobs on it. A model that is already tuned keeps serving until its base model is retired.
 
-The page gives no reason. My guess is batching. A provider can serve requests from every customer on one shared model at once, which is far more efficient than hosting a separate model for each company. That is my reading, not something OpenAI said.
+The page gives no reason. My guess is batching. A provider can serve requests from every customer on one shared model at once, which is far more efficient than hosting a separate model for each company.
 
 ## Robots have it worse
 
