@@ -1,0 +1,17 @@
+{
+  "/assets/robotics/thumbnails/breaking-bellman.jpg": "/assets/robotics/breaking-bellman/casino.png",
+  "/assets/robotics/thumbnails/can-you-zero-shot-robotics-with-a-coding-agent.jpg": "/assets/robotics/can-you-zero-shot-robotics-with-a-coding-agent/loop-thumb.svg",
+  "/assets/robotics/thumbnails/from-joint-angles-to-a-moving-arm.jpg": "/assets/robotics/arm-control/v3/franka_joint_names.png",
+  "/assets/robotics/thumbnails/how-robot-control-is-changing.jpg": "/assets/robotics/modern-control/moved-target-preview.svg",
+  "/assets/robotics/thumbnails/robot-brains-robot-bodies.jpg": "/robotics/robot-brains-robot-bodies/#rf-arithmetic-title",
+  "/assets/robotics/thumbnails/so101-1-target-and-goal.jpg": "/assets/robotics/so101-series/spring-goal.png",
+  "/assets/robotics/thumbnails/so101-2-finer-than-the-sensor.jpg": "/assets/robotics/so101-series/tick-rounding.png",
+  "/assets/robotics/thumbnails/so101-3-choosing-the-goal.jpg": "/assets/robotics/so101-series/map-errors.png",
+  "/assets/robotics/thumbnails/so101-4-learning-what-physics-misses.jpg": "/assets/robotics/so101-series/hindsight-label.png",
+  "/assets/robotics/thumbnails/so101-6-where-the-last-millimeter-goes.jpg": "/assets/robotics/so101-controllers/arm-pan-lever.png",
+  "/assets/robotics/thumbnails/so101-7-learning-between-and-during-strokes.jpg": "/assets/robotics/so101-after-part6/timing-and-shape.png",
+  "/assets/robotics/thumbnails/so101-8-measuring-the-tool-in-3d.jpg": "/assets/robotics/so101-series/arm-reach-overhead-poster.jpg",
+  "/assets/robotics/thumbnails/so101-pen-holder.jpg": "/assets/robotics/so101-pen-holder/design5-on-arm.png",
+  "/assets/robotics/thumbnails/what-information-can-a-reinforcement-learner-use.jpg": "/assets/robotics/what-information-can-a-reinforcement-learner-use/sentence-words.png",
+  "/assets/robotics/thumbnails/why-i-am-learning-robotics.jpg": "/assets/robotics/why-robotics/openvla-architecture.png"
+}

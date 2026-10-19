@@ -421,6 +421,22 @@ ${GENERATED_MARKER}
 <body><p>This article moved to <a href="${escape(target)}">${url}</a>.</p></body></html>
 `;
 }
+function validateThumbnailSources(articles, root) {
+  const filename = path.join(root, 'content/robotics/thumbnail-sources.json');
+  const sources = fs.existsSync(filename) ? JSON.parse(fs.readFileSync(filename, 'utf8')) : {};
+  const seen = new Map();
+  for (const article of articles.filter((article) => article.draft !== true)) {
+    const thumbnail = article.thumbnail;
+    const source = sources[thumbnail] || thumbnail;
+    if (thumbnail.startsWith('/assets/robotics/thumbnails/') && !sources[thumbnail]) {
+      throw new Error(`${article.slug}.md: generated thumbnail needs original source in thumbnail-sources.json`);
+    }
+    if (typeof source !== 'string' || !source.startsWith('/') || source.includes('..')) throw new Error(`${article.slug}.md: invalid original thumbnail source`);
+    if (seen.has(source)) throw new Error(`${article.slug}.md: duplicate original thumbnail source ${source}; already used by ${seen.get(source)}.md`);
+    seen.set(source, article.slug);
+  }
+}
+
 export function build(root = ROOT) {
   const sourceDir = path.join(root, 'content/robotics');
   if (!fs.existsSync(sourceDir)) return;
@@ -437,6 +453,7 @@ export function build(root = ROOT) {
     if (SECTIONS[slug]) throw new Error(`Article filename ${name} collides with the ${slug} section index`);
     return {...metadata, slug, source};
   });
+  validateThumbnailSources(allArticles, root);
   const articles = allArticles.filter((article) => article.draft !== true).map(({source, slug}) => ({...renderArticle(source, root), slug}))
     .sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
   attachSeries(articles);

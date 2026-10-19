@@ -7,7 +7,7 @@ series: 'From policy to action: the last mile of robotics control'
 part: 6
 tags: ['so-101', 'calibration', 'measurement']
 thumbnail: /assets/robotics/thumbnails/so101-6-where-the-last-millimeter-goes.jpg
-thumbnail_alt: 'Overhead view of the SO-101 arm drawing on the tablet.'
+thumbnail_alt: 'Left: side view of the arm with the pan, shoulder lift, elbow flex, wrist flex and wrist roll joints named, and the distance R from the pan axis to the pen. Right: top view of the arm. One tick of the pan, drawn 100 times too big, moves the pen 0.354 mm, which is 231 mm times 1.534 mrad.'
 ---
 
 ## Where the series stands

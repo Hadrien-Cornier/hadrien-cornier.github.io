@@ -9,7 +9,7 @@ part: 5
 track: hardware
 tags: ['so-101', 'hardware', '3d-printing']
 thumbnail: /assets/robotics/thumbnails/so101-pen-holder.jpg
-thumbnail_alt: 'Overhead view of the SO-101 arm drawing on the tablet.'
+thumbnail_alt: 'Design 5 on the full arm in a drawing pose'
 ---
 
 This is the hardware part of the series. [Parts 1 to 4](/robotics/so101-1-target-and-goal/) measure the arm's error in joint angles. This part builds the tool that will show the same error as ink on paper.

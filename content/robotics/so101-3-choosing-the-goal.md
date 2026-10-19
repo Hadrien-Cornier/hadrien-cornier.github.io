@@ -7,7 +7,7 @@ series: 'From policy to action: the last mile of robotics control'
 part: 3
 tags: ['so-101', 'control']
 thumbnail: /assets/robotics/thumbnails/so101-3-choosing-the-goal.jpg
-thumbnail_alt: 'Overhead view of the SO-101 arm drawing on the tablet.'
+thumbnail_alt: 'Bar chart of the real-arm tracking error. Cat motion: direct 22.5 mrad at 30 Hz, pi 8.4, solve 6.2 and mpc 6.0 at 60 Hz. Signature motion: direct 28.3, lead 23.7 and inv 13.4 mrad.'
 ---
 
 [Part 1](/robotics/so101-1-target-and-goal/) ended with one equation for a joint of my arm, and one rule: the servo only makes torque from the gap between the goal and the joint, so every term of the equation needs a bit more gap. [Part 2](/robotics/so101-2-finer-than-the-sensor/) was about the reading the controller sees. This part is about the fixes.

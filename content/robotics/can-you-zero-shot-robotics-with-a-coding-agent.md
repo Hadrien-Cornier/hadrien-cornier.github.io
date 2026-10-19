@@ -5,7 +5,7 @@ date: '2026-10-19'
 tags: ['code-as-policy', 'agents', 'skill-learning', 'nvidia']
 section: 'recent-papers'
 thumbnail: /assets/robotics/thumbnails/can-you-zero-shot-robotics-with-a-coding-agent.jpg
-thumbnail_alt: 'Diagram of the ASPIRE loop: a coding agent writes a robot program, the engine runs it and records a trace, the agent repairs it, a verifier checks the fix, and the skill library keeps it.'
+thumbnail_alt: 'The ASPIRE loop: write a robot program, run it, inspect the trace, repair and verify it, and keep the skill.'
 ---
 
 A simulated robot has to pick up a red radio. It finds the radio, 1.91 m away, and starts to drive over. Then `navigate_to_pose` returns `PLANNING_ERROR`. It does it again, and again.
