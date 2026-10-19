@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 680" role="img" aria-labelledby="dt-title dt-desc">
 <title id="dt-title">The deadly triad: three useful ingredients, one dangerous feedback loop</title>
-<desc id="dt-desc">Function approximation shares predictions. Bootstrapping learns before an episode ends. Off-policy learning reuses behavior data for a target policy. Green numbered edges refer to three stable pair examples with assumptions in the article. Red arrows combine all three: shared estimates can feed their own targets and grow without bound. The rising curve is illustrative, not measured data.</desc>
+<desc id="dt-desc">Function approximation shares predictions. Bootstrapping learns before an episode ends. Off-policy learning reuses behavior data for a target policy. Green numbered edges refer to three stable pair examples with assumptions in the article. Red arrows combine all three: shared estimates can feed their own targets and grow without bound. The rising curve shows estimates increasing while true value stays finite.</desc>
 <defs><marker id="dt-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="#b44c2c" stroke-width="1.5"/></marker></defs>
 <rect width="620" height="680" fill="#f5f4ed"/>
 <g fill="none" stroke="#49724e" stroke-width="2.4" stroke-linecap="round"><path d="M210 96 Q151 112 142 180 M410 96 Q468 113 478 180 M142 284 Q308 355 478 284"/></g>
@@ -67,6 +67,6 @@
 <tspan x="443" dy="0">true value stays finite</tspan>
 </text>
 <text x="310" y="666" text-anchor="middle" fill="#656b62" font-family="Arial,Helvetica,sans-serif" font-size="16">
-<tspan x="310" dy="0">Illustrative sketch, not measured data</tspan>
+<tspan x="310" dy="0">Estimates rise while true value stays finite</tspan>
 </text>
 </svg>

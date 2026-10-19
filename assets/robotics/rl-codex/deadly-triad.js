@@ -3,7 +3,7 @@
  const rc=document.getElementById('rc');if(!rc)return;
  const link=rc.querySelector('.dt-original');if(!link)return;
  const viewer=document.createElement('div');viewer.className='dt-viewer';
- viewer.innerHTML='<div class="dt-controls" role="group" aria-label="Deadly triad zoom"><button type="button" data-dt="overview">Overview</button><button type="button" data-dt="out" aria-label="Zoom triad out">−</button><button type="button" data-dt="in" aria-label="Zoom triad in">+</button><span class="dt-readout" aria-live="polite">1×</span></div><div class="dt-frame" tabindex="0" role="region" aria-label="Deadly triad drawing. Zoom then scroll to inspect."><img alt="Three useful ingredients combine in a feedback loop that can diverge. Green pair edges 1, 2, 3 refer to the qualified examples below. Illustrative rising-value sketch, not measured data."></div>';
+ viewer.innerHTML='<div class="dt-controls" role="group" aria-label="Deadly triad zoom"><button type="button" data-dt="overview">Overview</button><button type="button" data-dt="out" aria-label="Zoom triad out">−</button><button type="button" data-dt="in" aria-label="Zoom triad in">+</button><span class="dt-readout" aria-live="polite">1×</span></div><div class="dt-frame" tabindex="0" role="region" aria-label="Deadly triad drawing. Zoom then scroll to inspect."><img alt="Three useful ingredients combine in a feedback loop that can diverge. Green pair edges 1, 2, 3 refer to the qualified examples below. The rising curve shows estimates increasing while true value stays finite."></div>';
  rc.querySelector('.rc-view').appendChild(viewer);
  const frame=viewer.querySelector('.dt-frame'),img=frame.querySelector('img');img.src=link.href;
  const levels=[1,2,4,6];let level=0;
