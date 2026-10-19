@@ -353,21 +353,141 @@ Sharing predictions saves memory. Bootstrapping saves waiting. Off-policy learni
 
 <p class="dt-caption">The drawing above belongs to this section. On phones, use + to enlarge it, scroll inside it to pan, and Overview to see all three ingredients again. <a class="dt-original" href="/assets/robotics/rl-codex/deadly-triad.svg" target="_blank" rel="noopener">Open the full drawing</a>. The rising curve is illustrative, not measured data.</p>
 
-**The green pairs are specific stable examples, not a guarantee that any two ingredients are safe. All three together can diverge; they do not have to.** Here is what each numbered edge assumes.
+**The green pairs are specific stable examples, not a guarantee that any two ingredients are safe. All three together can diverge; they do not have to.** The numbered edges have three different reasons for stability.
+
+In the equations below, $t$ is the time step; $S_t$ and $A_t$ are the state and action; $R_{t+1}$ is the next reward. The target policy $\pi(a\mid s)$ gives the probability of action $a$ in state $s$; $b(a\mid s)$ is the policy that collected the data. The discount is $0\leq\gamma<1$ and $\alpha_t>0$ is a learning step size. A superscript $+$ means the next parameter or table value.
 
 <div class="dt-pairs">
-<details open id="dt-pair-1">
-<summary>1 · Approximation + bootstrapping: on-policy linear TD prediction</summary>
-<p>Use fixed linear features and follow the same fixed policy you are evaluating. For a finite, irreducible, aperiodic Markov chain, discount below 1, bounded rewards, linearly independent features and appropriate diminishing step sizes, TD converges to a finite approximation. This prediction result does not cover arbitrary neural networks or changing control policies. <a href="https://web.mit.edu/~jnt/www/Papers/J063-97-bvr-td.pdf">Tsitsiklis and Van Roy, 1997, Sections IV and VII</a>.</p>
+<section class="dt-worked" id="dt-pair-1">
+
+### 1 · Approximation + bootstrapping
+
+**Learn a fixed policy's values with on-policy linear TD.** A fixed feature vector $\phi(s)$ describes state $s$; the weights $w$ produce $v_w(s)=\phi(s)^\top w$. The superscript $\top$ means transpose. One observed transition gives this update:
+
+$$
+\begin{aligned}
+\delta_t &= R_{t+1}+\gamma v_w(S_{t+1})-v_w(S_t),\\
+w^+ &= w+\alpha_t\delta_t\phi(S_t).
+\end{aligned}
+$$
+
+Here $\delta_t$ is the TD error. Why can this settle down? Let $T^\pi$ be the Bellman prediction operator:
+
+$$
+(T^\pi v)(s)=\mathbb E_\pi[
+R_{t+1}+\gamma v(S_{t+1})\mid S_t=s].
+$$
+
+The expectation uses the fixed target policy and the environment's transition probabilities. Let $D$ put its stationary state probabilities $d(s)$ on the diagonal; $\|x\|_D^2=\sum_s d(s)x(s)^2$ weights a value vector $x$ by those probabilities. Let $\Pi$ be least-squares projection onto the space spanned by the fixed features, using those same weights. For value vectors $v$ and $u$:
+
+$$
+\|\Pi T^\pi v-\Pi T^\pi u\|_D
+\leq\gamma\|v-u\|_D.
+$$
+
+On-policy averaging cannot enlarge this norm; neither can the orthogonal projection. Multiplying by $\gamma<1$ makes the combined map a contraction, with one projected fixed point $v=\Pi T^\pi v$. **TD's sampled weight update is not literally repeated projection.** Under the conditions below, it converges to that same projected solution. [Tsitsiklis and Van Roy, Sections IV and VII](https://web.mit.edu/~jnt/www/Papers/J063-97-bvr-td.pdf).
+
+**Add off-policy sampling:** projection may now weight states by the behavior distribution, while the Bellman target follows $\pi$. The matched-norm argument can fail. The two-state example below shows the resulting feedback.
+
+<details class="dt-conditions">
+<summary>Conditions behind this prediction result</summary>
+<p>Fixed policy; finite irreducible, aperiodic on-policy Markov chain; bounded rewards; discount below 1; fixed, linearly independent features. Positive diminishing step sizes satisfy the paper's stochastic-approximation conditions, including infinite sum and finite squared sum. This is linear prediction, not a claim for arbitrary neural networks or a changing control policy.</p>
 </details>
-<details open id="dt-pair-2">
-<summary>2 · Approximation + off-policy: Monte Carlo regression</summary>
-<p>Fit a fixed linear predictor to complete returns, corrected with importance sampling for the target policy. There is no guessed future value in the target. A well-behaved setting uses independent finite-horizon episodes, bounded rewards and features, coverage of the target policy, finite-variance importance-weighted targets, and a nonsingular feature covariance. Least-squares fitting then has a finite unique solution. This is a regression example, not a promise about every off-policy Monte Carlo method: importance weights can have enormous or infinite variance. <a href="https://web.stanford.edu/class/psych209/Readings/SuttonBartoIPRLBook2ndEd.pdf">Sutton and Barto, second-edition draft, Sections 5.5 and 9.2</a>.</p>
+</section>
+<section class="dt-worked" id="dt-pair-2">
+
+### 2 · Approximation + off-policy
+
+**Wait for the complete return, then fit fixed targets.** If an episode ends at step $H$, its return and importance weight from step $t$ are
+
+$$
+\begin{aligned}
+G_t &= \sum_{k=0}^{H-t-1}\gamma^k R_{t+k+1},\\
+\rho_t &= \prod_{k=t}^{H-1}
+\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}.
+\end{aligned}
+$$
+
+$H$ is the terminal time, $k$ indexes future steps, $G_t$ is the full discounted return and $\rho_t$ corrects its trajectory from behavior $b$ to target policy $\pi$. Crucially, $G_t$ contains **rewards, not a guessed future value**. Freeze the recorded data. For example $i$, use its corrected return $y_i=\rho_i G_i$ as the label; here $G_i$ and $\rho_i$ mean the return and weight for that recorded starting point. Let $y$ stack these labels, and let row $i$ of the feature matrix $X$ be $\phi(s_i)^\top$, with $s_i$ the example's starting state. Batch gradient descent is
+
+$$
+w^+=w-\eta X^\top(Xw-y).
+$$
+
+$\eta>0$ is the batch step size. This minimizes the squared error $L(w)=\tfrac12\|Xw-y\|_2^2$, where $\|\cdot\|_2$ is Euclidean length. If $X$ has full column rank,
+
+$$
+X^\top X\succ0
+\quad\Longrightarrow\quad
+w_*=(X^\top X)^{-1}X^\top y.
+$$
+
+$\succ0$ means positive definite; $^{-1}$ means matrix inverse; $w_*$ is the unique empirical least-squares minimizer. The labels stay fixed while the weights move. Rank-deficient data need not have a unique fit. This is a well-posed regression argument, not a blanket convergence claim for off-policy Monte Carlo. [Sutton and Barto's draft, Sections 5.5 and 9.2](https://web.stanford.edu/class/psych209/Readings/SuttonBartoIPRLBook2ndEd.pdf).
+
+**Add bootstrapping:** replace the complete return with a target containing $v_w$ at a future state. Now the labels move with $w$. Treating them as constants during each update no longer gives gradient descent on the fixed regression above.
+
+<details class="dt-conditions">
+<summary>Conditions behind this regression example</summary>
+<p>Fixed target/behavior policies and fixed linear features; independent finite-horizon episodes; bounded rewards/features; behavior covers every action the target may take. Importance-weighted labels have finite variance; the frozen empirical design has full column rank. For the displayed batch update, choose η less than 2 divided by the largest eigenvalue of XᵀX. Full rank guarantees a unique empirical fit, not exact recovery of the target-policy value from finite data. Importance weights can otherwise have enormous or infinite variance.</p>
 </details>
-<details open id="dt-pair-3">
-<summary>3 · Bootstrapping + off-policy: tabular Q-learning</summary>
-<p>Give every state-action pair its own table entry. In a finite MDP with bounded rewards and discount below 1, Q-learning converges to the optimal action values when every pair is visited infinitely often and each pair's step sizes have infinite sum but finite squared sum. A fixed batch or an exploration rule that stops visiting some actions does not satisfy those conditions. <a href="https://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf">Watkins and Dayan, 1992, convergence theorem</a>.</p>
+</section>
+<section class="dt-worked" id="dt-pair-3">
+
+### 3 · Bootstrapping + off-policy
+
+**Keep a separate table entry for every state-action pair.** From a transition $(s,a,r,s')$, tabular Q-learning updates just one entry:
+
+$$
+\begin{aligned}
+Q^+(s,a)=Q(s,a)+\alpha_t\big[&r+\gamma\max_{a'}Q(s',a')\\
+&-Q(s,a)\big].
+\end{aligned}
+$$
+
+$Q$ is the current action-value table; $s$ and $a$ are the observed state and action, $r$ the reward, $s'$ the next state, and $a'$ ranges over next-state actions. All other entries stay unchanged. Its expected target is the Bellman optimality operator $T_*$:
+
+$$
+(T_*q)(s,a)=\mathbb E\!\left[
+ r+\gamma\max_{a'}q(s',a')\mid s,a\right].
+$$
+
+Here $q$ is any candidate action-value table; the expectation averages the environment's rewards and transitions. For two tables $q$ and $u$,
+
+$$
+\|T_*q-T_*u\|_\infty
+\leq\gamma\|q-u\|_\infty.
+$$
+
+The max norm is $\|x\|_\infty=\max_{s,a}|x(s,a)|$ for any table $x$. Taking a maximum and averaging cannot amplify the largest entrywise difference; discounting shrinks it. Thus $T_*$ has one fixed point, the optimal table. With enough visits and suitable step sizes, sampled Q-learning reaches it. [Watkins and Dayan's convergence theorem](https://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf).
+
+**Add function approximation:** a weight update can also change other states' values, including a value in the bootstrap target. The tabular Bellman operator still contracts, but that alone does not control the added shared fitting step. Its guarantee does not transfer to an arbitrary approximator.
+
+<details class="dt-conditions">
+<summary>Conditions behind tabular convergence</summary>
+<p>Finite MDP, bounded rewards, discount below 1. Every state-action pair is visited infinitely often. For each pair, step sizes are positive, at most 1, have infinite sum and finite squared sum. A replay buffer that omits a pair, or exploration that stops visiting it, does not meet these conditions.</p>
 </details>
+</section>
+<section class="dt-worked" id="dt-two-state">
+
+### A tiny feedback loop: one weight, two values
+
+Take two states $s_1,s_2$ and one available action. The target policy always takes it: $s_1$ moves to $s_2$, and $s_2$ loops to itself. Every reward is 0 and $\gamma<1$, so both true values are 0. Use one scalar weight $w$, features $\phi(s_1)=1$, $\phi(s_2)=2$, and estimates $v_w(s_1)=w$, $v_w(s_2)=2w$.
+
+Now replay **only** the stored zero-reward transition $s_1\to s_2$, forever. Sampling probability is 1 for that transition and 0 for transitions starting at $s_2$. Only the TD error at $s_1$ updates the shared weight; the target is $0+\gamma(2w)$. With constant step size $\alpha>0$,
+
+$$
+\begin{aligned}
+\delta &= 0+\gamma(2w)-w=(2\gamma-1)w,\\
+w^+ &= w+\alpha\delta\,\phi(s_1)\\
+    &= [1+\alpha(2\gamma-1)]w.
+\end{aligned}
+$$
+
+$\delta$ is this transition's TD error. If $\gamma>\tfrac12$, the multiplier exceeds 1. For $\gamma=0.9$, $\alpha=0.1$ and initial weight $w_0=1$, after $n$ replay updates $w_n=1.08^n$: estimates grow although all rewards are 0. Updating $w$ to raise the first value also raises the second, making the next target still larger. This is exact arithmetic for the specified toy, not measured training data.
+
+Here off-policy means **biased replay states rather than target-policy visitation**; with one action there is no action-choice mismatch. Replay never corrects the second state's value directly. It fails state coverage, so it does not satisfy the tabular convergence conditions above. This counterexample isolates a possible mechanism; it does not say every combination of all three ingredients diverges. [The primary paper's two-state construction and discussion](https://arxiv.org/html/1812.02648#S2).
+
+</section>
 </div>
 
 These are ways to remove one source of the feedback, under stated assumptions. The [deadly triad](https://arxiv.org/html/1812.02648#S1) names the risk when all three are present. DQN combines all three; replay and a frozen target network help stabilize learning without providing a general convergence guarantee. Part 5 is forthcoming in this trial.

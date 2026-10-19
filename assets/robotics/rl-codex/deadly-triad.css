@@ -13,3 +13,12 @@
 #rc .dt-pairs summary{cursor:pointer;font-weight:600;line-height:1.45}
 #rc .dt-pairs p{font-size:16px;margin:12px 0}
 #rc .dt-caption{font-size:14px;line-height:1.5;color:#656b62}
+/* Worked pair equations and compact theorem drawers, scoped to this section. */
+#rc .dt-pairs .dt-worked{padding:10px 0 20px;border-top:1px solid #d3d6cb;scroll-margin-top:var(--rc-top);min-width:0}
+#rc .dt-pairs .dt-worked h3{font-size:21px;line-height:1.35;margin:14px 0}
+#rc .dt-pairs .dt-conditions{padding:10px 12px;background:#efefe9;border:1px solid #d3d6cb;border-radius:3px}
+#rc .dt-pairs .dt-conditions summary{font-size:14px;line-height:1.4}
+#rc .dt-pairs .dt-conditions p{font-size:14px;line-height:1.6}
+#rc .dt-pairs .katex-display{max-width:100%;overflow-x:auto;overflow-y:hidden;padding:8px 3px;box-sizing:border-box;overscroll-behavior-x:contain}
+#rc .dt-pairs .katex-display>.katex{display:block;width:max-content;min-width:100%;text-align:left}
+#rc .dt-pairs .katex{font-size:1em}
