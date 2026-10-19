@@ -1,6 +1,6 @@
 ---
 title: "How do I get the XYZ position of my robot's tool tip?"
-description: 'A $40 drawing tablet matches the accuracy of a $10,000 motion-capture system, as long as the pen stays on the page. Here is how to see the pen in space.'
+description: 'A $40 drawing tablet quotes accuracy in the same ballpark as a $10,000 motion-capture system, as long as the pen stays on the page. Here is how to see the pen in space.'
 date: '2026-10-15'
 updated: '2026-10-17'
 series: 'From policy to action: the last mile of robotics control'
@@ -12,7 +12,7 @@ How do I get the precise x, y, and z coordinates of the tip of my robot's grippe
 
 I ask because I use an SO-101, a small robot arm, to build a smooth, precise controller, which is the program that turns a desired path into motor commands. I call it the drawing arm project, but drawing is only one showcase. The real goal is a controller that also works in space, and this post is about generalizing away from the XY plane. Right now the gripper holds a pen, and a Wacom drawing tablet, a flat sensor that reports where a pen touches it, measures the tip of that pen, called the nib. The tablet gives me x and y along its surface. What it can't give me is z, the height above that plane, so that is the question.
 
-The tablet is also the best deal in my setup. It cost about US$40 and reports the pen position to within ±0.25 mm, 133 times a second. OptiTrack, a motion-capture system, lists ±0.3 mm for its cameras, and four of them cost about US$10,000 before software. That makes the tablet a cheap, precise feedback signal for learning precise motions, as long as the pen touches it.
+The tablet is also the best deal in my setup. It cost about US$40 and reports the pen position to within ±0.25 mm, 133 times a second. OptiTrack, a motion-capture system, lists ±0.3 mm for its cameras, and four of them cost about US$10,000 before software. The two figures come from different kinds of specification, but they sit in the same ballpark. That makes the tablet a cheap, precise feedback signal for learning precise motions, as long as the pen touches it.
 
 <figure class="article-figure">
 <video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-reach-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm swinging down from above the table to touch the pen to the Wacom tablet, and later lifting the pen off the tablet and swinging back up.">
@@ -113,9 +113,9 @@ To compare these systems fairly, a few terms need defining. Rate counts samples 
 
 ### What the US$40 buys
 
-Inside its plane, the tablet sits in the same accuracy class as a motion-capture system that costs more than 200 times as much.
+Inside its plane, the tablet quotes accuracy in the same ballpark as a motion-capture system that costs more than 200 times as much.
 
-- **Accuracy:** the tablet lists ±0.25 mm and OptiTrack PrimeX 13 lists ±0.3 mm. The tablet's figure is a tolerance bound and OptiTrack's is a typical value, so I read them as a tie, not a win.
+- **Accuracy:** the tablet lists ±0.25 mm and OptiTrack PrimeX 13 lists ±0.3 mm. The tablet's figure is a tolerance bound and OptiTrack's is a typical value, so they are comparable quoted specifications, not a measured tie.
 - **Price:** the tablet cost me about US$40. Four PrimeX 13 cameras cost US$9,996 at list price, plus US$1,148 for the Motive:Tracker software and key.
 - **Resolution:** Wacom lists 100 lines per mm, which is 0.01 mm. That is much finer than its accuracy, so the pen reports small moves that the sensor does not claim to place exactly.
 
