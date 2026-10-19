@@ -1,0 +1,17 @@
+/* Local Codex series: readable equations and mechanism drawings. */
+.article-body .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: .55rem .15rem; text-align: left; }
+.article-body .katex-display > .katex { display: block; width: max-content; min-width: 100%; text-align: left; font-size: 1em; }
+.article-body .rls-figure { margin: 1.3rem 0; }
+.article-body .rls-figure > svg { display: block; width: 300px; max-width: 100%; height: auto; margin: 0 auto; background: #fbfbf8; }
+.article-body .rls-figure figcaption { margin-top: .5rem; font: 14px/1.45 var(--sans, Arial, sans-serif); color: #50554e; }
+.article-body pre { max-width: 100%; overflow-x: auto; font-size: 14px; line-height: 1.55; }
+.article-body .rls-canvas .rc-svg { font-family: Arial, sans-serif; }
+.article-body .rls-canvas .rc-svg .rls-panel-title { font-size: 16px; font-weight: 700; fill: #50554e; }
+.article-body .rls-canvas .rc-body { min-width: 0; }
+.article-body .series-box { overflow-wrap: anywhere; }
+.article-body .rls-canvas details { margin: 1rem 0; }
+@media (max-width: 999px) { .article-body .rls-canvas { --rc-h: clamp(230px, 38vh, 340px); } }
+/* Focused views show only the chosen mechanism. Titles stay on the whole map. */
+.article-body .rls-canvas.is-zoomed .rc-panel:not(.is-active) { visibility: hidden; }
+.article-body .rls-canvas.is-zoomed .rc-panel > .rls-panel-title,
+.article-body .rls-canvas.is-zoomed .rc-panel > rect:first-child { visibility: hidden; }
