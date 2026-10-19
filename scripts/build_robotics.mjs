@@ -56,6 +56,13 @@ const SECTIONS = {
 function validateSection(data) {
   if (data.section !== undefined && !SECTIONS[data.section]) throw new Error(`section must be one of: ${Object.keys(SECTIONS).join(', ')}`);
 }
+// An optional card thumbnail is an image under /assets/ that the article already ships, with alt text.
+function validateThumbnail(data, root) {
+  if (data.thumbnail === undefined) return;
+  if (typeof data.thumbnail !== 'string' || !/^\/assets\/[\w./-]+$/.test(data.thumbnail) || data.thumbnail.includes('..')) throw new Error('thumbnail must be a path under /assets/');
+  if (!fs.existsSync(path.join(root, data.thumbnail))) throw new Error(`thumbnail file not found: ${data.thumbnail}`);
+  if (typeof data.thumbnail_alt !== 'string' || !data.thumbnail_alt.trim()) throw new Error('thumbnail needs thumbnail_alt text');
+}
 // A track marks a series part of a different kind (for example the hardware side of a control series).
 // It gives the part its own accent colour and a label wherever the series is listed.
 const TRACKS = {hardware:'Hardware'};
@@ -279,7 +286,8 @@ function tagLinks(tags) {
 }
 function articleCard(article) {
   const part = article.series ? `<span class="report-part">Part ${article.part}${trackLabel(article)}</span>` : article.section ? `<span class="report-part">${SECTIONS[article.section].name}</span>` : '';
-  return `<a class="report-card${trackClass(article)}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
+  const thumb = article.thumbnail ? `<span class="report-thumb"><img src="${escape(article.thumbnail)}" alt="${escape(article.thumbnail_alt)}" loading="lazy" decoding="async"></span>` : '';
+  return `<a class="report-card${trackClass(article)}${thumb ? ' has-thumb' : ''}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span>${thumb}<div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
 }
 function seriesBlock(unit, renderArticle, className = '') {
   const count = `${unit.articles.length} ${unit.articles.length === 1 ? 'part' : 'parts'}`;
@@ -350,7 +358,6 @@ function previewImage(article, root) {
   }
   const preferred = {
     'from-joint-angles-to-a-moving-arm':'/assets/robotics/arm-control/v3/franka_joint_names.png',
-    'why-cant-robots-remember':'/assets/robotics/why-cant-robots-remember/memer-object-search.png',
   }[article.slug];
   const src = preferred || article.body.match(/<img\s[^>]*src="([^"]+)"/)?.[1];
   if (!src || !src.startsWith('/assets/robotics/') || src.includes('..')) return '';
@@ -437,6 +444,7 @@ export function build(root = ROOT) {
     validateSeriesMetadata(metadata);
     validateTags(metadata);
     validateSection(metadata);
+    validateThumbnail(metadata, root);
     if (SECTIONS[slug]) throw new Error(`Article filename ${name} collides with the ${slug} section index`);
     return {...metadata, slug, source};
   });

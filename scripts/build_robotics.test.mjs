@@ -413,3 +413,25 @@ test('a section gets its own index page, a labelled card, and a sitemap entry; u
     assert.throws(() => build(root), /section must be one of/);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
+
+test('a thumbnail shows on the index card, and a missing file or missing alt text fails', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-thumb-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.mkdirSync(path.join(root, 'assets'), {recursive:true});
+    fs.writeFileSync(path.join(root, 'assets/fig.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const essay = (extra) => `---\ntitle: With figure\ndescription: Has a thumbnail.\ndate: 2026-09-26\n${extra}---\n\nBody.`;
+    fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay("thumbnail: '/assets/fig.svg'\nthumbnail_alt: 'A loop diagram.'\n"));
+    fs.writeFileSync(path.join(sourceDir, 'plain.md'), '---\ntitle: Plain essay\ndescription: No figure.\ndate: 2026-09-25\n---\n\nBody.');
+    build(root);
+    const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
+    assert.match(listing, /class="report-card has-thumb"[^>]*><span class="report-date">[\s\S]*?<span class="report-thumb"><img src="\/assets\/fig\.svg" alt="A loop diagram\." loading="lazy"/);
+    assert.equal((listing.match(/report-thumb"/g) || []).length, 1);
+    fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay("thumbnail: '/assets/missing.svg'\nthumbnail_alt: 'x'\n"));
+    assert.throws(() => build(root), /thumbnail file not found/);
+    fs.writeFileSync(path.join(sourceDir, 'with-figure.md'), essay("thumbnail: '/assets/fig.svg'\n"));
+    assert.throws(() => build(root), /thumbnail_alt/);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});

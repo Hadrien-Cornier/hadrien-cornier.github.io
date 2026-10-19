@@ -58,6 +58,9 @@
 .post-meta { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 27px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.7; }
 .report-list { padding: 7px 0 65px; }
 .report-card { display: grid; grid-template-columns: 180px minmax(0, 1fr) 25px; gap: 28px; padding: 34px 0; border-bottom: 1px solid var(--line); }
+.report-card.has-thumb { grid-template-columns: 180px 210px minmax(0, 1fr) 25px; }
+.report-thumb { display: block; align-self: start; margin-top: 4px; border: 1px solid var(--line); background: #f1f2ed; }
+.report-thumb img { display: block; width: 100%; height: auto; }
 .report-card:hover { text-decoration: none; }
 .report-card:hover h2 { color: var(--accent); }
 .report-date { display: flex; flex-direction: column; gap: 10px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; padding-top: 5px; }
@@ -118,6 +121,7 @@
   .home-notes, .home-about { gap: 48px; }
   .post-layout { grid-template-columns: 185px minmax(0, 720px); gap: 38px; }
   .report-card { grid-template-columns: 145px minmax(0, 1fr) 22px; gap: 25px; }
+  .report-card.has-thumb { grid-template-columns: 145px 160px minmax(0, 1fr) 22px; }
 }
 @media (max-width: 800px) {
   .home-hero { grid-template-columns: 1fr; gap: 34px; padding: 43px 0 49px; }
@@ -171,7 +175,8 @@
   .robotics-header h1 { font-size: clamp(37px, 9.6vw, 48px); letter-spacing: -1.2px; margin: 20px 0; }
   .series-intro, .post-description { font-size: 16px; line-height: 1.7; }
   .post-meta { font-size: 10px; gap: 6px 17px; margin-top: 22px; }
-  .report-card { grid-template-columns: minmax(0, 1fr) 19px; gap: 16px; padding: 26px 0; }
+  .report-card, .report-card.has-thumb { grid-template-columns: minmax(0, 1fr) 19px; gap: 16px; padding: 26px 0; }
+  .report-thumb { grid-column: 1 / -1; max-width: 340px; margin-top: 0; }
   .report-date { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; gap: 17px; padding: 0; font-size: 10px; }
   .report-copy h2 { font-size: 29px; }
   .report-copy p { font-size: 14px; }

@@ -4,6 +4,8 @@ description: 'Many robot policies decide from the last few frames. A snapshot of
 date: '2026-10-19'
 tags: ['robot-memory', 'long-horizon', 'navigation', 'vla']
 section: 'recent-papers'
+thumbnail: '/assets/robotics/why-cant-robots-remember/memer-object-search.png'
+thumbnail_alt: 'Bar chart of MemER object search on a real robot: 32 of 60 objects retrieved with no history, 38 with 8 recent frames, 47 with 32 recent frames, and 59 with 8 key frames.'
 ---
 
 Say you ask a robot to walk down a hall, take the second door on the left, pick up the blue box and bring it back to where it started. It does the first part. Now it holds the box. The first door is far behind, the starting point is out of sight, and the camera shows a box and a wall.
@@ -188,7 +190,7 @@ Reading it: a text note like "two cubes in" is enough to count cubes, and useles
 
 ## The library that remembers across tasks
 
-[ASPIRE](/robotics/aspire-robots-that-keep-their-fixes/) is a different kind of memory. There is no learned policy. A coding agent writes Python for each task, and each verified fix is saved as a text skill: a failure signature, a trigger and a repair. A later task reads the matching notes.
+[ASPIRE](/robotics/can-you-zero-shot-robotics-with-a-coding-agent/) is a different kind of memory. There is no learned policy. A coding agent writes Python for each task, and each verified fix is saved as a text skill: a failure signature, a trigger and a repair. A later task reads the matching notes.
 
 That is across-task, procedural memory. It remembers how to recover from a planner error near a table edge. It does not remember where the box is in this room. The paper does not describe a map or an episodic store for the robot at run time, and whether the generated programs keep state between steps is not stated. Its authors list stale and redundant entries as open problems.
 

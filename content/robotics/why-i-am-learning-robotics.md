@@ -184,7 +184,7 @@ Not every world model draws pixels. Meta's [V-JEPA 2](https://arxiv.org/abs/2506
 
 ## Reindustrializing Europe and the United States
 
-This is the part that excites me most. It's a vision, not a measurement.
+This is the part that excites me most.
 
 Factories in Europe and the US already use a lot of robots. The International Federation of Robotics counts [449 robots per 10,000 manufacturing employees in Germany and 307 in the US](https://ifr.org/ifr-press-releases/news/robot-density-surges-in-europe-asia-and-americas), against 1,220 in South Korea. But those robots sit mostly where the task never changes: welding the same car body, placing the same chip. Every new task means an integrator reprogramming the cell, so automation only pays off at high volume. Small-batch work, with many different parts and frequent changes, stayed manual, and manual work moved to wherever labor was cheapest.
 
@@ -197,7 +197,7 @@ Now suppose a robot can learn a new task from a few dozen demonstrations in an a
 <figcaption>Boston Dynamics, the production Atlas (January 2026). Hyundai plans to use it in its car plants, starting with parts sequencing. <a href="https://www.youtube.com/watch?v=rrUHZKlrxms">Watch on YouTube</a></figcaption>
 </figure>
 
-What's blocking it, again, is software that generalizes and is reliable enough for a production line. That's the problem I want to work on.
+What's blocking it, again, is software that generalizes and is reliable enough for a production line. This is what I want to explore.
 
 ## Open questions I keep returning to
 
