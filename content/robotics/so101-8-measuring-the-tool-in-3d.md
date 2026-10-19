@@ -1,6 +1,6 @@
 ---
 title: "How do I get the XYZ position of my robot's tool tip?"
-description: 'A $40 drawing tablet quotes accuracy in the same ballpark as a $10,000 motion-capture system, as long as the pen stays on the page. Here is how to see the pen in space.'
+description: 'I get $10,000 worth of measurements from a $40 drawing tablet. Now I want the height of the pen too.'
 date: '2026-10-15'
 updated: '2026-10-17'
 series: 'From policy to action: the last mile of robotics control'
