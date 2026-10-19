@@ -342,17 +342,35 @@ Putting equation 2 into equation 4 gives the Bellman equation for a policy. The 
 
 </details>
 
-<div class="rc-mark" id="sec-triad" data-panel="tree" data-num="" data-view="tree2" data-title="The deadly triad"></div>
+<div class="rc-mark" id="sec-triad" data-panel="triad" data-num="" data-view="tree2" data-title="The deadly triad"></div>
 
 ## The deadly triad
 
-Three ingredients can make value learning unstable:
+Sharing predictions saves memory. Bootstrapping saves waiting. Off-policy learning lets us reuse data. The trouble is that a change to one shared prediction can also change its own future target; off-policy sampling may fail to correct that target often enough. The guesses can reinforce each other instead of settling down. [Van Hasselt et al. show this feedback](https://arxiv.org/html/1812.02648#S2).
 
-- **Function approximation.** A formula shares changes across states.
-- **Bootstrapping.** An estimate helps build another estimate's target.
-- **Off-policy learning.** Data comes from behavior different from the policy being valued.
+<link rel="stylesheet" href="/assets/robotics/rl-codex/deadly-triad.css">
+<script src="/assets/robotics/rl-codex/deadly-triad.js" defer></script>
 
-Sutton and Barto call this combination the [deadly triad](http://incompleteideas.net/book/RLbook2020.pdf). DQN combines all three and uses replay and a frozen target network to help stabilize learning. Part 5 is forthcoming in this trial.
+<p class="dt-caption">The drawing above belongs to this section. On phones, use + to enlarge it, scroll inside it to pan, and Overview to see all three ingredients again. <a class="dt-original" href="/assets/robotics/rl-codex/deadly-triad.svg" target="_blank" rel="noopener">Open the full drawing</a>. The rising curve is illustrative, not measured data.</p>
+
+**The green pairs are specific stable examples, not a guarantee that any two ingredients are safe. All three together can diverge; they do not have to.** Here is what each numbered edge assumes.
+
+<div class="dt-pairs">
+<details open id="dt-pair-1">
+<summary>1 · Approximation + bootstrapping: on-policy linear TD prediction</summary>
+<p>Use fixed linear features and follow the same fixed policy you are evaluating. For a finite, irreducible, aperiodic Markov chain, discount below 1, bounded rewards, linearly independent features and appropriate diminishing step sizes, TD converges to a finite approximation. This prediction result does not cover arbitrary neural networks or changing control policies. <a href="https://web.mit.edu/~jnt/www/Papers/J063-97-bvr-td.pdf">Tsitsiklis and Van Roy, 1997, Sections IV and VII</a>.</p>
+</details>
+<details open id="dt-pair-2">
+<summary>2 · Approximation + off-policy: Monte Carlo regression</summary>
+<p>Fit a fixed linear predictor to complete returns, corrected with importance sampling for the target policy. There is no guessed future value in the target. A well-behaved setting uses independent finite-horizon episodes, bounded rewards and features, coverage of the target policy, finite-variance importance-weighted targets, and a nonsingular feature covariance. Least-squares fitting then has a finite unique solution. This is a regression example, not a promise about every off-policy Monte Carlo method: importance weights can have enormous or infinite variance. <a href="https://web.stanford.edu/class/psych209/Readings/SuttonBartoIPRLBook2ndEd.pdf">Sutton and Barto, second-edition draft, Sections 5.5 and 9.2</a>.</p>
+</details>
+<details open id="dt-pair-3">
+<summary>3 · Bootstrapping + off-policy: tabular Q-learning</summary>
+<p>Give every state-action pair its own table entry. In a finite MDP with bounded rewards and discount below 1, Q-learning converges to the optimal action values when every pair is visited infinitely often and each pair's step sizes have infinite sum but finite squared sum. A fixed batch or an exploration rule that stops visiting some actions does not satisfy those conditions. <a href="https://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf">Watkins and Dayan, 1992, convergence theorem</a>.</p>
+</details>
+</div>
+
+These are ways to remove one source of the feedback, under stated assumptions. The [deadly triad](https://arxiv.org/html/1812.02648#S1) names the risk when all three are present. DQN combines all three; replay and a frozen target network help stabilize learning without providing a general convergence guarantee. Part 5 is forthcoming in this trial.
 
 ## Continue with the table
 
