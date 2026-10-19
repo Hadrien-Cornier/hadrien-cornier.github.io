@@ -52,6 +52,7 @@
     }
     function setTop() {
       var d = window.matchMedia('(min-width: 1000px)').matches;
+      rc.style.setProperty('--rc-nav-top', stage.offsetHeight + 'px'); /* measured stage height places the nav; the same value feeds the anchor offset below */
       rc.style.setProperty('--rc-top', (d ? nav.offsetHeight + 12 : stage.offsetHeight + nav.offsetHeight + 12) + 'px');
     }
     function go(i) {

@@ -660,15 +660,15 @@ span.so101-coupling-co { background: var(--accent); }
 }
 
 /* RL pilot: pinned whole-system canvas, text scrolls beneath, scroll drives the camera */
-.article-body .rc { --rc-h: clamp(230px, 40vh, 380px); --rc-top: 0px; margin: 8px 0 0; }
-.article-body .rc-stage { position: sticky; top: 0; z-index: 20; height: var(--rc-h); background: #fbfbf8; border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; }
-.article-body .rc-bar { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 8px; border-bottom: 1px solid var(--line); background: #fff; }
+.article-body .rc { --rc-h: clamp(230px, 40vh, 380px); --rc-bar: 40px; --rc-stage-h: calc(var(--rc-h) + var(--rc-bar)); --rc-top: 0px; margin: 8px 0 0; }
+.article-body .rc-stage { position: sticky; top: 0; z-index: 20; height: var(--rc-stage-h); background: #fbfbf8; border: 1px solid var(--line); overflow: hidden; display: flex; flex-direction: column; }
+.article-body .rc-bar { flex: 0 0 var(--rc-bar); box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 8px; border-bottom: 1px solid var(--line); background: #fff; }
 .article-body .rc-view { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .article-body .rc-stage svg.rc-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; margin: 0; }
 .article-body .rc-reset { flex: 0 0 auto; font: 600 13px/1 var(--sans, Arial, sans-serif); color: var(--ink); background: #fff; border: 1px solid var(--line); padding: 7px 11px; cursor: pointer; }
 .article-body .rc-reset:hover, .article-body .rc-reset:focus-visible { border-color: var(--accent); }
 .article-body .rc-where { min-width: 0; font: 600 12.5px/1.3 var(--sans, Arial, sans-serif); color: var(--accent); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.article-body .rc-nav { position: sticky; top: var(--rc-h); z-index: 19; display: flex; gap: 8px; align-items: center; padding: 8px 0; background: #fbfbf8; border-bottom: 1px solid var(--line); font: 14px/1.3 var(--sans, Arial, sans-serif); }
+.article-body .rc-nav { position: sticky; top: var(--rc-nav-top, var(--rc-stage-h)); z-index: 19; display: flex; gap: 8px; align-items: center; padding: 8px 0; background: #fbfbf8; border-bottom: 1px solid var(--line); font: 14px/1.3 var(--sans, Arial, sans-serif); }
 .article-body .rc-nav select { flex: 1 1 auto; min-width: 0; font: inherit; padding: 8px 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
 .article-body .rc-nav button { flex: 0 0 auto; font: inherit; font-weight: 600; width: 40px; padding: 8px 0; border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
 .article-body .rc-nav button:hover, .article-body .rc-nav button:focus-visible, .article-body .rc-nav select:focus-visible { border-color: var(--accent); }
@@ -681,11 +681,10 @@ span.so101-coupling-co { background: var(--accent); }
 .article-body .rc-route span { color: var(--muted); }
 .article-body .rc-body > h2 { scroll-margin-top: var(--rc-top); }
 @media (min-width: 1000px) {
-  .article-body .rc { width: min(1260px, calc(100vw - 64px)); position: relative; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 540px); gap: 40px; align-items: start; --rc-h: calc(100vh - 32px); }
+  .article-body .rc { width: min(1260px, calc(100vw - 64px)); position: relative; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 540px); gap: 40px; align-items: start; --rc-h: calc(100vh - 32px - var(--rc-bar)); }
   .article-body .rc-stage { top: 16px; }
   .article-body .rc-nav { top: 0; }
 }
-@media (max-width: 999px) { .article-body .rc-stage { height: calc(var(--rc-h) + 40px); } }
 @media (max-width: 520px) { .article-body .rc-reset { padding: 6px 8px; font-size: 12px; } .article-body .rc-where { font-size: 11.5px; } }
 .article-body .ct th:first-child, .article-body .ct td:first-child { min-width: 5.5em; overflow-wrap: normal; word-break: normal; hyphens: none; }
 .article-body .ct .table-scroll { margin: 18px 0; }
