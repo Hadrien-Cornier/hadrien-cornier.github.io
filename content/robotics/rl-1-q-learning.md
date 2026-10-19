@@ -87,7 +87,7 @@ Averaged over 300 runs, the robot took the left door in about 85% of episodes du
 
 ## Where Q-learning breaks
 
-- **A finished run isn't a finished table.** After 2,000 updates the arrows already trace the 13-step route, but the start cell reads −9.7 against the exact −12.2. After 10,000 updates all 13 route cells are exact, yet in 4 of the 37 cells the favorite move isn't an optimal one, and 13 cells have a largest number off by more than 0.01. All of them are in the top two rows, which the robot updated 35 to 127 times per cell against 507 or more for the route.
+- **A finished run isn't a finished table.** The arrows first trace the 13-step route after update 1,998, and update 1,999 knocks them off it again. At 2,000 updates the arrow in cell (2,0) points up and the walk loops, and the start cell reads −9.7 against the exact −12.2. After 10,000 updates all 13 route cells are exact, yet in 4 of the 37 cells the favorite move isn't an optimal one, and 13 cells have a largest number off by more than 0.01. All of them are in the top two rows, which the robot updated 35 to 127 times per cell against 507 or more for the route.
 - **The step size isn't the theorem's.** This run keeps the step size fixed at 0.5, which the shrinking-step condition doesn't cover. The world has no randomness, and the route numbers settle anyway.
 - **Exploring next to a cliff costs falls.** The run fell 171 times in 10,000 updates. The 150 falls after update 2,000 all came from random moves, and the table's own walk never falls. Part 4 asks what target fits this.
 - **A table has one row per situation.** 37 cells give 148 numbers. Add a second robot or a speed to the situation and the rows multiply. Part 3 replaces the table with a formula.
@@ -108,7 +108,7 @@ What it costs:
 
 - **Rows grow with the situations.** A table doesn't scale to large worlds.
 - **Every move has to be tried many times.** Near a cliff, that means falls while learning.
-- **Slow to settle.** The arrows took about 2,000 updates here and the route numbers took up to 10,000. Cells off the route had not settled after 10,000.
+- **Slow to settle.** The arrows first traced the route at update 1,998, and the route numbers took up to 10,000. Cells off the route had not settled after 10,000.
 - **The max is biased high** when the numbers are noisy.
 - **The guarantee stops at tables.** A formula in place of the table loses it.
 
@@ -137,7 +137,7 @@ The table in the widget is one recorded run, re-run for this article so that its
 - **Check.** The final table of the re-run equals the saved table of the recorded seed-202 run in all 192 entries. The clip above shows that same recorded run.
 - **Recorded.** The full table after updates 0, 1, 5, 20, 100, 185, 300, 1,000, 1,670, 2,000, 3,000 and 10,000, and every update from 1 to 10,000 (cell, move, reward, next cell, new number). The widget replays updates 1 to 400 from that log and shows four later snapshots (1,000, 1,670, 2,000 and 10,000 updates).
 - **Command.** `SEED=202 node pilot-v2/snapshots.js > pilot-v2/snapshots-seed202.json`, then `node pilot-v2/make-widget-data.js` writes the data file that the widget loads. The exact values come from value iteration over the same grid rules (5,000 sweeps, discount 0.99).
-- **Greedy walk.** The "walk the arrows" line in the widget breaks ties by taking the first move in the order up, right, down, left, and uses no random numbers. The first update after which the walk reaches the flag is 1,670, in 17 steps. The first after which it takes the shortest route of 13 steps is 1,998.
+- **Greedy walk.** The "walk the arrows" line in the widget breaks ties by taking the first move in the order up, right, down, left, and uses no random numbers. The first update after which the walk reaches the flag is 1,670, in 17 steps. The first after which it takes the shortest route of 13 steps is 1,998. After update 1,999 the walk loops again, because that update lowers the right move in cell (2,0) below the up move.
 
 The finished table, all 37 cells a robot can stand on, is below. Cells are (row, column) with the row counted from the top, and the last column holds the exact best value for comparison.
 
