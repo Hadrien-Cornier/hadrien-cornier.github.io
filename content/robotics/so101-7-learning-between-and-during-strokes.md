@@ -5,6 +5,7 @@ date: '2026-10-15'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 7
+tags: ['so-101', 'machine-learning', 'control']
 ---
 
 ## Where the series stands

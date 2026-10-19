@@ -7,6 +7,7 @@ draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 5
 track: hardware
+tags: ['so-101', 'hardware', '3d-printing']
 ---
 
 This is the hardware part of the series. [Parts 1 to 4](/robotics/so101-1-target-and-goal/) measure the arm's error in joint angles. This part builds the tool that will show the same error as ink on paper.

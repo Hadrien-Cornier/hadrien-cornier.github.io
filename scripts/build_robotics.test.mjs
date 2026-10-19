@@ -334,3 +334,42 @@ test('essay presentation keeps a centered reading path and loads figure styles o
   assert.equal(renderArticle(essay).components.futures,true);
   assert.throws(()=>renderArticle(essay.replace('layout: essay','layout: invalid')),/layout must be essay/);
 });
+
+test('tags are optional but strict: 2 to 4 short lowercase tags, no duplicates', () => {
+  const withTags = (tags) => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\ntags: ${tags}\n---\nBody.`);
+  assert.deepEqual(renderArticle(frontmatter).tags, []);
+  assert.deepEqual(withTags("['robotics', 'so-101']").tags, ['robotics', 'so-101']);
+  assert.throws(() => withTags('robotics'), /2 to 4/);
+  assert.throws(() => withTags("['one']"), /2 to 4/);
+  assert.throws(() => withTags("['a', 'b', 'c', 'd', 'e']"), /2 to 4/);
+  assert.throws(() => withTags("['Robotics', 'so-101']"), /short lowercase/);
+  assert.throws(() => withTags("['so 101', 'control']"), /short lowercase/);
+  assert.throws(() => withTags("['robotics', 'robotics']"), /Duplicate tag robotics/);
+});
+
+test('the search index carries title, description, tags, date and url but never drafts', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'robotics-search-index-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    fs.writeFileSync(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    fs.writeFileSync(path.join(sourceDir, 'published.md'), '---\ntitle: Published report\ndescription: A published description.\ndate: 2026-09-26\ntags: [robotics, so-101]\n---\n\nBody.');
+    fs.writeFileSync(path.join(sourceDir, 'drafted.md'), '---\ntitle: Draft report\ndescription: A draft description.\ndate: 2026-09-27\ndraft: true\ntags: [robotics, hidden]\n---\n\nUnfinished.');
+    build(root);
+    const indexFile = path.join(root, 'robotics/search-index.json');
+    const index = JSON.parse(fs.readFileSync(indexFile, 'utf8'));
+    assert.deepEqual(index, [{title:'Published report', description:'A published description.', tags:['robotics', 'so-101'], date:'2026-09-26', url:'/robotics/published/'}]);
+    const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
+    assert.match(listing, /<script src="\/assets\/robotics-search\.js\?v=[a-f0-9]+" defer><\/script>/);
+    assert.match(listing, /data-filter hidden/);
+    assert.match(listing, /<label for="article-search">/);
+    assert.match(listing, /data-filter-tag="robotics"[^>]*>robotics<span class="tag-count">1<\/span>/);
+    assert.match(listing, /data-entry data-tags="robotics so-101"/);
+    assert.doesNotMatch(listing, /Draft report|hidden<\/span>/);
+    const page = fs.readFileSync(path.join(root, 'robotics/published/index.html'), 'utf8');
+    assert.match(page, /<a class="tag-chip" href="\/robotics\/#tag-so-101">so-101<\/a>/);
+    assert.doesNotMatch(page, /<script[^>]*src=/);
+    build(root);
+    assert.equal(fs.readFileSync(indexFile, 'utf8'), JSON.stringify(index, null, 2) + '\n');
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});

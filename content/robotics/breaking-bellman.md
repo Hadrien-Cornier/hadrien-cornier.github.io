@@ -3,6 +3,7 @@ title: 'I made a small game where RL algorithms break'
 description: 'Breaking Bellman is a free browser game for learning reinforcement learning. Real algorithms train in your browser and fail, and you fix them one word at a time.'
 date: '2026-10-15'
 slug: 'breaking-bellman'
+tags: ['reinforcement-learning', 'simulation', 'education']
 ---
 
 Give Q-learning a neural network on CartPole and its value estimate climbs to **4.7 million**. The most any policy can earn there is 100. So the network is off by a factor of 47,000, and the estimate is still climbing when the run ends.

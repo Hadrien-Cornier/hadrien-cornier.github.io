@@ -610,3 +610,29 @@ span.so101-coupling-co { background: var(--accent); }
 .ca-pick { fill: var(--accent); stroke: var(--white); stroke-width: 1.5; }
 .ca-note, .ca-intro { margin: 8px 0; }
 .ca-readout { margin: 6px 0 0; font-variant-numeric: tabular-nums; color: var(--muted); }
+
+/* Tags and the search bar on the Robotics index. Chips reuse the mono label style; the filter bar shows once its small script runs. */
+.tag-row, .post-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.tag-row { margin-top: 15px; }
+.post-tags { margin-top: 20px; }
+.tag-chip { display: inline-block; padding: 4px 10px; border: 1px solid var(--line); color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: .7px; text-transform: uppercase; }
+a.tag-chip:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+.article-filter { margin: 26px 0 4px; padding: 22px 24px 19px; border: 1px solid var(--line); background: var(--white); }
+.article-filter[hidden] { display: none; }
+.filter-search label, .filter-label { display: block; margin: 0 0 9px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.filter-search input { width: 100%; max-width: 460px; padding: 11px 13px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: inherit; font-size: 15px; }
+.filter-search input::placeholder { color: var(--muted); opacity: .8; }
+.filter-tags { margin-top: 18px; }
+.tag-filter-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-filter { display: inline-flex; align-items: center; gap: 8px; padding: 5px 11px; border: 1px solid var(--line); background: transparent; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: .7px; text-transform: uppercase; }
+.tag-filter:hover { border-color: var(--accent); color: var(--accent); }
+.tag-filter[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--white); }
+.tag-filter[aria-pressed="true"] .tag-count { color: var(--white); }
+.tag-count { color: var(--muted); font-size: 9px; }
+.filter-status { margin-top: 15px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
+.report-card[hidden], .series-block[hidden], .writing-row[hidden] { display: none; }
+@media (max-width: 600px) {
+  .article-filter { margin: 20px 0 2px; padding: 16px 15px 15px; }
+  .tag-row { margin-top: 12px; }
+}
+@media print { .article-filter { display: none; } }

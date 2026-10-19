@@ -4,6 +4,7 @@ description: 'A short model for the words in Breaking Bellman: data weight, real
 date: '2026-10-16'
 draft: false
 layout: essay
+tags: ['reinforcement-learning', 'machine-learning']
 ---
 
 One high payout can increase the estimate for a door that loses money on average. How much can one payout change that estimate?

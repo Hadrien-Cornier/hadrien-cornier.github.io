@@ -31,6 +31,17 @@ function validateSeriesMetadata(data) {
   if (data.track !== undefined && !TRACKS[data.track]) throw new Error(`track must be one of: ${Object.keys(TRACKS).join(', ')}`);
   if (data.track !== undefined && !data.series) throw new Error('track requires series');
 }
+// Tags group essays for the search and the tag filter on the Robotics index.
+function validateTags(data) {
+  if (data.tags === undefined) return;
+  if (!Array.isArray(data.tags) || data.tags.length < 2 || data.tags.length > 4) throw new Error('tags must be a list of 2 to 4 short tags');
+  const seen = new Set();
+  for (const tag of data.tags) {
+    if (typeof tag !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(tag)) throw new Error(`tags must be short lowercase words: ${String(tag)}`);
+    if (seen.has(tag)) throw new Error(`Duplicate tag ${tag}`);
+    seen.add(tag);
+  }
+}
 // A track marks a series part of a different kind (for example the hardware side of a control series).
 // It gives the part its own accent colour and a label wherever the series is listed.
 const TRACKS = {hardware:'Hardware'};
@@ -48,6 +59,7 @@ export function renderArticle(source, root = ROOT) {
   if (data.draft !== undefined && typeof data.draft !== 'boolean') throw new Error('draft must be true or false');
   if (data.layout !== undefined && data.layout !== 'essay') throw new Error('layout must be essay when provided');
   validateSeriesMetadata(data);
+  validateTags(data);
   if (updated < date) throw new Error('updated cannot be earlier than date');
   const md = new MarkdownIt({html:true, linkify:true, typographer:false}).use(katex, {
     delimiters:'dollars', throwOnError:true, trust:false, output:'htmlAndMathml',
@@ -168,7 +180,7 @@ export function renderArticle(source, root = ROOT) {
     });
   }).join(' ');
   const words = prose.trim().split(/\s+/).filter(Boolean).length;
-  return {...data, date, updated, body, headings, components, readingMinutes:Math.max(1, Math.ceil(words / 220))};
+  return {...data, tags:data.tags ? [...data.tags] : [], date, updated, body, headings, components, readingMinutes:Math.max(1, Math.ceil(words / 220))};
 }
 
 function template(name, root = ROOT, values = {}) {
@@ -188,7 +200,7 @@ function assetVersion(root, ...filenames) {
   }
   return hash.digest('hex').slice(0, 12);
 }
-function shell({title, description, pathname, content, article, root = ROOT, interactive = false}) {
+function shell({title, description, pathname, content, article, root = ROOT, interactive = false, search = false}) {
   const canonical = `${ORIGIN}${pathname}`;
   const siteCss = `/assets/site.css?v=${assetVersion(root, 'assets/site.css')}`;
   const header = template('header.html', root, {
@@ -207,7 +219,7 @@ ${GENERATED_MARKER}
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/papers.css?v=${assetVersion(root, 'assets/papers.css')}"><link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.layout === 'essay' || article?.components.futures ? `<link rel="stylesheet" href="/assets/robotics-futures.css?v=${assetVersion(root, 'assets/robotics-futures.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
+<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/papers.css?v=${assetVersion(root, 'assets/papers.css')}"><link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.layout === 'essay' || article?.components.futures ? `<link rel="stylesheet" href="/assets/robotics-futures.css?v=${assetVersion(root, 'assets/robotics-futures.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${search ? `\n<script src="/assets/robotics-search.js?v=${assetVersion(root, 'assets/robotics-search.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
 </head><body class="${pathname === '/' ? 'home-page' : 'robotics'}${article ? trackClass(article) : ''}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
@@ -225,7 +237,7 @@ function seriesBox(article) {
 function articlePage(article, root) {
   const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
-<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p></header>
+<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}"><a class="eyebrow" href="/#writing">Writing / Robotics</a><h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p>${tagLinks(article.tags)}</header>
 ${seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
 function articleUnits(articles) {
@@ -241,9 +253,16 @@ function articleUnits(articles) {
     return [{series:article.series, articles:groups.get(article.series)}];
   });
 }
+// Tags on an index entry are display chips; the clickable tag filter sits above the list.
+function tagChips(tags) {
+  return tags.map((tag) => `<span class="tag-chip">${escape(tag)}</span>`).join('');
+}
+function tagLinks(tags) {
+  return tags.length ? `<p class="post-tags">${tags.map((tag) => `<a class="tag-chip" href="/robotics/#tag-${tag}">${escape(tag)}</a>`).join('')}</p>` : '';
+}
 function articleCard(article) {
   const part = article.series ? `<span class="report-part">Part ${article.part}${trackLabel(article)}</span>` : '';
-  return `<a class="report-card${trackClass(article)}" href="/robotics/${article.slug}/"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p></div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
+  return `<a class="report-card${trackClass(article)}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span><div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
 }
 function seriesBlock(unit, renderArticle, className = '') {
   const count = `${unit.articles.length} ${unit.articles.length === 1 ? 'part' : 'parts'}`;
@@ -270,14 +289,27 @@ function attachSeries(articles) {
     });
   }
 }
+// The tag filter and search bar work client-side over the list already on the page.
+function filterBar(articles) {
+  const counts = new Map();
+  for (const article of articles) for (const tag of article.tags) counts.set(tag, (counts.get(tag) || 0) + 1);
+  const tags = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  if (!tags.length) return '';
+  const buttons = tags.map(([tag, count]) => `<button type="button" class="tag-filter" data-filter-tag="${escape(tag)}" aria-pressed="false">${escape(tag)}<span class="tag-count">${count}</span></button>`).join('');
+  return `<section class="article-filter" aria-label="Search and filter the essays" data-filter hidden>
+<div class="filter-search"><label for="article-search">Search the essays</label><input type="search" id="article-search" data-filter-search placeholder="Title, description, or tag" autocomplete="off" spellcheck="false"></div>
+<div class="filter-tags"><p class="filter-label" id="filter-tags-label">Tags</p><div class="tag-filter-list" role="group" aria-labelledby="filter-tags-label"><button type="button" class="tag-filter tag-filter-all" data-filter-tag="" aria-pressed="true">All<span class="tag-count">${articles.length}</span></button>${buttons}</div></div>
+<p class="filter-status" role="status" aria-live="polite"></p>
+</section>`;
+}
 function landingPage(articles, root) {
   const units = articleUnits(articles);
   const content = units.map((unit) => unit.series
     ? seriesBlock(unit, articleCard)
     : articleCard(unit.article)).join('\n');
-  return shell({title:'Robotics', description:'Essays on robot learning, geometry, and control, with experiments and diagrams.', pathname:'/robotics/', root, content:`
+  return shell({title:'Robotics', description:'Essays on robot learning, geometry, and control, with experiments and diagrams.', pathname:'/robotics/', root, search:true, content:`
 <header class="robotics-header"><p class="eyebrow">Essays &amp; explorations / ${articles.length} ${articles.length === 1 ? 'essay' : 'essays'}</p><h1>Learning robotics.</h1><p class="series-intro">Experiments, diagrams, and questions from learning how robots move, learn, and make decisions.</p></header>
-<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
+${filterBar(articles)}<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
 }
 function previewImage(article, root) {
   if (article.slug === 'how-robot-control-is-changing') {
@@ -321,7 +353,7 @@ function homePage(articles, root) {
   const renderRow = (article) => {
     const image = previewImage(article, root);
     const label = article.series ? `Part ${article.part}${article.track ? `<small>${TRACKS[article.track]}</small>` : ''}` : String(rowNumber++).padStart(2, '0');
-    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}${trackClass(article)}" href="/robotics/${article.slug}/"><span class="writing-row-number">${label}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p></div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
+    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}${trackClass(article)}" href="/robotics/${article.slug}/"><span class="writing-row-number">${label}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
   };
   const feature = latestUnit?.series
     ? seriesBlock(latestUnit, renderRow, 'series-block-home')
@@ -372,6 +404,7 @@ export function build(root = ROOT) {
     const source = fs.readFileSync(path.join(sourceDir, name), 'utf8');
     const metadata = matter(source).data;
     validateSeriesMetadata(metadata);
+    validateTags(metadata);
     return {...metadata, slug, source};
   });
   const articles = allArticles.filter((article) => article.draft !== true).map(({source, slug}) => ({...renderArticle(source, root), slug}))
@@ -382,6 +415,9 @@ export function build(root = ROOT) {
   const redirects = readRedirects(sourceDir, new Set(articles.map((article) => article.slug)));
   for (const {slug, target} of redirects) pages.push([path.join(root, 'robotics', slug, 'index.html'), redirectPage(target)]);
   pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);
+  // The search bar reads this small index; drafts never reach it because they are not in articles.
+  const searchIndex = articles.map((article) => ({title:article.title, description:article.description, tags:[...article.tags], date:article.date, url:`/robotics/${article.slug}/`}));
+  pages.push([path.join(root, 'robotics', 'search-index.json'), `${JSON.stringify(searchIndex, null, 2)}\n`]);
   pages.push([path.join(root, 'index.html'), homePage(articles, root)]);
   for (const [filename, page] of pages) { fs.mkdirSync(path.dirname(filename), {recursive:true}); fs.writeFileSync(filename, page); }
   const vendor = path.join(root, 'assets/vendor/katex');

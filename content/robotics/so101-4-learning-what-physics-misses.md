@@ -5,6 +5,7 @@ date: '2026-10-05'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 4
+tags: ['so-101', 'control', 'machine-learning']
 ---
 
 [Part 3](/robotics/so101-3-choosing-the-goal/) wrote every controller I built as one formula for the goal, and grouped them in six families. The first five families use a model that I wrote down or fitted. This part is about the sixth family, where the controller learns: from repeats of the same motion, from data with a neural network, and from both physics and a network together.

@@ -5,6 +5,7 @@ date: '2026-10-02'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 1
+tags: ['so-101', 'control', 'hardware']
 ---
 
 I've been trying to find out whether a robot controller can be more accurate than the classical ones. To answer that, I first had to understand how the classical controllers work and which problems each of them fixes, and then test them on my own SO-101 arm and in the Genesis simulator. This series is what I learned along the way.
