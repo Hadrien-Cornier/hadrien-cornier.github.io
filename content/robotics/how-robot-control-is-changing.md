@@ -9,9 +9,9 @@ thumbnail: /assets/robotics/thumbnails/how-robot-control-is-changing.jpg
 thumbnail_alt: 'Before a cube moves, the robot gripper surrounds it. After it moves, the same grasp closes at the old position.'
 ---
 
-Ask a robot arm to pick up a small green block and put it in a tray. The camera sees the block. The arm starts reaching. Then someone moves the block a few centimetres to the right.
+Ask a robot arm to pick up a small green block and put it in a tray. The camera sees the block, and the arm starts reaching. Then someone moves the block a few centimetres to the right.
 
-The motors can follow their commands perfectly and still miss. Something has to notice the change and choose a different movement. So the real question of robot control isn't "how do I make the motor follow?" anymore. It's this: **how does the robot choose its next movement?**
+The motors can follow their commands perfectly and still miss, so something has to notice the change and choose a different movement. The real question of robot control isn't "how do I make the motor follow?" anymore. It's **how does the robot choose its next movement?**
 
 <figure class="article-figure">
 <video autoplay loop controls muted playsinline preload="metadata" poster="/assets/robotics/modern-control/v4/observe-again.png" aria-label="Two simulated SO-101 arms reach for a green block that slides about 9 cm while they move. The left arm, which planned once, closes on empty air. The right arm, which looks again every 0.1 s, turns toward the block and puts it in the tray.">
@@ -21,7 +21,7 @@ The motors can follow their commands perfectly and still miss. Something has to 
 <figcaption>Same block, same move, two ways to choose the next movement. Left: the arm plans once from the first image and closes on empty air. Right: it takes a new image every 0.1 s, so the next targets follow the block. Each tick on the time bar is one new image. Simulated SO-101 in Genesis; the motions are scripted to teach the idea, not a learned policy. <a class="video-link" href="/assets/robotics/modern-control/v4/observe-again.mp4">Open video</a></figcaption>
 </figure>
 
-Here's the short answer. Between 2023 and 2026, that choice moved out of hand-written planners and into one learned network, in five steps:
+Between 2023 and 2026, that choice moved out of hand-written planners and into one learned network. Here's the short answer, in five steps:
 
 1. **Copy a person** (ACT, 2023): learn from about 50 demonstrations and predict a short chunk of future movements.
 2. **Borrow the web** (VLA, 2023 to 2024): start from a model that already knows objects and words.
@@ -29,7 +29,7 @@ Here's the short answer. Between 2023 and 2026, that choice moved out of hand-wr
 4. **Practice** (reinforcement learning, 2024 to 2026): improve the generalist on the real robot until it stops failing.
 5. **Imagine** (world action models, 2026): predict the future video and the action together.
 
-What's still missing is **memory** and a **cheap way to imagine**. The timeline below shows which part of the loop each step changed. The rest of the post goes through them one at a time.
+What's still missing is **memory** and a **cheap way to imagine**. The timeline below shows which part of the loop each step changed, and the rest of the post goes through them one at a time.
 
 ```robotics-timeline
 {
@@ -176,7 +176,7 @@ What's still missing is **memory** and a **cheap way to imagine**. The timeline 
 
 ## Before 2023: plan, then track
 
-The classical answer splits the choice into separate programs. **Perception** finds the block and the obstacles. **State estimation** says where the block is relative to the arm. A **task planner** picks the step ("pick up the block"), a **motion planner** finds a path that doesn't hit the table, and a **controller** makes the joints follow that path. When the camera sees the block move, the estimate changes and the planner plans again.
+The classical answer splits the choice into separate programs. **Perception** finds the block and the obstacles, and **state estimation** says where the block is relative to the arm. A **task planner** picks the step ("pick up the block"), a **motion planner** finds a path that doesn't hit the table, and a **controller** makes the joints follow that path. When the camera sees the block move, the estimate changes and the planner plans again.
 
 This works, and it's still how most factory robots run. The trouble is that every piece is written by hand for a known world. Who writes the rule for a block that's half hidden, or slippery, or a sock instead of a block? Each new object asks for new code. That's the wall learning tries to get through.
 
@@ -193,11 +193,11 @@ The two ideas, "learn what to do" and "learn what will happen", come back at the
 
 ## ACT: copy a person, one chunk at a time
 
-Suppose a person shows the arm how to pick up the block, about 50 times, from different positions. You record what the cameras see, the joint angles, and the commands the person gave. Can a network learn the next movement from that?
+Suppose a person shows the arm how to pick up the block about 50 times, from different positions. You record what the cameras see, the joint angles, and the commands the person gave. Can a network learn the next movement from that?
 
-**ALOHA** made this cheap. A person moves two small "leader" arms, and two "follower" arms copy them. The leader joint angles become the action labels; the follower cameras and joint readings become the observations. [ALOHA, pp. 3–5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=4)
+**ALOHA** made this cheap. A person moves two small "leader" arms, and two "follower" arms copy them. The leader joint angles become the action labels, while the follower cameras and joint readings become the observations. [ALOHA, pp. 3–5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=4)
 
-The method that came with it, **Action Chunking with Transformers (ACT)**, predicts a short sequence of future joint targets from the current images and joint angles. That sequence is an **action chunk**. A controller below tracks the targets. With only **10 minutes of demonstrations**, ACT learned six fine tasks, like slotting a battery, with **80 to 90% success**. [ACT abstract](https://arxiv.org/abs/2304.13705)
+The method that came with it, **Action Chunking with Transformers (ACT)**, predicts a short sequence of future joint targets from the current images and joint angles. That sequence is an **action chunk**, and a controller below tracks the targets. With only **10 minutes of demonstrations**, ACT learned six fine tasks, like slotting a battery, with **80 to 90% success**. [ACT abstract](https://arxiv.org/abs/2304.13705)
 
 <figure class="article-figure">
 <video autoplay loop controls muted playsinline preload="metadata" poster="/assets/robotics/modern-control/v4/action-chunks.png" aria-label="A simulated SO-101 reaches for a green block. Ten small spheres in front of the gripper show the predicted targets of the current action chunk; the first two are dark red. When the block moves, the next chunks bend toward it.">
@@ -218,7 +218,7 @@ T_\text{react}&=\frac{k}{f}=\frac{2}{20}=0.1\ \mathrm{s}.
 \end{aligned}
 $$
 
-Units: targets ÷ (targets/s) = s. The plan looks half a second ahead, but the arm sees the moved block after a tenth of a second, plus the computing time.
+The units are targets ÷ (targets/s) = s. The plan looks half a second ahead, but the arm sees the moved block after a tenth of a second, plus the computing time.
 
 ```so101-widget
 {"type": "predict", "id": "RC1", "fallback": "Predict first. A policy predicts a chunk of H = 10 joint targets. The robot sends f = 20 targets per second. It executes 2 targets, then takes a new image and predicts a new chunk. Ignore the computing time. How long, at most, does the arm keep following the old chunk? (A) 0.5 s: H / f. (B) 0.1 s: 2 / 20. (C) 0.05 s: 1 / 20. (D) 2 s: f / H. Answer: 0.1 s. It executes 2 targets of 1/20 s each, then it looks again."}
@@ -231,7 +231,7 @@ Mobile ALOHA used the same recipe on a robot that drives around a house. Its aut
 <figcaption>Mobile ALOHA, autonomous skills learned by imitation (Zipeng Fu, co-author, 2024). <a href="https://www.youtube.com/watch?v=zMNumQ45pJ8">Watch on YouTube</a></figcaption>
 </figure>
 
-The limit shows up as soon as you change the task. An ACT policy knows one task, in one setup, on one robot. It has no idea what a "tray" is. It only knows the motions it saw.
+The limit shows up as soon as you change the task. An ACT policy knows one task, in one setup, on one robot. It has no idea what a "tray" is, only the motions it saw.
 
 <details>
 <summary>Side path: when two routes are both right (Diffusion Policy)</summary>
@@ -248,7 +248,7 @@ Put an obstacle between the gripper and the block. A person goes around it on th
 
 A person knows what a tray is without a single robot demonstration. Could a robot borrow that knowledge?
 
-A **vision-language model (VLM)** reads images and text and answers in text. It learned from billions of web images, so it knows objects, colors and words. A **vision-language-action model (VLA)** is a VLM that is trained further on robot data, so that it also outputs robot actions. The table compares the three.
+A **vision-language model (VLM)** reads images and text and answers in text. It learned from billions of web images, so it knows objects, colors and words. Train that VLM further on robot data so it also outputs robot actions, and you have a **vision-language-action model (VLA)**. The table compares the three.
 
 | Model | Input | Output | Learns from |
 |---|---|---|---|
@@ -256,13 +256,13 @@ A **vision-language model (VLM)** reads images and text and answers in text. It 
 | VLM | images + text | text | web images and text |
 | VLA | camera images + instruction (+ robot state) | robot actions | web data, then robot demonstrations |
 
-**RT-2** (2023) showed that the transfer is real. It wrote each action as tokens, the same discrete symbols the model uses for words: each action dimension was cut into 256 bins. [RT-2 v1, pp. 5–6](https://www.alphaxiv.org/pdf/2307.15818v1?page=5) On scenes with unseen objects, backgrounds and environments, success rose from 32% for RT-1 to 62%. [DeepMind, RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/)
+**RT-2** (2023) showed that the transfer is real. It wrote each action as tokens, the same discrete symbols the model uses for words, with each action dimension cut into 256 bins. [RT-2 v1, pp. 5–6](https://www.alphaxiv.org/pdf/2307.15818v1?page=5) On scenes with unseen objects, backgrounds and environments, success rose from 32% for RT-1 to 62%. [DeepMind, RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/)
 
 **OpenVLA** (2024) shows the recipe with open weights: two image encoders, a 7-billion-parameter language model, and a de-tokenizer that turns output tokens back into a small move of the gripper.
 
 ![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture.png "OpenVLA architecture. Figure from Kim et al., OpenVLA (2024), CC BY 4.0.")
 
-For our block, this means the instruction "put the green block in the tray" now means something to the model, even for a block color it never saw in the robot data. The cost is the action format: 256 bins per dimension, predicted one token at a time, is coarse and slow for a fast, precise arm.
+For our block, this means the instruction "put the green block in the tray" now means something to the model, even for a block color it never saw in the robot data. The cost is the action format. With 256 bins per dimension and tokens predicted one at a time, it's coarse and slow for a fast, precise arm.
 
 ## Generalist models: one policy for many robots
 
@@ -278,15 +278,15 @@ Physical Intelligence (PI) took the next step: one model, trained on many robots
 
 **π0.5** (April 2025) adds a step before the motion: the same model first predicts a subtask in words ("pick up the block"), then generates the actions for that subtask. It trains on many robots plus web data, which helps it work in homes it never saw. [π0.5 v1, §§IV-A–D](https://www.alphaxiv.org/pdf/2504.16054v1?page=5)
 
-**π0.7** (April 2026) changes what the prompt can say. It reads not only *what* to do but *how*: metadata such as speed, quality and mistakes, and optional subgoal images. That lets it train on mixed data, including failed and slow attempts, because the labels tell good runs from bad ones. PI reports that π0.7 makes espresso out of the box about as well as specialist models fine-tuned with RL. [π0.7 abstract](https://arxiv.org/abs/2604.15483)
+**π0.7** (April 2026) changes what the prompt can say. Along with *what* to do, it reads *how*: metadata such as speed, quality and mistakes, and optional subgoal images. That lets it train on mixed data, including failed and slow attempts, because the labels tell good runs from bad ones. PI reports that π0.7 makes espresso out of the box about as well as specialist models fine-tuned with RL. [π0.7 abstract](https://arxiv.org/abs/2604.15483)
 
-What does the generalist actually send to the robot? Still targets. In π*0.6, the output is joint angles and gripper commands at 50 Hz; in π0.7, joint targets or gripper poses, with inverse kinematics for poses, and a **proportional-derivative (PD) controller** that turns the targets into motor effort. [π*0.6, §V-A](https://arxiv.org/html/2511.14759v1#S5.SS1), [π0.7, §VIII](https://arxiv.org/html/2604.15483v2#S8) The learned part chooses where the joints should go. A classical loop still makes them get there. I spent a whole [series on that bottom loop on my $100 arm](/robotics/so101-1-target-and-goal/), and it's not a solved detail.
+What does the generalist actually send to the robot? Still targets. In π*0.6, the output is joint angles and gripper commands at 50 Hz. In π0.7, it's joint targets or gripper poses, with inverse kinematics for poses, and a **proportional-derivative (PD) controller** that turns the targets into motor effort. [π*0.6, §V-A](https://arxiv.org/html/2511.14759v1#S5.SS1), [π0.7, §VIII](https://arxiv.org/html/2604.15483v2#S8) The learned part chooses where the joints should go, and a classical loop still makes them get there. I spent a whole [series on that bottom loop on my $100 arm](/robotics/so101-1-target-and-goal/), and it's not a solved detail.
 
 ## Practice: reinforcement learning on real robots
 
-A generalist that succeeds 80% of the time is impressive in a video. In a home, it's a broken glass every few days. Perry Dong and Chelsea Finn put it this way in [Towards Universal Post-Training for Robotics](https://pd-perry.github.io/posts/post-training.html) (September 2026): robot models today are where language models were around GPT-2 and GPT-3. They're capable enough for demos, not reliable enough to trust. Language models closed that gap with a standard **post-training** recipe, more training after the big pretraining: instruction tuning, then reinforcement learning from feedback. Their argument is that robots need the same thing.
+A generalist that succeeds 80% of the time is impressive in a video. In a home, it's a broken glass every few days. In [Towards Universal Post-Training for Robotics](https://pd-perry.github.io/posts/post-training.html) (September 2026), Perry Dong and Chelsea Finn compare today's robot models to language models around GPT-2 and GPT-3: they can give capable demos, but you can't trust them yet. Language models closed that gap through **post-training**, more training after the big pretraining, with a standard recipe of instruction tuning followed by reinforcement learning from feedback. Dong and Finn argue that robots need the same thing.
 
-Why not just collect more demonstrations? Because copying has a ceiling. The demonstrations never show how to recover from the robot's own mistakes, and the robot can't get better than the people who demonstrated. **Reinforcement learning (RL)** learns from the robot's own attempts and a score of how they went.
+Why not just collect more demonstrations? Copying has a ceiling: the demonstrations never show how to recover from the robot's own mistakes, and the robot can't get better than the people who demonstrated. **Reinforcement learning (RL)** learns from the robot's own attempts and a score of how they went.
 
 ### Why RL is hard on a robot
 
@@ -303,13 +303,13 @@ $$
 a^\star=\arg\max_a\ Q(s,a).
 $$
 
-In a game with four buttons, you score the four buttons and pick the best. That's what DQN does. A robot action is 7 real numbers. Cut each into 20 bins and you get $20^7 \approx 1.28$ billion actions to score, 50 times per second. You can't enumerate them.
+In a game with four buttons, you score the four buttons and pick the best. That's what DQN does. But a robot action is 7 real numbers, and cutting each into 20 bins gives you $20^7 \approx 1.28$ billion actions to score, 50 times per second. You can't enumerate them.
 
 ```so101-widget
 {"type": "continuous-action", "fallback": "Interactive: the value Q of each action for a one-number action, with two hills: a wide one on the left (value 0.67) and a narrow, higher one on the right (value 1.00). Discretizing with 6 bins picks an action on the left hill at 65% of the best value. An actor that climbs the slope from a = -0.6 stops on the left hill. Sampling 16 actions from the base policy, editing each slightly uphill, and picking the best finds the right hill."}
 ```
 
-Classic continuous-control RL answers this with an **actor-critic**: a second network, the actor, learns to output the action that the critic scores high, by following the slope of $Q$. DDPG, TD3 and **SAC** (soft actor-critic) all work this way. Play with the widget: the actor climbs the nearest hill. It's fast, but it can get stuck on a lower one.
+Classic continuous-control RL answers this with an **actor-critic**. A second network, the actor, follows the slope of $Q$ to learn to output an action the critic scores high. DDPG, TD3 and **SAC** (soft actor-critic) all work this way. Play with the widget and you'll see the actor climb the nearest hill. It's fast, but it can get stuck on a lower one.
 
 ```so101-widget
 {"type": "predict", "id": "RC2", "fallback": "Predict first. A DQN-style agent picks the action with the highest Q by scoring every action. The arm has 7 joints. You cut each joint range into 20 bins. How many Q scores per control step? (A) 140. (B) 1.28 billion, 20^7. (C) 7^20. (D) 20. Answer: 20^7 = 1.28 billion. The choices multiply across joints."}
@@ -319,7 +319,7 @@ Modern VLAs add a second problem. Their action expert is a flow or diffusion mod
 
 ### Four ways to practice
 
-These are the four methods I find most instructive. Each uses the critic differently.
+These are the four methods I find most instructive, each using the critic differently.
 
 | Method | Starts from | How the critic changes behavior | Reported result |
 |---|---|---|---|
@@ -342,38 +342,38 @@ $$
 \hat A_t=\sum_{k=t}^{t+N-1}r_k+V(o_{t+N})-V(o_t).
 $$
 
-A worked example with made-up numbers. Each step costs $-1$, so a 10-step segment has rewards summing to $-10$. Before the segment, $V$ predicts $-40$; after, $-25$. Then $\hat A=-10+(-25)-(-40)=+5$: the segment moved the robot 15 units closer to done for a cost of 10. If $+5$ is above the threshold, the segment gets the label "Advantage: positive", even if the whole attempt failed later. The policy learns every segment *under its label*, and at run time you ask for "positive". [π\*0.6, §§IV-A–B](https://arxiv.org/html/2511.14759v1#S4)
+Let's work through it with made-up numbers. Each step costs $-1$, so a 10-step segment has rewards summing to $-10$. Before the segment, $V$ predicts $-40$, and after it, $-25$. Then $\hat A=-10+(-25)-(-40)=+5$: the segment moved the robot 15 units closer to done for a cost of 10. If $+5$ is above the threshold, the segment gets the label "Advantage: positive", even if the whole attempt failed later. The policy learns every segment *under its label*, and at run time you ask for "positive". [π\*0.6, §§IV-A–B](https://arxiv.org/html/2511.14759v1#S4)
 
 ```so101-widget
 {"type": "predict", "id": "RC3", "fallback": "Predict first. A segment inside a FAILED attempt has an estimated advantage of +5. The threshold for the positive label is +2. What does RECAP's policy learn from it? (A) Nothing: failed attempts are dropped. (B) To avoid these actions. (C) To reproduce them under the label 'Advantage: positive'. (D) To reproduce them under 'negative' because the attempt failed. Answer: (C). The label comes from the segment's advantage, not from the episode's final result."}
 ```
 
-**EXPO-FT** is the method behind Dong and Finn's post, and its picture is the widget's third button. The big VLA proposes $N$ chunks $a^1,\dots,a^N$. A small edit policy proposes a bounded change $\hat a^i$ for each one. The robot runs whichever candidate the critic likes best:
+**EXPO-FT** is the method behind Dong and Finn's post, illustrated by the widget's third button. The big VLA proposes $N$ chunks $a^1,\dots,a^N$, and a small edit policy proposes a bounded change $\hat a^i$ for each one. The robot runs whichever candidate the critic likes best:
 
 $$
 a^\star=\arg\max_{a\,\in\,\{a^i,\ a^i+\hat a^i\}}\ Q(s,a),\qquad \|\hat a^i\|\le\varepsilon .
 $$
 
-The VLA keeps the candidates in good regions. The edits stay small, so a wrong critic can't drag the robot far. Then the improvements are trained back into the VLA.
+The VLA keeps the candidates in good regions, and the edits stay small so a wrong critic can't drag the robot far. Then the improvements are trained back into the VLA.
 
 ![EXPO-FT diagram. Left: offline pretraining, then online fine-tuning with a replay buffer, a success detector and human interventions. Right: the VLA proposes N action chunks, an edit actor adjusts each, and the chunk with the highest Q is executed.](/assets/robotics/modern-control/v3/expo-ft-architecture.png "EXPO-FT system. Figure 1 from Dong et al., EXPO-FT (2026), CC BY 4.0.")
 
-The comparison I care about is controlled: same base model, same tasks, same 30 trials. More copying, even with a person correcting the robot (HG-DAgger), stays around 20 to 22 out of 30. Practice reaches 30 out of 30.
+The comparison I care about is controlled: same base model, same tasks, same 30 trials. More copying, even with a person correcting the robot (HG-DAgger), stays around 20 to 22 out of 30, while practice reaches 30 out of 30.
 
 ![Grouped bar chart over 8 tasks: imitation fine-tuning averages 20.5 of 30, imitation with human corrections 22.1 of 30, EXPO-FT 30 of 30 on every task, with 14 to 35 minutes of online data per task.](/assets/robotics/modern-control/v3/rl-finetune-results.png "My chart of Table 2 of EXPO-FT. The tasks include egg flipping, a pool shot and inserting a flower into a bottle.")
 
-Two cautions before this sounds solved. First, 30/30 is 30 trials in the authors' lab, not a deployment. Second, Dong and Finn are clear that the algorithm is only half of the recipe. Nobody has a standard answer yet for the other half:
+There are two cautions before this sounds solved. The 30/30 result comes from 30 trials in the authors' lab, not a deployment. And Dong and Finn are clear that the algorithm is only half of the recipe. Nobody has a standard answer yet for the other half:
 
 1. **Reward:** who decides that the egg flip succeeded? Today, a trained success detector or a person.
 2. **Reset:** who puts the egg back?
 3. **Human help:** when should the person step in, and how much?
 4. **Defaults:** RL on robots is still sensitive to settings, with no agreed defaults.
 
-That's the difference with language models, where "check the answer" and "run it again" are almost free. RL also works when the robot practices in simulation instead: Mistral trained Robostral Navigate on simulated buildings, then ran online RL there and gained 4 points of success (more on it below).
+That's the difference with language models, where "check the answer" and "run it again" are almost free. RL also works when the robot practices in simulation instead. Mistral trained Robostral Navigate on simulated buildings, then ran online RL there and gained 4 points of success (more on it below).
 
 ## World action models: imagine the video and the action together
 
-A VLA maps an image to an action. It never has to say what the world will look like next. Does that matter?
+A VLA maps an image to an action without ever having to say what the world will look like next. Does that matter?
 
 NVIDIA's argument is yes. VLAs are good at semantics ("which object is the tray?") but weak at motions they never saw. A video model, trained on a huge amount of video, has seen how things fall, slide, open and pour. A **world action model (WAM)** is a policy built on such a video model: it predicts how the scene will change *and* the action that goes with it. [NVIDIA, The rise of world action models](https://developer.nvidia.com/blog/pretrained-to-imagine-fine-tuned-to-act-the-rise-of-world-action-models/)
 
@@ -381,7 +381,7 @@ NVIDIA's argument is yes. VLAs are good at semantics ("which object is the tray?
 
 ![DreamZero architecture. Training: video and actions are encoded, noised, and denoised jointly by a causal video transformer. Inference: past frames, language and state go in; future frames and a future action chunk come out; real observations replace the imagined frames at each step.](/assets/robotics/modern-control/v3/dreamzero-architecture.png "DreamZero: joint video and action prediction. Figure from Ye et al., World Action Models are Zero-shot Policies (2026), CC BY 4.0.")
 
-Here's what that looks like on tasks the model never trained on. The top row is what really happened; the bottom row is what the model imagined from the robot's cameras before acting.
+Here's what that looks like on tasks the model never trained on. The top row shows what really happened, and the bottom row shows what the model imagined from the robot's cameras before acting.
 
 ![Two tasks, hit the cymbal and fry vegetables with a spatula. Top row: real-world execution frames. Bottom row: the frames DreamZero generated from the robot's cameras, which match the real motion.](/assets/robotics/modern-control/v3/dreamzero-real-vs-generated.png "Real execution (top) and imagined video (bottom) on unseen tasks. Figure from Ye et al. (2026), CC BY 4.0.")
 
@@ -392,7 +392,7 @@ The reported results:
 - **A new robot in 30 minutes** of play data, while keeping its zero-shot skills.
 - On the public **RoboArena** ranking (April 2026 snapshot, reported by NVIDIA), DreamZero scored 1750 against 1622 for π0.5.
 
-The price is compute. A 14B video model is slow: one action step first took **5.7 s**. With system work and a trick called DreamZero-Flash, the authors brought it to **150 ms**, 38× faster on NVIDIA's GB200 chips, enough for **7 Hz** closed-loop control. [DreamZero, real-time section](https://arxiv.org/html/2602.15922v1)
+The price is compute. With a 14B video model, one action step first took **5.7 s**. System work and a trick called DreamZero-Flash brought that down to **150 ms**, 38× faster on NVIDIA's GB200 chips and enough for **7 Hz** closed-loop control. [DreamZero, real-time section](https://arxiv.org/html/2602.15922v1)
 
 <details>
 <summary>How this differs from "generate a video, then copy it"</summary>
@@ -409,7 +409,7 @@ Two limits stand out to me: the robot forgets, and imagining every pixel is expe
 
 ### Memory: the same image, a different next step
 
-Extend the job: inspect the block, then put it away. The camera image looks the same before and after the inspection. So which step comes next?
+Suppose we extend the job: inspect the block, then put it away. The camera image looks the same before and after the inspection, so which step comes next?
 
 <figure class="article-figure">
 <video autoplay loop controls muted playsinline preload="metadata" poster="/assets/robotics/modern-control/v4/history.png" aria-label="Two simulated SO-101 arms start from the same image of a block on the table. The left one, whose record says inspection pending, carries the block to a dark inspection pad first, then to the tray. The right one, whose record says inspection done, puts the block straight into the tray.">
@@ -419,13 +419,13 @@ Extend the job: inspect the block, then put it away. The camera image looks the 
 <figcaption>Same camera image, two task records. Left: the record says the inspection is still pending, so the arm takes the block to the inspection pad first. Right: the record says it is done, so the arm puts the block away. Nothing in the first image tells them apart. Simulated SO-101 in Genesis, scripted motion. <a class="video-link" href="/assets/robotics/modern-control/v4/history.mp4">Open video</a></figcaption>
 </figure>
 
-Every policy in this post, ACT, π0.5 and most VLAs, decides from the current images, maybe the last one or two. That's fine for "pick up the block". It fails for "did I already add salt?", for counting, and for an object the arm itself is hiding.
+Every policy in this post, ACT, π0.5 and most VLAs, decides from the current images, maybe the last one or two. That's fine for "pick up the block", but it fails for "did I already add salt?", for counting, and for an object the arm itself is hiding.
 
-**RoboMME** (2026) measured this on 16 simulated memory tasks with the same π0.5 policy. With the current view only, it averages **17.9%**. Giving it past actions barely helps (19.7%). Feeding it a sample of past frames reaches **44.5%**. The authors' main finding is that the best kind of memory depends on the task. [RoboMME abstract](https://arxiv.org/abs/2603.04639)
+**RoboMME** (2026) measured this on 16 simulated memory tasks with the same π0.5 policy. With the current view only, it averages **17.9%**, and giving it past actions barely helps (19.7%). Feeding it a sample of past frames reaches **44.5%**. The authors' main finding is that the best kind of memory depends on the task. [RoboMME abstract](https://arxiv.org/abs/2603.04639)
 
 ![Bar chart of average success over 16 RoboMME memory tasks: π0.5 with the current view only 17.9%, with past actions 19.7%, best recurrent memory 22.4%, language subgoals 42.4%, best sampled past frames 44.5%.](/assets/robotics/modern-control/v3/robomme-memory.png "My chart of the RoboMME main table. Simulation benchmark, same π0.5 backbone in every row.")
 
-Then there's **Robostral Navigate**, Mistral's first robotics model (July 2026). It's an 8-billion-parameter navigation model, not a manipulation one: it drives a robot through buildings it never saw, from a spoken instruction and **one ordinary camera**, with no map, no depth sensor and no special memory module. It simply keeps every frame of the trip in its input. It was trained only in simulation, and it's first on the standard R2R-CE benchmark: **77.4%** success, ahead of systems that use depth sensors or several cameras. [Robostral Navigate, §§2.1, 4.1](https://arxiv.org/html/2607.20785v1)
+Then there's **Robostral Navigate**, Mistral's first robotics model (July 2026). It's an 8-billion-parameter navigation model, not a manipulation one. It drives a robot through buildings it never saw, from a spoken instruction and **one ordinary camera**, with no map, no depth sensor and no special memory module. It simply keeps every frame of the trip in its input. Trained only in simulation, it's first on the standard R2R-CE benchmark with **77.4%** success, ahead of systems that use depth sensors or several cameras. [Robostral Navigate, §§2.1, 4.1](https://arxiv.org/html/2607.20785v1)
 
 ![Robostral Navigate system: a stack of past camera frames and an instruction go to a VLM at 0.5 Hz, which outputs a waypoint such as go to pixel (48, 64) and move 4.5 m forward. A diffusion policy at 10 Hz turns the waypoint and the current frame into a short path, and a motion-tracking controller runs at 100 Hz.](/assets/robotics/modern-control/v3/robostral-architecture.png "Three loops at three rates: the VLM reads all past frames every 2 s, a diffusion policy plans at 10 Hz, a classical tracker runs at 100 Hz. Figure from Bounhar et al., Robostral Navigate (2026), CC BY 4.0.")
 
@@ -436,11 +436,11 @@ Then there's **Robostral Navigate**, Mistral's first robotics model (July 2026).
 <figcaption>Mistral, "Introducing Robostral Navigate" (July 2026). <a href="https://www.youtube.com/watch?v=7dpLB9NoY1A">Watch on YouTube</a></figcaption>
 </figure>
 
-I find that striking: the simplest possible memory, "keep everything", wins a benchmark that used to need maps and depth. But it's a lucky case. A navigation episode is short, and the model only looks at its frames every 2 seconds. A 15-minute kitchen task at one frame per second is 900 frames. In the MEM paper, a VLA that reads raw frames already needs about **3.5 s for 16 frames**, against a real-time limit of 0.3 s.
+I find that striking: the simplest possible memory, "keep everything", wins a benchmark that used to need maps and depth. But it's a lucky case, with short navigation episodes and a model that only looks at its frames every 2 seconds. A 15-minute kitchen task at one frame per second is 900 frames. In the MEM paper, a VLA that reads raw frames already needs about **3.5 s for 16 frames**, against a real-time limit of 0.3 s.
 
 ![Line chart: inference time against number of frames. Without a video encoder it rises from about 0.07 s at 1 frame to about 3.5 s at 16 frames, crossing the 300 ms real-time barrier at 4 frames. With MEM's video encoder it stays near 0.2 s at 16 frames.](/assets/robotics/modern-control/v3/mem-latency.png "Inference time against the number of frames, for a VLA with and without a video encoder. Figure from Torne et al., MEM (2026), CC BY 4.0.")
 
-**MEM** (Physical Intelligence, 2026) splits memory in two, like people do. Recent seconds go through a compact video encoder, so the arm remembers the object it's now hiding. Older events become a short text summary that a higher-level policy rewrites as it goes ("I opened the drawer with the masher"). On recipe setup and kitchen cleanup tasks lasting up to 15 minutes, π0.6 without memory reaches about a third of the task; with MEM, about 70%. [MEM abstract](https://arxiv.org/abs/2603.03596)
+**MEM** (Physical Intelligence, 2026) splits memory in two, like people do. Recent seconds go through a compact video encoder, so the arm remembers the object it's now hiding. Older events become a short text summary that a higher-level policy rewrites as it goes ("I opened the drawer with the masher"). On recipe setup and kitchen cleanup tasks lasting up to 15 minutes, π0.6 without memory reaches about a third of the task, compared with about 70% with MEM. [MEM abstract](https://arxiv.org/abs/2603.03596)
 
 ![MEM architecture: a high-level policy reads the task, recent images and its language memory, then writes an updated memory and a subtask; a low-level policy with a video memory encoder outputs continuous actions for that subtask.](/assets/robotics/modern-control/v3/mem-architecture.png "MEM: text memory for long-term events, video memory for the last seconds. Figure from Torne et al. (2026), CC BY 4.0.")
 
@@ -450,11 +450,11 @@ I find that striking: the simplest possible memory, "keep everything", wins a be
 {"type": "predict", "id": "RC4", "fallback": "Predict first. A VLA without a video encoder needs about 0.35 s for 4 frames and about 3.5 s for 16 frames; the real-time limit is 0.3 s. A kitchen task lasts 15 minutes, at one frame per second. Can the policy keep every frame? Answer: No. 15 x 60 = 900 frames, far beyond the 16 that already take 3.5 s. The memory must be compressed: video for recent frames, text for old events."}
 ```
 
-Memory has its own failure mode, and it's the one I'd test first. Suppose the gripper closes beside the block. The command finished, but the pickup failed. If the text memory now says "block put away", every later decision builds on a false record. A memory that can't tell "I tried" from "it worked" is worse than no memory.
+Memory has its own failure mode, and it's the one I'd test first. Suppose the gripper closes beside the block: the command finished, but the pickup failed. If the text memory now says "block put away", every later decision builds on a false record. A memory that can't tell "I tried" from "it worked" is worse than no memory.
 
 ### World models without all the pixels
 
-DreamZero imagines every pixel of the next frames. That's what makes it slow and big. And sometimes it's what makes it wrong: when the imagined video goes off, the robot follows it.
+DreamZero imagines every pixel of the next frames, which makes it slow and big. Sometimes that also makes it wrong: when the imagined video goes off, the robot follows it.
 
 ![Two tasks where the video prediction failed. Draw a line on the whiteboard: the generated video does not show the drawing, and the robot does not draw. Bake the croissant: the generated video drifts, and the robot follows the failed plan.](/assets/robotics/modern-control/v3/dreamzero-failed-plan.png "Imagined video (top) and execution (bottom) when the imagination fails. Figure from Ye et al. (2026), CC BY 4.0.")
 
@@ -466,7 +466,7 @@ Does the robot need the pixels at all? To choose between the detour and the coll
 
 It isn't free either. In the paper, one planning step took 16 seconds on one GPU, with 800 sampled action sequences and ten rounds of refinement. [V-JEPA 2 v1, p. 15](https://www.alphaxiv.org/pdf/2506.09985v1?page=15) The pixels are gone, but the search is expensive.
 
-DreamZero's own speed-up points the same way, which I didn't expect. DreamZero-Flash trains the model to predict clean actions from *very noisy* video, so at run time one denoising step is enough. The actions stay good while the imagined video stays rough. The authors also note that dropping the video and generating only actions barely saved time at this size: the number of denoising steps and layers sets the cost, not the pixels. [DreamZero, real-time section](https://arxiv.org/html/2602.15922v1) My reading: the useful part of imagining is the rough shape of the future, and the open question is how little of it you can predict and still choose well.
+DreamZero's own speed-up points the same way, which I didn't expect. DreamZero-Flash trains the model to predict clean actions from *very noisy* video, so at run time one denoising step is enough. The actions stay good while the imagined video stays rough. The authors also note that dropping the video and generating only actions barely saved time at this size: the number of denoising steps and layers sets the cost, not the pixels. [DreamZero, real-time section](https://arxiv.org/html/2602.15922v1) My reading is that the useful part of imagining is the rough shape of the future. The open question is how little of it you can predict and still choose well.
 
 <details>
 <summary>Side path: physical structure and safety checks</summary>
