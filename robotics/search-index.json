@@ -1,0 +1,225 @@
+[
+  {
+    "title": "Reinforcement learning: the problems behind the methods",
+    "description": "From playing Breaking Bellman to the problems behind reinforcement learning: delayed credit, exploration, scale and learning from guesses.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-20",
+    "url": "/robotics/rl-0-overview/"
+  },
+  {
+    "title": "RL methods: a family tree and a Q table",
+    "description": "Connect each reinforcement learning method to its problem, then read a Q table and follow one recorded cliff-grid run.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-20",
+    "url": "/robotics/rl-1-q-learning/"
+  },
+  {
+    "title": "Can you zero-shot robotics with a coding agent?",
+    "description": "ASPIRE lets a coding agent debug robot programs from execution traces and save each verified fix as a text skill. What the loop does, and what the numbers cover.",
+    "tags": [
+      "code-as-policy",
+      "agents",
+      "skill-learning",
+      "nvidia"
+    ],
+    "date": "2026-10-19",
+    "url": "/robotics/can-you-zero-shot-robotics-with-a-coding-agent/"
+  },
+  {
+    "title": "Bootstrapping: learn before the reward arrives",
+    "description": "How Monte Carlo, TD and n-step returns move credit backward, with a worked eight-state corridor.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-19",
+    "url": "/robotics/rl-2-bootstrapping/"
+  },
+  {
+    "title": "Function approximation: share a value, share an error",
+    "description": "A worked feature update explains generalization, aliasing, semi-gradients and moving targets.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-19",
+    "url": "/robotics/rl-3-function-approximation/"
+  },
+  {
+    "title": "On-policy and off-policy: whose future are we learning?",
+    "description": "One row, three targets: exploration costs, coverage and what importance weighting corrects.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-19",
+    "url": "/robotics/rl-4-on-policy-and-off-policy/"
+  },
+  {
+    "title": "The deadly triad: how a guess can train itself upward",
+    "description": "An exact two-state feedback loop, three scoped pair guarantees and DQN stabilizers.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-19",
+    "url": "/robotics/rl-5-the-deadly-triad/"
+  },
+  {
+    "title": "Recipes for choosing a learning target",
+    "description": "Rules of thumb for a reinforcement learning target: freeze, take a second estimate, or take the minimum, and why the combinations table is one reading, not a law.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-17",
+    "url": "/robotics/recipes-for-choosing-a-learning-target/"
+  },
+  {
+    "title": "I made a small game where RL algorithms break",
+    "description": "Breaking Bellman is a free browser game for learning reinforcement learning. Real algorithms train in your browser and fail, and you fix them one word at a time.",
+    "tags": [
+      "reinforcement-learning",
+      "simulation",
+      "education"
+    ],
+    "date": "2026-10-15",
+    "url": "/robotics/breaking-bellman/"
+  },
+  {
+    "title": "Teaching my drawing arm to keep learning",
+    "description": "After part 6: direct motor drive, learning between drawings, feedback during a stroke, and a twin tested across days. The repeat floor is not a claim of one-millimeter control.",
+    "tags": [
+      "so-101",
+      "machine-learning",
+      "control"
+    ],
+    "date": "2026-10-15",
+    "url": "/robotics/so101-7-learning-between-and-during-strokes/"
+  },
+  {
+    "title": "How do I get the XYZ position of my robot's tool tip?",
+    "description": "I get $10,000 worth of measurements from a $40 drawing tablet. Now I want the height of the pen too.",
+    "tags": [
+      "so-101",
+      "measurement",
+      "sensors"
+    ],
+    "date": "2026-10-15",
+    "url": "/robotics/so101-8-measuring-the-tool-in-3d/"
+  },
+  {
+    "title": "Where the last millimeter of my drawing arm goes",
+    "description": "My SO-101 arm cannot see its own pen tip. A tablet can. Here is what the tablet showed: how much error a learned correction removes, which causes are left, and why the base joint matters most.",
+    "tags": [
+      "so-101",
+      "calibration",
+      "measurement"
+    ],
+    "date": "2026-10-11",
+    "url": "/robotics/so101-6-where-the-last-millimeter-goes/"
+  },
+  {
+    "title": "A few predictions about robotics",
+    "description": "If intelligence keeps getting cheaper, the robotics industry may start to look more like a combination of AI infrastructure, industrial services, and manufacturing.",
+    "tags": [
+      "robotics",
+      "industry",
+      "ai"
+    ],
+    "date": "2026-10-08",
+    "url": "/robotics/robot-brains-robot-bodies/"
+  },
+  {
+    "title": "Learning what the physics misses",
+    "description": "Where a neural network fits in a robot controller. A network that learns only what the physics model gets wrong does the same job as a Kalman disturbance estimate, with more freedom, and this is where recent research is going.",
+    "tags": [
+      "so-101",
+      "control",
+      "machine-learning"
+    ],
+    "date": "2026-10-05",
+    "url": "/robotics/so101-4-learning-what-physics-misses/"
+  },
+  {
+    "title": "A pen holder that shows the arm’s error, not its own",
+    "description": "I want to see my SO-101 trajectory errors as ink on paper. For that, the pen must not add an error of its own. I made five holder designs. The one I release is a printed sleeve that slides onto the stock gripper: 4 printed parts, nothing to buy, any pen from 8 to 13 mm.",
+    "tags": [
+      "so-101",
+      "hardware",
+      "3d-printing"
+    ],
+    "date": "2026-10-05",
+    "url": "/robotics/so101-pen-holder/"
+  },
+  {
+    "title": "Six ways to choose the goal",
+    "description": "One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC, is that formula with some terms set to zero.",
+    "tags": [
+      "so-101",
+      "control"
+    ],
+    "date": "2026-10-04",
+    "url": "/robotics/so101-3-choosing-the-goal/"
+  },
+  {
+    "title": "Seeing finer than the sensor",
+    "description": "The sensor side of the joint equation: why differences of encoder ticks explode the noise, and how an observer or a Kalman filter can estimate an angle finer than one tick.",
+    "tags": [
+      "so-101",
+      "control",
+      "sensors"
+    ],
+    "date": "2026-10-03",
+    "url": "/robotics/so101-2-finer-than-the-sensor/"
+  },
+  {
+    "title": "One equation, and every way the arm misses it",
+    "description": "Start from torque = inertia × acceleration, then add each term a cheap servo arm really has: gravity, friction, a payload, dead time, a dead band. Each term is one way the arm misses its target.",
+    "tags": [
+      "so-101",
+      "control",
+      "hardware"
+    ],
+    "date": "2026-10-02",
+    "url": "/robotics/so101-1-target-and-goal/"
+  },
+  {
+    "title": "How robot control is changing",
+    "description": "From copying a person to practicing and imagining: how a robot chooses its next movement in 2026, and what is still missing.",
+    "tags": [
+      "control",
+      "reinforcement-learning",
+      "industry"
+    ],
+    "date": "2026-09-30",
+    "url": "/robotics/how-robot-control-is-changing/"
+  },
+  {
+    "title": "Why I am learning robotics",
+    "description": "The most impressive robots of the last decade stayed in videos because they could not generalize. Language models changed that, and robotics now looks like language models in 2019.",
+    "tags": [
+      "robotics",
+      "industry"
+    ],
+    "date": "2026-09-28",
+    "url": "/robotics/why-i-am-learning-robotics/"
+  },
+  {
+    "title": "How an arm moves: joints, geometry, and motor control",
+    "description": "From encoder readings to gripper position: a visual guide to robot geometry, servos, and the commands that connect them.",
+    "tags": [
+      "control",
+      "hardware",
+      "sensors"
+    ],
+    "date": "2026-09-26",
+    "url": "/robotics/from-joint-angles-to-a-moving-arm/"
+  }
+]

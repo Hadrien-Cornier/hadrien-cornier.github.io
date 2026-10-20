@@ -1,15 +1,20 @@
 ---
 title: "How do I get the XYZ position of my robot's tool tip?"
-description: 'A drawing tablet measures a pen in a plane. Cameras, marker tracking, and laser trackers extend the view into space, with different costs and sources of error.'
+description: 'I get $10,000 worth of measurements from a $40 drawing tablet. Now I want the height of the pen too.'
 date: '2026-10-15'
 updated: '2026-10-17'
 series: 'From policy to action: the last mile of robotics control'
 part: 8
+tags: ['so-101', 'measurement', 'sensors']
+thumbnail: /assets/robotics/thumbnails/so101-8-measuring-the-tool-in-3d.jpg
+thumbnail_alt: 'Overhead view of the SO-101 arm reaching over the drawing tablet.'
 ---
 
 How do I get the precise x, y, and z coordinates of the tip of my robot's gripper?
 
 I ask because I use an SO-101, a small robot arm, to build a smooth, precise controller, which is the program that turns a desired path into motor commands. I call it the drawing arm project, but drawing is only one showcase. The real goal is a controller that also works in space, and this post is about generalizing away from the XY plane. Right now the gripper holds a pen, and a Wacom drawing tablet, a flat sensor that reports where a pen touches it, measures the tip of that pen, called the nib. The tablet gives me x and y along its surface. What it can't give me is z, the height above that plane, so that is the question.
+
+The tablet is also the best deal in my setup. It cost about US$40 and reports the pen position to within ±0.25 mm, 133 times a second. OptiTrack, a motion-capture system, lists ±0.3 mm for its cameras, and four of them cost about US$10,000 before software. The two figures come from different kinds of specification, but they sit in the same ballpark. That makes the tablet a cheap, precise feedback signal for learning precise motions, as long as the pen touches it.
 
 <figure class="article-figure">
 <video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-reach-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm swinging down from above the table to touch the pen to the Wacom tablet, and later lifting the pen off the tablet and swinging back up.">
@@ -107,6 +112,16 @@ To compare these systems fairly, a few terms need defining. Rate counts samples 
 | Sweeping base stations: SteamVR Tracking | With four stations: [0.155 mm static translation RMSE; 2.164 mm dynamic aggregate RMSE at 25 mm/s](https://doi.org/10.3390/s23020725) | [100 Hz tracker stream](https://doi.org/10.3390/s23020725) in that study | Tracker-to-program delay not established by that study | Reported coverage [up to 10 × 10 m with four stations](https://doi.org/10.3390/s23020725) | Tracker position and orientation; calibrated offset to the nib | [US$149 tracker; US$229 per station](https://shop-us.vive.com/collections/accessories), plus mounts and a compatible host; requires frame registration |
 | Infrared motion capture: OptiTrack PrimeX | PrimeX 13: [±0.3 mm typical position accuracy](https://www.optitrack.com/cameras/primex-13/specs) | [240 Hz at full resolution](https://www.optitrack.com/cameras/primex-13/specs) | [4.2 ms listed camera latency](https://www.optitrack.com/cameras/primex-13/specs) | Vendor accuracy context: [9 × 9 m tracking area](https://www.optitrack.com/cameras/primex-13); camera overlap defines the usable volume | Marker positions; a rigid marker cluster supplies orientation | Estimate: about US$12k to 20k for 4 to 6 cameras. [PrimeX 13 starts at US$2,499 each](https://www.optitrack.com/cameras); [Motive:Tracker is US$999 plus a US$149 key](https://www.optitrack.com/software/motive/pricing). The rest is my allowance for a switch, calibration tools, markers, and mounts; requires camera calibration |
 | Laser tracker: Leica AT960 | [±(0.015 + 0.006L) mm](https://solutions-ds.com/wp-content/uploads/2017/06/Hexagon_MI_AT960_Brochure_EN.pdf) maximum permissible error, with distance L in meters | [1,000 Hz output](https://nexus.hexagon.com/home/product/laser-trackers-at960/) | No application-delay figure in the cited specifications | AT960-MR: [40 m diameter for reflector position; 20 m with the pose accessory](https://solutions-ds.com/wp-content/uploads/2017/06/Hexagon_MI_AT960_Brochure_EN.pdf) | Reflector center position; a dedicated target adds orientation | Estimate: about US$75k new or US$17k to 30k used, tracker only. [New AT960: US$74,900](https://dotsurveying.com/laser-tracker/leica-absolute-tracker-at960); used listings: [US$29,900](https://dotsurveying.com/laser-tracker) and [US$16,900 for an AT960-LR](https://www.ec21.com/product-details/Used-Leica-Absolute-Tracker-AT960--11606805.html). No target or software included; [rental rates are not published](https://rotatek.us/leica-laser-tracker-rental/); requires frame registration |
+
+### What the US$40 buys
+
+Inside its plane, the tablet quotes accuracy in the same ballpark as a motion-capture system that costs more than 200 times as much.
+
+- **Accuracy:** the tablet lists ±0.25 mm and OptiTrack PrimeX 13 lists ±0.3 mm. The tablet's figure is a tolerance bound and OptiTrack's is a typical value, so they are comparable quoted specifications, not a measured tie.
+- **Price:** the tablet cost me about US$40. Four PrimeX 13 cameras cost US$9,996 at list price, plus US$1,148 for the Motive:Tracker software and key.
+- **Resolution:** Wacom lists 100 lines per mm, which is 0.01 mm. That is much finer than its accuracy, so the pen reports small moves that the sensor does not claim to place exactly.
+
+The tablet does not win everywhere. OptiTrack samples at 240 Hz against the tablet's 133, and it tracks in three dimensions. The Leica laser tracker is accurate to 0.021 mm at 1 m, more than ten times tighter than the tablet, and costs US$17k to 75k.
 
 ## From the sensor target to the nib
 

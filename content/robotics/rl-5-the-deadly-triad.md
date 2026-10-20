@@ -1,149 +1,329 @@
 ---
-title: 'The deadly triad'
-description: 'How three useful ideas can feed each other''s errors.'
-date: '2026-10-18'
-draft: true
-series: 'Reinforcement learning, one idea at a time'
+title: 'The deadly triad: how a guess can train itself upward'
+description: 'An exact two-state feedback loop, three scoped pair guarantees and DQN stabilizers.'
+date: '2026-10-19'
+draft: false
+series: 'Reinforcement learning'
 part: 5
 layout: essay
+tags: ['reinforcement-learning', 'machine-learning']
+thumbnail: '/assets/robotics/rl/rl-5-the-deadly-triad-whole.svg'
+thumbnail_alt: 'rl-5-the-deadly-triad'
 ---
 
-Bootstrapping, function approximation and off-policy learning each solve a real problem, and Sutton and Barto call the combination of all three the deadly triad. Suppose you train a neural network to balance a broom on a cart with all three at work. Below, two simulated robots do exactly that, and one of them also keeps a memory of old moves and a frozen copy of its network.
+<link rel="stylesheet" href="/assets/robotics/rl/series.css">
+<div class="rc rls-canvas" id="rc">
+<div class="rc-stage"><div class="rc-bar"><button class="rc-reset" type="button">Whole canvas &#8689;</button><div class="rc-where" aria-live="polite"></div></div><div class="rc-view"><svg class="rc-svg" viewBox="0 0 680 1144" data-whole="0 0 680 1144" data-views='{"feedback":[24,46,300,220],"two-state":[364,46,300,220],"linear-pair":[24,326,300,220],"fixed-labels":[364,326,300,220],"tabular-pair":[24,606,300,220],"dqn":[364,606,300,220],"diagnostics":[24,886,300,220]}' role="img" aria-label="Whole mechanism map: The deadly triad: how a guess can train itself upward"><g class="rc-panel" data-panel="feedback"><rect x="12" y="12" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="36">1. Three pressures, one loop</text><svg x="24" y="46" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="A shared update raises a next-state value, bootstrapping raises the target, and mismatched sampling misses a corrective update"><defs><marker id="canvas-5-0-p5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="22" text-anchor="middle">shared update</text><path d="M171 31Q264 49 258 93" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-5-0-p5a)"/><text x="241" y="117" text-anchor="middle">next value</text><text x="241" y="140" text-anchor="middle">rises</text><path d="M227 150Q168 188 101 160" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-5-0-p5a)"/><text x="66" y="139" text-anchor="middle">target</text><text x="66" y="162" text-anchor="middle">rises</text><path d="M43 115Q27 42 121 30" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-5-0-p5a)"/><path d="M151 79V131" stroke="#2b6a8e" stroke-width="2" stroke-dasharray="5 4"/><path d="M139 97L163 119M163 97L139 119" stroke="#b44c2c" stroke-width="3"/><text x="150" y="200" text-anchor="middle">sampling misses correction</text></g></svg></g><g class="rc-panel" data-panel="two-state"><rect x="352" y="12" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="36">2. Two states, one weight</text><svg x="364" y="46" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Only the transition from value w to value two w is replayed; changing w raises both estimates"><defs><marker id="canvas-5-1-p5b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="55" cy="65" r="32" fill="#d7e5ee" stroke="#242622"/><circle cx="224" cy="65" r="32" fill="#d7e5ee" stroke="#242622"/><text x="55" y="59" text-anchor="middle">s₁</text><text x="55" y="81" text-anchor="middle">w</text><text x="224" y="59" text-anchor="middle">s₂</text><text x="224" y="81" text-anchor="middle">2w</text><path d="M89 65H188" stroke="#b44c2c" stroke-width="3" marker-end="url(#canvas-5-1-p5b)"/><text x="140" y="47" text-anchor="middle">R = 0</text><path d="M214 31C185 -1 284 -1 251 43" fill="none" stroke="#777" stroke-width="2" marker-end="url(#canvas-5-1-p5b)"/><path d="M160 71Q149 133 79 104" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-5-1-p5b)"/><text x="150" y="146" text-anchor="middle">replay s₁ → s₂ only</text><text x="150" y="175" text-anchor="middle">w rises → 2w rises</text><text x="150" y="205" text-anchor="middle">no updates starting at s₂</text></g></svg></g><g class="rc-panel" data-panel="linear-pair"><rect x="12" y="292" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="316">3. Match the prediction distribution</text><svg x="24" y="326" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Bellman prediction followed by projection shrinks the distance between two value estimates in the matching stationary norm"><defs><marker id="canvas-5-2-p5c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="35" cy="45" r="7" fill="#2b6a8e"/><circle cx="265" cy="45" r="7" fill="#b44c2c"/><path d="M44 45H256" stroke="#777" stroke-width="2"/><text x="150" y="29" text-anchor="middle">two predictions: distance d</text><path d="M35 57L99 110M265 57L201 110" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#canvas-5-2-p5c)"/><text x="150" y="90" text-anchor="middle">Bellman + projection</text><circle cx="104" cy="125" r="7" fill="#2b6a8e"/><circle cx="196" cy="125" r="7" fill="#b44c2c"/><path d="M113 125H187" stroke="#777" stroke-width="2"/><text x="150" y="160" text-anchor="middle">distance ≤ γd</text><text x="150" y="187" text-anchor="middle">same stationary weighting</text><text x="150" y="211" text-anchor="middle">for transitions and fitting</text></g></svg></g><g class="rc-panel" data-panel="fixed-labels"><rect x="352" y="292" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="316">4. Keep the labels fixed</text><svg x="364" y="326" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Predictions move toward labels held fixed as the weights change"><defs><marker id="canvas-5-3-p5d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="24" text-anchor="middle">fixed reward-only labels</text><path d="M32 48H267" stroke="#2b6a8e" stroke-width="2"/><circle cx="60" cy="48" r="6" fill="#2b6a8e"/><circle cx="150" cy="48" r="6" fill="#2b6a8e"/><circle cx="240" cy="48" r="6" fill="#2b6a8e"/><circle cx="60" cy="144" r="6" fill="#b44c2c"/><circle cx="150" cy="120" r="6" fill="#b44c2c"/><circle cx="240" cy="162" r="6" fill="#b44c2c"/><path d="M60 132V63M150 108V63M240 150V63" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-5-3-p5d)"/><text x="150" y="187" text-anchor="middle">predictions move toward y</text><text x="150" y="212" text-anchor="middle">changing w leaves y fixed</text></g></svg></g><g class="rc-panel" data-panel="tabular-pair"><rect x="12" y="572" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="596">5. Separate the table entries</text><svg x="24" y="606" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="One table cell takes a backup from the next-state row while all other cells stay fixed"><defs><marker id="canvas-5-4-p5e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="24" text-anchor="middle">independent table entries</text><rect x="73" y="42" width="192" height="111" fill="#fff" stroke="#242622"/><path d="M73 79H265M73 116H265M137 42V153M201 42V153" stroke="#777"/><rect x="137" y="79" width="64" height="37" fill="#d7e5ee"/><text x="40" y="104" text-anchor="middle">s</text><text x="40" y="140" text-anchor="middle">s′</text><text x="105" y="140" text-anchor="middle">2</text><text x="169" y="140" text-anchor="middle">5</text><text x="233" y="140" text-anchor="middle">1</text><path d="M169 149Q293 190 287 96Q285 61 203 87" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-5-4-p5e)"/><text x="150" y="188" text-anchor="middle">max supplies target</text><text x="150" y="213" text-anchor="middle">update one cell only</text></g></svg></g><g class="rc-panel" data-panel="dqn"><rect x="352" y="572" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="596">6. Slow the target feedback</text><svg x="364" y="606" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Replay sends a transition to online and frozen networks; only the online network updates until a periodic copy"><defs><marker id="canvas-5-5-p5f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="24" text-anchor="middle">sample a replay transition</text><path d="M125 35L65 70M175 35L235 70" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#canvas-5-5-p5f)"/><rect x="12" y="79" width="116" height="51" fill="#d7e5ee" stroke="#242622"/><rect x="172" y="79" width="116" height="51" fill="#eee" stroke="#242622"/><text x="70" y="100" text-anchor="middle">online θ</text><text x="70" y="121" text-anchor="middle">prediction</text><text x="230" y="100" text-anchor="middle">frozen θ⁻</text><text x="230" y="121" text-anchor="middle">target y</text><path d="M171 145H92" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-5-5-p5f)"/><text x="157" y="171" text-anchor="middle">update θ only</text><path d="M65 180Q150 218 239 181" fill="none" stroke="#2b6a8e" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#canvas-5-5-p5f)"/><text x="150" y="215" text-anchor="middle">copy θ → θ⁻ periodically</text></g></svg></g><g class="rc-panel" data-panel="diagnostics"><rect x="12" y="852" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="876">7. Check estimates beside rewards</text><svg x="24" y="886" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="The estimate curve crosses a known possible-return bound while zero reward stays flat"><defs><marker id="canvas-5-6-p5g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><path d="M36 175V24M36 175H284" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#canvas-5-6-p5g)"/><path d="M38 99H283" stroke="#777" stroke-width="2" stroke-dasharray="5 4"/><text x="156" y="88" text-anchor="middle">return bound</text><path d="M38 163C125 160 197 139 262 28" fill="none" stroke="#b44c2c" stroke-width="3"/><text x="165" y="42" text-anchor="middle">estimate ↑</text><path d="M38 172H277" stroke="#2b6a8e" stroke-width="3"/><text x="155" y="157" text-anchor="middle">reward stays zero</text><text x="160" y="203" text-anchor="middle">updates →</text><text x="19" y="120" transform="rotate(-90 19 120)" text-anchor="middle">value</text></g></svg></g></svg></div></div>
+<div class="rc-body">
 
-<div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-naive-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-naive-101-desktop.mp4"></video><figcaption><b>No memory, no frozen copy: the broom falls after 9 steps</b>The greedy test of one real recorded run, at quarter speed because the real fall takes under a fifth of a second. At the end of training this robot's largest estimate was about 2.2 million, in a world where no estimate above 100 can be right. Simulation.</figcaption></figure>
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-dqn-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-dqn-202-desktop.mp4"></video><figcaption><b>Memory and a frozen copy: the broom stays up</b>The greedy test of one real recorded run, 12 seconds. Its largest estimate at the end was about 60. This is the best of five runs: in the other four tests the cart reached the end of the rail after 99 to 272 steps. Simulation.</figcaption></figure>
+How can value estimates grow forever when every reward is zero?
+
+**Part 5.** Three useful ideas can form a feedback loop. A shared formula changes several predictions at once. Bootstrapping turns a prediction into a target. Sampling away from the target policy's state distribution can leave the inflated prediction without enough correction. The **deadly triad** names this risk, not an inevitable outcome.
+
+Throughout, $S_t$ and $A_t$ are the state and action at step $t$; $R_{t+1}$ is the reward after that action. The discount is $0\leq\gamma<1$, and $\alpha_t>0$ is a learning rate. A superscript $+$ denotes an updated quantity; $t$ is a step index, not an exponent. We will calculate one growing loop, then compare three narrowly scoped stable settings. [Van Hasselt et al., §2](https://arxiv.org/abs/1812.02648).
+
+**Reading goal:** calculate why the weight grows by 8% per replay, then identify exactly which assumption each stable pair restores.
+
+<nav class="rc-route" aria-label="Reading route"><a href="#sec-feedback" data-go="sec-feedback">Three pressures, one loop</a><a href="#sec-two-state" data-go="sec-two-state">Two states, one weight</a><a href="#sec-linear-pair" data-go="sec-linear-pair">Match the prediction distribution</a><a href="#sec-fixed-labels" data-go="sec-fixed-labels">Keep the labels fixed</a><a href="#sec-tabular-pair" data-go="sec-tabular-pair">Separate the table entries</a><a href="#sec-dqn" data-go="sec-dqn">Slow the target feedback</a><a href="#sec-diagnostics" data-go="sec-diagnostics">Check estimates beside rewards</a></nav>
+
+<div class="rc-mark" id="sec-feedback" data-panel="feedback" data-view="feedback" data-title="Three pressures, one loop"></div>
+
+## Three pressures, one loop
+
+Waiting for an episode to end delays learning. Keeping a table for every observation exhausts memory. Requiring data from exactly the policy you're evaluating limits reuse. Bootstrapping, function approximation and off-policy learning address those three problems.
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="A shared update raises a next-state value, bootstrapping raises the target, and mismatched sampling misses a corrective update"><defs><marker id="p5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="22" text-anchor="middle">shared update</text><path d="M171 31Q264 49 258 93" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#p5a)"/><text x="241" y="117" text-anchor="middle">next value</text><text x="241" y="140" text-anchor="middle">rises</text><path d="M227 150Q168 188 101 160" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#p5a)"/><text x="66" y="139" text-anchor="middle">target</text><text x="66" y="162" text-anchor="middle">rises</text><path d="M43 115Q27 42 121 30" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#p5a)"/><path d="M151 79V131" stroke="#2b6a8e" stroke-width="2" stroke-dasharray="5 4"/><path d="M139 97L163 119M163 97L139 119" stroke="#b44c2c" stroke-width="3"/><text x="150" y="200" text-anchor="middle">sampling misses correction</text></g></svg><figcaption>Feedback view. Fixed: rewards. Change: coupled predictions and their targets. Follow the rising loop and the missing corrective update.</figcaption></figure>
+
+Read the loop clockwise: raising one prediction also raises its shared successor; that successor supplies the next target; the sampled updates raise the original prediction again. With too little corrective sampling, the loop can keep growing. The next section calculates the multiplier. The missing correction matters: raising a successor is harmless if later data correct it, but replay that never trains there can leave the inflated target in place. [Van Hasselt et al., §2](https://arxiv.org/abs/1812.02648).
+
+The three pairs below have specific stable settings. Each setting needs its own assumptions; there is no universal rule that any pair is safe or that every triple diverges.
+
+<div class="rc-mark" id="sec-two-state" data-panel="two-state" data-view="two-state" data-title="Two states, one weight"></div>
+
+## Two states, one weight
+
+Take states $s_1,s_2$ and a target policy $\pi$ with one available action. It moves from $s_1$ to $s_2$, then loops at $s_2$. Every reward is zero, so both true values are zero. The subscripts 1 and 2 label states. A scalar weight $w$ and scalar feature $\phi(s)$ produce estimates $v_w(s_1)=w$ and $v_w(s_2)=2w$, from fixed features $\phi(s_1)=1$ and $\phi(s_2)=2$.
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Only the transition from value w to value two w is replayed; changing w raises both estimates"><defs><marker id="p5b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="55" cy="65" r="32" fill="#d7e5ee" stroke="#242622"/><circle cx="224" cy="65" r="32" fill="#d7e5ee" stroke="#242622"/><text x="55" y="59" text-anchor="middle">s₁</text><text x="55" y="81" text-anchor="middle">w</text><text x="224" y="59" text-anchor="middle">s₂</text><text x="224" y="81" text-anchor="middle">2w</text><path d="M89 65H188" stroke="#b44c2c" stroke-width="3" marker-end="url(#p5b)"/><text x="140" y="47" text-anchor="middle">R = 0</text><path d="M214 31C185 -1 284 -1 251 43" fill="none" stroke="#777" stroke-width="2" marker-end="url(#p5b)"/><path d="M160 71Q149 133 79 104" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#p5b)"/><text x="150" y="146" text-anchor="middle">replay s₁ → s₂ only</text><text x="150" y="175" text-anchor="middle">w rises → 2w rises</text><text x="150" y="205" text-anchor="middle">no updates starting at s₂</text></g></svg><figcaption>State view. Fixed: zero rewards and one action. Change: shared weight during replay. Only the red transition trains the model.</figcaption></figure>
+
+Replay only $s_1\to s_2$, forever. Let $\delta$ be its temporal-difference error and $\alpha$ a constant learning rate. The semi-gradient update treats the target as fixed while differentiating the current prediction:
+
+$$\begin{aligned}
+\delta&=0+\gamma(2w)-w=(2\gamma-1)w,\\
+w^+&=w+\alpha\delta\phi(s_1)=[1+\alpha(2\gamma-1)]w.
+\end{aligned}$$
+
+Let $n$ count replay updates, $w_n$ be the resulting weight and $w_0$ its initial value. With $\gamma=0.9$, $\alpha=0.1$, and $w_0=1$, $w_n=1.08^n$. This is an exact calculation. The multiplier exceeds one, so positive estimates grow despite zero rewards.
+
+| Replay update $n$ | Weight $w_n$ | Estimate at $s_1$ | Estimate at $s_2$ |
+| --- | ---: | ---: | ---: |
+| 0 | 1 | 1 | 2 |
+| 1 | 1.08 | 1.08 | 2.16 |
+| 2 | 1.1664 | 1.1664 | 2.3328 |
+
+Every true value is still zero. Multiplying by 1.08 repeatedly, rather than any observed reward, creates the growth.
+
+Here the mismatch is **state sampling**, not action choice. Target-policy trajectories eventually stay at $s_2$; replay never starts there. The construction violates state coverage, so it isn't a counterexample to the pair guarantees below. [Two-state construction](https://arxiv.org/abs/1812.02648).
+
+<div class="rc-mark" id="sec-linear-pair" data-panel="linear-pair" data-view="linear-pair" data-title="Match the prediction distribution"></div>
+
+## Match the prediction distribution
+
+The replay example omitted the state that needed correction. Restore sampling from the fixed policy's own trajectories, keeping approximation and bootstrapping. This changes the weighting used in the stability argument. For feature vector $\phi(s)$ and weight vector $w$, define $v_w(s)=\phi(s)^\top w$; $\top$ means transpose. Let $\delta_t$ be the TD error, $w^+$ the updated weights and $\alpha_t$ the current step size. $S_{t+1}$ is the observed successor:
+
+$$\begin{aligned}
+\delta_t&=R_{t+1}+\gamma v_w(S_{t+1})-v_w(S_t),\\
+w^+&=w+\alpha_t\delta_t\phi(S_t).
+\end{aligned}$$
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Bellman prediction followed by projection shrinks the distance between two value estimates in the matching stationary norm"><defs><marker id="p5c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="35" cy="45" r="7" fill="#2b6a8e"/><circle cx="265" cy="45" r="7" fill="#b44c2c"/><path d="M44 45H256" stroke="#777" stroke-width="2"/><text x="150" y="29" text-anchor="middle">two predictions: distance d</text><path d="M35 57L99 110M265 57L201 110" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#p5c)"/><text x="150" y="90" text-anchor="middle">Bellman + projection</text><circle cx="104" cy="125" r="7" fill="#2b6a8e"/><circle cx="196" cy="125" r="7" fill="#b44c2c"/><path d="M113 125H187" stroke="#777" stroke-width="2"/><text x="150" y="160" text-anchor="middle">distance ≤ γd</text><text x="150" y="187" text-anchor="middle">same stationary weighting</text><text x="150" y="211" text-anchor="middle">for transitions and fitting</text></g></svg><figcaption>Value-space view. Fixed: policy, features and stationary weighting. Change: candidate predictions. Compare their distance before and after the map.</figcaption></figure>
+
+For any value vector $v$, let $T^\pi v$ be the expected one-step reward plus discounted next value under $\pi$. Let $D$ have stationary state probabilities $d(s)$ on its diagonal, with weighted norm for a value vector $x$ defined by $\|x\|_D^2=\sum_s d(s)x(s)^2$. Let $\Pi_D$ be orthogonal projection onto the feature space in this norm. The squared norm above defines the distance after taking its square root. For candidate value vectors $v,u$, the composition $\Pi_DT^\pi$ first forms the Bellman target and then projects it:
+
+$$\|\Pi_DT^\pi v-\Pi_DT^\pi u\|_D\leq\gamma\|v-u\|_D.$$
+
+**Numerical reading:** with $\gamma=0.9$, two candidate predictions at distance 2 in this norm are at most 1.8 apart after the projected map. The distance is measured with the same stationary probabilities before and after. Changing those probabilities invalidates this particular comparison.
+
+Stationary averaging and orthogonal projection don't enlarge the distance; discounting shrinks it. There is one projected fixed point. Sampled linear TD reaches that solution under its conditions; its update isn't literally repeated projection. Off-policy state weighting can break this matched-norm argument. [Tsitsiklis and Van Roy](https://web.mit.edu/~jnt/www/Papers/J063-97-bvr-td.pdf).
+
+<details><summary>Conditions for this linear prediction result</summary>
+<p>This is a fixed-policy prediction result. A finite irreducible, aperiodic chain supplies a stationary distribution and repeated on-policy visits. Rewards are bounded, the discount is below 1, and the fixed feature columns are linearly independent.</p>
+<p>Positive diminishing learning rates have infinite sum and finite squared sum: they retain enough total adjustment while suppressing persistent sampling noise. These assumptions support the linear result cited above; they do not cover arbitrary neural networks or a changing control policy.</p>
+</details>
+
+<div class="rc-mark" id="sec-fixed-labels" data-panel="fixed-labels" data-view="fixed-labels" data-title="Keep the labels fixed"></div>
+
+## Keep the labels fixed
+
+Moving targets prevent an ordinary fixed-objective fit. Keep approximation and off-policy data, but wait for reward-only returns. With suitable coverage, importance correction can produce target-policy labels without using a guessed future value. Freeze those labels before fitting.
+
+Let $X$ be the fixed feature matrix, $y$ the vector of corrected labels, and $w$ the linear weights. The Euclidean norm $\|\cdot\|_2$ measures vector length. Let $L$ be squared-error loss and $\eta$ the batch learning rate. $X^\top$ transposes $X$, and $w^+$ is the updated vector:
+
+$$\begin{aligned}
+L(w)&=\tfrac12\|Xw-y\|_2^2,\\
+w^+&=w-\eta X^\top(Xw-y).
+\end{aligned}$$
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Predictions move toward labels held fixed as the weights change"><defs><marker id="p5d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="24" text-anchor="middle">fixed reward-only labels</text><path d="M32 48H267" stroke="#2b6a8e" stroke-width="2"/><circle cx="60" cy="48" r="6" fill="#2b6a8e"/><circle cx="150" cy="48" r="6" fill="#2b6a8e"/><circle cx="240" cy="48" r="6" fill="#2b6a8e"/><circle cx="60" cy="144" r="6" fill="#b44c2c"/><circle cx="150" cy="120" r="6" fill="#b44c2c"/><circle cx="240" cy="162" r="6" fill="#b44c2c"/><path d="M60 132V63M150 108V63M240 150V63" stroke="#b44c2c" stroke-width="2" marker-end="url(#p5d)"/><text x="150" y="187" text-anchor="middle">predictions move toward y</text><text x="150" y="212" text-anchor="middle">changing w leaves y fixed</text></g></svg><figcaption>Regression view. Fixed: observations and corrected labels. Change: predictions. Compare vertical errors as weights move toward a fixed objective.</figcaption></figure>
+
+If $X$ has full column rank, its curvature matrix $X^\top X$ is positive definite. Write $\lambda_{\max}$ for that matrix's largest eigenvalue and $w_*$ for the unique empirical minimizer; $^{-1}$ means inverse:
+
+$$0<\eta<\frac{2}{\lambda_{\max}}\quad\Longrightarrow\quad w\to w_*=(X^\top X)^{-1}X^\top y.$$
+
+**One-dimensional check:** with $X=[1]$ and $y=[2]$, the largest eigenvalue is 1. Choose $\eta=0.5$, within the bound. The update becomes $w^+=w-0.5(w-2)$, taking $0\to1\to1.5\to1.75$. It approaches a fixed label of 2.
+
+Every curvature direction contracts with that step size. Adding bootstrapping makes the labels depend on the current predictions, so this fixed-objective argument no longer applies. [Sutton and Barto, §§5.5, 9.2](http://incompleteideas.net/book/RLbook2020.pdf).
+
+<details><summary>Conditions for this regression example</summary>
+<p>Freeze the target and behavior policies, linear features and recorded data. Use independent finite-horizon episodes with bounded rewards and features. Behavior must cover the target actions and the starting states whose values are being fitted; corrected labels need finite variance for statistical claims.</p>
+<p>Full column rank gives a unique empirical fit. The batch step-size bound stated above makes optimization approach it. Finite data need not recover the true target-policy value; large importance weights can make that statistical estimate poor.</p>
+</details>
+
+<div class="rc-mark" id="sec-tabular-pair" data-panel="tabular-pair" data-view="tabular-pair" data-title="Separate the table entries"></div>
+
+## Separate the table entries
+
+A shared weight can change the successor while fitting the current state. Keep bootstrapping and off-policy learning, but give every state-action pair its own table entry to remove that coupling. Let $Q$ be that table; $s,a,r,s'$ denote the observed $S_t,A_t,R_{t+1},S_{t+1}$, and $a'$ ranges over next actions. Q-learning changes only:
+
+$$Q^+(s,a)=Q(s,a)+\alpha_t\bigl[r+\gamma\max_{a'}Q(s',a')-Q(s,a)\bigr].$$
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="One table cell takes a backup from the next-state row while all other cells stay fixed"><defs><marker id="p5e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="24" text-anchor="middle">independent table entries</text><rect x="73" y="42" width="192" height="111" fill="#fff" stroke="#242622"/><path d="M73 79H265M73 116H265M137 42V153M201 42V153" stroke="#777"/><rect x="137" y="79" width="64" height="37" fill="#d7e5ee"/><text x="40" y="104" text-anchor="middle">s</text><text x="40" y="140" text-anchor="middle">s′</text><text x="105" y="140" text-anchor="middle">2</text><text x="169" y="140" text-anchor="middle">5</text><text x="233" y="140" text-anchor="middle">1</text><path d="M169 149Q293 190 287 96Q285 61 203 87" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#p5e)"/><text x="150" y="188" text-anchor="middle">max supplies target</text><text x="150" y="213" text-anchor="middle">update one cell only</text></g></svg><figcaption>Table view. Fixed: every other entry during this update. Change: the blue cell. Follow the maximum in the next row back to its predecessor.</figcaption></figure>
+
+**One entry at a time:** with reward 0, next-row maximum 5 and $\gamma=0.9$, the target is 4.5. Step size 0.5 takes an old entry of 2 to 3.25. Every other table entry, including the successor maximum, stays unchanged during this update.
+
+Let $T_*$ map a candidate table to its expected Q-learning target. For candidate tables $q,u$, define $\|q-u\|_\infty$ as their largest absolute entrywise difference. The composition $T_*q$ applies that expected-target map to $q$; $\leq$ means at most. Then:
+
+$$\|T_*q-T_*u\|_\infty\leq\gamma\|q-u\|_\infty.$$
+
+A maximum and an expectation cannot enlarge the largest difference; discounting shrinks it. With enough sampling, Q-learning converges to the optimal table. Shared approximation adds a fitting step that can also change the next-state values, so the tabular argument alone no longer controls learning. [Watkins and Dayan, 1992](https://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf).
+
+<details><summary>Conditions for tabular Q-learning</summary>
+<p>The task is a finite Markov decision process with fixed transition and reward laws, bounded rewards and discount below 1. Every nonterminal state-action pair must receive infinitely many updates.</p>
+<p>Each pair's positive learning rates are at most 1, have infinite sum and finite squared sum. A replay buffer omitting a pair fails the visit assumption; a constant noisy step size fails the shrinking-step assumption. The theorem cited above concerns the resulting infinite update sequence, not a finite successful route.</p>
+</details>
+
+<div class="rc-mark" id="sec-dqn" data-panel="dqn" data-view="dqn" data-title="Slow the target feedback"></div>
+
+## Slow the target feedback
+
+The guessed tail can change after every shared-weight update. DQN retains all three ingredients, so it needs ways to slow that feedback. Two devices help manage them: replay samples stored transitions to reduce temporal correlation and change the update distribution; a frozen target network holds the guessed labels still for a bounded period. Replay doesn't make the data on-policy.
+
+Let $Q_\theta$ be the online action-value network with weights $\theta$, and $Q_{\theta^-}$ its frozen copy. Let $d$ be one for a terminal transition and zero otherwise, $y$ the target, and $\nabla_\theta$ the gradient with respect to online weights. Here $s,a,r,s'$ are the current state, action, observed reward and successor, $a'$ ranges over next actions and $\theta^+$ is the updated online network. The superscript minus labels the frozen copy, not subtraction. For these transition symbols:
+
+$$\begin{aligned}
+y&=r+\gamma(1-d)\max_{a'}Q_{\theta^-}(s',a'),\\
+\theta^+&=\theta+\alpha_t[y-Q_\theta(s,a)]\nabla_\theta Q_\theta(s,a).
+\end{aligned}$$
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Replay sends a transition to online and frozen networks; only the online network updates until a periodic copy"><defs><marker id="p5f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="24" text-anchor="middle">sample a replay transition</text><path d="M125 35L65 70M175 35L235 70" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#p5f)"/><rect x="12" y="79" width="116" height="51" fill="#d7e5ee" stroke="#242622"/><rect x="172" y="79" width="116" height="51" fill="#eee" stroke="#242622"/><text x="70" y="100" text-anchor="middle">online θ</text><text x="70" y="121" text-anchor="middle">prediction</text><text x="230" y="100" text-anchor="middle">frozen θ⁻</text><text x="230" y="121" text-anchor="middle">target y</text><path d="M171 145H92" stroke="#b44c2c" stroke-width="2" marker-end="url(#p5f)"/><text x="157" y="171" text-anchor="middle">update θ only</text><path d="M65 180Q150 218 239 181" fill="none" stroke="#2b6a8e" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#p5f)"/><text x="150" y="215" text-anchor="middle">copy θ → θ⁻ periodically</text></g></svg><figcaption>Training view. Fixed between copies: target weights. Change: online predictions. Compare the frequent learning arrow with the periodic copy.</figcaption></figure>
+
+The terminal mask removes the nonexistent future after an episode ends. This is a **semi-gradient** update: gradients flow through the current prediction, while $y$ is held fixed. Let $C$ be the positive number of updates between target copies:
+
+```text
+store each observed transition in replay
+sample a transition (s, a, r, s′, d)
+compute y using frozen weights theta_minus
+update online weights theta toward y
+if C updates have passed: theta_minus = theta
+```
+
+Freezing delays the target feedback. It doesn't prove global convergence, even in the two-state family of examples. [Mnih et al., Methods, primary PDF](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf); [van Hasselt et al.](https://arxiv.org/abs/1812.02648).
+
+<div class="rc-mark" id="sec-diagnostics" data-panel="diagnostics" data-view="diagnostics" data-title="Check estimates beside rewards"></div>
+
+## Check estimates beside rewards
+
+A task score tells you how the policy acts. Value estimates also need checking. If each reward has absolute magnitude at most $R_{\max}$, let $G_t$ be the discounted return from step $t$. The bars $|\cdot|$ mean absolute magnitude. The return adds future rewards with a factor $\gamma$ per step; the geometric sum gives:
+
+$$|G_t|\leq\frac{R_{\max}}{1-\gamma}.$$
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="The estimate curve crosses a known possible-return bound while zero reward stays flat"><defs><marker id="p5g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><path d="M36 175V24M36 175H284" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#p5g)"/><path d="M38 99H283" stroke="#777" stroke-width="2" stroke-dasharray="5 4"/><text x="156" y="88" text-anchor="middle">return bound</text><path d="M38 163C125 160 197 139 262 28" fill="none" stroke="#b44c2c" stroke-width="3"/><text x="165" y="42" text-anchor="middle">estimate ↑</text><path d="M38 172H277" stroke="#2b6a8e" stroke-width="3"/><text x="155" y="157" text-anchor="middle">reward stays zero</text><text x="160" y="203" text-anchor="middle">updates →</text><text x="19" y="120" transform="rotate(-90 19 120)" text-anchor="middle">value</text></g></svg><figcaption>Diagnostic view. The red estimates cross the permitted return range while the reward stays zero.</figcaption></figure>
+
+For example, if rewards are bounded in magnitude by 1 and $\gamma=0.9$, the bound is 10. A prediction of 100 cannot be the correct discounted return. Check the reward scale and terminal handling first, then inspect sampling and target feedback.
+
+An estimate beyond this range is wrong for the specified discounted task. A finite spike establishes an error, while divergence to infinity is a stronger mathematical claim.
+
+- **Coverage:** identify which states and actions the updates omit.
+- **Coupling:** check which other predictions move after one update.
+- **Targets:** identify when labels change and where gradients stop.
+- **Scope:** linear prediction and tabular convergence results require their stated conditions.
+
+
+<details>
+<summary>The three pairs: detailed stability arguments and conditions</summary>
+
+Each pair below has a particular stable construction under stated assumptions. They explain why removing one source of feedback can help. The deadly triad names a risk when all three ingredients are present; it is not a rule that every pair is safe or every triple diverges.
+
+<figure><img src="/assets/robotics/rl/deadly-triad.svg" alt="Three ingredients around a feedback loop, with a stable construction for each pair" loading="lazy"><figcaption>Shared predictions, guessed targets and off-policy data can reinforce an error. Each pair has a different stability argument.</figcaption></figure>
+
+In the equations below, $t$ is the time step; $S_t$ and $A_t$ are the state and action; $R_{t+1}$ is the next reward. The target policy $\pi(a\mid s)$ gives the probability of action $a$ in state $s$; $b(a\mid s)$ is the policy that collected the data. The discount is $0\leq\gamma<1$ and $\alpha_t>0$ is a learning step size. A superscript $+$ means the next parameter or table value.
+
+<div class="dt-pairs">
+<section class="dt-worked" id="dt-pair-1">
+
+### 1 · Approximation + bootstrapping
+
+**Learn a fixed policy's values with on-policy linear TD.** A fixed feature vector $\phi(s)$ describes state $s$; the weights $w$ produce $v_w(s)=\phi(s)^\top w$. The superscript $\top$ means transpose. Let $\delta_t$ be the TD error, and let $w^+$ denote the updated weights. One observed transition gives this update:
+
+$$
+\begin{aligned}
+\delta_t &= R_{t+1}+\gamma v_w(S_{t+1})-v_w(S_t),\\
+w^+ &= w+\alpha_t\delta_t\phi(S_t).
+\end{aligned}
+$$
+
+Why can this settle down? For a candidate value vector $v$, let $T^\pi$ be the Bellman prediction operator:
+
+$$
+(T^\pi v)(s)=\mathbb E_\pi[
+R_{t+1}+\gamma v(S_{t+1})\mid S_t=s].
+$$
+
+The expectation uses the fixed target policy and the environment's transition probabilities. Let $D$ put its stationary state probabilities $d(s)$ on the diagonal; $\|x\|_D^2=\sum_s d(s)x(s)^2$ weights a value vector $x$ by those probabilities. Let $\Pi$ be least-squares projection onto the space spanned by the fixed features, using those same weights. For value vectors $v$ and $u$:
+
+$$
+\|\Pi T^\pi v-\Pi T^\pi u\|_D
+\leq\gamma\|v-u\|_D.
+$$
+
+On-policy averaging cannot enlarge this norm; neither can the orthogonal projection. Multiplying by $\gamma<1$ makes the combined map a contraction, with one projected fixed point $v=\Pi T^\pi v$. **TD's sampled weight update is not literally repeated projection.** Under the conditions below, it converges to that same projected solution. [Tsitsiklis and Van Roy, Sections IV and VII](https://web.mit.edu/~jnt/www/Papers/J063-97-bvr-td.pdf).
+
+**Add off-policy sampling:** projection may now weight states by the behavior distribution, while the Bellman target follows $\pi$. The matched-norm argument can fail. The two-state example earlier in this article shows the resulting feedback.
+
+**Read the bound:** if two candidate value vectors are distance 2 apart and $\gamma=0.9$, one projected Bellman map leaves them at most 1.8 apart. It compares two whole predictions under the same policy and state weighting. It does not say every noisy TD sample improves its estimate.
+
+<details class="dt-conditions">
+<summary>Conditions behind this prediction result</summary>
+<p>This is a fixed-policy prediction result. A finite irreducible, aperiodic chain supplies a stationary distribution and repeated on-policy visits. Rewards are bounded, the discount is below 1, and the fixed feature columns are linearly independent.</p>
+<p>Positive diminishing learning rates have infinite sum and finite squared sum: they retain enough total adjustment while suppressing persistent sampling noise. These assumptions support the linear result cited above; they do not cover arbitrary neural networks or a changing control policy.</p>
+</details>
+</section>
+<section class="dt-worked" id="dt-pair-2">
+
+### 2 · Approximation + off-policy
+
+**Wait for the complete return, then fit fixed targets.** Let $H$ be the terminal time, $k$ index future steps, $G_t$ be the full discounted return and $\rho_t$ be the trajectory weight correcting behavior $b$ to target policy $\pi$. The product $\prod$ multiplies the action-probability ratios along that recorded future. Its return and importance weight are
+
+$$
+\begin{aligned}
+G_t &= \sum_{k=0}^{H-t-1}\gamma^k R_{t+k+1},\\
+\rho_t &= \prod_{k=t}^{H-1}
+\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}.
+\end{aligned}
+$$
+
+Crucially, $G_t$ contains **rewards, not a guessed future value**. Freeze the recorded data. For example $i$, use its corrected return $y_i=\rho_i G_i$ as the label; here $G_i$ and $\rho_i$ mean the return and weight for that recorded starting point. Let $y$ stack these labels, and let row $i$ of the feature matrix $X$ be $\phi(s_i)^\top$, with $s_i$ the example's starting state. Let $\eta>0$ be the batch step size; $X^\top$ is the transposed feature matrix. Batch gradient descent is
+
+$$
+w^+=w-\eta X^\top(Xw-y).
+$$
+
+The Euclidean norm $\|\cdot\|_2$ measures vector length. The fixed squared-error loss is $L(w)=\tfrac12\|Xw-y\|_2^2$. Let $w_*$ be its empirical minimizer, $\succ0$ mean positive definite, and $^{-1}$ mean matrix inverse. If $X$ has full column rank,
+
+$$
+X^\top X\succ0
+\quad\Longrightarrow\quad
+w_*=(X^\top X)^{-1}X^\top y.
+$$
+
+Full rank gives one empirical least-squares minimizer. Choose $\eta$ below 2 divided by the largest eigenvalue of $X^\top X$: then the error in each curvature direction shrinks. The labels stay fixed while the weights move. Rank-deficient data need not have a unique fit. This is a well-posed regression argument, not a blanket convergence claim for off-policy Monte Carlo. [Sutton and Barto, published second edition, §§5.5 and 9.2](http://incompleteideas.net/book/RLbook2020.pdf).
+
+**Add bootstrapping:** replace the complete return with a target containing $v_w$ at a future state. Now the labels move with $w$. Treating them as constants during each update no longer gives gradient descent on the fixed regression above.
+
+**One fixed label:** take one feature equal to 1 and a corrected return label of 2. The loss is $(w-2)^2/2$. With batch step size $\eta=0.5$, weights $0,1,1.5,1.75$ approach 2 because the label stays 2. Bootstrapping would let that destination move with the predictions.
+
+<details class="dt-conditions">
+<summary>Conditions behind this regression example</summary>
+<p>Freeze the target and behavior policies, linear features and recorded data. Use independent finite-horizon episodes with bounded rewards and features. Behavior must cover the target actions and the starting states whose values are being fitted; corrected labels need finite variance for statistical claims.</p>
+<p>Full column rank gives a unique empirical fit. The batch step-size bound stated above makes optimization approach it. Finite data need not recover the true target-policy value; large importance weights can make that statistical estimate poor.</p>
+</details>
+</section>
+<section class="dt-worked" id="dt-pair-3">
+
+### 3 · Bootstrapping + off-policy
+
+**Keep a separate table entry for every state-action pair.** Let $Q$ be the action-value table. In a transition $(s,a,r,s')$, $s$ and $a$ are the state and action, $r$ the reward and $s'$ the next state; $a'$ ranges over next actions. Tabular Q-learning updates just one entry:
+
+$$
+\begin{aligned}
+Q^+(s,a)=Q(s,a)+\alpha_t\big[&r+\gamma\max_{a'}Q(s',a')\\
+&-Q(s,a)\big].
+\end{aligned}
+$$
+
+All other entries stay unchanged. For any candidate table $q$, its expected target is the Bellman optimality operator $T_*$:
+
+$$
+(T_*q)(s,a)=\mathbb E\!\left[
+ r+\gamma\max_{a'}q(s',a')\mid s,a\right].
+$$
+
+The expectation averages the environment's rewards and transitions. The max norm $\|x\|_\infty=\max_{s,a}|x(s,a)|$ is the largest absolute entry of a table $x$. For two candidate tables $q$ and $u$,
+
+$$
+\|T_*q-T_*u\|_\infty
+\leq\gamma\|q-u\|_\infty.
+$$
+
+Taking a maximum and averaging cannot amplify the largest entrywise difference; discounting shrinks it. Thus $T_*$ has one fixed point, the optimal table. With enough visits and suitable step sizes, sampled Q-learning reaches it. [Watkins and Dayan's convergence theorem](https://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf).
+
+**Add function approximation:** a weight update can also change other states' values, including a value in the bootstrap target. The tabular Bellman operator still contracts, but that alone does not control the added shared fitting step. Its guarantee does not transfer to an arbitrary approximator.
+
+**Two separate entries:** if the successor maximum is 5, the reward is 0 and $\gamma=0.9$, the target is 4.5. Moving a predecessor from 2 toward 4.5 leaves the successor at 5 during that update. A shared weight can move both; a table entry cannot.
+
+<details class="dt-conditions">
+<summary>Conditions behind tabular convergence</summary>
+<p>The task is a finite Markov decision process with fixed transition and reward laws, bounded rewards and discount below 1. Every nonterminal state-action pair must receive infinitely many updates.</p>
+<p>Each pair's positive learning rates are at most 1, have infinite sum and finite squared sum. A replay buffer omitting a pair fails the visit assumption; a constant noisy step size fails the shrinking-step assumption. The theorem cited above concerns the resulting infinite update sequence, not a finite successful route.</p>
+</details>
+</section>
+
 </div>
 
-The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). They show what happens and not why, so let's follow the mechanism in a small case first and then compare robots that differ in one component at a time.
+</details>
 
-## The question: how do three good ideas make errors grow
+Across the series, values connect late rewards to earlier choices. The triad matters because sharing that credit can also share an error, then turn it into the next target. [Return to the method tree](/robotics/rl-1-q-learning/#sec-tree), or [the opening problems](/robotics/rl-0-overview/).
 
-How can bootstrapping, a shared formula and an off-policy target amplify each other's errors when each of them exists for a good reason? Parts 2 to 4 introduced them. **Bootstrapping** puts the robot's own guess inside the target, so it learns before a walk ends. **Function approximation** lets one formula produce every number, so one visit teaches it about situations it never saw. And **off-policy learning** lets the target describe a different rule from the one that acts, so a robot can aim at the greedy rule while it explores. Together they are the **deadly triad** of Sutton and Barto, and the book shows the danger in planning with a fully known world, so it needs neither noisy data nor the choice of actions.
-
-## The smallest case: two situations that share a number
-
-Take a walk that goes from situation A to situation B and ends. Every reward is 0, so both true values are 0, and the robot shares one weight $w$, with an estimate of $w$ for A and $2w$ for B. Updating A moves $w$ toward the target for A:
-
-$$w \leftarrow w + \alpha\,\bigl(\gamma \cdot 2w - w\bigr)$$
-
-In words, the target for A is the discount $\gamma$ times the estimate for B, and the estimate for A moves toward it by a fraction $\alpha$ (the step size). The gap is $(2\gamma - 1)\,w$, which is positive for any positive $w$ when $\gamma$ is above one half, so every update raises $w$, and that also raises the estimate for B and with it the next target. A round is one walk, meaning one update at A and, when B is also updated, one update at B after it. Part 2 gave the multiplier, $1 + \alpha(2\gamma - 1)$ for each update at A, which is 1.098 for $\gamma = 0.99$ and $\alpha = 0.1$.
-
-Three links make the loop, and removing any one of them breaks it.
-
-- **The guess.** If the target is the real return, 0, then $w$ moves toward 0.
-- **The shared number.** With separate numbers, an update at A leaves B's number alone and the target stays put.
-- **The missing pull-back.** B's own update has a target of 0, because its next step ends the walk, and it pushes $w$ down about four times as hard as A's update pushes it up. If B is updated after every update of A, with the settings below, $w$ shrinks, and if B is never updated nothing opposes the growth.
-
-The third link is a mismatch in which updates happen. The toy has no choice of actions, so it isn't an off-policy task but an analogue. Part 4 defined off-policy learning as a target that describes a different rule from the one that acts, which lets updates visit situations in other proportions than that rule would, and here I take the extreme case and leave B out.
-
-## Try the switches
-
-Each box turns one link on or off, and the chart shows the estimate for A over 100 rounds on a log scale. Each round updates A once, and B is also updated once when the third box is off. That third box is the missing pull-back and not a full off-policy setting.
-
-<div class="tri-switches"><noscript>With all three links on, the estimate for A grows from 10 to 25.5 after 10 rounds and to about 115,000 after 100. With any one link off it does not grow: it shrinks toward 0, or, with separate numbers and B never updated, it settles at 19.8.</noscript></div>
-
-Only the setting with all three on grows. Of the other seven, one is bounded but wrong, since with separate numbers and B never updated A settles at 19.8, a copy of a number that no update corrects.
-
-This is a fragment, and the repeated multiplier shows growth only in the fragment and not in a network in a full task. The off-policy result comes from the book's complete seven-state task, with a behavior rule and a different target rule. There the same combination diverges for any positive step size and changing only the distribution of its expected updates to the on-policy one restores convergence.
-
-## What the robots measured
-
-The toy shows a mechanism, but it doesn't predict what a network does or why one blows up. So I compared robots on the balance task, five runs of 20,000 steps each, starting from the network with the Q-learning target, the one that blew up. Each network arm changes one recorded setting of that network, and the table also changes the optimizer and step size, as part 3 says. No estimate above 100 can be right in this task, so I compare the largest estimate at the end with that bound.
-
-- **Table**, with the same guess and target but no sharing, scored 50.4 of 200 and had a largest estimate of 30.
-- **Network with real returns**, with no guess, scored 33.9 and had a largest estimate of 18.
-- **Network, one-step guess, Q-learning target**, with all three links, scored 9.4 and had a largest estimate of 2.1 million.
-- **Network, one-step guess, Sarsa target**, the on-policy target, scored 9.4 and had a largest estimate of 0.92 million.
-
-Removing the shared formula or the guess removed the blow-up, and changing the target to the on-policy one did not. A stable estimate isn't a good policy either, since the table is stable and scores 50 of 200. The toy suggests a mechanism that could act in a network, where an update at one situation also changes the numbers of similar situations, including the next one, whose number is the target. The DQN authors give a similar account. It's a possible mechanism and not a measurement.
-
-## What the repairs do
-
-Two repairs from DQN are a memory of old moves, replayed in random order, and a frozen copy of the network that computes the targets. The frozen copy delays the effect of an update on the target, and the authors say that makes divergence "much more unlikely", not impossible. The memory keeps the current estimates from deciding alone what the next updates see. Neither removes bootstrapping, sharing or the off-policy target, and replay makes the data more off-policy.
-
-In the game, the memory without the frozen copy still ended far above 100, with a median of 31,000, a range from 800 to 75,000 and a score of 90.6. With the Sarsa target and the memory the median was 263, from 67 to 1,780, and the score was 70.0. Only the memory and the frozen copy together ended between 60 and 65, with a score of 143 and not 200. I didn't run the frozen copy alone.
-
-On Atari, van Hasselt and colleagues found the same shape. Q-learning soft-diverged, with an estimate above 100, in 61 percent of its runs across their settings. Those are finite excursions seen in finite runs, since values often passed a million and then fell back. The authors report no unbounded divergence, which in their runs means no floating-point NaNs, but that doesn't show the true iterates stay bounded. The growth without end in the toy is a statement about repeated multiplication, which is a different thing from an observed excursion. Target networks lowered the rate, and heavier prioritised replay, which is more off-policy, raised it. So these repairs reduce the loop and don't prove it away.
-
-## What I could not explain
-
-Two of three doesn't guarantee stability here. The book says that if any two elements are present but not all three, instability can be avoided, and the analysis around that sentence is for linear formulas. My Sarsa network has the guess and the network and no off-policy target, and it still blew up. Tsitsiklis and Van Roy proved convergence for on-policy learning with a linear formula, gave a nonlinear example of divergence that they call somewhat contrived, and left neural networks open. So the guarantee doesn't cover my network, and it doesn't tell me why the network blew up. I don't know.
-
-<div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cart-sarsa-net-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cart-sarsa-net-101-desktop.mp4"></video><figcaption><b>The Sarsa target with a network: the broom falls after 10 steps</b>The same task and budget, with no memory of old moves and no frozen copy. At the end of this run the largest estimate was about 1.0 million. I did not find out why. Quarter speed. Simulation, one real recorded run.</figcaption></figure>
 </div>
-
-## What this shows, and what it does not
-
-The two-situation case shows a loop in which a guess, a shared number and a missing pull-back make an estimate grow. In the game, removing the shared formula or the guess removed the blow-up, the on-policy target did not, and the repairs reduced it. The results don't show that the triad is the cause in the network, that two of three is safe for networks, or how the repairs behave elsewhere, and they come from one task, one network and five runs per arm.
-
-There is one cheap check to take from this. When rewards are bounded, compare the largest estimate with the highest return the task allows, because above that bound the estimates are wrong even when the score looks fine.
-
-Looking back over the series, a table of action values estimates how good each move is, and taking its largest entry chooses a greedy action. The optimal values, $Q^*$, are the relationship that part 1 explained under its convergence conditions, and finishing a run doesn't by itself give them. Bootstrapping builds a number from other numbers, a formula lets numbers share, and a target can describe a rule that isn't the one acting. Together they let errors feed on errors.
-
-<details>
-<summary>Source checks and what each claim depends on</summary>
-
-Section and equation numbers are from Sutton and Barto, [*Reinforcement Learning: An Introduction*, second edition](http://incompleteideas.net/book/RLbook2020.pdf), which I checked in the published text.
-
-- **The triad.** Section 11.3 defines the three elements and says the danger arises when all three are combined, that it is not due to control or to learning, that it occurs in planning with a known environment, and that if any two are present but not all three, instability can be avoided. The remarks name Sutton (1995) as the first to identify it, Tsitsiklis and Van Roy (1997) for the analysis, and Sutton (2015) for the name.
-- **The two-situation case.** Section 11.2. The text gives the multiplier $1 + \alpha(2\gamma - 1)$, says it exceeds 1 whenever $\gamma > 0.5$ and that the step size changes the speed and not whether it diverges. It says the key is that the transition recurs without $w$ being updated on other transitions, and that under on-policy training each visit to the $2w$ state is followed by a transition out of it. My toy, with B updated once per walk, is my own arithmetic. In the version of Tsitsiklis and Van Roy that [van Hasselt and colleagues](https://arxiv.org/abs/1812.02648) draw, state 2 is updated several times per update of state 1 under the on-policy dynamics, and they note that updating it as often as state 1 still diverges for a large enough discount. My toy updates B once per walk and is stable with these settings, so it does not reproduce that case.
-- **The complete example.** Section 11.2, Baird's counterexample: seven states, eight weights, reward 0, $\gamma = 0.99$. Semi-gradient TD(0) diverges for any positive step size, and so does an expected update as in dynamic programming. If only the distribution of the updates is changed to the on-policy one, convergence is guaranteed with the error bound of Eq. 9.14. I did not run it.
-- **The limits of the two-of-three statement.** The sentence in Section 11.3 does not say "linear", but the analysis and examples around it (Sections 9.4 and 11.2) are for linear formulas. Whether it covers a nonlinear network is not settled by anything I read. Section 11.2 also says that Q-learning with exploring behavior close to the target has, to the authors' knowledge, never been found to diverge, with no theoretical analysis. The game's random-move rate starts at 1.0 and ends at 0.05, and its network is nonlinear. It blew up in 5 of 5 runs. I did not test a smaller final rate.
-- **Tsitsiklis and Van Roy.** [*An analysis of temporal-difference learning with function approximation*](https://doi.org/10.1109/9.580874), IEEE Transactions on Automatic Control, 1997. The abstract proves convergence with probability one for a linear formula with on-line updating along trajectories of the chain, and shows divergence can occur when updates do not follow trajectories. Section X gives an example of divergence with a nonlinear approximator. They analyze its steady-state dynamics and do not give a rigorous proof. They call the example contrived and say it is unclear whether divergence occurs for neural networks.
-- **DQN.** Mnih and colleagues, [*Human-level control through deep reinforcement learning*](https://www.nature.com/articles/nature14236), Nature 2015, Methods. Replay randomizes over the data to remove correlations and smooth changes in the data distribution. The target network is cloned every $C$ updates. An update that raises $Q(s_t,a_t)$ often raises $Q(s_{t+1},a)$ for all $a$ and so the target, and the delay makes divergence or oscillations "much more unlikely".
-- **Van Hasselt and colleagues.** *Deep reinforcement learning and the deadly triad* (arXiv 1812.02648, a preprint). A run soft-diverges when an estimate exceeds the bound of 100 for rewards clipped to one at discount 0.99. Their runs are 3 replications of each of 336 settings per game over 57 games: four bootstrap targets, three bootstrap lengths (1, 3 and 10 steps), four network sizes and prioritisation settings. Figure 2 reports soft divergence by bootstrap target over all settings: Q-learning 61 percent, and the three other targets 14, 33 and 10 percent (target Q-learning, inverse double Q-learning and double Q-learning, in the order of the figure labels). Figure 3a splits the same runs by bootstrap length. For Q-learning, the one-step runs soft-diverged in 94 percent and the ten-step runs in 21 percent, each percentage taken across the other settings. So 61 percent is the aggregate over all three lengths, and 94 percent is its one-step part. I did not recount the runs. They say replay makes the updates even more off-policy. They report that values often grow past a million and then fall back below 100, and that no run was unbounded. Here that means no floating-point NaNs in finite runs. It is not a proof that the true iterates are bounded, and I read it as finite observed excursions. Heavier prioritisation raised the rate from 52 to 77 percent for Q-learning. They state that target networks do not suffice: on the two-situation example with a linear formula the weights still diverge, slowed by the copying period.
-- **My reading, not a source's.** That the toy explains the network blow-up in the game is not shown by anything above. I give the DQN authors' account of the mechanism and did not test it in the game's network.
-
-</details>
-
-<details>
-<summary>Exact numbers: the two-situation case and the balance task</summary>
-
-**The two-situation case.** Discount 0.99, step size 0.1, A starts at 10 and B at 20, true values 0. One walk is A, B, end, and one round is one walk: A is updated once, and in the last column B is also updated once after it. B's own target is always 0. With one shared weight, A is $w$ and B is $2w$ and the update moves $w$ by the gradient of the estimate. In the last column B is updated once per round, after A, so one round multiplies $w$ by $1.098 \times 0.6 = 0.659$. The estimate for A after 10, 60 and 100 rounds:
-
-| Guess | One number | B never updated | A after 10 rounds | A after 60 rounds | A after 100 rounds |
-| --- | --- | --- | --- | --- | --- |
-| yes | yes | yes | 25.5 | 2,730 | 114,900 |
-| yes | yes | no | 0.154 | about 0 | about 0 |
-| yes | no | yes | 16.4 | 19.78 | 19.80 |
-| yes | no | no | 11.2 | 0.255 | 0.006 |
-| no | yes | yes | 3.49 | 0.018 | 0.0003 |
-| no | yes | no | 0.021 | about 0 | about 0 |
-| no | no | yes | 3.49 | 0.018 | 0.0003 |
-| no | no | no | 3.49 | 0.018 | 0.0003 |
-
-The script `q5/toy.py` produces this table. The widget code reproduces the same 24 numbers to nine digits.
-
-**The balance task.** CartPole, 5 runs (seeds 101 to 505), 20,000 steps, random moves from 1.0 to 0.05 over 5,000 steps, one-step updates unless noted, network of two hidden layers of 32 units with Adam at 0.001. The score is the greedy policy's reward over its first 200 counted steps, averaged over 3 test episodes and the last quarter of the test points. "End" is the last test point. "Run" is the largest estimate at any test point. The discounted return cannot pass 100 (reward 1 per step, discount 0.99). Medians over the five runs, with the range in brackets:
-
-| Arm | Formula | Guess | Target | Data | Frozen copy | Score | Largest at the end | Largest in the run |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Table | table | yes | greedy next | latest | no | 50.4 | 29.5 (22.8 to 35.0) | 32.5 |
-| Network, real returns | network | no | none | latest | no | 33.9 | 18.1 (11.9 to 24.2) | 25.8 |
-| Network, Q-learning target | network | yes | greedy next | latest | no | 9.4 | 2.10 million (2.08 to 2.42 million) | 4.10 million |
-| Network, Sarsa target | network | yes | taken next | latest | no | 9.4 | 0.92 million (0.80 to 1.90 million) | 1.02 million |
-| Memory, Q-learning target | network | yes | greedy next | replay | no | 90.6 | 31,000 (800 to 75,000) | 70,400 |
-| Memory, Sarsa target | network | yes | taken next | replay | no | 70.0 | 263 (67 to 1,780) | 9,260 |
-| Memory and frozen copy | network | yes | greedy next | replay | yes | 143.0 | 61.7 (60.0 to 65.4) | 61.7 |
-
-Part 2 quotes 4.1 million for the network with the Q-learning target, which is the largest at any test point. Parts 3 and 4 and this article quote the last test point, 2.1 million. The two memory arms scatter widely between runs. The recorded settings of the three network arms without memory differ from the Q-learning network in one setting each: the number of real rewards for the no-guess arm, and the target for the Sarsa arm. The memory arms change the data mode, and the last arm also uses the frozen copy. The table arm changes the formula, and with it the optimizer and the step size. I did not run the frozen copy without the memory.
-
-The two online arms without a memory used the same data mode (latest), exploration schedule and budget. Their different targets make different policies, so the runs gathered different trajectories.
-
-**Test lengths of the memory and frozen copy arm.** The five tests lasted 118, 600, 99, 104 and 272 steps. In four the cart reached the end of the rail. The clip is the one that held the broom for the full 600 steps.
-
-</details>
-
-<details>
-<summary>How the clips and the switches were made</summary>
-
-Clips are real recorded greedy tests from the saved run records of the game at commit [681cae3](https://github.com/Hadrien-Cornier/breaking-bellman/tree/681cae3820f05f8604d212c0ab048ebf0e017e73), drawn by the game's own `web/scenes.js` in a real browser with a replaced clock at 30 frames per second, and encoded with ffmpeg (H.264). The first and the third clip play at quarter speed. The first two clips are the same files as in parts 2 and 3. The third is new and made with the same pipeline from the Sarsa network run with seed 101.
-
-The switches are not a game run and not an off-policy task. They are a small program that follows the update rule written above, with the numbers in the note under the chart. The third switch leaves B's update out as an analogue of an update-distribution mismatch. No game code was changed, and no new training run was made for this article.
-
-</details>
-
-<script src="/assets/robotics/rl/rl-videos.js" defer></script>
-<script src="/assets/robotics/rl/switches.js" defer></script>
+</div>
+<script src="/assets/robotics/rl/canvas.js" defer></script>

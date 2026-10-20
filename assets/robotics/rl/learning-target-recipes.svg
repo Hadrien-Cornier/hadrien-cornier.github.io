@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 760" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="title desc">
+<title id="title">Recipes for choosing a learning target</title><desc id="desc">Four scorers differ in how fast they change and which errors they share. A separate estimate scores the live selector's chosen Left at 9. GAE blends action credit across return lengths.</desc>
+<style>text{font-family:Arial,sans-serif;fill:#242622}.head{font-size:28px;font-weight:700}.label{font-size:22px}.small{font-size:20px}.num{font-size:26px;font-weight:700}.card{fill:#f5f4ed;stroke:#7f8f79;stroke-width:2}</style>
+<rect width="1080" height="760" fill="#fbfbf8"/>
+<text class="head" x="32" y="47">Who scores the target?</text>
+<text class="small" x="32" y="83">Two dials: how fast it changes, and how much error it shares.</text>
+<rect class="card" x="30" y="107" width="495" height="130" rx="8"/>
+<text class="label" x="50" y="143">Live estimate</text><text class="small" x="50" y="181">Changes every update.</text><text class="small" x="50" y="213">Shares the selector's errors.</text>
+<rect class="card" x="555" y="107" width="495" height="130" rx="8"/>
+<text class="label" x="575" y="143">Frozen copy</text><text class="small" x="575" y="181">Changes at each refresh.</text><text class="small" x="575" y="213">Keeps much of the same learning history.</text>
+<rect class="card" x="30" y="257" width="495" height="130" rx="8"/>
+<text class="label" x="50" y="293">Second estimate</text><text class="small" x="50" y="331">Learns through separate updates.</text><text class="small" x="50" y="363">Shares fewer errors.</text>
+<rect class="card" x="555" y="257" width="495" height="130" rx="8"/>
+<text class="label" x="575" y="293">Minimum of live and second</text><text class="small" x="575" y="331">Takes the smaller score.</text><text class="small" x="575" y="363">Lowers the target by construction.</text>
+<rect x="30" y="412" width="1020" height="136" rx="8" fill="#e4eef4" stroke="#7f8f79" stroke-width="2"/>
+<text class="label" x="50" y="447">Same choice, different score</text>
+<text class="small" x="50" y="484">True values: Left 10, Right 10. Live: Left 14, Right 9 → select Left.</text>
+<text class="num" x="50" y="526">Live: 14</text><text class="num" x="350" y="526">Frozen: 13</text><text class="num" x="695" y="526">Second: 9</text>
+<rect class="card" x="30" y="573" width="1020" height="158" rx="8"/>
+<text class="label" x="50" y="609">How far does the credit look? GAE blends return lengths.</text>
+<text class="small" x="50" y="647">One-step errors: 0, −1, 3. With γ = 1 and λ = 0.5:</text>
+<text class="num" x="50" y="694">0 + 0.5 × (−1) + 0.25 × 3 = 0.25</text>
+</svg>

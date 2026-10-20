@@ -5,6 +5,9 @@ date: '2026-10-15'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 7
+tags: ['so-101', 'machine-learning', 'control']
+thumbnail: /assets/robotics/thumbnails/so101-7-learning-between-and-during-strokes.jpg
+thumbnail_alt: 'Two bar charts of the same Measured N64 comparison. At fixed time, baseline error is 2.238 mm and frozen-head error is 1.643 mm. With lag fitted using native tablet reports, baseline error is 1.537 mm and frozen-head error is 1.641 mm.'
 ---
 
 ## Where the series stands

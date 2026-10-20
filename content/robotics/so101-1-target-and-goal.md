@@ -5,6 +5,9 @@ date: '2026-10-02'
 draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 1
+tags: ['so-101', 'control', 'hardware']
+thumbnail: /assets/robotics/thumbnails/so101-1-target-and-goal.jpg
+thumbnail_alt: 'Three drawings of one joint as a torsion spring. With no load, the goal and the joint sit on the target. With gravity and the goal on the target, the joint sags below and the spring between goal and joint stretches. With the goal moved up past the target, the stretched spring holds the joint on the target.'
 ---
 
 I've been trying to find out whether a robot controller can be more accurate than the classical ones. To answer that, I first had to understand how the classical controllers work and which problems each of them fixes, and then test them on my own SO-101 arm and in the Genesis simulator. This series is what I learned along the way.

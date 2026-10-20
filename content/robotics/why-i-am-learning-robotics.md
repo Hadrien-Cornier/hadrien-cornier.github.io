@@ -4,6 +4,9 @@ description: 'The most impressive robots of the last decade stayed in videos bec
 date: '2026-09-28'
 updated: '2026-10-05'
 slug: 'why-i-am-learning-robotics'
+tags: ['robotics', 'industry']
+thumbnail: /assets/robotics/thumbnails/why-i-am-learning-robotics.jpg
+thumbnail_alt: 'Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.'
 ---
 
 In 2018, Boston Dynamics posted a video of its Atlas humanoid jumping over a log and running up a set of boxes. A year earlier, Atlas did a backflip. For a lot of people, me included, those clips were what a robot was supposed to look like. So where are they? I went looking for one at work, and I couldn't find many. Spot, the robot dog, [went on sale in 2020](https://venturebeat.com/ai/boston-dynamics-buy-spot-robot-74500) for $74,500, and Boston Dynamics now says it has [more than 1,500 Spots in customer hands](https://bostondynamics.com/products/spot/). Over the same years, Amazon put [one million robots](https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model) into its warehouses, and almost none of them can walk.
@@ -183,7 +186,7 @@ Not every world model draws pixels. Meta's [V-JEPA 2](https://arxiv.org/abs/2506
 
 ## Reindustrializing Europe and the United States
 
-This is the part that excites me most. It's a vision, not a measurement.
+This is the part that excites me most.
 
 Factories in Europe and the US already use a lot of robots. The International Federation of Robotics counts [449 robots per 10,000 manufacturing employees in Germany and 307 in the US](https://ifr.org/ifr-press-releases/news/robot-density-surges-in-europe-asia-and-americas), against 1,220 in South Korea. But those robots sit mostly where the task never changes: welding the same car body, placing the same chip. Every new task means an integrator reprogramming the cell, so automation only pays off at high volume. Small-batch work, with many different parts and frequent changes, stayed manual, and manual work moved to wherever labor was cheapest.
 
@@ -196,7 +199,7 @@ Now suppose a robot can learn a new task from a few dozen demonstrations in an a
 <figcaption>Boston Dynamics, the production Atlas (January 2026). Hyundai plans to use it in its car plants, starting with parts sequencing. <a href="https://www.youtube.com/watch?v=rrUHZKlrxms">Watch on YouTube</a></figcaption>
 </figure>
 
-What's blocking it, again, is software that generalizes and is reliable enough for a production line. That's the problem I want to work on.
+What's blocking it, again, is software that generalizes and is reliable enough for a production line. This is what I want to explore.
 
 ## Open questions I keep returning to
 

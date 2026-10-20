@@ -3,6 +3,9 @@ title: 'I made a small game where RL algorithms break'
 description: 'Breaking Bellman is a free browser game for learning reinforcement learning. Real algorithms train in your browser and fail, and you fix them one word at a time.'
 date: '2026-10-15'
 slug: 'breaking-bellman'
+tags: ['reinforcement-learning', 'simulation', 'education']
+thumbnail: /assets/robotics/thumbnails/breaking-bellman.jpg
+thumbnail_alt: 'A casino with ten slot machines. A small robot stands in front of machine 8, which it pulled 995 times, and says: I pick #8! (Wrong.) A crown floats over machine 7.'
 ---
 
 Give Q-learning a neural network on CartPole and its value estimate climbs to **4.7 million**. The most any policy can earn there is 100. So the network is off by a factor of 47,000, and the estimate is still climbing when the run ends.
@@ -42,7 +45,7 @@ Replay slowed the explosion down. The frozen copy stopped it.
 
 All numbers come from the game's own engine and are logged in [the experiment log](https://github.com/Hadrien-Cornier/breaking-bellman/blob/main/EXPERIMENTS.md). They are simulations of toy worlds.
 
-For the trade-offs behind these settings, see [Observations and estimates in reinforcement learning](/robotics/what-information-can-a-reinforcement-learner-use/). It covers the weight of new data, return length, and the source of a continuation estimate.
+For the trade-offs behind these settings, see [Recipes for choosing a learning target](/robotics/recipes-for-choosing-a-learning-target/). It covers frozen copies, second estimates, minimum targets and return-length blending.
 
 ## The dog that learned to sit
 

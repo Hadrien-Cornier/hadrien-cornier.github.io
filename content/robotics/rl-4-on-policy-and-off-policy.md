@@ -1,154 +1,158 @@
 ---
-title: 'On-policy or off-policy?'
-description: 'What changes when a learning target describes the robot that is acting, not the best robot.'
-date: '2026-10-18'
-draft: true
-series: 'Reinforcement learning, one idea at a time'
+title: 'On-policy and off-policy: whose future are we learning?'
+description: 'One row, three targets: exploration costs, coverage and what importance weighting corrects.'
+date: '2026-10-19'
+draft: false
+series: 'Reinforcement learning'
 part: 4
 layout: essay
+tags: ['reinforcement-learning', 'machine-learning']
+thumbnail: '/assets/robotics/rl/rl-4-on-policy-and-off-policy-whole.svg'
+thumbnail_alt: 'rl-4-on-policy-and-off-policy'
 ---
 
-Suppose you are teaching a robot to walk along a cliff to a flag, and it learns with a table of numbers. The update has a target inside it, and that target has to assume some way of acting after the next step. Below, two simulated robots keep the same table and differ in one word of the update, the word that picks that assumption.
+<link rel="stylesheet" href="/assets/robotics/rl/series.css">
+<div class="rc rls-canvas" id="rc">
+<div class="rc-stage"><div class="rc-bar"><button class="rc-reset" type="button">Whole canvas &#8689;</button><div class="rc-where" aria-live="polite"></div></div><div class="rc-view"><svg class="rc-svg" viewBox="0 0 680 864" data-whole="0 0 680 864" data-views='{"policies":[24,46,300,220],"targets":[364,46,300,220],"cliff":[24,326,300,220],"coverage":[364,326,300,220],"weighting":[24,606,300,220],"guarantees":[364,606,300,220]}' role="img" aria-label="Whole mechanism map: On-policy and off-policy: whose future are we learning?"><g class="rc-panel" data-panel="policies"><rect x="12" y="12" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="36">1. Two policies, one task</text><svg x="24" y="46" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Behavior produces a transition; target policy specifies the continuation used to value it"><defs><marker id="canvas-4-0-p4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="40" cy="65" r="23" fill="#d7e5ee" stroke="#242622"/><text x="40" y="71" text-anchor="middle">s</text><path d="M65 65H171" stroke="#2b6a8e" stroke-width="2" marker-end="url(#canvas-4-0-p4a)"/><text x="110" y="43" text-anchor="middle">b picks a</text><circle cx="200" cy="65" r="23" fill="#d7e5ee" stroke="#242622"/><text x="200" y="71" text-anchor="middle">s′</text><path d="M216 85Q256 115 265 148" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-4-0-p4a)"/><text x="158" y="119">π values</text><text x="158" y="140">the future</text><path d="M246 168H61Q40 168 40 94" fill="none" stroke="#2b6a8e" stroke-width="2" marker-end="url(#canvas-4-0-p4a)"/><text x="145" y="195" text-anchor="middle">credit returns to (s, a)</text></g></svg></g><g class="rc-panel" data-panel="targets"><rect x="352" y="12" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="36">2. One row, three targets</text><svg x="364" y="46" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="The same action row feeds a maximum, one sample, or a weighted average"><defs><marker id="canvas-4-1-p4b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><rect x="25" y="12" width="250" height="54" fill="#d7e5ee" stroke="#242622"/><path d="M150 12V66" stroke="#242622"/><text x="86" y="35" text-anchor="middle">right: 10</text><text x="213" y="35" text-anchor="middle">down: −10</text><text x="86" y="57" text-anchor="middle">b = 0.9</text><text x="213" y="57" text-anchor="middle">b = 0.1</text><path d="M80 69L44 112M150 69V112M220 69L255 112" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#canvas-4-1-p4b)"/><text x="45" y="140" text-anchor="middle">max</text><text x="150" y="140" text-anchor="middle">sample</text><text x="252" y="140" text-anchor="middle">average</text><text x="45" y="169" text-anchor="middle">10</text><text x="150" y="169" text-anchor="middle">−10*</text><text x="252" y="169" text-anchor="middle">8</text><text x="150" y="205" text-anchor="middle">*a sampled down action</text></g></svg></g><g class="rc-panel" data-panel="cliff"><rect x="12" y="292" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="316">3. Exploration has a cost</text><svg x="24" y="326" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="A short edge route exposes exploratory downward actions to a cliff; an upper detour leaves a recovery cell"><defs><marker id="canvas-4-2-p4c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><path d="M24 40H276V166H24Z M24 82H276 M24 124H276 M66 40V166 M108 40V166 M150 40V166 M192 40V166 M234 40V166" fill="none" stroke="#777"/><path d="M66 124H234V166H66Z" fill="#b44c2c" opacity=".25"/><text x="150" y="151" text-anchor="middle">cliff</text><text x="45" y="151" text-anchor="middle">S</text><text x="255" y="151" text-anchor="middle">G</text><path d="M45 130V103H255V127" fill="none" stroke="#b44c2c" stroke-width="3" marker-end="url(#canvas-4-2-p4c)"/><path d="M45 126V61H255V126" fill="none" stroke="#2b6a8e" stroke-width="3" marker-end="url(#canvas-4-2-p4c)"/><path d="M150 99V134" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-4-2-p4c)"/><path d="M109 58V93" stroke="#2b6a8e" stroke-width="2" marker-end="url(#canvas-4-2-p4c)"/><text x="150" y="25" text-anchor="middle">downward exploration</text><text x="150" y="201" text-anchor="middle">detour leaves recovery room</text></g></svg></g><g class="rc-panel" data-panel="coverage"><rect x="352" y="292" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="316">4. Data must cover the question</text><svg x="364" y="326" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Data cover one branch but omit a target-policy bridge and all states reached through it"><defs><marker id="canvas-4-3-p4d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="52" cy="108" r="24" fill="#d7e5ee" stroke="#242622"/><text x="52" y="115" text-anchor="middle">s</text><path d="M72 94L177 48" stroke="#2b6a8e" stroke-width="3" marker-end="url(#canvas-4-3-p4d)"/><path d="M73 123L177 172" stroke="#b44c2c" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#canvas-4-3-p4d)"/><circle cx="212" cy="40" r="25" fill="#d7e5ee" stroke="#242622"/><circle cx="212" cy="180" r="25" fill="#fff" stroke="#b44c2c"/><text x="212" y="46" text-anchor="middle">seen</text><text x="212" y="186" text-anchor="middle">?</text><text x="128" y="25" text-anchor="middle">b takes this</text><text x="155" y="126" text-anchor="middle">π needs bridge</text><path d="M125 141L145 164M145 141L125 164" stroke="#b44c2c" stroke-width="3"/><text x="126" y="210" text-anchor="middle">zero data for this branch</text></g></svg></g><g class="rc-panel" data-panel="weighting"><rect x="12" y="572" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="596">5. Correcting action probabilities</text><svg x="24" y="606" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Equal behavior action probabilities become target weights point eight and point two after multiplying by ratios"><defs><marker id="canvas-4-4-p4e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="25" text-anchor="middle">b samples each action: 0.5</text><path d="M150 38L75 77M150 38L225 77" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#canvas-4-4-p4e)"/><text x="75" y="103" text-anchor="middle">right</text><text x="225" y="103" text-anchor="middle">down</text><path d="M75 112V152M225 112V152" stroke="#2b6a8e" stroke-width="2" marker-end="url(#canvas-4-4-p4e)"/><text x="75" y="141" text-anchor="middle">× 1.6</text><text x="225" y="141" text-anchor="middle">× 0.4</text><text x="75" y="179" text-anchor="middle">weight 0.8</text><text x="225" y="179" text-anchor="middle">weight 0.2</text><text x="150" y="209" text-anchor="middle">target action proportions</text></g></svg></g><g class="rc-panel" data-panel="guarantees"><rect x="352" y="572" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="596">6. Which guarantees survive?</text><svg x="364" y="606" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="A shared parameter changes both the current prediction and the next-state prediction used as a target"><defs><marker id="canvas-4-5-p4f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="150" cy="42" r="27" fill="#d7e5ee" stroke="#242622"/><text x="150" y="48" text-anchor="middle">w</text><path d="M132 64L71 105M168 64L229 105" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#canvas-4-5-p4f)"/><text x="68" y="132" text-anchor="middle">value(s)</text><text x="232" y="132" text-anchor="middle">value(s′)</text><path d="M230 145Q150 204 75 148" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-4-5-p4f)"/><text x="150" y="187" text-anchor="middle">changes the target</text><path d="M43 113Q17 41 113 42" fill="none" stroke="#2b6a8e" stroke-width="2" marker-end="url(#canvas-4-5-p4f)"/><text x="150" y="216" text-anchor="middle">one update can move both</text></g></svg></g></svg></div></div>
+<div class="rc-body">
 
-<div class="tri-clips">
-<figure class="tri-clip"><video class="tri-video" data-clip="cliff-q-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-q-202-desktop.mp4"></video><figcaption><b>Q-learning: it learns the edge path and still falls on the way</b>The first walk, a late walk, then the final test with no random moves. The arrows show the favorite move in each cell. In this late walk the robot falls once. Simulation, one real recorded run.</figcaption></figure>
-<figure class="tri-clip"><video class="tri-video" data-clip="cliff-sarsa-101" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-sarsa-101-desktop.mp4"></video><figcaption><b>Sarsa: it keeps away from the edge while it learns</b>The same three phases: a first walk, a late walk and the final test. Here the late walk has no fall, and the final test takes the top row. This is another run, from a different seed. The falls per walk over 20 runs are in the text. Simulation, one real recorded run.</figcaption></figure>
+Your favorite route stays beside a cliff, but one random exploratory move can still make you fall. Should the value of that route include those random moves? We will hold one next-state row fixed and calculate three answers. The distinction follows [Sutton and Barto, §§5.5 and 6.4–6.6](http://incompleteideas.net/book/RLbook2020.pdf).
+
+**Part 4.** A value estimate gives credit to earlier actions for rewards that arrive later. But which later actions does it assume? That choice separates on-policy from off-policy learning. We can see the difference without changing the task, the rewards or the table.
+
+**Reading goal:** keep the next-state row fixed. Changing only the assumed future policy gives targets of 8, a sampled 8 or −10, and an average of 6.2.
+
+<nav class="rc-route" aria-label="Reading route"><a href="#sec-two-policies" data-go="sec-two-policies">Two policies, one task</a><a href="#sec-three-targets" data-go="sec-three-targets">One row, three targets</a><a href="#sec-cliff-risk" data-go="sec-cliff-risk">Exploration has a cost</a><a href="#sec-coverage" data-go="sec-coverage">Data must cover the question</a><a href="#sec-action-correction" data-go="sec-action-correction">Correcting action probabilities</a><a href="#sec-guarantees" data-go="sec-guarantees">Which guarantees survive?</a></nav>
+
+<div class="rc-mark" id="sec-two-policies" data-panel="policies" data-view="policies" data-title="Two policies, one task"></div>
+
+## Two policies, one task
+
+Suppose you want the shortest route to a goal, and you occasionally try a random move to discover better routes. The rule collecting those moves is the **behavior policy**, written $b$. The rule whose future you want to value is the **target policy**, written $\pi$. A vertical bar means “given this state.” Both give action probabilities in a state: $b(a\mid s)$ and $\pi(a\mid s)$, for action $a$ in state $s$.
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Behavior produces a transition; target policy specifies the continuation used to value it"><defs><marker id="p4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="40" cy="65" r="23" fill="#d7e5ee" stroke="#242622"/><text x="40" y="71" text-anchor="middle">s</text><path d="M65 65H171" stroke="#2b6a8e" stroke-width="2" marker-end="url(#p4a)"/><text x="110" y="43" text-anchor="middle">b picks a</text><circle cx="200" cy="65" r="23" fill="#d7e5ee" stroke="#242622"/><text x="200" y="71" text-anchor="middle">s′</text><path d="M216 85Q256 115 265 148" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#p4a)"/><text x="158" y="119">π values</text><text x="158" y="140">the future</text><path d="M246 168H61Q40 168 40 94" fill="none" stroke="#2b6a8e" stroke-width="2" marker-end="url(#p4a)"/><text x="145" y="195" text-anchor="middle">credit returns to (s, a)</text></g></svg><figcaption>Decision view. Fixed: task and transition. Change: the policy assumed after arrival. Follow data forward and credit backward.</figcaption></figure>
+
+| At one illustrative state | Right | Down |
+| --- | ---: | ---: |
+| Behavior $b$: collects moves | 0.9 | 0.1 |
+| Target $\pi$: greedy continuation | 1 | 0 |
+
+Here a down move can enter the data even though the future being valued always chooses right. The next section keeps this row and makes the consequences numerical.
+
+If the target and behavior rules match, learning is **on-policy**. If they differ, it is **off-policy**. Q-learning can learn after every fresh move and still be off-policy: an exploratory rule acts, while the target assumes greedy continuation. Old data aren't required.
+
+Separating the rules is useful when exploration helps collect information but you want values for a different eventual behavior. It also creates an obligation: the collected data must support the future you're asking about. [Sutton and Barto, §5.5](http://incompleteideas.net/book/RLbook2020.pdf).
+
+<div class="rc-mark" id="sec-three-targets" data-panel="targets" data-view="targets" data-title="One row, three targets"></div>
+
+## One row, three targets
+
+Should the backup use the best next move, the move actually drawn, or an average over the policy? Keep the estimates fixed to isolate that choice.
+
+At step $t$, take action $A_t$ in state $S_t$, receive reward $R_{t+1}$ and reach $S_{t+1}$. Let $Q(s,a)$ estimate discounted return after action $a$ in state $s$. The discount is $\gamma$, the positive learning rate is $\alpha$, and $Y_t$ is the target. An arrow means replacement:
+
+$$Q(S_t,A_t)\leftarrow Q(S_t,A_t)+\alpha\bigl[Y_t-Q(S_t,A_t)\bigr].$$
+
+Now hold the next-state row fixed. Two actions, right and down, have estimates $10$ and $-10$. The behavior chooses them with probabilities $0.9$ and $0.1$. Set $\gamma=0.9$ and the observed reward to $-1$. These are illustrative calculations.
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="The same action row feeds a maximum, one sample, or a weighted average"><defs><marker id="p4b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><rect x="25" y="12" width="250" height="54" fill="#d7e5ee" stroke="#242622"/><path d="M150 12V66" stroke="#242622"/><text x="86" y="35" text-anchor="middle">right: 10</text><text x="213" y="35" text-anchor="middle">down: −10</text><text x="86" y="57" text-anchor="middle">b = 0.9</text><text x="213" y="57" text-anchor="middle">b = 0.1</text><path d="M80 69L44 112M150 69V112M220 69L255 112" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#p4b)"/><text x="45" y="140" text-anchor="middle">max</text><text x="150" y="140" text-anchor="middle">sample</text><text x="252" y="140" text-anchor="middle">average</text><text x="45" y="169" text-anchor="middle">10</text><text x="150" y="169" text-anchor="middle">−10*</text><text x="252" y="169" text-anchor="middle">8</text><text x="150" y="205" text-anchor="middle">*a sampled down action</text></g></svg><figcaption>Backup view. Fixed: row, reward and discount. Change: how the next action enters the target. Compare the three reductions of one row.</figcaption></figure>
+
+Define $a'$ as a candidate next action. For Sarsa, $A_{t+1}$ is the action actually sampled from the same behavior used in its target. The superscripts Q, Sarsa and Expected name the method producing $Y_t$; they are labels, not powers. $\max$ takes the largest next-action estimate and $\sum$ adds the policy-weighted estimates. The three targets are:
+
+$$\begin{aligned}
+Y_t^{\mathrm{Q}}&=R_{t+1}+\gamma\max_{a'}Q(S_{t+1},a')=8,\\
+Y_t^{\mathrm{Sarsa}}&=R_{t+1}+\gamma Q(S_{t+1},A_{t+1}),\\
+Y_t^{\mathrm{Expected}}&=R_{t+1}+\gamma\sum_{a'}\pi(a'\mid S_{t+1})Q(S_{t+1},a').
+\end{aligned}$$
+
+Sarsa's target is $8$ after right or $-10$ after down. Expected Sarsa with $\pi=b$ uses $-1+0.9[0.9(10)+0.1(-10)]=6.2$. It removes next-action sampling noise by averaging that action exactly; transition and reward randomness can remain. Expected Sarsa is off-policy when its chosen $\pi$ differs from $b$. A greedy target makes it Q-learning. [§§6.4–6.6](http://incompleteideas.net/book/RLbook2020.pdf).
+
+<div class="rc-mark" id="sec-cliff-risk" data-panel="cliff" data-view="cliff" data-title="Exploration has a cost"></div>
+
+## Exploration has a cost
+
+The shortest route can run beside a cliff. With perfectly greedy execution, staying on that route is fine. With continuing exploration, a random downward action can cause a fall, even after the preferred action is well learned.
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="A short edge route exposes exploratory downward actions to a cliff; an upper detour leaves a recovery cell"><defs><marker id="p4c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><path d="M24 40H276V166H24Z M24 82H276 M24 124H276 M66 40V166 M108 40V166 M150 40V166 M192 40V166 M234 40V166" fill="none" stroke="#777"/><path d="M66 124H234V166H66Z" fill="#b44c2c" opacity=".25"/><text x="150" y="151" text-anchor="middle">cliff</text><text x="45" y="151" text-anchor="middle">S</text><text x="255" y="151" text-anchor="middle">G</text><path d="M45 130V103H255V127" fill="none" stroke="#b44c2c" stroke-width="3" marker-end="url(#p4c)"/><path d="M45 126V61H255V126" fill="none" stroke="#2b6a8e" stroke-width="3" marker-end="url(#p4c)"/><path d="M150 99V134" stroke="#b44c2c" stroke-width="2" marker-end="url(#p4c)"/><path d="M109 58V93" stroke="#2b6a8e" stroke-width="2" marker-end="url(#p4c)"/><text x="150" y="25" text-anchor="middle">downward exploration</text><text x="150" y="201" text-anchor="middle">detour leaves recovery room</text></g></svg><figcaption>Top view. Fixed: cliff and goal. Change: route and occasional downward move. Compare a fall beside the edge with recovery above it.</figcaption></figure>
+
+Q-learning's greedy continuation target values a future without those exploratory deviations. On-policy Sarsa includes them in the behavior it evaluates. So it can prefer a longer route that leaves room to recover. The book's cliff example illustrates this mechanism with persistent exploration. A particular finite run also depends on initialization, visits and learning rate. [Example 6.6](http://incompleteideas.net/book/RLbook2020.pdf).
+
+Neither target supplies a physical safety guarantee. Sarsa learns an expected return for its policy, which may still choose dangerous actions. Changing the exploration rule changes that return. Gradually removing exploration changes the comparison again: the book's asymptotic optimality discussion assumes the required exploration and learning-rate conditions.
+
+<div class="rc-mark" id="sec-coverage" data-panel="coverage" data-view="coverage" data-title="Data must cover the question"></div>
+
+## Data must cover the question
+
+Suppose a stored dataset never takes a bridge that the target policy would use. Replaying the other transitions more often won't reveal where the bridge leads. For action correction, the **coverage** requirement is that a target action with positive probability also has positive behavior probability.
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Data cover one branch but omit a target-policy bridge and all states reached through it"><defs><marker id="p4d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="52" cy="108" r="24" fill="#d7e5ee" stroke="#242622"/><text x="52" y="115" text-anchor="middle">s</text><path d="M72 94L177 48" stroke="#2b6a8e" stroke-width="3" marker-end="url(#p4d)"/><path d="M73 123L177 172" stroke="#b44c2c" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#p4d)"/><circle cx="212" cy="40" r="25" fill="#d7e5ee" stroke="#242622"/><circle cx="212" cy="180" r="25" fill="#fff" stroke="#b44c2c"/><text x="212" y="46" text-anchor="middle">seen</text><text x="212" y="186" text-anchor="middle">?</text><text x="128" y="25" text-anchor="middle">b takes this</text><text x="155" y="126" text-anchor="middle">π needs bridge</text><path d="M125 141L145 164M145 141L125 164" stroke="#b44c2c" stroke-width="3"/><text x="126" y="210" text-anchor="middle">zero data for this branch</text></g></svg><figcaption>Transition view. Fixed: two possible branches. Change: which branch enters the data. The missing branch leaves its destination unsupported.</figcaption></figure>
+
+For a visited state $s$ and candidate action $a$, that requirement is $\pi(a\mid s)>0\;\Longrightarrow\;b(a\mid s)>0$. The implication arrow means every action the target might take must be possible under behavior too. Action coverage at a visited state is only part of the problem. The relevant states must also appear in the updates. A buffer can omit them or sample them very unevenly. That distinction matters when a shared formula changes predictions outside the sampled states.
+
+**Designed for:** off-policy methods let the policy being evaluated differ from the data collector, including a past policy or another controller. **Cost:** that freedom makes coverage and sampling distribution part of the learning problem. Age alone tells you neither whether data are off-policy nor whether they are useful. [§5.5](http://incompleteideas.net/book/RLbook2020.pdf).
+
+<div class="rc-mark" id="sec-action-correction" data-panel="weighting" data-view="weighting" data-title="Correcting action probabilities"></div>
+
+## Correcting action probabilities
+
+Suppose the data choose right and down equally, but the target chooses right four times as often as down. An unweighted average answers the wrong policy question. Importance weights correct each action's contribution to the average.
+
+At one fixed state $s$, let $A$ be an action sampled from $b$. Let $f(s,a)$ be any fixed quantity attached to action $a$, and let $\rho(a\mid s)=\pi(a\mid s)/b(a\mid s)$ be its **importance ratio**, where the denominator is positive for target actions. The symbols $\mathbb E$ and $\sum$ mean expectation and sum over actions; $A\sim b$ means sampling $A$ from behavior at this fixed state.
+
+$$\mathbb E_{A\sim b}[\rho(A\mid s)f(s,A)]=\sum_a\pi(a\mid s)f(s,a).$$
+
+The reason is cancellation: multiplying behavior probability by the ratio leaves target probability.
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="Equal behavior action probabilities become target weights point eight and point two after multiplying by ratios"><defs><marker id="p4e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="150" y="25" text-anchor="middle">b samples each action: 0.5</text><path d="M150 38L75 77M150 38L225 77" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#p4e)"/><text x="75" y="103" text-anchor="middle">right</text><text x="225" y="103" text-anchor="middle">down</text><path d="M75 112V152M225 112V152" stroke="#2b6a8e" stroke-width="2" marker-end="url(#p4e)"/><text x="75" y="141" text-anchor="middle">× 1.6</text><text x="225" y="141" text-anchor="middle">× 0.4</text><text x="75" y="179" text-anchor="middle">weight 0.8</text><text x="225" y="179" text-anchor="middle">weight 0.2</text><text x="150" y="209" text-anchor="middle">target action proportions</text></g></svg><figcaption>Probability view. Fixed: state and action quantities. Change: contribution of each sampled action. Compare equal sampling with unequal target weights.</figcaption></figure>
+
+For an illustrative calculation, take behavior probabilities $(0.5,0.5)$, target probabilities $(0.8,0.2)$ and quantities $(10,-10)$. The ratios are $1.6$ and $0.4$. Then $0.5(1.6)(10)+0.5(0.4)(-10)=6$, matching $0.8(10)+0.2(-10)$.
+
+| Action | Behavior | Target | Ratio | Quantity | Weighted contribution |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Right | 0.5 | 0.8 | 1.6 | 10 | 8 |
+| Down | 0.5 | 0.2 | 0.4 | −10 | −2 |
+
+Add the last column to recover 6. Each contribution is behavior probability × ratio × quantity; it is not a new transition or reward.
+
+This is a conditional, one-step action identity. Correcting a whole multi-step return needs the appropriate sequence of ratios, coverage and variance control. Rare behavior actions can receive huge weights. The arithmetic doesn't repair an omitted state or establish convergence for a nonlinear bootstrap learner. [§5.5](http://incompleteideas.net/book/RLbook2020.pdf).
+
+<div class="rc-mark" id="sec-guarantees" data-panel="guarantees" data-view="guarantees" data-title="Which guarantees survive?"></div>
+
+## Which guarantees survive?
+
+In the drawing, $w$ is a vector of shared model weights. On-policy sampling fixes one distribution mismatch. The familiar convergence result is more specific: fixed-policy prediction with fixed linear features, suitable visits and diminishing learning rates. A changing control policy and a nonlinear network need their own analysis. [Tsitsiklis and Van Roy, 1997](https://web.mit.edu/~jnt/www/Papers/J063-97-bvr-td.pdf).
+
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-label="A shared parameter changes both the current prediction and the next-state prediction used as a target"><defs><marker id="p4f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="currentColor" stroke-width="2"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="150" cy="42" r="27" fill="#d7e5ee" stroke="#242622"/><text x="150" y="48" text-anchor="middle">w</text><path d="M132 64L71 105M168 64L229 105" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#p4f)"/><text x="68" y="132" text-anchor="middle">value(s)</text><text x="232" y="132" text-anchor="middle">value(s′)</text><path d="M230 145Q150 204 75 148" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#p4f)"/><text x="150" y="187" text-anchor="middle">changes the target</text><path d="M43 113Q17 41 113 42" fill="none" stroke="#2b6a8e" stroke-width="2" marker-end="url(#p4f)"/><text x="150" y="216" text-anchor="middle">one update can move both</text></g></svg><figcaption>Parameter view. Fixed: two inputs. Change: shared weights and both predictions. Follow the target feedback that matching action policies alone leaves in place.</figcaption></figure>
+
+| Method | Continuation in the target | Primary source |
+| --- | --- | --- |
+| Q-learning | Largest next-action estimate | [§6.5](http://incompleteideas.net/book/RLbook2020.pdf) |
+| Sarsa | One action sampled from its policy | [§6.4](http://incompleteideas.net/book/RLbook2020.pdf) |
+| Expected Sarsa | Average under the chosen target policy | [§6.6](http://incompleteideas.net/book/RLbook2020.pdf) |
+
+A short Expected Sarsa loop makes the policy choice explicit. As above, $S_t,A_t,R_{t+1}$ are the current state, sampled action and following reward; $Y_t$ is the target, $\alpha$ the update fraction, $b$ collects actions and $\pi$ weights their continuation. In the code, `gamma`, `alpha` and `pi` spell those same symbols:
+
+```text
+choose A_t using behavior b at S_t
+observe R_(t+1), S_(t+1), terminal
+if terminal: Y_t = R_(t+1)
+else: Y_t = R_(t+1) + gamma * sum_a pi(a|S_(t+1)) Q(S_(t+1),a)
+move Q(S_t,A_t) a fraction alpha toward Y_t
+```
+
+Here `terminal` means the episode ended, so there is no remaining value to bootstrap.
+
+- **On-policy benefit:** the target includes the behavior's exploratory costs.
+- **Off-policy benefit:** collection and the policy being learned about can differ.
+- **Coverage cost:** missing actions or states leave parts of the question unsupported.
+- **Approximation limit:** shared predictions can feed changes back into their own targets.
+
+### From action credit to a policy update
+
+How do we turn those values into a better action rule? [Generalized Advantage Estimation (GAE)](/robotics/rl-2-bootstrapping/#sec-gae) estimates whether an action did better or worse than the policy's state-value baseline, using a mixture of return lengths. **Proximal Policy Optimization (PPO)** can use that credit to train the policy. Its clipped objective limits the incentive to change an action's probability too far relative to the policy that collected the rollout. Clipping does not impose a hard bound on the policy step. GAE supplies action credit; PPO clipping shapes the update incentive. [Spinning Up's PPO explanation](https://spinningup.openai.com/en/latest/algorithms/ppo.html).
+
+[Part 5: the deadly triad](/robotics/rl-5-the-deadly-triad/) follows that feedback all the way to a growing number.
+
 </div>
-
-The clips are recorded runs of [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/). A step costs 1, a fall costs 100 and sends the robot back to the start, and each robot makes a random move one time in ten while it learns. So which word makes the difference?
-
-## The question: whose behavior does the target describe
-
-Should a learner's target describe the behavior that collects the data, or a better behavior? Two terms make that question exact. A **policy** is a rule for acting, and the **behavior policy** is the rule that picks the robot's actions, so it decides which data arrive. Here it is: take the action with the largest number, but one time in ten move at random. The **target policy** is the rule that the update's target describes. If both are the same rule, learning is **on-policy**, and if they differ it is **off-policy**.
-
-## Two targets
-
-Part 1 gave the Q-learning target. After the robot takes action $a$ in situation $s$ it lands in $s'$ and looks at the row of $s'$:
-
-$$\text{target} = r + \gamma \max_{a'} Q(s',a')$$
-
-In words, the target assumes that from $s'$ the robot takes the action with the largest number, which describes a robot that never moves at random. The target policy is the greedy rule and the behavior policy is the greedy rule with random moves, so Q-learning is off-policy.
-
-Sarsa changes one word and uses the action that the robot really takes next, random moves included:
-
-$$\begin{aligned}\text{target} &= r + \gamma\, Q(s',a') \\ a' &= \text{the action taken next}\end{aligned}$$
-
-In words, the guess describes the robot that is really acting. The target policy equals the behavior policy, so Sarsa is on-policy, and the name comes from the sequence state, action, reward, state, action.
-
-Off-policy doesn't mean replay or old data. Q-learning is off-policy even when it learns from each move right after the move, because the data come from the current robot and the target still describes a different rule. What matters is the gap between the rule that acts and the rule that the target describes.
-
-## What the cliff shows
-
-A fall sends the robot back to the start. The shortest route takes 13 steps and runs along the row next to the cliff, where one random move can push the robot over the edge.
-
-I ran 20 robots of each kind for 10,000 steps, with the table and one random move in ten. In the second half of training Q-learning fell 0.318 times per walk, and Sarsa fell 0.061 times per walk.
-
-The tables show why if you look at the column in the middle of the grid. For Q-learning the largest number in the cell next to the cliff is the best of the three rows, -6.8 against -8.2 in the top row. For Sarsa the order flips, with -14.0 next to the cliff and -11.9 in the top row. The Sarsa number counts the falls that random moves cause, so it ranks the edge below the top row.
-
-The finished robots show the price. In the final test with no random moves, all 20 Q-learning robots walk the 13-step edge route. Of the 20 Sarsa robots, 12 reach the flag along the top row in 17 or 19 steps and 8 don't reach the flag in 200 steps, and I didn't examine why. Averaged over the last quarter of the tests and over the runs, the score was -13 for Q-learning and -82 for Sarsa. So describing the acting robot bought fewer falls while learning, and it cost a longer route and a worse final test in these runs.
-
-## The target follows the behavior
-
-Now change only the behavior and remove the random moves. Sarsa then learns the 13-step edge route in all 20 runs and, in the second half of training, falls 0.000 times per walk, because its target now describes a robot that no longer slips and so the edge is safe again. Q-learning ends on the same route, since its target never described the random moves.
-
-Without random moves the robots still try untested actions, because the table starts at zero and an untested action looks as good as any other, so this isn't a robot that never explores.
-
-The two words answer different questions. Sarsa asks how good a situation is if the robot keeps acting the way it acts now, so its number changes when the behavior changes, even in the limit. Q-learning asks how good a situation is if the robot acts greedily from here on, and its target uses the current largest number in the next row, not a known best action. Under the book's conditions, including that every pair is tried often enough, the numbers it aims at are the optimal ones, whatever behavior collects the data. A finite table isn't at that point yet, and how close it gets and where it is wrong still depends on which data the behavior collected.
-
-A third word sits between them. Expected Sarsa averages the next row by the probabilities of the behavior instead of using one sampled action. In these runs it fell 0.038 times per walk and all 20 robots reached the flag in 15 steps. In the book it is on-policy in the cliff results, and if its target policy is the greedy rule it is exactly Q-learning, so the target policy is a choice and not a switch.
-
-## Which target to choose
-
-The choice depends on which robot you care about. If random moves stay on, as for a real arm that must keep exploring and where every fall is a crash, a target that describes that robot measures the falls you'll pay for. If the robot will act greedily later, a target that describes the greedy rule finds the best route for it. The book notes that both methods would converge to the optimal policy if the random moves were gradually reduced, but in my runs the random moves stayed at one in ten and I didn't test a reduction.
-
-## What I could not explain
-
-A target that matches the behavior doesn't make learning safe. I ran the Sarsa target with the neural network on the balance task of part 3, with one-step updates, no memory of old moves and no frozen copy, and the score was 9.4 of 200. The largest estimate at the end was between 0.8 and 1.9 million in the five runs, and the discounted return can be at most 100 in this world, so any estimate far above 100 is wrong. The network with the Q-learning target ended at 9.4 and 2.1 million, which means changing the target to describe the acting robot did not stop the blow-up in this network.
-
-The book proves convergence for on-policy updates with a linear formula, under conditions. My network isn't linear and its behavior changes as its estimates change, and I don't know which of those differences matters here, so I offer no cause. Part 5 puts bootstrapping, a formula and off-policy data together.
-
-## What this shows, and what it does not
-
-A target describes some policy. Q-learning describes the greedy rule and Sarsa describes the rule that acts, and the difference showed up as falls while learning, as the route each robot found, and as which cell looked best. Off-policy means that the target and the behavior differ, and it doesn't mean replay or old data.
-
-On the cliff, 20 runs per kind and one setting say that the on-policy target fell less while learning and, in my runs, finished worse. The evidence is one world, one random-move rate and 20 tables. The network result is a limit, because an on-policy target didn't make this network stable and I didn't find out why.
-
-<details>
-<summary>Source checks and what each claim depends on</summary>
-
-All section numbers are from Sutton and Barto, [*Reinforcement Learning: An Introduction*, second edition](http://incompleteideas.net/book/RLbook2020.pdf), which I checked in the published text.
-
-- **Behavior and target policy.** Section 5.5: the policy being learned about is the target policy, the policy that generates behavior is the behavior policy, and learning from data off the target policy is off-policy learning. On-policy methods are the special case where the two are the same. The book also says that off-policy data can come from a non-learning controller or a human expert. This is why the article does not tie the term to replay.
-- **Sarsa.** Section 6.4 gives the update with the action taken next. It converges with probability 1 to an optimal policy under the usual step-size conditions, if every state-action pair is visited infinitely often and the policy converges in the limit to the greedy policy. My runs keep the random moves at one in ten, so that condition is not met and they illustrate the book's on-policy compromise, not its convergence result.
-- **Q-learning and the cliff.** Section 6.5 and Example 6.6: Q-learning learns the values of the optimal policy, and its online performance is worse than that of Sarsa, which learns the longer but safer path through the upper part of the grid. If the random-move rate were gradually reduced, both would asymptotically converge to the optimal policy. Exercise 6.12 asks whether Q-learning is Sarsa when action selection is greedy. I did not use it.
-- **Expected Sarsa.** Section 6.6: it uses the expected value over next actions under the policy. In the cliff results it was used on-policy. If the target policy is greedy while the behavior is exploratory, it is exactly Q-learning.
-- **Function approximation.** Section 9.4: for on-policy training with a linear formula, semi-gradient TD(0) converges to the TD fixed point. The text near Eq. 9.14 says one-step semi-gradient action-value methods such as semi-gradient Sarsa(0) converge to an analogous fixed point and bound, with technical conditions that it omits. I did not read the proofs. The statement that the game's network differs (nonlinear, with a changing policy) is a description of the game, not a diagnosis.
-- **The deadly triad.** Section 11.3 names it. The article only points to it.
-- **My reading, not the book's.** The sentence that the Sarsa number ranks the edge lower because it counts the falls from random moves is the book's explanation applied to my tables. I checked the order of the numbers, not the mechanism alone.
-
-</details>
-
-<details>
-<summary>Exact numbers: falls, routes, cell values and the network arm</summary>
-
-All numbers come from the saved results of the game's own `RLA.run` code at commit [681cae3](https://github.com/Hadrien-Cornier/breaking-bellman/tree/681cae3820f05f8604d212c0ab048ebf0e017e73) with the settings of the level "Falling while learning". I recomputed each from the raw records. This is not a new experiment.
-
-**Setup.** A cliff grid of 4 rows and 12 columns, a step costs 1, a fall costs 100 and sends the robot to the start, a walk ends at 200 steps. A table, step size 0.5, discount 0.99, random moves with probability 0.1 (the "no random moves" arms set it off), 10,000 steps, 20 seeds (101 to 2020 in steps of 101). The cliff cells are the bottom row from column 2 to column 11, and the best route has a discounted value of -12.2479.
-
-**Falls while learning.** Falls per walk over the walks that ended in the second half of the 10,000 steps, pooled over the 20 runs:
-
-| Learner | Falls per walk (pooled) | Mean of the 20 per-run values | Walks counted |
-| --- | --- | --- | --- |
-| Q-learning | 0.318 | 0.319 | 5,904 |
-| Sarsa | 0.061 | 0.067 | 4,029 |
-| Expected Sarsa | 0.038 | 0.038 | 5,801 |
-| Q-learning, no random moves | 0.000 | 0.000 | 7,691 |
-| Sarsa, no random moves | 0.000 | 0.000 | 7,695 |
-
-The game's own summary field gives 0.30, 0.10 and 0.00 for the first three rows. It uses the last half of the walks by count and not the second half of the steps, and I did not trace the rest of the difference. Part 2 uses the pooled values above.
-
-**Score and routes.** The score is the mean of the last quarter of the test points of each run (10 of 40), then the mean and sample standard deviation over the 20 runs. The route is the final greedy test of each run.
-
-| Learner | Score | Final tests that reach the flag | Route length and row |
-| --- | --- | --- | --- |
-| Q-learning | -13.0 ± 0.0 | 20 of 20 | 13 steps, row next to the cliff |
-| Sarsa | -82.1 ± 47.3 | 12 of 20 | 17 steps (11 runs) or 19 steps (1 run), top row |
-| Expected Sarsa | -15.0 ± 0.0 | 20 of 20 | 15 steps, second row |
-| Q-learning, no random moves | -13.0 ± 0.0 | 20 of 20 | 13 steps, row next to the cliff |
-| Sarsa, no random moves | -13.0 ± 0.0 | 20 of 20 | 13 steps, row next to the cliff |
-
-The 8 Sarsa runs that did not reach the flag took no fall in the test. Their final positions and the number of distinct cells visited differ from run to run (from 1 to 14 cells). I did not examine why.
-
-**Largest number in a cell, mean over the 20 finished tables** (min to max across runs in brackets). Column 6 counts from 1, so the middle of the grid. Discounted values.
-
-| Cell | Q-learning | Sarsa | Expected Sarsa | Sarsa, no random moves |
-| --- | --- | --- | --- | --- |
-| Start | -12.25 (all runs) | -19.88 (-25.17 to -17.18) | -16.06 | -12.25 |
-| Row next to the cliff | -6.79 (all runs) | -14.02 (-25.14 to -8.98) | -9.86 | -6.79 |
-| Second row | -7.73 | -13.34 (-21.51 to -10.09) | -8.86 | -7.26 |
-| Top row | -8.17 | -11.92 (-22.08 to -9.19) | -9.25 | -7.42 |
-
-The Sarsa numbers vary a lot between runs. The order edge below top row holds on the mean, and I did not count in how many runs it holds.
-
-**The network arm.** One-step updates on a live network, no memory and no frozen copy, 20,000 steps, 5 seeds (101 to 505). The score is the greedy policy's undiscounted reward over its first 200 counted steps, averaged over 3 test episodes and the last quarter of test points. The largest estimate is at the last test point.
-
-| Arm | Target | Score | Largest estimate at the end (per run) |
-| --- | --- | --- | --- |
-| `explode-naive-net` | max (Q-learning) | 9.4 ± 0.2 | 2.1 million (median), 2.08 to 2.42 million |
-| `net-sarsa` | action taken next (Sarsa) | 9.4 ± 0.2 | 0.92 million (median), 0.80 to 1.90 million |
-| `net-sarsa-replay` | action taken next, with replay | 70.0 ± 30.5 | 263 (median), 67 to 1,780 |
-
-The two arms without replay used the same data mode (latest move), the same random-move schedule (1.0 down to 0.05 over 5,000 steps) and the same budget. Their different target rules make different policies, so the runs gathered different trajectories. The third arm uses stored moves whose next actions came from older behavior, so the Sarsa target there no longer describes the current robot. I did not test whether that explains its result. The discounted return in this world is bounded above by 100 (reward 1 per step at discount 0.99, the sum of 0.99 to the power k over all steps). It is an upper bound for the discounted return, not a value that a capped episode attains. Part 2 reports a largest estimate near 2 million for the Sarsa network, which is the highest of the five runs at the end. The median is lower.
-
-**Limits.** The cliff arms use 20 seeds and one setting. I did not tune the step size (0.5) or test any other random-move rate or a shrinking one.
-
-</details>
-
-<details>
-<summary>How the clips were made</summary>
-
-Each clip is a real recorded run drawn by a real browser with the game's own `web/scenes.js` at the same commit, unmodified, using the game's own sprites and fonts. I replaced only the clock, so that the scene runs at a fixed 30 frames per second, and I encoded the frames with ffmpeg (H.264). The Q-learning clip is the one from part 2: seed 202, the first walk, the last recorded training walk (one fall) and the final test. The Sarsa clip is the same layout for seed 101: the first walk (9 falls), the last recorded training walk (no fall) and the final test (17 steps). The seeds differ. In seed 101 Sarsa takes the top route, as 12 of the 20 runs do. The falls per walk in the text come from all 20 runs, not from the clips. The run script and raw results are stored locally and are not published.
-
-</details>
-
-<script src="/assets/robotics/rl/rl-videos.js" defer></script>
+</div>
+<script src="/assets/robotics/rl/canvas.js" defer></script>
