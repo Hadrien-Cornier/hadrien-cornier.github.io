@@ -72,6 +72,18 @@
     "url": "/robotics/rl-5-the-deadly-triad/"
   },
   {
+    "title": "Why can't robots remember?",
+    "description": "Many robot policies decide from the last few frames. A snapshot of six ways to give them memory in October 2026, what each one stores, and what has been measured.",
+    "tags": [
+      "robot-memory",
+      "long-horizon",
+      "navigation",
+      "vla"
+    ],
+    "date": "2026-10-19",
+    "url": "/robotics/why-cant-robots-remember/"
+  },
+  {
     "title": "Recipes for choosing a learning target",
     "description": "Rules of thumb for a reinforcement learning target: freeze, take a second estimate, or take the minimum, and why the combinations table is one reading, not a law.",
     "tags": [
