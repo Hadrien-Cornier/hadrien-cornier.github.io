@@ -10,13 +10,13 @@ draft: false
 layout: essay
 ---
 
-**Do I need an answer that changes less, or an answer that shares fewer of my errors?** That question decides what scores a learning target. The [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) combinations table measured the choices; here are the recipes I use, each with one number.
+**Do I need an answer that changes less, or an answer that shares fewer of my errors?** The answer helps decide what scores a learning target. The [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) combinations table measured these choices. Here are the recipes I use, with a number to illustrate each one.
 
 <figure class="article-figure target-recipes-drawing"><a class="figure-link" href="/assets/robotics/rl/learning-target-recipes.svg" aria-label="Open the full learning-target drawing"><img src="/assets/robotics/rl/learning-target-recipes.svg" width="1080" height="760" alt="Four target scorers, their scores for the same action, and a GAE credit calculation." style="display:block;width:100%;height:auto"></a><figcaption>A frozen copy slows change; a second estimate separates errors. GAE blends credit across return lengths.</figcaption></figure>
 
 ## Two dials
 
-A **target** is the reference value an update moves toward. Its scorer sits on two dials: **how fast it changes**, and **how much it shares the selector's errors**. The game's four scorers take four positions:
+A **target** is the reference value an update moves toward. There are two dials for the estimate that scores it: **how fast it changes**, and **how much it shares the selector's errors**. Here is where the game's four scorers sit:
 
 | `scored by` | Changes | Shares the selector's errors |
 |---|---|---|
@@ -25,17 +25,17 @@ A **target** is the reference value an update moves toward. Its scorer sits on t
 | `Scored by a second estimate` | when it learns | fewer (separate updates) |
 | `The smaller of live and second` | when either learns | fewer, and lowered by construction |
 
-A frozen copy addresses change over time. A second estimate addresses shared errors. Neither guarantees accuracy.
+A frozen copy addresses change over time, while a second estimate addresses shared errors. Neither guarantees accuracy.
 
 ## The recipes
 
 ### Freeze when the target changes too fast
 
-A frozen copy changes only at refresh: one stored guess that rises from 10 to 14 still scores 10 until the next refresh.
+A frozen copy changes only when it is refreshed. If the live guess rises from 10 to 14, the stored copy still scores 10 until the next refresh.
 
 ### Take a second estimate when over-estimates win
 
-If the learner repeatedly trusts actions because of over-estimates, a frozen copy preserves the error it froze; a second estimate can escape it. True values are 10 and 10.
+If the learner keeps trusting actions because of over-estimates, a frozen copy preserves the error it froze. A second estimate can escape that error. In this example, the true values are 10 and 10.
 
 | Estimate | Left | Right |
 |---|---:|---:|
@@ -43,25 +43,25 @@ If the learner repeatedly trusts actions because of over-estimates, a frozen cop
 | `A frozen copy` | 13 | 8 |
 | `Scored by a second estimate` | 9 | 11 |
 
-Live selects Left by its error. Frozen scores that pick at 13: the same error. Second scores it at 9.
+The live estimate selects Left because it over-estimates its value. The frozen copy still scores that choice too high, at 13, while the second estimate scores it at 9.
 
 ### The minimum lowers the target
 
-The smaller of live and second takes the lower number. It helps when over-estimates drive bad choices and hurts when estimates are already accurate. With live 14 and second 9, the target becomes 9.
+Taking the smaller of live and second gives the lower number, so live 14 and second 9 produce a target of 9. This helps when over-estimates drive bad choices and hurts when estimates are already accurate.
 
 ### Blend the return lengths instead of picking one
 
-These recipes choose who scores the target. A target also chooses how far its return looks. That is the short-versus-long return tradeoff. A one-step target reads the value estimate just after the move. A full-return target waits for every reward in the episode. A short return leans on a guess that can be biased. A long return carries every reward and the noise with it.
+These recipes choose who scores the target, but there is also a choice about how far its return looks. A one-step target uses the value estimate just after the move, while a full-return target waits for every reward in the episode. That is the tradeoff between short and long returns: a short return leans on a guess that can be biased, and a long return carries every reward and the noise with it.
 
-**Generalized advantage estimation (GAE)** is the recipe for that choice. It estimates how much credit one action earned by mixing the errors from many return lengths at once. Each error is `reward + gamma V(next) - V(now)`, the gap a reward opens in the value estimate. GAE adds them as `delta + gamma lambda delta_next + ...`, so each later error carries one more factor of `gamma lambda`. GAE scores action credit. That is a different job from PPO's clip, which limits the incentive to change the policy and is not a hard step bound.
+**Generalized advantage estimation (GAE)** handles that choice by mixing the errors from many return lengths to estimate how much credit one action earned. Each error is `reward + gamma V(next) - V(now)`, the gap a reward opens in the value estimate. GAE adds them as `delta + gamma lambda delta_next + ...`, so each later error carries one more factor of `gamma lambda`. This estimates action credit. PPO's clip has a different job: it limits the incentive to change the policy, without imposing a hard step bound.
 
-Three moves pay 0, 0, 4, and frozen values run 2, 2, 1, 0. The errors are 0, -1, 3, so at lambda 0.5 the first move earns 0 - 0.5 + 0.75 = 0.25. Lambda is a decay factor, not a split: 0.95 is not 95 percent full return and 5 percent one step. At `lambda = 0` this is the one-step estimate. At `lambda = 1` it is the full return minus the starting value, when the episode really ends.
+Suppose three moves pay 0, 0, 4, and the frozen values are 2, 2, 1, 0. The errors are 0, -1, 3, so at lambda 0.5 the first move earns 0 - 0.5 + 0.75 = 0.25. Lambda controls the decay: 0.95 does not mean 95 percent full return and 5 percent one step. At `lambda = 0`, this is the one-step estimate. At `lambda = 1`, it is the full return minus the starting value, provided the episode really ends.
 
 ### The table is one reading, not a law
 
-The mechanism is general: a minimum lowers the target. The evidence is thin: scored by a frozen copy, the frozen chooser made **159.1 ± 5.2** against **147.5 ± 22.0** for the live chooser, and three seeds do not establish a winner. One environment, one settings row, one seed set; elsewhere the best cell could be in the bottom row or the last column.
+Taking a minimum lowers the target. That mechanism is general, but the evidence here is thin. When scored by a frozen copy, the frozen chooser made **159.1 ± 5.2**, compared with **147.5 ± 22.0** for the live chooser. Three seeds do not establish a winner. These results cover one environment, one settings row, and one seed set. Elsewhere, the best cell could be in the bottom row or the last column.
 
-**A stable target can still be wrong; a less biased target can still produce unstable learning.** Each recipe chooses which error to accept.
+**A stable target can still be wrong, and a less biased target can still produce unstable learning.** Each recipe chooses which error to accept.
 
 <details>
 <summary>GAE: the formula, the boundaries, and the source</summary>
