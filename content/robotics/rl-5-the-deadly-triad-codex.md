@@ -187,7 +187,141 @@ An estimate beyond this range is wrong for the specified discounted task. A fini
 - **Targets:** identify when labels change and where gradients stop.
 - **Scope:** linear prediction and tabular convergence results require their stated conditions.
 
-Across the series, values connect late rewards to earlier choices. The triad matters because sharing that credit can also share an error, then turn it into the next target. [Return to the method map](/robotics/rl-0-overview-codex/).
+
+<details>
+<summary>The three pairs: detailed stability arguments and conditions</summary>
+
+Each pair below has a particular stable construction under stated assumptions. They explain why removing one source of feedback can help. The deadly triad names a risk when all three ingredients are present; it is not a rule that every pair is safe or every triple diverges.
+
+<figure><img src="/assets/robotics/rl-codex/deadly-triad.svg" alt="Three ingredients around a feedback loop, with a stable construction for each pair" loading="lazy"><figcaption>Shared predictions, guessed targets and off-policy data can reinforce an error. Each pair has a different stability argument.</figcaption></figure>
+
+In the equations below, $t$ is the time step; $S_t$ and $A_t$ are the state and action; $R_{t+1}$ is the next reward. The target policy $\pi(a\mid s)$ gives the probability of action $a$ in state $s$; $b(a\mid s)$ is the policy that collected the data. The discount is $0\leq\gamma<1$ and $\alpha_t>0$ is a learning step size. A superscript $+$ means the next parameter or table value.
+
+<div class="dt-pairs">
+<section class="dt-worked" id="dt-pair-1">
+
+### 1 · Approximation + bootstrapping
+
+**Learn a fixed policy's values with on-policy linear TD.** A fixed feature vector $\phi(s)$ describes state $s$; the weights $w$ produce $v_w(s)=\phi(s)^\top w$. The superscript $\top$ means transpose. Let $\delta_t$ be the TD error, and let $w^+$ denote the updated weights. One observed transition gives this update:
+
+$$
+\begin{aligned}
+\delta_t &= R_{t+1}+\gamma v_w(S_{t+1})-v_w(S_t),\\
+w^+ &= w+\alpha_t\delta_t\phi(S_t).
+\end{aligned}
+$$
+
+Why can this settle down? For a candidate value vector $v$, let $T^\pi$ be the Bellman prediction operator:
+
+$$
+(T^\pi v)(s)=\mathbb E_\pi[
+R_{t+1}+\gamma v(S_{t+1})\mid S_t=s].
+$$
+
+The expectation uses the fixed target policy and the environment's transition probabilities. Let $D$ put its stationary state probabilities $d(s)$ on the diagonal; $\|x\|_D^2=\sum_s d(s)x(s)^2$ weights a value vector $x$ by those probabilities. Let $\Pi$ be least-squares projection onto the space spanned by the fixed features, using those same weights. For value vectors $v$ and $u$:
+
+$$
+\|\Pi T^\pi v-\Pi T^\pi u\|_D
+\leq\gamma\|v-u\|_D.
+$$
+
+On-policy averaging cannot enlarge this norm; neither can the orthogonal projection. Multiplying by $\gamma<1$ makes the combined map a contraction, with one projected fixed point $v=\Pi T^\pi v$. **TD's sampled weight update is not literally repeated projection.** Under the conditions below, it converges to that same projected solution. [Tsitsiklis and Van Roy, Sections IV and VII](https://web.mit.edu/~jnt/www/Papers/J063-97-bvr-td.pdf).
+
+**Add off-policy sampling:** projection may now weight states by the behavior distribution, while the Bellman target follows $\pi$. The matched-norm argument can fail. The two-state example earlier in this article shows the resulting feedback.
+
+**Read the bound:** if two candidate value vectors are distance 2 apart and $\gamma=0.9$, one projected Bellman map leaves them at most 1.8 apart. It compares two whole predictions under the same policy and state weighting. It does not say every noisy TD sample improves its estimate.
+
+<details class="dt-conditions">
+<summary>Conditions behind this prediction result</summary>
+<p>This is a fixed-policy prediction result. A finite irreducible, aperiodic chain supplies a stationary distribution and repeated on-policy visits. Rewards are bounded, the discount is below 1, and the fixed feature columns are linearly independent.</p>
+<p>Positive diminishing learning rates have infinite sum and finite squared sum: they retain enough total adjustment while suppressing persistent sampling noise. These assumptions support the linear result cited above; they do not cover arbitrary neural networks or a changing control policy.</p>
+</details>
+</section>
+<section class="dt-worked" id="dt-pair-2">
+
+### 2 · Approximation + off-policy
+
+**Wait for the complete return, then fit fixed targets.** Let $H$ be the terminal time, $k$ index future steps, $G_t$ be the full discounted return and $\rho_t$ be the trajectory weight correcting behavior $b$ to target policy $\pi$. The product $\prod$ multiplies the action-probability ratios along that recorded future. Its return and importance weight are
+
+$$
+\begin{aligned}
+G_t &= \sum_{k=0}^{H-t-1}\gamma^k R_{t+k+1},\\
+\rho_t &= \prod_{k=t}^{H-1}
+\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}.
+\end{aligned}
+$$
+
+Crucially, $G_t$ contains **rewards, not a guessed future value**. Freeze the recorded data. For example $i$, use its corrected return $y_i=\rho_i G_i$ as the label; here $G_i$ and $\rho_i$ mean the return and weight for that recorded starting point. Let $y$ stack these labels, and let row $i$ of the feature matrix $X$ be $\phi(s_i)^\top$, with $s_i$ the example's starting state. Let $\eta>0$ be the batch step size; $X^\top$ is the transposed feature matrix. Batch gradient descent is
+
+$$
+w^+=w-\eta X^\top(Xw-y).
+$$
+
+The Euclidean norm $\|\cdot\|_2$ measures vector length. The fixed squared-error loss is $L(w)=\tfrac12\|Xw-y\|_2^2$. Let $w_*$ be its empirical minimizer, $\succ0$ mean positive definite, and $^{-1}$ mean matrix inverse. If $X$ has full column rank,
+
+$$
+X^\top X\succ0
+\quad\Longrightarrow\quad
+w_*=(X^\top X)^{-1}X^\top y.
+$$
+
+Full rank gives one empirical least-squares minimizer. Choose $\eta$ below 2 divided by the largest eigenvalue of $X^\top X$: then the error in each curvature direction shrinks. The labels stay fixed while the weights move. Rank-deficient data need not have a unique fit. This is a well-posed regression argument, not a blanket convergence claim for off-policy Monte Carlo. [Sutton and Barto, published second edition, §§5.5 and 9.2](http://incompleteideas.net/book/RLbook2020.pdf).
+
+**Add bootstrapping:** replace the complete return with a target containing $v_w$ at a future state. Now the labels move with $w$. Treating them as constants during each update no longer gives gradient descent on the fixed regression above.
+
+**One fixed label:** take one feature equal to 1 and a corrected return label of 2. The loss is $(w-2)^2/2$. With batch step size $\eta=0.5$, weights $0,1,1.5,1.75$ approach 2 because the label stays 2. Bootstrapping would let that destination move with the predictions.
+
+<details class="dt-conditions">
+<summary>Conditions behind this regression example</summary>
+<p>Freeze the target and behavior policies, linear features and recorded data. Use independent finite-horizon episodes with bounded rewards and features. Behavior must cover the target actions and the starting states whose values are being fitted; corrected labels need finite variance for statistical claims.</p>
+<p>Full column rank gives a unique empirical fit. The batch step-size bound stated above makes optimization approach it. Finite data need not recover the true target-policy value; large importance weights can make that statistical estimate poor.</p>
+</details>
+</section>
+<section class="dt-worked" id="dt-pair-3">
+
+### 3 · Bootstrapping + off-policy
+
+**Keep a separate table entry for every state-action pair.** Let $Q$ be the action-value table. In a transition $(s,a,r,s')$, $s$ and $a$ are the state and action, $r$ the reward and $s'$ the next state; $a'$ ranges over next actions. Tabular Q-learning updates just one entry:
+
+$$
+\begin{aligned}
+Q^+(s,a)=Q(s,a)+\alpha_t\big[&r+\gamma\max_{a'}Q(s',a')\\
+&-Q(s,a)\big].
+\end{aligned}
+$$
+
+All other entries stay unchanged. For any candidate table $q$, its expected target is the Bellman optimality operator $T_*$:
+
+$$
+(T_*q)(s,a)=\mathbb E\!\left[
+ r+\gamma\max_{a'}q(s',a')\mid s,a\right].
+$$
+
+The expectation averages the environment's rewards and transitions. The max norm $\|x\|_\infty=\max_{s,a}|x(s,a)|$ is the largest absolute entry of a table $x$. For two candidate tables $q$ and $u$,
+
+$$
+\|T_*q-T_*u\|_\infty
+\leq\gamma\|q-u\|_\infty.
+$$
+
+Taking a maximum and averaging cannot amplify the largest entrywise difference; discounting shrinks it. Thus $T_*$ has one fixed point, the optimal table. With enough visits and suitable step sizes, sampled Q-learning reaches it. [Watkins and Dayan's convergence theorem](https://www.gatsby.ucl.ac.uk/~dayan/papers/cjch.pdf).
+
+**Add function approximation:** a weight update can also change other states' values, including a value in the bootstrap target. The tabular Bellman operator still contracts, but that alone does not control the added shared fitting step. Its guarantee does not transfer to an arbitrary approximator.
+
+**Two separate entries:** if the successor maximum is 5, the reward is 0 and $\gamma=0.9$, the target is 4.5. Moving a predecessor from 2 toward 4.5 leaves the successor at 5 during that update. A shared weight can move both; a table entry cannot.
+
+<details class="dt-conditions">
+<summary>Conditions behind tabular convergence</summary>
+<p>The task is a finite Markov decision process with fixed transition and reward laws, bounded rewards and discount below 1. Every nonterminal state-action pair must receive infinitely many updates.</p>
+<p>Each pair's positive learning rates are at most 1, have infinite sum and finite squared sum. A replay buffer omitting a pair fails the visit assumption; a constant noisy step size fails the shrinking-step assumption. The theorem cited above concerns the resulting infinite update sequence, not a finite successful route.</p>
+</details>
+</section>
+
+</div>
+
+</details>
+
+Across the series, values connect late rewards to earlier choices. The triad matters because sharing that credit can also share an error, then turn it into the next target. [Return to the method tree](/robotics/rl-1-q-learning-codex/#sec-tree), or [the opening problems](/robotics/rl-0-overview-codex/).
 
 </div>
 </div>
