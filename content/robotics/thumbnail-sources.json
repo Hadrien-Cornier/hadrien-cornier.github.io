@@ -13,5 +13,12 @@
   "/assets/robotics/thumbnails/so101-8-measuring-the-tool-in-3d.jpg": "/assets/robotics/so101-series/arm-reach-overhead-poster.jpg",
   "/assets/robotics/thumbnails/so101-pen-holder.jpg": "/assets/robotics/so101-pen-holder/design5-on-arm.png",
   "/assets/robotics/thumbnails/what-information-can-a-reinforcement-learner-use.jpg": "/assets/robotics/what-information-can-a-reinforcement-learner-use/sentence-words.png",
-  "/assets/robotics/thumbnails/why-i-am-learning-robotics.jpg": "/assets/robotics/why-robotics/openvla-architecture.png"
+  "/assets/robotics/thumbnails/why-i-am-learning-robotics.jpg": "/assets/robotics/why-robotics/openvla-architecture.png",
+  "/assets/robotics/rl/rl-0-overview-whole.svg": "/robotics/rl-0-overview/#rc",
+  "/assets/robotics/rl/rl-1-q-learning-whole.svg": "/robotics/rl-1-q-learning/#rc",
+  "/assets/robotics/rl/rl-2-bootstrapping-whole.svg": "/robotics/rl-2-bootstrapping/#rc",
+  "/assets/robotics/rl/rl-3-function-approximation-whole.svg": "/robotics/rl-3-function-approximation/#rc",
+  "/assets/robotics/rl/rl-4-on-policy-and-off-policy-whole.svg": "/robotics/rl-4-on-policy-and-off-policy/#rc",
+  "/assets/robotics/rl/rl-5-the-deadly-triad-whole.svg": "/robotics/rl-5-the-deadly-triad/#rc",
+  "/assets/robotics/rl/learning-target-recipes.svg": "/assets/robotics/rl/learning-target-recipes.svg"
 }

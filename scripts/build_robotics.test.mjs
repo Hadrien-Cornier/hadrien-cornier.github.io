@@ -241,7 +241,7 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
     assert.match(listingBlock, /report-part">Part 2</);
     assert.doesNotMatch(listing + home, /Unpublished part/);
     assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\n---\nBody.`), /part is required/);
-    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\npart: 0\n---\nBody.`), /positive integer/);
+    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\npart: -1\n---\nBody.`), /non-negative integer/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 
@@ -315,7 +315,7 @@ test('redirects write small moved pages, survive cleanup, and reject bad targets
     fs.mkdirSync(sourceDir, {recursive:true});
     writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
     writeFixture(path.join(sourceDir, 'new-home.md'), frontmatter + '## Moved section\n\nText.');
-    writeFixture(path.join(sourceDir, 'redirects.json'), JSON.stringify({'old-home':'/robotics/new-home/#moved-section'}));
+    writeFixture(path.join(sourceDir, 'redirects.json'), JSON.stringify({'old-home':'/robotics/new-home/#moved-section', 'old-root':'/robotics/new-home/'}));
     build(root);
     const page = fs.readFileSync(path.join(root, 'robotics/old-home/index.html'), 'utf8');
     assert.match(page, /http-equiv="refresh" content="0; url=\/robotics\/new-home\/#moved-section"/);
@@ -323,6 +323,7 @@ test('redirects write small moved pages, survive cleanup, and reject bad targets
     assert.doesNotMatch(fs.readFileSync(path.join(root, 'sitemap.xml'), 'utf8'), /old-home/);
     build(root);
     assert.ok(fs.existsSync(path.join(root, 'robotics/old-home/index.html')), 'a second build must keep the redirect');
+    assert.match(fs.readFileSync(path.join(root, 'robotics/old-root/index.html'), 'utf8'), /location\.replace\("\/robotics\/new-home\/" \+ location\.hash\)/);
     for (const bad of [{'new-home':'/robotics/new-home/'}, {'old-home':'https://example.com/'}, {'old-home':'/robotics/missing/'}]) {
       writeFixture(path.join(sourceDir, 'redirects.json'), JSON.stringify(bad));
       assert.throws(() => build(root), /Redirect/);
@@ -485,5 +486,21 @@ test('different generated thumbnails cannot conceal a shared original source', (
     fs.copyFileSync(new URL('./fixtures/thumbnail.svg', import.meta.url), path.join(root, 'assets/robotics/thumbnails/two.svg'));
     writeFixture(path.join(dir, 'two.md'), frontmatter.replace('/assets/fixture-thumbnail.svg', '/assets/robotics/thumbnails/two.svg') + 'Body.');
     assert.throws(() => build(root), /two\.md: generated thumbnail needs original source/);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});
+
+// An overview is part zero; its neighbours must still be ordered numerically.
+test('a series can begin with part zero', () => {
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-zero-'));
+  try {
+    const dir = path.join(root, 'content/robotics');
+    fs.mkdirSync(dir, {recursive:true});
+    writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    for (const part of [2, 0, 1]) writeFixture(path.join(dir, `part-${part}.md`), frontmatter.replace('Test report', `Part ${part}`).replace('---\n\n', `series: RL\npart: ${part}\n---\n\n`) + 'Body.');
+    build(root);
+    const page = fs.readFileSync(path.join(root, 'robotics/part-0/index.html'), 'utf8');
+    assert.match(page, /Part 0 of 2/);
+    assert.match(page, /rel="next" href="\/robotics\/part-1\//);
+    assert.doesNotMatch(page, /rel="prev"/);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });

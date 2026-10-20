@@ -26,7 +26,7 @@ export function dateValue(value, field) {
 }
 function validateSeriesMetadata(data) {
   if (data.series !== undefined && (typeof data.series !== 'string' || !data.series.trim())) throw new Error('series must be a non-empty string');
-  if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 1)) throw new Error('part must be a positive integer');
+  if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 0)) throw new Error('part must be a non-negative integer');
   if (data.series && data.part === undefined) throw new Error('part is required when series is set');
   if (data.track !== undefined && !TRACKS[data.track]) throw new Error(`track must be one of: ${Object.keys(TRACKS).join(', ')}`);
   if (data.track !== undefined && !data.series) throw new Error('track requires series');
@@ -259,7 +259,7 @@ function seriesBox(article) {
     : `<li class="series-part${trackClass(part)}"><a href="/robotics/${part.slug}/">${escape(part.title)}</a>${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`).join('');
   const previous = article.seriesPrevious ? `<a rel="prev" href="/robotics/${article.seriesPrevious.slug}/">← Previous: ${escape(article.seriesPrevious.title)}</a>` : '';
   const next = article.seriesNext ? `<a rel="next" href="/robotics/${article.seriesNext.slug}/">Next: ${escape(article.seriesNext.title)} →</a>` : '';
-  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${(article.seriesArticles.some((part) => part.part === 0) ? Math.max(...article.seriesArticles.map((part) => part.part)) : article.seriesArticles.length)}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
 function articlePage(article, root) {
   const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
@@ -417,7 +417,7 @@ function redirectPage(target) {
   return `<!doctype html>
 ${GENERATED_MARKER}
 <html lang="en"><head><meta charset="utf-8"><title>Moved</title><meta name="robots" content="noindex"><link rel="canonical" href="${url}"><meta http-equiv="refresh" content="0; url=${escape(target)}">
-<script>location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')});</script></head>
+<script>location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')}${target.includes('#') ? '' : ' + location.hash'});</script></head>
 <body><p>This article moved to <a href="${escape(target)}">${url}</a>.</p></body></html>
 `;
 }

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 680" role="img" aria-labelledby="dt-title dt-desc">
+<title id="dt-title">The deadly triad: three useful ingredients, one dangerous feedback loop</title>
+<desc id="dt-desc">Function approximation shares predictions. Bootstrapping learns before an episode ends. Off-policy learning reuses behavior data for a target policy. Green numbered edges refer to three stable pair examples with assumptions in the article. Red arrows combine all three: shared estimates can feed their own targets and grow without bound. The rising curve shows estimates increasing while true value stays finite.</desc>
+<defs><marker id="dt-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10" fill="none" stroke="#b44c2c" stroke-width="1.5"/></marker></defs>
+<rect width="620" height="680" fill="#f5f4ed"/>
+<g fill="none" stroke="#49724e" stroke-width="2.4" stroke-linecap="round"><path d="M210 96 Q151 112 142 180 M410 96 Q468 113 478 180 M142 284 Q308 355 478 284"/></g>
+<g fill="none" stroke="#b44c2c" stroke-width="2.5" stroke-dasharray="5 4" marker-end="url(#dt-arrow)"><path d="M310 104 Q308 234 310 375"/><path d="M154 284 Q160 342 205 375"/><path d="M466 284 Q460 343 415 375"/></g>
+<path d="M166 15 Q310.0 12 455 15 L454 104 Q310.0 106 165 103 Z" fill="#e4eef4" stroke="#242622" stroke-width="2" stroke-linejoin="round"/>
+<text x="310" y="44" text-anchor="middle" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700">
+<tspan x="310" dy="0">Function approximation</tspan>
+</text>
+<text x="310" y="72" text-anchor="middle" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="17">
+<tspan x="310" dy="0">Share / generalize</tspan>
+<tspan x="310" dy="22.1">across related states</tspan>
+</text>
+<path d="M15 183 Q153.0 180 292 183 L291 284 Q153.0 286 14 283 Z" fill="#e4eef4" stroke="#242622" stroke-width="2" stroke-linejoin="round"/>
+<text x="153" y="212" text-anchor="middle" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700">
+<tspan x="153" dy="0">Bootstrapping</tspan>
+</text>
+<text x="153" y="240" text-anchor="middle" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="17">
+<tspan x="153" dy="0">Learn before complete returns</tspan>
+<tspan x="153" dy="22.1">Use a guess in the target</tspan>
+</text>
+<path d="M329 183 Q467.0 180 606 183 L605 284 Q467.0 286 328 283 Z" fill="#e4eef4" stroke="#242622" stroke-width="2" stroke-linejoin="round"/>
+<text x="467" y="212" text-anchor="middle" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="700">
+<tspan x="467" dy="0">Off-policy learning</tspan>
+</text>
+<text x="467" y="240" text-anchor="middle" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="17">
+<tspan x="467" dy="0">Reuse behavior data</tspan>
+<tspan x="467" dy="22.1">for a different target policy</tspan>
+</text>
+<rect x="60" y="118" width="166" height="46" rx="5" fill="#f5f4ed"/>
+<text x="143" y="135" text-anchor="middle" fill="#49724e" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700">
+<tspan x="143" dy="0">1 · Linear TD</tspan>
+</text>
+<rect x="394" y="118" width="166" height="46" rx="5" fill="#f5f4ed"/>
+<text x="477" y="135" text-anchor="middle" fill="#49724e" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700">
+<tspan x="477" dy="0">2 · Monte Carlo</tspan>
+</text>
+<rect x="227" y="315" width="166" height="46" rx="5" fill="#f5f4ed"/>
+<text x="310" y="332" text-anchor="middle" fill="#49724e" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700">
+<tspan x="310" dy="0">3 · Table Q-learning</tspan>
+</text>
+<text x="310" y="365" text-anchor="middle" fill="#49724e" font-family="Arial,Helvetica,sans-serif" font-size="15">
+<tspan x="310" dy="0">Pairs: stable examples under assumptions below</tspan>
+</text>
+<path d="M151 381 Q310 376 469 381 L468 443 Q310 446 150 442 Z" fill="#f6e5e0" stroke="#b44c2c" stroke-width="2"/>
+<text x="310" y="406" text-anchor="middle" fill="#b44c2c" font-family="Arial,Helvetica,sans-serif" font-size="21" font-weight="700">
+<tspan x="310" dy="0">ALL THREE: can diverge</tspan>
+</text>
+<text x="310" y="431" text-anchor="middle" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="17">
+<tspan x="310" dy="0">Shared guesses feed their own targets</tspan>
+</text>
+<path d="M310 445 L310 468" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#dt-arrow)"/>
+<path d="M96 491 L96 618 L535 618" fill="none" stroke="#656b62" stroke-width="1.8"/><path d="M105 609 Q175 607 225 595 T325 556 Q380 519 418 487" fill="none" stroke="#b44c2c" stroke-width="3" marker-end="url(#dt-arrow)"/><path d="M98 601 L531 601" fill="none" stroke="#656b62" stroke-width="1.4" stroke-dasharray="4 5"/>
+<text x="310" y="488" text-anchor="middle" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700">
+<tspan x="310" dy="0">A possible failure: values grow without bound</tspan>
+</text>
+<text x="105" y="530" text-anchor="start" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="15">
+<tspan x="105" dy="0">estimated</tspan>
+<tspan x="105" dy="19.5">value</tspan>
+</text>
+<text x="530" y="641" text-anchor="end" fill="#242622" font-family="Arial,Helvetica,sans-serif" font-size="16">
+<tspan x="530" dy="0">learning updates →</tspan>
+</text>
+<text x="443" y="589" text-anchor="middle" fill="#656b62" font-family="Arial,Helvetica,sans-serif" font-size="15">
+<tspan x="443" dy="0">true value stays finite</tspan>
+</text>
+<text x="310" y="666" text-anchor="middle" fill="#656b62" font-family="Arial,Helvetica,sans-serif" font-size="16">
+<tspan x="310" dy="0">Estimates rise while true value stays finite</tspan>
+</text>
+</svg>

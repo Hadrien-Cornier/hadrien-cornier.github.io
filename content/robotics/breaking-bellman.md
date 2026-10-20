@@ -45,7 +45,7 @@ Replay slowed the explosion down. The frozen copy stopped it.
 
 All numbers come from the game's own engine and are logged in [the experiment log](https://github.com/Hadrien-Cornier/breaking-bellman/blob/main/EXPERIMENTS.md). They are simulations of toy worlds.
 
-For the trade-offs behind these settings, see [Observations and estimates in reinforcement learning](/robotics/what-information-can-a-reinforcement-learner-use/). It covers the weight of new data, return length, and the source of a continuation estimate.
+For the trade-offs behind these settings, see [Recipes for choosing a learning target](/robotics/recipes-for-choosing-a-learning-target/). It covers frozen copies, second estimates, minimum targets and return-length blending.
 
 ## The dog that learned to sit
 
