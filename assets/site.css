@@ -197,7 +197,7 @@ main { width: min(1200px, calc(100% - 112px)); margin: auto; }
   .wordmark { font-size: 13px; gap: 9px; }
   .monogram { width: 27px; height: 27px; font-size: 17px; }
   .topbar nav { gap: 18px; font-size: 12px; }
-  .header-github { display: none; }
+  .header-github { border-left: 0; padding-left: 0; }
   .site-footer { flex-wrap: wrap; margin-top: 30px; padding: 25px 0; gap: 24px; }
   .footer-name { flex-basis: 100%; }
   .footer-links { gap: 21px; }

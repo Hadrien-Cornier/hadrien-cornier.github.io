@@ -5,6 +5,8 @@ date: '2026-09-28'
 updated: '2026-10-05'
 slug: 'why-i-am-learning-robotics'
 tags: ['robotics', 'industry']
+thumbnail: /assets/robotics/thumbnails/why-i-am-learning-robotics.jpg
+thumbnail_alt: 'Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.'
 ---
 
 In 2018, Boston Dynamics posted a video of its Atlas humanoid jumping over a log and running up a set of boxes. A year earlier, Atlas did a backflip. For a lot of people, me included, those clips were what a robot was supposed to look like. So where are they? I went looking for one at work, and I couldn't find many. Spot, the robot dog, [went on sale in 2020](https://venturebeat.com/ai/boston-dynamics-buy-spot-robot-74500) for $74,500, and Boston Dynamics now says it has [more than 1,500 Spots in customer hands](https://bostondynamics.com/products/spot/). Over the same years, Amazon put [one million robots](https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model) into its warehouses, and almost none of them can walk.

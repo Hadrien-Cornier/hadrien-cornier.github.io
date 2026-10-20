@@ -6,6 +6,8 @@ draft: false
 series: 'From policy to action: the last mile of robotics control'
 part: 2
 tags: ['so-101', 'control', 'sensors']
+thumbnail: /assets/robotics/thumbnails/so101-2-finer-than-the-sensor.jpg
+thumbnail_alt: 'Top: a ramp of true angles and the staircase of readings rounded to the nearest tick. Bottom: the reading error, a sawtooth between minus and plus half a tick, with an RMS of 1 over the square root of 12 tick, 0.443 mrad.'
 ---
 
 [Part 1](/robotics/so101-1-target-and-goal/) wrote one joint of my arm as an equation, and every term in it uses the true angle $q$. My controllers never see $q$. They see the reading $\hat q$, in whole encoder ticks of 1.534 mrad. Two questions kept coming back while I worked on this side of the equation. What happens when a controller needs more than the angle, like the speed or the acceleration? And can a controller know the angle better than the sensor tells it?

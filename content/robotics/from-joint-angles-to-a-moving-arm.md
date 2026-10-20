@@ -5,6 +5,8 @@ date: '2026-09-26'
 updated: '2026-10-01'
 slug: 'from-joint-angles-to-a-moving-arm'
 tags: ['control', 'hardware', 'sensors']
+thumbnail: /assets/robotics/thumbnails/from-joint-angles-to-a-moving-arm.jpg
+thumbnail_alt: 'Franka arm with human-readable joint names and colored rotation arrows'
 ---
 
 I own an SO-101 arm. I wanted to understand how a number sent from my laptop becomes a movement, and how joint angles determine where the gripper ends up. [Why I'm learning robotics](/robotics/why-i-am-learning-robotics/) is a separate post.
