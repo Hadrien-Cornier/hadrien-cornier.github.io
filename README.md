@@ -51,10 +51,14 @@ Each report starts with YAML metadata:
 title: 'Report title'
 description: 'A short summary.'
 date: '2026-09-26'
+thumbnail: '/assets/robotics/report-name/thumbnail.jpg'
+thumbnail_alt: 'Describe the figure or frame.'
 # updated: '2026-09-27'
 # draft: true
 ---
 ```
+
+Every published article needs a 720 × 424 thumbnail made from its own figure or video frame. Crop photos; contain and pad diagrams so labels survive. Set `thumbnail` to an existing local file under `/assets/` and supply descriptive `thumbnail_alt`. Both the homepage and section indexes use these fields. The build fails with the article filename when a published thumbnail is missing or invalid. Drafts may omit it; supplied draft thumbnails are validated. For generated outputs in `/assets/robotics/thumbnails/`, record the original source in `content/robotics/thumbnail-sources.json`. The build rejects two published cards with the same original source, even when output filenames differ. Preserve existing homepage source figures when adding explicit metadata. See [the source audit](docs/thumbnail-audit.md).
 
 Add `section: 'recent-papers'` to file an essay under Recent papers. The builder writes the
 shelf's index at `/robotics/recent-papers/`, links it from the Robotics page, and labels the

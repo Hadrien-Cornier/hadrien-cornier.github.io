@@ -2,6 +2,8 @@
 title: Timeline component fixture
 description: An isolated display fixture. These stages are invented test content.
 date: 2026-10-01
+thumbnail: /assets/fixture-thumbnail.svg
+thumbnail_alt: A fixture diagram.
 ---
 
 This page tests the timeline's layout and controls. It uses invented stages.

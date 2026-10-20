@@ -1,0 +1,22 @@
+/* Scoped to the RL method article's family tree. */
+#rc .ft-viewer{display:none}
+#rc[data-active-panel="tree"] .rc-view>.rc-svg{visibility:hidden}
+#rc[data-active-panel="tree"] .ft-viewer{position:absolute;inset:0;display:flex;flex-direction:column;background:#f5f4ed;color:#242622;font-family:Arial,Helvetica,sans-serif}
+#rc .ft-toolbar{display:none}
+#rc[data-active-panel="tree"] .rc-bar>.rc-reset,#rc[data-active-panel="tree"] .rc-bar>.rc-where{display:none}
+#rc[data-active-panel="tree"] .ft-toolbar{display:flex;align-items:center;gap:6px;width:100%;background:#fff}
+#rc .ft-toolbar button{font:600 14px/1 Arial,sans-serif;background:#fff;color:#242622;border:1px solid #aeb6a5;border-radius:3px;min-width:44px;min-height:34px;padding:6px 10px;cursor:pointer}
+#rc .ft-toolbar button:focus-visible,#rc .ft-viewport:focus-visible{outline:2px solid #b44c2c;outline-offset:-2px}
+#rc .ft-zoom-readout{font-size:13px;color:#656b62;margin-left:auto}
+#rc .ft-hint{font:13px/1.35 Arial,sans-serif;margin:0;padding:6px 9px;flex:none}
+#rc .ft-viewport{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y;position:relative}
+#rc .ft-viewport svg.ft-graph{display:block;max-width:none;max-height:none;margin:0 auto;padding:0}
+#rc .ft-graph .ft-edge-link{cursor:pointer}
+#rc .ft-graph .ft-edge-link:hover .ft-edge-label,#rc .ft-graph .ft-edge-link:focus .ft-edge-label{stroke:#b44c2c;stroke-width:2}
+#rc .ft-graph .ft-edge-link:focus{outline:none}
+#rc .ft-detail{margin:20px 0;padding:14px 0;border-top:1px solid #d3d6cb;scroll-margin-top:var(--rc-top)}
+#rc .ft-detail summary{font-size:17px;line-height:1.4;cursor:pointer;font-weight:600;color:#242622}
+#rc .ft-detail p{font-size:16px;line-height:1.65;margin:14px 0}
+#rc .ft-detail figure{margin:14px 0 0}
+#rc .ft-detail .ft-failure{display:block;width:100%;max-width:440px;height:auto;box-sizing:border-box;background:#f5f4ed;border:1px solid #d3d6cb;border-radius:3px;margin:0}
+#rc .ft-detail figcaption{font:13px/1.45 Arial,sans-serif;color:#656b62;margin:8px 0}

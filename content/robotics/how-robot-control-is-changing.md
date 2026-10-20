@@ -5,6 +5,8 @@ date: '2026-09-30'
 updated: '2026-10-05'
 draft: false
 tags: ['control', 'reinforcement-learning', 'industry']
+thumbnail: /assets/robotics/thumbnails/how-robot-control-is-changing.jpg
+thumbnail_alt: 'Before a cube moves, the robot gripper surrounds it. After it moves, the same grasp closes at the old position.'
 ---
 
 Ask a robot arm to pick up a small green block and put it in a tray. The camera sees the block. The arm starts reaching. Then someone moves the block a few centimetres to the right.

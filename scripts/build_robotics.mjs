@@ -26,7 +26,7 @@ export function dateValue(value, field) {
 }
 function validateSeriesMetadata(data) {
   if (data.series !== undefined && (typeof data.series !== 'string' || !data.series.trim())) throw new Error('series must be a non-empty string');
-  if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 1)) throw new Error('part must be a positive integer');
+  if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 0)) throw new Error('part must be a non-negative integer');
   if (data.series && data.part === undefined) throw new Error('part is required when series is set');
   if (data.track !== undefined && !TRACKS[data.track]) throw new Error(`track must be one of: ${Object.keys(TRACKS).join(', ')}`);
   if (data.track !== undefined && !data.series) throw new Error('track requires series');
@@ -56,9 +56,12 @@ const SECTIONS = {
 function validateSection(data) {
   if (data.section !== undefined && !SECTIONS[data.section]) throw new Error(`section must be one of: ${Object.keys(SECTIONS).join(', ')}`);
 }
-// An optional card thumbnail is an image under /assets/ that the article already ships, with alt text.
+// Published cards require an article figure/frame under /assets/ and descriptive alt text.
 function validateThumbnail(data, root) {
-  if (data.thumbnail === undefined) return;
+  if (data.thumbnail === undefined) {
+    if (data.draft === true) return;
+    throw new Error('published article requires thumbnail and thumbnail_alt frontmatter');
+  }
   if (typeof data.thumbnail !== 'string' || !/^\/assets\/[\w./-]+$/.test(data.thumbnail) || data.thumbnail.includes('..')) throw new Error('thumbnail must be a path under /assets/');
   if (!fs.existsSync(path.join(root, data.thumbnail))) throw new Error(`thumbnail file not found: ${data.thumbnail}`);
   if (typeof data.thumbnail_alt !== 'string' || !data.thumbnail_alt.trim()) throw new Error('thumbnail needs thumbnail_alt text');
@@ -256,7 +259,7 @@ function seriesBox(article) {
     : `<li class="series-part${trackClass(part)}"><a href="/robotics/${part.slug}/">${escape(part.title)}</a>${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`).join('');
   const previous = article.seriesPrevious ? `<a rel="prev" href="/robotics/${article.seriesPrevious.slug}/">← Previous: ${escape(article.seriesPrevious.title)}</a>` : '';
   const next = article.seriesNext ? `<a rel="next" href="/robotics/${article.seriesNext.slug}/">Next: ${escape(article.seriesNext.title)} →</a>` : '';
-  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${article.seriesArticles.length}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${(article.seriesArticles.some((part) => part.part === 0) ? Math.max(...article.seriesArticles.map((part) => part.part)) : article.seriesArticles.length)}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
 function articlePage(article, root) {
   const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
@@ -349,23 +352,8 @@ function landingPage(articles, root) {
 <header class="robotics-header"><p class="eyebrow">Essays &amp; explorations / ${articles.length} ${articles.length === 1 ? 'essay' : 'essays'}</p><h1>Learning robotics.</h1><p class="series-intro">Experiments, diagrams, and questions from learning how robots move, learn, and make decisions.</p></header>
 ${sectionLinks(articles)}${filterBar(articles)}<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
 }
-function previewImage(article, root) {
-  if (article.slug === 'how-robot-control-is-changing') {
-    const src = '/assets/robotics/modern-control/moved-target-preview.svg';
-    if (!fs.existsSync(path.join(root, src))) return '';
-    const version = createHash('sha256').update(fs.readFileSync(path.join(root, src))).digest('hex').slice(0, 12);
-    return `<img src="${src}?v=${version}" alt="Before a cube moves, the robot gripper surrounds it. After it moves, the same grasp closes at the old position." width="720" height="424" loading="lazy" decoding="async">`;
-  }
-  const preferred = {
-    'from-joint-angles-to-a-moving-arm':'/assets/robotics/arm-control/v3/franka_joint_names.png',
-  }[article.slug];
-  const src = preferred || article.body.match(/<img\s[^>]*src="([^"]+)"/)?.[1];
-  if (!src || !src.startsWith('/assets/robotics/') || src.includes('..')) return '';
-  const file = path.join(root, src);
-  if (!fs.existsSync(file)) return '';
-  const bytes = fs.readFileSync(file);
-  if (!bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) return '';
-  return `<img src="${escape(src)}" alt="" width="${bytes.readUInt32BE(16)}" height="${bytes.readUInt32BE(20)}" loading="lazy" decoding="async">`;
+function previewImage(article) {
+  return `<img src="${escape(article.thumbnail)}" alt="${escape(article.thumbnail_alt)}" width="720" height="424" loading="lazy" decoding="async">`;
 }
 function homeNotes(root) {
   const filename = path.join(root, 'content/notes.md');
@@ -429,10 +417,26 @@ function redirectPage(target) {
   return `<!doctype html>
 ${GENERATED_MARKER}
 <html lang="en"><head><meta charset="utf-8"><title>Moved</title><meta name="robots" content="noindex"><link rel="canonical" href="${url}"><meta http-equiv="refresh" content="0; url=${escape(target)}">
-<script>location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')});</script></head>
+<script>location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')}${target.includes('#') ? '' : ' + location.hash'});</script></head>
 <body><p>This article moved to <a href="${escape(target)}">${url}</a>.</p></body></html>
 `;
 }
+function validateThumbnailSources(articles, root) {
+  const filename = path.join(root, 'content/robotics/thumbnail-sources.json');
+  const sources = fs.existsSync(filename) ? JSON.parse(fs.readFileSync(filename, 'utf8')) : {};
+  const seen = new Map();
+  for (const article of articles.filter((article) => article.draft !== true)) {
+    const thumbnail = article.thumbnail;
+    const source = sources[thumbnail] || thumbnail;
+    if (thumbnail.startsWith('/assets/robotics/thumbnails/') && !sources[thumbnail]) {
+      throw new Error(`${article.slug}.md: generated thumbnail needs original source in thumbnail-sources.json`);
+    }
+    if (typeof source !== 'string' || !source.startsWith('/') || source.includes('..')) throw new Error(`${article.slug}.md: invalid original thumbnail source`);
+    if (seen.has(source)) throw new Error(`${article.slug}.md: duplicate original thumbnail source ${source}; already used by ${seen.get(source)}.md`);
+    seen.set(source, article.slug);
+  }
+}
+
 export function build(root = ROOT) {
   const sourceDir = path.join(root, 'content/robotics');
   if (!fs.existsSync(sourceDir)) return;
@@ -444,10 +448,12 @@ export function build(root = ROOT) {
     validateSeriesMetadata(metadata);
     validateTags(metadata);
     validateSection(metadata);
-    validateThumbnail(metadata, root);
+    try { validateThumbnail(metadata, root); }
+    catch (error) { throw new Error(`${name}: ${error.message}`); }
     if (SECTIONS[slug]) throw new Error(`Article filename ${name} collides with the ${slug} section index`);
     return {...metadata, slug, source};
   });
+  validateThumbnailSources(allArticles, root);
   const articles = allArticles.filter((article) => article.draft !== true).map(({source, slug}) => ({...renderArticle(source, root), slug}))
     .sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
   attachSeries(articles);
