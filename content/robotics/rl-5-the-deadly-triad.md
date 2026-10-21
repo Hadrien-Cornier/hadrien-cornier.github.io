@@ -2,7 +2,7 @@
 title: 'The deadly triad'
 description: 'How three useful ideas can feed each other''s errors.'
 date: '2026-10-18'
-draft: true
+draft: false
 series: 'Reinforcement learning, one idea at a time'
 part: 5
 layout: essay

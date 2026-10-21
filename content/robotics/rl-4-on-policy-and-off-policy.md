@@ -2,7 +2,7 @@
 title: 'On-policy or off-policy?'
 description: 'What changes when a learning target describes the robot that is acting, not the best robot.'
 date: '2026-10-18'
-draft: true
+draft: false
 series: 'Reinforcement learning, one idea at a time'
 part: 4
 layout: essay

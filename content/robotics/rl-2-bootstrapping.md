@@ -2,7 +2,7 @@
 title: 'Bootstrapping: learning from your own guess'
 description: 'Why reinforcement learning learns from its own estimates, how that carries a reward from the end of a task back to the start, and what that guess costs.'
 date: '2026-10-17'
-draft: true
+draft: false
 series: 'Reinforcement learning, one idea at a time'
 part: 2
 layout: essay
@@ -73,7 +73,7 @@ The corridor doesn't show the guess winning. With no randomness and a step size 
 
 ## What the guess buys
 
-**It lets learners share what they know.** Sutton and Barto give a small example with eight recorded walks through two situations, A and B. One walk goes from A to B and ends with no reward at all, and seven walks start at B, six ending with reward 1 and one ending with 0. So the value of B is clearly 3/4, and the question is what A is worth. If the learner reuses this data until its estimates settle, waiting says 0, because the one walk through A returned 0. Guessing says A leads to B and B is worth 3/4, so A is worth 3/4, which means the guess shares what was learned about B with every situation that leads to B. If the world is Markov (the next situation depends only on the current one), the shared answer is the better one. That holds for repeated reuse of the data, and a single online pass wouldn't give these numbers. Which method learns faster has no general proof, though in practice the guess has usually won on noisy tasks.
+**It lets learners share what they know.** Sutton and Barto give a small example with eight recorded walks through two situations, A and B. One walk goes from A to B and ends with no reward at all, and seven walks start at B, six ending with reward 1 and one ending with 0. So the value of B is clearly 3/4, and the question is what A is worth. If the learner reuses this data until its estimates settle, waiting says 0, because the one walk through A returned 0. Guessing says A leads to B and B is worth 3/4, so A is worth 3/4, which means the guess shares what was learned about B with every situation that leads to B. If the world is Markov (the next situation depends only on the current one), that shared answer is expected to predict future walks better. That holds for repeated reuse of the data, and a single online pass wouldn't give these numbers. Which method learns faster has no general proof, though in practice the guess has usually won on noisy tasks.
 
 **It learns while the task runs.** The robot doesn't need the walk to end, so it can learn in a task with very long walks or one that never ends, and its target holds one random reward instead of two hundred. Sutton and Barto call the one-step target often superior in variance, though it introduces bias because the guess can be wrong.
 
@@ -85,7 +85,7 @@ Bootstrapping doesn't exist because rewards are rare. Suppose a reward arrives o
 
 The target uses the robot's own number. In a table, where each situation has a separate entry, a wrong number gets pulled toward reality because the guesses end at real rewards. But now let one set of weights produce the numbers for all situations, as a neural network does (**function approximation**), and let the target assume a different behavior from the one that collects the data (**off-policy learning**, where Q-learning assumes the best next action while the robot also makes random moves). The next two articles take these two apart, and the last one puts them together with bootstrapping as the **deadly triad**, where a wrong guess can feed itself.
 
-The smallest case comes from Sutton and Barto. Two situations share one weight $w$, so the first has estimated value $w$ and the second has $2w$. The only move goes from the first to the second, with reward 0, which makes the true value of both 0. The target for the first is $\gamma \cdot 2w$, and the update is:
+The smallest case comes from Sutton and Barto. Two situations share one weight $w$, so the first has estimated value $w$ and the second has $2w$. One transition goes from the first to the second with reward 0, and every reward in the task is 0, so the true value of both is 0. Now repeat the update for the first situation without the compensating update out of the second. That uneven update distribution is the off-policy piece. The target for the first is $\gamma \cdot 2w$, and the update is:
 
 $$w \leftarrow w + \alpha\,(2\gamma w - w) = \bigl(1 + \alpha(2\gamma - 1)\bigr)\,w$$
 
@@ -113,8 +113,8 @@ All equation numbers are from Sutton and Barto, [*Reinforcement Learning: An Int
 - **Variance and bias.** The sentence that the one-step return is often superior in variance and computational convenience, even though it introduces bias, is from the actor-critic section. The same section notes that the extent of the bias can be modulated with n-step returns and traces.
 - **Shaping.** Ng, Harada and Russell, [*Policy invariance under reward transformations: Theory and application to reward shaping*](https://people.eecs.berkeley.edu/~pabbeel/cs287-fa09/readings/NgHaradaRussell-shaping-ICML1999.pdf) (ICML 1999). The PDF has bitmap glyphs and no text layer, so I rendered pages 3 and 4 as images and read them. The shaped task is $M' = (S,A,T,\gamma,R+F)$. Theorem 1: $F$ is potential-based if some real-valued $\Phi : S \to \mathbb{R}$ gives $F(s,a,s') = \gamma\Phi(s') - \Phi(s)$ for all $s \in S-\{s_0\}$, all $a$ and all $s'$ (with $S-\{s_0\}=S$ if $\gamma<1$). That form is necessary and sufficient to guarantee consistency with the optimal policy. Sufficiency: every optimal policy in $M'$ is optimal in $M$ and the reverse. Necessity: for any other $F$, some transition function and some reward function exist for which no optimal policy of $M'$ is optimal in $M$. So necessity holds without further knowledge of the task, not in every task. The theorem treats $\Phi$ as a fixed function of the situation. For infinite state spaces the paper asks for a bounded $\Phi$. The paper does not cover a $\Phi$ that changes during learning, which is why the article does not claim the TD error is covered.
 - **Two situations and one weight.** Sutton and Barto, Section 11.2. The multiplication factor and the numbers (25 and 114,877) are my own arithmetic from the update rule.
-- **The triad.** Sutton and Barto state that if any two of the three elements are present but not all three, instability can be avoided, and that the danger comes from all three together. My game runs showed a possible exception: a network with the Sarsa target (the action actually taken next, not the best next action), also without memory or a frozen copy, blew up too. Whether that contradicts the book depends on details I did not examine.
-- **Atari.** Across 336 settings, one-step Q-learning showed soft divergence in 94% of runs against 21% for ten-step returns ([van Hasselt and colleagues, 2018](https://arxiv.org/abs/1812.02648)).
+- **The triad.** Sutton and Barto state that if any two of the three elements are present but not all three, instability can be avoided, and that the danger comes from all three together. This is not a guarantee that every two-element nonlinear system is stable. My game runs used a nonlinear network, and a network with the Sarsa target (the action actually taken next, not the best next action), also without memory or a frozen copy, blew up too. I did not examine why.
+- **Atari.** Across 336 settings per game, 57 games and three replications, one-step Q-learning showed soft divergence in 94% of runs against 21% for ten-step returns ([van Hasselt and colleagues, 2018](https://arxiv.org/abs/1812.02648)).
 
 </details>
 

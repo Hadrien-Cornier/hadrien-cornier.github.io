@@ -2,7 +2,7 @@
 title: 'Function approximation: sharing what you learn'
 description: 'How a formula teaches a robot about situations it never saw, and what the sharing costs.'
 date: '2026-10-18'
-draft: true
+draft: false
 series: 'Reinforcement learning, one idea at a time'
 part: 3
 layout: essay

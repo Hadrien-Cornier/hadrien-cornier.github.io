@@ -28,17 +28,42 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/papers/</loc>
-    <lastmod>2026-10-08</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/papers/eigendexplore/</loc>
-    <lastmod>2026-10-08</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
     <loc>https://hadrien-cornier.github.io/robotics/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/reinforcement-learning/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/rl-0-overview/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/rl-1-q-learning/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/rl-3-function-approximation/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/rl-4-on-policy-and-off-policy/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/rl-5-the-deadly-triad/</loc>
+    <lastmod>2026-10-18</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/rl-2-bootstrapping/</loc>
     <lastmod>2026-10-17</lastmod>
     <changefreq>monthly</changefreq>
   </url>
@@ -110,6 +135,16 @@
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/from-joint-angles-to-a-moving-arm/</loc>
     <lastmod>2026-10-01</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/papers/</loc>
+    <lastmod>2026-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/papers/eigendexplore/</loc>
+    <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
   </url>
 </urlset>
