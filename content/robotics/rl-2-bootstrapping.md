@@ -246,7 +246,7 @@ Their Last Moment example shows how much this matters. At each step the agent ca
 
 **The time limit is only for training.** If the task would really go on, the cutoff isn't an end. Treating it as terminal teaches the learner that a state near the cutoff is worth less, even though nothing about that state changed. Their fix is **partial-episode bootstrapping**: at the cutoff, use $R+\gamma V(S')$ instead of $R$, which is the truncation rule from the GAE section.
 
-<div class="ct">
+<div class="ct ct-words">
 
 | How the limit is meant | Value depends on | Target at the limit | Fix from Pardo et al. |
 | --- | --- | --- | --- |

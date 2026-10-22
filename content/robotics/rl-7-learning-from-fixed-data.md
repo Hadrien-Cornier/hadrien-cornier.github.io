@@ -29,7 +29,7 @@ Take one moment in the log: the gripper is just above the mug. In the recorded a
 
 Now train a Q-function on this log, the same kind of action-value estimate as in [part 1](/robotics/rl-1-q-learning/). It learns from the recorded transitions, so its estimates for the two recorded actions get corrected by real outcomes. The sideways sweep never appears, so its estimate is whatever the network happens to produce there. Here are illustrative numbers:
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Action above the mug | Times in the log | Estimate $\hat Q$ | True value |
 | --- | ---: | ---: | ---: |
@@ -75,7 +75,7 @@ The first term pulls the action toward higher estimates. The second pulls it bac
 
 **Implicit Q-Learning (IQL)** ([Kostrikov, Nair and Levine, 2021](https://arxiv.org/abs/2110.06169)) never evaluates an unrecorded action. Instead of a max, it fits a state value $V(s)$ to an upper **expectile** of the recorded actions' estimates. An expectile is a weighted average that counts values above it more heavily, controlled by $\tau$ between 0 and 1. With $\tau=0.5$ you get the ordinary mean. As $\tau$ approaches 1, it approaches the largest recorded value. Above the mug, with 60% of the log at 4 and 40% at 3:
 
-<div class="ct">
+<div class="ct ct-words">
 
 | $\tau$ | $V$ above the mug | Reading |
 | ---: | ---: | --- |
@@ -111,7 +111,7 @@ Say the rotate-then-grasp action has advantage $+1$ and the straight grasp has $
 
 $$\max_\pi\;\sum_{(s,a)\in\text{log}}\log\pi(a\mid s)\,\exp\!\big(A(s,a)/\beta\big).$$
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Training | Share of the copy going to the good grasp |
 | --- | ---: |
@@ -140,7 +140,7 @@ All of them work by trusting a number attached to each recorded action. So they 
 
 None of this is guaranteed by a method's name. In the game's version of this problem, the log mixes 50 episodes of a good controller with 50 episodes of random commands. Copying everything ended 0.56 m from the target. IQL ended at 0.22 m, copying only the best episodes at 0.35 m, CQL at 0.33 m, TD3+BC at 0.50 m, the one-bit advantage tag at 0.51 m, and AWR at 0.57 m, no better than copying (3 seeds, 8,000 training steps, simulation). In this toy, how the advantage was estimated mattered more than the idea of weighting.
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Method | Uses | Helps when | Limits |
 | --- | --- | --- | --- |
@@ -165,7 +165,7 @@ Everything above assumed the log tells the truth. The new operator's straight gr
 
 A reward-aware method takes every record at face value. A false success has a high advantage, so AWR gives it a large weight and the advantage tag marks it as good. Off-policy learning can't repair this either: it can reuse a transition from another policy, but only if that transition is real. These fixes belong to the data pipeline: synchronize the clocks, record the executed action next to the command, audit success labels, and drop episodes that fail consistency checks.
 
-<div class="ct">
+<div class="ct ct-words">
 
 | | Extrapolation error | Poor behavior | Corrupted records |
 | --- | --- | --- | --- |

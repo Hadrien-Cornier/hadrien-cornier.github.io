@@ -31,7 +31,7 @@ Take one attempt with three actions. The arm reaches toward the block and bumps 
 
 A better score for action $t$ is the **reward-to-go**: the rewards from that action onward, $G_t=\sum_{k\ge t}R_{k+1}$ (no discount here, to keep the numbers simple). This is the return REINFORCE uses in [Sutton and Barto, Section 13.3](http://incompleteideas.net/book/RLbook2020.pdf).
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Action | Reward after it | Whole-return score | Reward-to-go score |
 | --- | ---: | ---: | ---: |
@@ -59,7 +59,7 @@ Reward-to-go fixes the timing, but every score here is still positive. Say the a
 
 Subtract a **baseline** $b(s)$, a number that depends on the state but not on the action. A natural choice is the usual return from that state, here the average of the four attempts, $b=7.5$:
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Attempt | Return | Score without baseline | Score with $b=7.5$ |
 | --- | ---: | ---: | ---: |
@@ -91,7 +91,7 @@ L^{\text{CLIP}}=\min\!\Big(&r(\theta)\hat A,\\
 
 With $\epsilon=0.2$, the clipped ratio stays between 0.8 and 1.2. The $\min$ takes whichever of the two terms is lower. Here are four cases after a few steps on one batch:
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Advantage | Ratio | Unclipped $r\hat A$ | Clipped | $L^{\text{CLIP}}$ | Gradient |
 | ---: | ---: | ---: | ---: | ---: | --- |
@@ -116,7 +116,7 @@ $$\hat A_i=\frac{r_i-\operatorname{mean}(r_1,\dots,r_G)}{\operatorname{std}(r_1,
 
 It keeps PPO's clipped objective and adds a separate penalty, $\beta$ times the KL divergence from a fixed reference policy. Here are two groups of four attempts, with reward 1 for a placed block and 0 for anything else, using the population standard deviation:
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Group | Mean | Std | Advantages |
 | --- | ---: | ---: | --- |
@@ -136,7 +136,7 @@ There are two published responses, and neither is free.
 
 In the game's pass-or-fail goal grid, a group-mean baseline solved all of the tasks. By the end of training, 92.4% of the groups had identical rewards (3 seeds, simulation). Since every task was solved by then, those groups were most likely all successes. That's the easy-start case: once the task was learned, most groups had nothing left to say.
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Problem | What goes wrong | Fix | What it costs or leaves open | Source |
 | --- | --- | --- | --- | --- |

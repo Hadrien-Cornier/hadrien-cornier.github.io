@@ -53,6 +53,7 @@
 .article-body .ct .table-scroll { margin: 18px 0; }
 .article-body .ct th, .article-body .ct td { min-width: 0; padding: 9px 10px; font-size: 14px; line-height: 1.5; }
 @media (max-width: 520px) { .article-body .ct th, .article-body .ct td { padding: 7px 6px; font-size: 13px; } .article-body .ct .katex { font-size: 1em; } }
+.article-body .ct-words th, .article-body .ct-words td { overflow-wrap: normal; }
 
 /* Reinforcement learning series: readable equations and mechanism drawings. */
 .article-body .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: .55rem .15rem; text-align: left; }

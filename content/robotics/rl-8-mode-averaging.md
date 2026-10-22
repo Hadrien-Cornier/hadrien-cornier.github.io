@@ -82,7 +82,7 @@ $$x \leftarrow x+0.1\,v_\theta(x,\tau,o),\qquad \tau\leftarrow\tau+0.1.$$
 
 Where does the choice of mode come from? From the starting noise. Here is the calculation for our two-route example, with the same offsets as before ($-1$ for the left route, $+1$ for the right), starting noise drawn from a standard normal, and the exact velocity field that a perfect learner would end up with. The details are in the drawer below.
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Starting noise | After 5 steps | After 10 steps | Plan |
 | ---: | ---: | ---: | --- |
@@ -128,7 +128,7 @@ Being able to represent two modes is not the same as learning both of them.
 
 So the failure and the remedy are different things. Mode averaging is what happens when a model that can only express one answer is trained on demonstrations with two. A flow policy is one way to express both answers: it chooses between them using random noise, and the training data decides how much of the noise goes to each.
 
-<div class="ct">
+<div class="ct ct-words">
 
 | Policy output | Two even routes, sampled once and executed as a chunk | Needs |
 | --- | --- | --- |
