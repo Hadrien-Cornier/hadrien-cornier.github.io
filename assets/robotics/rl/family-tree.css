@@ -20,3 +20,20 @@
 #rc .ft-detail figure{margin:14px 0 0}
 #rc .ft-detail .ft-failure{display:block;width:100%;max-width:440px;height:auto;box-sizing:border-box;background:#f5f4ed;border:1px solid #d3d6cb;border-radius:3px;margin:0}
 #rc .ft-detail figcaption{font:13px/1.45 Arial,sans-serif;color:#656b62;margin:8px 0}
+/* Method cards (popups) and the scope note, in the series blackboard style. */
+#rc .ft-graph .ft-node-btn{cursor:pointer}
+#rc .ft-graph .ft-node-btn:focus{outline:none}
+#rc .ft-graph .ft-node-btn:hover>rect,#rc .ft-graph .ft-node-btn:focus-visible>rect{stroke:var(--bb-yellow)!important;stroke-width:4}
+.ft-pop{position:fixed;z-index:60;box-sizing:border-box;width:min(430px,calc(100vw - 16px));max-height:min(72vh,600px);overflow:auto;overscroll-behavior:contain;padding:14px 16px 12px;background-color:var(--bb-board);background-image:var(--bb-texture);color:var(--bb-chalk);border:1.5px solid var(--bb-dim);border-radius:6px;box-shadow:0 12px 32px rgba(0,0,0,.55);font:15px/1.55 Arial,Helvetica,sans-serif}
+.ft-pop[hidden]{display:none}
+.ft-pop-close{position:absolute;top:6px;right:8px;width:36px;height:36px;padding:0;font:400 24px/1 Arial,sans-serif;color:var(--bb-chalk)!important;background:transparent!important;border:1px solid var(--bb-faint)!important;border-radius:4px;cursor:pointer}
+.ft-pop-close:hover,.ft-pop-close:focus-visible{border-color:var(--bb-yellow)!important}
+.ft-pop h4,#ft-methods .ft-method h4{margin:0 40px 4px 0;font:400 25px/1.2 var(--bb-hand);color:var(--bb-yellow)}
+.ft-pop p,#ft-methods .ft-method p{margin:8px 0;font-size:15px;line-height:1.55}
+.ft-pop .ft-m-when,#ft-methods .ft-m-when{color:var(--bb-dim);font-size:14px}
+.ft-pop .ft-m-label,#ft-methods .ft-m-label{font-weight:700;color:var(--bb-chalk)}
+.ft-pop blockquote,#ft-methods .ft-method blockquote{margin:10px 0 4px;padding:8px 12px;border-left:3px solid var(--bb-blue)!important;background:rgba(147,212,255,.07)!important;font:400 18px/1.4 var(--bb-hand);color:var(--bb-chalk)!important}
+.ft-pop .ft-m-cite,#ft-methods .ft-m-cite{margin-top:4px;font-size:13.5px;color:var(--bb-dim)}
+.ft-pop a{color:var(--accent)}
+#ft-methods .ft-method{padding:12px 0;border-top:1px solid var(--line)}
+@media (max-width:699px){.ft-pop{left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto;max-height:66vh}}

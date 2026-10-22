@@ -47,6 +47,8 @@
   .article-body .rc { width: min(1260px, calc(100vw - 64px)); position: relative; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 540px); gap: 40px; align-items: start; --rc-h: calc(100vh - 32px - var(--rc-bar)); }
   .article-body .rc-stage { top: 16px; }
   .article-body .rc-nav { top: 0; }
+  /* Room after the last section, so the board stays whole while its text and drawers are read. */
+  .article-body .rc .rc-body { padding-bottom: 30vh; }
 }
 @media (max-width: 520px) { .article-body .rc-reset { padding: 6px 8px; font-size: 12px; } .article-body .rc-where { font-size: 11.5px; } }
 .article-body .ct th:first-child, .article-body .ct td:first-child { min-width: 5.5em; overflow-wrap: normal; word-break: normal; hyphens: none; }
@@ -93,6 +95,10 @@
 .article-body .rls-canvas .rc-svg .rls-panel-title { font-size: 16px; font-weight: 700; fill: #50554e; }
 .article-body .rls-canvas .rc-body { min-width: 0; }
 .article-body .series-box { overflow-wrap: anywhere; }
+/* The series starts at Part 0, so the list numbers start at 0 and match "Part N". */
+.series-box ol { list-style: none; counter-reset: rl-part -1; }
+.series-box ol > li { counter-increment: rl-part; }
+.series-box ol > li::before { content: counter(rl-part) ". "; }
 .article-body .rls-canvas details { margin: 1rem 0; }
 @media (max-width: 999px) { .article-body .rls-canvas { --rc-h: clamp(230px, 38vh, 340px); } }
 /* Focused views show only the chosen mechanism. Titles stay on the whole map. */
@@ -100,8 +106,9 @@
 .article-body .rls-canvas.is-zoomed .rc-panel > .rls-panel-title,
 .article-body .rls-canvas.is-zoomed .rc-panel > rect:first-child { visibility: hidden; }
 
-/* Dark default, scoped by loading this file only on the reinforcement learning series. */
-:root {
+/* Dark default, scoped by loading this file only on the reinforcement learning series.
+   The theme button still switches the text column to light; the boards stay dark. */
+:root:not([data-theme="light"]) {
   color-scheme: dark;
   --paper: #141a16;
   --ink: #e8ece3;
@@ -113,12 +120,28 @@
   --rl-surface: #1d271f;
   --rl-raised: #263329;
   --rl-warning: #563c30;
-  --rl-diagram-filter: invert(.90) hue-rotate(180deg);
+  --rl-link-hover: #ffd0b8;
+  --rl-stripe: #19221c;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --paper: #f7f6f2;
+  --ink: #242622;
+  --muted: #50554e;
+  --accent: #954025;
+  --green: #49724e;
+  --line: #cfd2c8;
+  --white: #fff;
+  --rl-surface: #eeefe9;
+  --rl-raised: #e4e6de;
+  --rl-warning: #f0d8cb;
+  --rl-link-hover: #6b2a14;
+  --rl-stripe: #f2f2ed;
 }
 html, body { background: var(--paper) !important; color: var(--ink) !important; }
 body h1, body h2, body h3, body h4, body strong, body b { color: var(--ink); }
 body a { color: var(--accent); }
-body a:hover { color: #ffd0b8; }
+body a:hover { color: var(--rl-link-hover); }
 body header, body footer, .article-head, .article-header, .article-body, .article-layout {
   border-color: var(--line) !important;
 }
@@ -136,7 +159,7 @@ body table, body th, body td, body caption, .table-scroll {
   color: var(--ink); border-color: var(--line) !important;
 }
 body thead th { background: var(--rl-raised) !important; color: var(--ink) !important; }
-body tbody tr:nth-child(even) { background: #19221c; }
+body tbody tr:nth-child(even) { background: var(--rl-stripe); }
 body td.low { background: var(--rl-warning) !important; }
 .article-body details summary { color: var(--ink) !important; }
 .article-body .katex-display { background: transparent; }
@@ -158,25 +181,106 @@ body :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 #rc .ft-zoom-readout, #rc .dt-readout, #rc .ft-detail figcaption {
   color: var(--muted) !important;
 }
-/* Filter the whole original drawing exactly once. This transforms presentation
-   attributes, embedded styles, every stroke/fill/label and marker together.
-   Nested SVGs inherit the rendered transformation; KaTeX SVGs are excluded.
-   Hue rotation retains red/blue/green roles. Source geometry stays untouched. */
-.article-body .rc-view > svg.rc-svg,
-.article-body .ft-viewport > svg.ft-graph,
-.article-body svg.ft-failure,
-.article-body .rls-figure > svg,
-.article-body .dt-frame > img,
-.article-body img[src*="/rl/"][src$=".svg"],
-.article-body .qt-widget,
-.article-body .rb-widget {
-  filter: var(--rl-diagram-filter);
+/* Blackboard drawings. Every series diagram is chalk on a dark board: the authored
+   light palette maps to chalk colors here, so the source geometry and numbers stay
+   untouched. CSS fill/stroke rules override SVG presentation attributes. Red marks
+   risk or the value being changed, blue marks a learned value or a choice, green
+   marks a safe or good outcome, yellow marks the one thing to look at. */
+@font-face { font-family: 'RL Chalk'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(/assets/robotics/rl/fonts/patrick-hand-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'RL Chalk'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(/assets/robotics/rl/fonts/patrick-hand-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+:root {
+  --bb-board: #1d2824;
+  --bb-board-2: #24312c;
+  --bb-chalk: #f4f1e8;
+  --bb-dim: #c3c9bd;
+  --bb-faint: #6f7d75;
+  --bb-red: #ff9f88;
+  --bb-pink: #ff93b8;
+  --bb-blue: #93d4ff;
+  --bb-green: #a8e2a0;
+  --bb-yellow: #ffe17c;
+  --bb-hand: 'RL Chalk', 'Patrick Hand', 'Chalkboard SE', 'Comic Neue', 'Segoe Print', 'Arial', sans-serif;
+  --bb-texture: radial-gradient(ellipse at 18% 12%, rgba(255,255,255,.045), transparent 55%),
+    radial-gradient(ellipse at 82% 78%, rgba(255,255,255,.035), transparent 50%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  --rl-diagram-filter: none;
 }
-/* SVG surfaces above are filtered with their content. Keep their original light
-   surface as filter input so labels retain the original contrast relationship. */
-.article-body .rls-figure > svg, .article-body svg.ft-failure { background: #fbfbf8 !important; }
+/* The board surfaces. */
+#rc .rc-stage, #rc .rc-view, #rc .ft-viewer, #rc .ft-viewport, #rc[data-active-panel="tree"] .ft-viewer,
+.article-body .rls-figure > svg, .article-body svg.ft-failure, .article-body .bb-board,
+.article-body .rb-widget, .article-body .bb-figure {
+  background-color: var(--bb-board) !important;
+  background-image: var(--bb-texture) !important;
+  color: var(--bb-chalk) !important;
+}
+#rc .ft-viewport svg.ft-graph, .article-body .rc-view > svg.rc-svg { background: transparent !important; }
+/* Nested panel drawings inherit chalk too (the site colors any svg[role=img] dark). */
+.article-body :is(svg.rc-svg, svg.ft-graph, .rls-figure > svg, svg.bb) svg { color: var(--bb-chalk) !important; }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) {
+  font-family: var(--bb-hand);
+  color: var(--bb-chalk) !important;
+  filter: url(#bb-chalk);
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) text {
+  font-family: var(--bb-hand) !important; letter-spacing: .01em;
+}
+/* Ink: dark authored ink becomes chalk. */
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#242622"], [fill="#50554e"], [fill="#000"], [fill="#111"]) { fill: var(--bb-chalk); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([stroke="#242622"], [stroke="#000"], [stroke="#111"]) { stroke: var(--bb-chalk); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#656b62"], [fill="#777"], [fill="#8d9087"], [fill="#7f8f79"], [fill="#b6baaf"]) { fill: var(--bb-dim); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([stroke="#656b62"], [stroke="#777"], [stroke="#8d9087"], [stroke="#7f8f79"], [stroke="#50554e"]) { stroke: var(--bb-dim); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([stroke="#b6baaf"], [stroke="#dcded6"], [stroke="#d3d6cb"], [stroke="#c9ccc2"]) { stroke: var(--bb-faint); }
+/* Paper: light surfaces become the board, so boxes read as chalk outlines. */
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#fff"], [fill="#ffffff"], [fill="white"], [fill="#fbfbf8"], [fill="#f5f4ed"], [fill="#efefe9"], [fill="#eceae2"], [fill="#eee"], [fill="#eeefe9"], [fill="#f8f9f4"], [fill="#f4f5f0"], [fill="#f7f6f2"]) { fill: var(--bb-board); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#d9d6cc"], [fill="#dcded6"]) { fill: var(--bb-board-2); }
+/* Tints keep their meaning as faint colored chalk washes. */
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#d7e5ee"], [fill="#e4eef4"], [fill="#eef3f6"]) { fill: rgba(147, 212, 255, .16); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#f6e5e0"], [fill="#e7c5b8"], [fill="#efd9cf"], [fill="#fbeef1"], [fill="#f6dbe1"]) { fill: rgba(255, 159, 136, .17); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#e6f0e1"]) { fill: rgba(168, 226, 160, .15); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#f8f0cf"]) { fill: rgba(255, 225, 124, .16); }
+/* Meaning colors become chalk colors. */
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) [fill="#b44c2c"] { fill: var(--bb-red); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) [stroke="#b44c2c"] { stroke: var(--bb-red); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#8f1d36"], [fill="#4a0f1c"]) { fill: var(--bb-pink); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) [stroke="#8f1d36"] { stroke: var(--bb-pink); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#2b6a8e"], [fill="#3d6f9e"]) { fill: var(--bb-blue); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([stroke="#2b6a8e"], [stroke="#3d6f9e"]) { stroke: var(--bb-blue); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([fill="#5f7f4f"], [fill="#49724e"], [fill="#3f7a45"]) { fill: var(--bb-green); }
+.article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) :is([stroke="#5f7f4f"], [stroke="#49724e"], [stroke="#3f7a45"]) { stroke: var(--bb-green); }
+/* New drawings use these classes directly. */
+.article-body svg :is(.c-chalk) { fill: var(--bb-chalk); } .article-body svg .s-chalk { stroke: var(--bb-chalk); }
+.article-body svg .c-dim { fill: var(--bb-dim); } .article-body svg .s-dim { stroke: var(--bb-dim); }
+.article-body svg .s-faint { stroke: var(--bb-faint); }
+.article-body svg .c-red { fill: var(--bb-red); } .article-body svg .s-red { stroke: var(--bb-red); }
+.article-body svg .c-pink { fill: var(--bb-pink); } .article-body svg .s-pink { stroke: var(--bb-pink); }
+.article-body svg .c-blue { fill: var(--bb-blue); } .article-body svg .s-blue { stroke: var(--bb-blue); }
+.article-body svg .c-green { fill: var(--bb-green); } .article-body svg .s-green { stroke: var(--bb-green); }
+.article-body svg .c-yellow { fill: var(--bb-yellow); } .article-body svg .s-yellow { stroke: var(--bb-yellow); }
+.article-body svg .c-board { fill: var(--bb-board); }
+.article-body svg .c-none { fill: none; }
+.article-body .rls-canvas .rc-svg .rls-panel-title { fill: var(--bb-yellow); font-weight: 400; }
+/* Panels on the big canvas: a thin chalk frame, no paper card. */
+.article-body svg.rc-svg .rc-panel > rect:first-child { stroke: var(--bb-faint) !important; stroke-dasharray: 2 5; fill: transparent !important; }
+.article-body .rls-figure > svg, .article-body svg.ft-failure { border-radius: 4px; }
+.article-body img[src*="/rl/"][src$=".svg"] { border-radius: 4px; }
+/* HTML widgets on the board: chalk text, faint chalk frames. */
+.article-body .rb-widget { border-color: var(--line) !important; font-family: Arial, Helvetica, sans-serif; }
+.article-body .rb-widget :is(p, b, strong, output, label), .article-body .rb-cell, .article-body .rb-cell b { color: var(--bb-chalk) !important; }
+.article-body .rb-widget .rb-title b { font: 400 21px/1.3 var(--bb-hand); color: var(--bb-yellow) !important; }
+.article-body .rb-widget .rb-assume { background: rgba(255, 147, 184, .08) !important; border-left-color: var(--bb-pink) !important; }
+.article-body :is(.rb-lane .rb-lane-h span, .rb-cell span, .rb-out span, .rb-out small) { color: var(--bb-dim) !important; }
+.article-body :is(.rb-cell, .rb-out > div) { border-color: var(--bb-faint) !important; }
+.article-body .rb-ctrl button { background: transparent !important; color: var(--bb-chalk) !important; border-color: var(--bb-dim) !important; }
+.article-body :is(.rb-row input[type="range"], .rb-checks input) { accent-color: var(--bb-yellow); }
+.article-body .rb-widget :focus-visible { outline-color: var(--bb-yellow); }
+@media (prefers-reduced-motion: reduce) { .article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) { filter: none; } }
 @media print {
-  :root { --paper: #fff; --ink: #242622; --muted: #50554e; --accent: #954025; --line: #bbb; --rl-surface: #f5f5f0; --rl-raised: #eee; --rl-warning: #f0d8cb; --rl-diagram-filter: none; color-scheme: light; }
+  :root:not([data-theme="light"]), :root[data-theme="light"] { --paper: #fff; --ink: #242622; --muted: #50554e; --accent: #954025; --line: #bbb; --rl-surface: #f5f5f0; --rl-raised: #eee; --rl-warning: #f0d8cb; --rl-diagram-filter: none; color-scheme: light; }
 }
 
 /* Keep the route links legible on the series dark surface. */

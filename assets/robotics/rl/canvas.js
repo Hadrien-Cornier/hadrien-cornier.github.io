@@ -10,6 +10,7 @@
   function init(rc) {
     var stage = rc.querySelector('.rc-stage'), svg = stage.querySelector('svg.rc-svg'), body = rc.querySelector('.rc-body');
     var views = JSON.parse(svg.getAttribute('data-views')), whole = svg.getAttribute('data-whole').split(' ').map(Number);
+    var narrowAt = +svg.getAttribute('data-narrow') || 0; /* optional: below this stage width (a phone), prefer the _n views */
     var marks = [].slice.call(rc.querySelectorAll('.rc-mark')), where = stage.querySelector('.rc-where'), reset = stage.querySelector('.rc-reset');
     var cam = null, target = null, raf = 0, idx = -1, hold = false, holdAt = -1, tick = 0;
     function label(i) { var n = marks[i].getAttribute('data-num'); if (n === null) n = String(i + 1); return (n ? n + '. ' : '') + marks[i].getAttribute('data-title'); }
@@ -36,7 +37,7 @@
     }
     function apply(i, instant) {
       idx = i; sel.value = String(i); var s = size(), panel = null, v = whole, whereLabel = 'Whole canvas';
-      if (i >= 0) { var m = marks[i]; panel = m.getAttribute('data-panel'); var vn = m.getAttribute('data-view'); v = (s[0] / s[1] < 1 && views[vn + '_p']) || views[vn] || views[panel]; whereLabel = label(i); }
+      if (i >= 0) { var m = marks[i]; panel = m.getAttribute('data-panel'); var vn = m.getAttribute('data-view'); v = (s[0] < narrowAt && views[vn + '_n']) || (s[0] / s[1] < 1 && views[vn + '_p']) || views[vn] || views[panel]; whereLabel = label(i); }
       [].forEach.call(svg.querySelectorAll('.rc-panel'), function (g) { g.classList.toggle('is-active', g.getAttribute('data-panel') === panel); });
       rc.classList.toggle('is-zoomed', panel !== null);
       rc.setAttribute('data-active-panel', panel || 'whole'); rc.setAttribute('data-active-index', String(i)); rc.setAttribute('data-active-view', i >= 0 ? marks[i].getAttribute('data-view') : 'whole');
