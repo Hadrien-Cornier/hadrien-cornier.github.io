@@ -15,8 +15,8 @@ export const OUTPUT = path.join(ROOT, 'content/papers/offline-empowerment.html')
 
 // The RL series palette after its dark-mode filter, invert(.9) hue-rotate(180deg), so the canvas matches it.
 const C = {
-  bg: '#1d1d1b', ink: '#d6d7d2', muted: '#a2a69e', grid: '#72746d', wall: '#3d3f38',
-  red: '#dc896f', blue: '#70a2bf', pink: '#ffa5b9', green: '#8fbf94', yellow: '#f0d98a',
+  bg: '#1d1d1b', ink: '#d6d7d2', muted: '#b3b7ae', grid: '#72746d', wall: '#3d3f38',
+  red: '#dc896f', blue: '#70a2bf', pink: '#ffa5b9', green: '#8fbf94', yellow: '#f0d98a', lavender: '#b9a7e6',
   panel: { blue: '#222a2f', green: '#232b1f', red: '#372925', yellow: '#2d270c', gray: '#272722' },
 };
 const HAND = "'Bradley Hand','Segoe Print','Chalkboard SE','Comic Neue','Comic Sans MS',cursive";
@@ -83,17 +83,19 @@ function text(x, y, value, { size = 22, fill = C.ink, anchor = 'start', font = S
   return `<text x="${n(x)}" y="${n(y)}" font-family="${esc(font)}" font-size="${size}" fill="${fill}"${anchor === 'start' ? '' : ` text-anchor="${anchor}"`}${weight ? ` font-weight="${weight}"` : ''}${italic ? ' font-style="italic"' : ''}${extra}>${esc(value)}</text>`;
 }
 
-/** Math label: strings stay on the baseline, [text, 'sup' | 'sub'] pieces shift. */
-function math(x, y, parts, { size = 24, fill = C.ink, anchor = 'start' } = {}) {
+/** Math label: strings stay on the baseline, [text, 'sup' | 'sub' | 'subword'] pieces shift, 'word' pieces are upright sans. */
+function math(x, y, parts, { size = 24, fill = C.ink, anchor = 'start', extra = '' } = {}) {
   let shift = 0, body = '';
   for (const part of parts) {
     const [value, kind] = typeof part === 'string' ? [part, null] : part;
-    const target = kind === 'sup' ? -0.36 * size : kind === 'sub' ? 0.24 * size : 0;
+    const target = kind === 'sup' ? -0.36 * size : kind === 'sub' || kind === 'subword' ? 0.24 * size : 0;
     const dy = n(target - shift);
-    body += `<tspan${dy ? ` dy="${dy}"` : ''}${kind ? ` font-size="${Math.round(size * 0.68)}"` : ''}>${esc(value)}</tspan>`;
+    const upright = ` font-family="${esc(SANS)}" font-style="normal"`;
+    const style = kind === 'word' ? upright : kind === 'subword' ? `${upright} font-size="${Math.round(size * 0.72)}"` : kind ? ` font-size="${Math.round(size * 0.68)}"` : '';
+    body += `<tspan${dy ? ` dy="${dy}"` : ''}${style}>${esc(value)}</tspan>`;
     shift = target;
   }
-  return `<text x="${n(x)}" y="${n(y)}" font-family="${esc(MATH)}" font-size="${size}" font-style="italic" fill="${fill}"${anchor === 'start' ? '' : ` text-anchor="${anchor}"`}>${body}</text>`;
+  return `<text x="${n(x)}" y="${n(y)}" font-family="${esc(MATH)}" font-size="${size}" font-style="italic" fill="${fill}"${anchor === 'start' ? '' : ` text-anchor="${anchor}"`}${extra}>${body}</text>`;
 }
 
 function tag(r, label, { x = 16, y = -21, size = 27 } = {}) {
@@ -186,25 +188,28 @@ function cloud(x, y, rx, ry, color) {
 function panelSkills() {
   const r = random(23);
   let out = frame(r, '2 · skills → futures', C.panel.green);
-  out += math(280, 84, ['Ê(s) = I(s', ['+', 'sup'], ' ; z | s)'], { size: 34, anchor: 'middle' });
+  out += math(280, 80, ['Ê(s) ≈ max', ['π', 'sub'], ' I(s', ['+', 'sup'], ' ; z | s)'], { size: 33, anchor: 'middle' });
+  out += math(280, 118, ['z', [' = skill (color)  ·  ', 'word'], 's', ['+', 'sup'], [' = future state', 'word']], { size: 22, anchor: 'middle', fill: C.muted });
   const block = (x, y, w, h) => `<rect x="${n(x)}" y="${n(y)}" width="${w}" height="${h}" fill="${C.wall}"/>` + rect(r, x, y, w, h, { stroke: C.grid, width: 1.6, jitter: 1.4 });
   // Junction: four corridors, so each skill can reach a different future.
-  const [jx, jy] = [145, 238];
+  const [jx, jy] = [145, 244];
   for (const [dx, dy] of [[-100, -100], [32, -100], [-100, 32], [32, 32]]) out += block(jx + dx, jy + dy, 68, 68);
   [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([ux, uy], k) => {
     out += cloud(jx + ux * 80, jy + uy * 80, ux ? 22 : 26, ux ? 26 : 22, SKILLS[k]) + line(r, jx + ux * 12, jy + uy * 12, jx + ux * 62, jy + uy * 62, { stroke: SKILLS[k], width: 2.6, arrow: true });
   });
   out += `<circle cx="${jx}" cy="${jy}" r="7" fill="${C.ink}"/>`;
-  // Dead end: one way out, so every skill reaches the same place.
-  const [dx0, dy0] = [415, 238];
-  out += block(dx0 - 100, dy0 - 100, 68, 200) + block(dx0 + 32, dy0 - 100, 68, 200) + block(dx0 - 32, dy0 - 100, 64, 22);
-  [-12, -4, 4, 12].forEach((offset, k) => {
-    out += cloud(dx0 + offset * 0.5, dy0 + 66, 24, 26, SKILLS[k]) + line(r, dx0 + offset * 0.4, dy0 - 40, dx0 + offset, dy0 + 34, { stroke: SKILLS[k], width: 2.6, arrow: true });
+  // Corner of a closed room: walls on two sides, so the skills' futures crowd into one quarter and overlap.
+  const [dx0, dy0] = [415, 244];
+  out += block(dx0 - 100, dy0 - 100, 32, 200) + block(dx0 - 68, dy0 + 68, 168, 32);
+  const [cx, cy] = [dx0 - 50, dy0 + 50];
+  [[0.2, -1], [0.6, -0.8], [0.8, -0.6], [1, -0.2]].forEach(([ux, uy], k) => {
+    const [tx, ty] = [cx + 70 + (k - 1.5) * 7, cy - 70 - (k - 1.5) * 5];
+    out += cloud(tx, ty, 30, 28, SKILLS[k]) + line(r, cx + ux * 12, cy + uy * 12, cx + ux * 60, cy + uy * 60, { stroke: SKILLS[k], width: 2.6, arrow: true });
   });
-  out += `<circle cx="${dx0}" cy="${dy0 - 50}" r="7" fill="${C.ink}"/>`;
-  out += math(jx, 380, ['high Ê'], { size: 30, anchor: 'middle', fill: C.yellow }) + math(dx0, 380, ['low Ê'], { size: 30, anchor: 'middle', fill: C.muted });
+  out += `<circle cx="${cx}" cy="${cy}" r="7" fill="${C.ink}"/>`;
+  out += math(jx, 382, ['high Ê'], { size: 30, anchor: 'middle', fill: C.yellow }) + math(dx0, 382, ['low Ê'], { size: 30, anchor: 'middle', fill: C.muted });
   out += line(r, 30, 424, 70, 424, { stroke: C.blue, width: 2.6, arrow: true }) + math(80, 433, ['π(a | s, z)'], { size: 27 });
-  out += cloud(316, 424, 18, 13, C.red) + math(344, 433, ['V', ['z', 'sup'], '(s', ['+', 'sup'], ' | s)'], { size: 27 });
+  out += cloud(316, 424, 18, 13, C.muted) + math(344, 433, ['V', ['z', 'sup'], '(s', ['+', 'sup'], ' | s)'], { size: 27 });
   return out;
 }
 
@@ -220,6 +225,9 @@ function panelMap() {
   out += math(bx + bw / 2, by - 20, ['Ê(s)'], { size: 30, anchor: 'middle' });
   out += text(bx + bw + 10, by + 9, MAP_RANGE[1].toFixed(1), { size: 24 }) + text(bx + bw + 10, by + bh + 5, MAP_RANGE[0].toFixed(1), { size: 24 });
   out += text(bx + bw + 10, by + bh + 34, 'nats', { size: 24, fill: C.muted });
+  // The junction that holds the peak, and the closed-room corner where the online agent starts.
+  out += `<circle cx="${x0 + 3.5 * cell}" cy="${y0 + 3.5 * cell}" r="23" fill="none" stroke="${C.yellow}" stroke-width="2.6" stroke-dasharray="6 5"/>`;
+  out += `<circle cx="${x0 + 0.5 * cell}" cy="${y0 + 5.5 * cell}" r="23" fill="none" stroke="${C.muted}" stroke-width="2.6" stroke-dasharray="6 5"/>`;
   out += text(x0, 412, 'read from paper Fig. 1b', { size: 23, fill: C.muted });
   return out;
 }
@@ -259,9 +267,12 @@ function panelBonus() {
   out += curve(values.map((v, k) => [xv(k), yv(v)]), { stroke: C.ink, width: 2.4 });
   out += line(r, px + 2, yv(values[best]), px + pw, yv(values[best]), { stroke: C.pink, width: 3, dash: '8 6', passes: 1 });
   out += star(xv(best), yv(values[best]), 10, C.yellow);
-  out += math(px + 4, py - 18, ['Ê(s', ['k', 'sub'], ')'], { size: 27 }) + math(px + pw + 6, py + ph + 30, ['k'], { size: 27, anchor: 'end' });
-  out += math(px + pw + 4, yv(values[best]) - 10, ['B'], { size: 27, fill: C.pink, anchor: 'end' });
-  out += math(x0, 442, ['B(s', ['t', 'sub'], ', a', ['t', 'sub'], ')  ←  max', ['k', 'sub'], ' Ê(s', ['k', 'sub'], ')'], { size: 30, fill: C.pink });
+  out += math(px + 4, py - 18, ['Ê(s', ['k', 'sub'], ')'], { size: 27 });
+  out += text(px, py + ph + 30, '0', { size: 24, anchor: 'middle' }) + math(px + pw / 2, py + ph + 30, ['k'], { size: 25, anchor: 'middle' }) + math(px + pw, py + ph + 30, ['T'], { size: 25, anchor: 'middle' });
+  out += math(px + pw + 4, yv(values[best]) - 10, ['B', [', every ', 'word'], 't'], { size: 23, fill: C.pink, anchor: 'end' });
+  out += math(196, 442, ['B', ['ω', 'sub'], '(s', ['t', 'sub'], ', a', ['t', 'sub'], ')'], { size: 29, fill: C.pink, anchor: 'end' });
+  out += line(r, 252, 433, 206, 433, { stroke: C.pink, width: 2.6, arrow: true, passes: 1 }) + text(229, 418, 'fit', { size: 19, anchor: 'middle', fill: C.muted });
+  out += math(260, 442, ['max', ['0 ≤ k ≤ T', 'subword'], ' Ê(s', ['k', 'sub'], ')'], { size: 29, fill: C.pink });
   return out;
 }
 
@@ -306,32 +317,33 @@ function panelExplore() {
   out += text(ax + aw / 2, ay + 32, 'actor', { size: 27, anchor: 'middle', font: HAND, weight: 700 });
   out += math(ax + 14, ay + 76, ['Q(s, a, g)'], { size: 29 }) + math(ax + 14, ay + 118, ['+ β · B(s, a)'], { size: 29, fill: C.pink });
   out += line(r, bx + 108, by + 18, ax - 6, ay + ah - 30, { arrow: true });
+  out += text(ax + 14, ay + ah + 28, 'critic Q: no bonus', { size: 21, fill: C.muted });
   out += curve([[ax + 40, ay - 4], [ax - 30, 96], [ex + ec * 3 + 10, ey + ec * 1.2]], { width: 2.4, arrow: true });
   out += math(ax - 34, 112, ['a'], { size: 30, anchor: 'end' });
   // β fades to zero by the middle of training.
-  const [sx, sy, sw, sh] = [366, 346, 170, 52];
+  const [sx, sy, sw, sh] = [366, 360, 170, 46];
   out += line(r, sx, sy + sh, sx + sw, sy + sh, { width: 2 }) + line(r, sx, sy - 4, sx, sy + sh, { width: 2 });
   out += `<path d="M${sx},${sy} L${sx + sw / 2},${sy + sh} L${sx + sw},${sy + sh}" fill="none" stroke="${C.pink}" stroke-width="3" stroke-linecap="round"/>`;
-  out += math(sx - 10, sy + 14, ['β'], { size: 30, anchor: 'end', fill: C.pink }) + text(sx + sw / 2, sy + sh + 28, '½', { size: 24, anchor: 'middle', fill: C.muted }) + text(sx + sw, sy + sh + 28, 'steps', { size: 24, anchor: 'end', fill: C.muted });
+  out += math(sx - 10, sy + 14, ['β'], { size: 30, anchor: 'end', fill: C.pink }) + text(sx + sw / 2, sy + sh + 28, '50%', { size: 22, anchor: 'middle', fill: C.muted }) + text(sx + sw, sy + sh + 28, 'steps', { size: 24, anchor: 'end', fill: C.muted });
   return out;
 }
 
 export const FAMILIES = [
   { name: 'CRL', color: C.blue, plot: 'crl', without: 'CRL', with: 'CRL + Emp' },
   { name: 'CRL + RND', color: C.red, plot: 'crl', without: 'CRL + RND', with: 'CRL + RND + Emp' },
-  { name: 'SUPE', color: C.pink, plot: 'supe', without: 'SUPE', with: 'SUPE + Emp' },
+  { name: 'SUPE', color: C.lavender, plot: 'supe', without: 'SUPE', with: 'SUPE + Emp' },
 ];
 
 function panelResult() {
   const r = random(67);
   let out = frame(r, '6 · antmaze-medium result', C.panel.gray);
-  out += text(PANEL.w - 16, 52, 'Fig. 4 · navigate data · 5 seeds', { size: 21, anchor: 'end', fill: C.muted });
-  const plots = { crl: [80, 78], supe: [340, 78] }, [pw, ph] = [182, 160];
+  out += text(80, 70, 'CRL', { size: 23, fill: C.blue, weight: 700 }) + text(136, 70, 'CRL + RND', { size: 23, fill: C.red, weight: 700 }) + text(340, 70, 'SUPE', { size: 23, fill: C.lavender, weight: 700 });
+  const plots = { crl: [80, 94], supe: [340, 94] }, [pw, ph] = [182, 146];
   for (const [key, [px, py]] of Object.entries(plots)) {
-    for (const level of [0.5]) out += `<path d="M${px},${n(py + ph * (1 - level))} H${px + pw}" stroke="${C.grid}" stroke-width="1.2" stroke-dasharray="2 5"/>`;
+    out += `<path d="M${px},${n(py + ph / 2)} H${px + pw}" stroke="${C.grid}" stroke-width="1.2" stroke-dasharray="2 5"/>`;
     out += line(r, px, py - 4, px, py + ph, { width: 2 }) + line(r, px, py + ph, px + pw + 4, py + ph, { width: 2 });
-    out += text(px - 9, py + 8, '1', { size: 24, anchor: 'end' }) + text(px - 9, py + ph + 7, '0', { size: 24, anchor: 'end' });
-    out += text(px, py + ph + 30, '0', { size: 24, anchor: 'middle', fill: C.muted }) + text(px + pw, py + ph + 30, DATA.curves[key].xmax, { size: 24, anchor: 'middle', fill: C.muted });
+    out += text(px - 9, py + 8, '1', { size: 23, anchor: 'end' }) + text(px - 9, py + ph / 2 + 7, '.5', { size: 20, anchor: 'end', fill: C.muted }) + text(px - 9, py + ph + 7, '0', { size: 23, anchor: 'end' });
+    out += text(px, py + ph + 28, '0', { size: 23, anchor: 'middle', fill: C.muted }) + text(px + pw, py + ph + 28, DATA.curves[key].xmax, { size: 23, anchor: 'middle', fill: C.muted });
     for (const family of FAMILIES.filter((f) => f.plot === key)) {
       for (const [series, dash] of [[family.without, '9 7'], [family.with, null]]) {
         const pts = DATA.curves[key].series[series].map(([x, y]) => `${n(px + x * pw)},${n(py + ph * (1 - y))}`);
@@ -339,19 +351,22 @@ function panelResult() {
       }
     }
   }
-  out += text(32, 158, 'success', { size: 22, anchor: 'middle', fill: C.muted, extra: ' transform="rotate(-90 32 158)"' });
-  out += text(PANEL.w / 2 + 4, 298, 'env steps', { size: 22, anchor: 'middle', fill: C.muted });
-  out += line(r, 28, 328, 72, 328, { width: 3, dash: '9 7', passes: 1 }) + math(82, 337, ['without Ê'], { size: 27 });
-  out += line(r, 262, 328, 306, 328, { width: 3, passes: 1 }) + math(316, 337, ['with Ê'], { size: 27 });
-  out += text(28, 376, 'CRL', { size: 26, fill: C.blue, weight: 700 }) + text(108, 376, 'CRL + RND', { size: 26, fill: C.red, weight: 700 }) + text(268, 376, 'SUPE', { size: 26, fill: C.pink, weight: 700 });
+  // In SUPE the bonus scores the high-level skill choice, not a CRL action.
+  out += text(plots.supe[0] + pw - 4, plots.supe[1] + ph - 14, 'B on skill choice', { size: 19, anchor: 'end', fill: C.muted });
+  out += text(30, 167, 'success', { size: 22, anchor: 'middle', fill: C.muted, extra: ' transform="rotate(-90 30 167)"' });
+  out += text(PANEL.w / 2 + 4, 300, 'env steps', { size: 22, anchor: 'middle', fill: C.muted });
+  out += line(r, 28, 330, 72, 330, { width: 3, dash: '9 7', passes: 1 }) + math(82, 339, ['without Ê'], { size: 26 });
+  out += line(r, 262, 330, 306, 330, { width: 3, passes: 1 }) + math(316, 339, ['with Ê'], { size: 26 });
   // Section 6.3 verdicts for adding Ê to CRL on all nine task and dataset pairs.
   const verdicts = [...DATA.tally].sort((a, b) => (a.vs_crl === b.vs_crl ? 0 : a.vs_crl === 'better' ? -1 : 1));
+  const better = verdicts.filter((v) => v.vs_crl === 'better').length;
   verdicts.forEach((v, k) => {
-    const x = 44 + k * 32, y = 420, better = v.vs_crl === 'better';
-    out += `<circle cx="${x}" cy="${y}" r="14" fill="${better ? C.yellow : 'none'}" stroke="${better ? C.yellow : C.muted}" stroke-width="2"/>`;
-    out += text(x, y + 7, better ? '↑' : '=', { size: 20, anchor: 'middle', fill: better ? C.bg : C.muted, weight: 700 });
+    const x = 42 + k * 30, y = 394, up = v.vs_crl === 'better';
+    out += `<circle cx="${x}" cy="${y}" r="13" fill="${up ? C.yellow : 'none'}" stroke="${up ? C.yellow : C.muted}" stroke-width="2"/>`;
+    out += text(x, y + 7, up ? '↑' : '=', { size: 20, anchor: 'middle', fill: up ? C.bg : C.muted, weight: 700 });
   });
-  out += math(334, 414, ['+ Ê vs CRL'], { size: 25 }) + text(334, 443, '9 task · data pairs', { size: 22, fill: C.muted });
+  out += math(322, 376, ['+ Ê vs CRL'], { size: 24 }) + text(322, 400, `${better} better · ${verdicts.length - better} on par`, { size: 20, fill: C.muted }) + math(322, 423, ['β', [' tuned per pair', 'word']], { size: 19, fill: C.muted });
+  out += text(28, 448, 'Fig. 4 · navigate data · 5 seeds · Sec. 6.3', { size: 19, fill: C.muted });
   return out;
 }
 
@@ -360,9 +375,11 @@ export const PANELS = [panelData, panelSkills, panelMap, panelBonus, panelExplor
 // ── Layouts ──────────────────────────────────────────────────────────────────────
 
 function snowflake(x, y, size, color) {
-  const arms = [0, 60, 120].map((deg) => {
-    const a = (deg * Math.PI) / 180, dx = size * Math.cos(a), dy = size * Math.sin(a);
-    return `M${n(x - dx)},${n(y - dy)} L${n(x + dx)},${n(y + dy)}`;
+  const arms = [30, 90, 150, 210, 270, 330].map((deg) => {
+    const a = (deg * Math.PI) / 180, ex = x + size * Math.cos(a), ey = y + size * Math.sin(a);
+    const bx = x + size * 0.6 * Math.cos(a), by = y + size * 0.6 * Math.sin(a), b = size * 0.35;
+    const branch = (d) => `M${n(bx)},${n(by)} L${n(bx + b * Math.cos(a + d))},${n(by + b * Math.sin(a + d))}`;
+    return `M${n(x)},${n(y)} L${n(ex)},${n(ey)} ${branch(0.8)} ${branch(-0.8)}`;
   });
   return `<path d="${arms.join(' ')}" stroke="${color}" stroke-width="2.4" stroke-linecap="round"/>`;
 }
@@ -377,7 +394,7 @@ export const LAYOUTS = {
       out += `<path d="M40,596 H1820" stroke="${C.muted}" stroke-width="2" stroke-dasharray="10 9"/>`;
       out += tag(r, 'online · sparse-reward goals', { x: 40, y: 610, size: 28 });
       out += curve([[1540, 546], [1420, 600], [1000, 606], [620, 620], [500, 688]], { stroke: C.yellow, width: 3, arrow: true });
-      out += math(1040, 580, ['Ê'], { size: 34, fill: C.yellow, anchor: 'end' }) + text(1052, 580, 'frozen', { size: 28, fill: C.yellow, font: HAND, weight: 700 }) + snowflake(1168, 570, 12, C.yellow);
+      out += math(1030, 580, ['Ê'], { size: 34, fill: C.yellow, anchor: 'end' }) + snowflake(1056, 569, 13, C.yellow) + text(1080, 580, 'frozen', { size: 28, fill: C.yellow, font: HAND, weight: 700 });
       return out;
     },
   },
@@ -390,7 +407,7 @@ export const LAYOUTS = {
       out += `<path d="M40,1660 H600" stroke="${C.muted}" stroke-width="2" stroke-dasharray="10 9"/>`;
       out += tag(r, 'online · sparse-reward goals', { x: 40, y: 1682, size: 28 });
       out += line(r, 480, 1586, 480, 1764, { stroke: C.yellow, width: 3, arrow: true });
-      out += math(462, 1632, ['Ê'], { size: 34, fill: C.yellow, anchor: 'end' }) + snowflake(504, 1622, 12, C.yellow) + text(520, 1632, 'frozen', { size: 28, fill: C.yellow, font: HAND, weight: 700 });
+      out += math(462, 1632, ['Ê'], { size: 34, fill: C.yellow, anchor: 'end' }) + snowflake(506, 1621, 13, C.yellow) + text(528, 1632, 'frozen', { size: 28, fill: C.yellow, font: HAND, weight: 700 });
       return out;
     },
   },
@@ -398,13 +415,13 @@ export const LAYOUTS = {
 
 const final = (plot, series) => DATA.curves[plot].series[series].at(-1)[1].toFixed(2);
 const TITLE = 'Offline empowerment, from logged data to online exploration';
-const DESC = 'Offline: from unlabeled OGBench transitions (s, a, s′) with no reward and no skill labels, the method learns a skill-conditioned policy and where each skill leads, V^z(s+ | s). '
-  + 'Empowerment Ê(s) = I(s+; z | s) is high at a junction, where skills reach different futures, and low in a dead end, where all futures overlap. '
-  + 'The map read from the paper (Fig. 1b, antmaze-medium) peaks near 1.4 nats at the corridor junctions and falls to about 0.6 in the corners. '
-  + 'Online: the frozen estimator scores each state of an episode. A bonus network B(s, a) learns the episode maximum of Ê. The actor maximizes Q(s, a, g) + β·B(s, a); '
-  + 'the critic is contrastive RL (CRL), each batch is half online and half offline data (RLPD), and β falls to zero by mid-training. '
-  + `Result on antmaze-medium with navigate data (Fig. 4, 5 seeds): final success rises ${FAMILIES.map((f) => `from ${final(f.plot, f.without)} to ${final(f.plot, f.with)} for ${f.name}`).join(', ')}. `
-  + 'Across all nine task and dataset pairs, adding Ê helps CRL on five and is on par on four.';
+const DESC = 'Offline: from unlabeled OGBench transitions (s, a, s′) with no reward and no skill labels, the method learns skills z, a skill-conditioned policy π(a | s, z) and where each skill leads, V^z(s+ | s), where s+ is a future state. '
+  + 'It learns the skills that maximize I(s+; z | s), and Ê(s) estimates that maximum. Ê is high at a junction, where skills reach different futures, and low in a room corner, where the futures overlap. '
+  + 'The map read from the paper (Fig. 1b, antmaze-medium) peaks near 1.4 nats at the central junction and falls to 0.6 in the corner of the bottom-left room, where the online agent starts; the other corners read about 0.8 to 1.0. '
+  + 'Online: the frozen estimator scores every state of an episode. A bonus network B(s, a) is fit to the maximum of Ê over the whole episode, on online and offline episodes. The actor maximizes Q(s, a, g) + β·B(s, a); '
+  + 'the critic Q is contrastive RL (CRL) and gets no bonus, each batch is half online and half offline data (RLPD), and β falls to zero at 50% of training. In SUPE the bonus scores the high-level skill choice instead. '
+  + `Result on antmaze-medium with navigate data (Fig. 4, 5 seeds, smoothed final success): ${FAMILIES.map((f) => `from ${final(f.plot, f.without)} to ${final(f.plot, f.with)} for ${f.name}`).join(', ')}. `
+  + 'Across all nine task and dataset pairs, the paper reports that adding Ê helps CRL on five and is on par on four (Sec. 6.3); β is tuned for each pair.';
 
 export function svg(name) {
   const layout = LAYOUTS[name], r = random(name === 'wide' ? 3 : 5);
