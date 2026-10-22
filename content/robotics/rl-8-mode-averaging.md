@@ -93,7 +93,7 @@ Where does the choice of mode come from? From the starting noise. Here is the ca
 
 </div>
 
-Different noise ends at different routes, and a small lean is enough to commit. The only start that ends at the average is exactly 0, which a continuous noise distribution draws with probability zero. That's the source of multimodality in a flow policy: the learned velocity field splits the noise space into regions, and each region flows to a different mode.
+Different noise ends at different routes, and a small lean is enough to commit. In the exact, continuous flow, the only start that ends at the average is exactly 0, which a continuous noise distribution draws with probability zero. Ten coarse steps leave a thin band: in this example, a start closer to 0 than about 0.00012 still finishes inside the box, which a standard normal draws about once in 10,000 tries. That's the source of multimodality in a flow policy: the learned velocity field splits the noise space into regions, and each region flows to a different mode.
 
 <details>
 <summary>How the velocity is trained, and the exact field in the example</summary>
@@ -106,13 +106,13 @@ The training target is the direction from the noise to the demonstration, $u=A-\
 
 $$L(\theta)=\mathbb E\big\|v_\theta(x_\tau,\tau,o)-(A-\epsilon)\big\|^2.$$
 
-This is still a squared error, so it is still minimized by a mean. The difference is what gets averaged. The network learns the average direction at a given noisy point $x_\tau$, and at most noisy points the demonstrations that could have produced it mostly belong to one route. So the averaged direction points toward one mode, not toward the middle. [Lipman et al. (2022)](https://arxiv.org/abs/2210.02747) introduced flow matching as a general method; π0 sets this up in its Section IV, with a chunk of $H=50$ actions and 10 integration steps.
+This is still a squared error, so it is still minimized by a mean. The difference is what gets averaged. The network learns the average direction at a given noisy point $x_\tau$, and at most noisy points the demonstrations that could have produced it mostly belong to one route. So the averaged direction points toward one mode, not toward the middle. [Lipman et al. (2022)](https://arxiv.org/abs/2210.02747) introduced flow matching as a general method. π0 sets it up in its Section IV, with a chunk of $H=50$ actions and 10 integration steps. The current arXiv version (v4) prints the target as $A-\epsilon$, as here. Versions 1 to 3 printed $\epsilon-A$, which has the opposite sign from both the blend above and the forward Euler step, so check the version if you compare against the paper.
 
 For the table, the data are $A=+1$ or $A=-1$ with equal probability and one-dimensional noise. Let $m(x,\tau)$ be the expected $A$ given $x_\tau=x$, computed from the two Gaussians centered at $\pm\tau$ with spread $1-\tau$. The exact field is
 
 $$v(x,\tau)=\frac{m(x,\tau)-x}{1-\tau},$$
 
-and the table applies the Euler rule above from $\tau=0$ to $\tau=1$. This is a calculation with a perfect field, not a trained network.
+and the table applies the Euler rule above from $\tau=0$ to $\tau=1$. This is a calculation with a perfect field, not a trained network. The thin band comes from the same calculation: with these ten steps, a start of 0.0001 ends at about 0.42, while with 20 steps even a start of 0.000001 ends at a route.
 
 </details>
 
@@ -121,7 +121,7 @@ and the table applies the Euler rule above from $\tau=0$ to $\tau=1$. This is a 
 Being able to represent two modes is not the same as learning both of them.
 
 - **Coverage is not guaranteed.** The training loss rewards matching the demonstrations on average. If one route appears in 5% of the data, the learned field may give it a tiny region of the noise, or none. Nothing in the method promises that every valid route gets its share.
-- **The dividing line is where errors live.** With the exact field, only one point flows to the average. A learned field is approximate, and the noise near the boundary between regions is where it is most likely to end somewhere in between. In the game's fork level, the flow copy still hit the obstacle 3.65 times per test with 10-command chunks.
+- **The dividing line is where errors live.** With the exact field, only one point flows to the average, and ten coarse steps widen it only to a thin band. A learned field is approximate, and the noise near the boundary between regions is where it is most likely to end somewhere in between. In the game's fork level, the flow copy still hit the obstacle 3.65 times per test with 10-command chunks.
 - **It copies, it doesn't judge.** A flow policy reproduces the routes in the data, including slow or risky ones. Choosing the better mode needs a reward or a value estimate. That's the subject of [the previous part on mixed-quality data](/robotics/rl-7-learning-from-fixed-data/#sec-mixed).
 - **Chunks still run open loop.** Sampling one consistent chunk fixes averaging inside the chunk. It doesn't let the robot react to something that changes during those 25 commands. π0's authors tried temporal ensembling, which averages overlapping chunks, and report that it hurt performance, so they execute chunks without blending.
 - **It costs computation.** Every chunk needs 10 network evaluations of the action part of the model instead of one.
@@ -147,7 +147,7 @@ This is the last part of the series. To see where mode averaging sits among the 
 <summary>Sources and what each one supports</summary>
 
 - **Squared error and the mean.** A standard result: the constant that minimizes the average squared distance to a set of numbers is their mean. The Gaussian numbers come from fitting mean and variance to an even split at ±1 (mean 0, variance 1), and the 38% is the probability that a standard normal lies within ±0.5. Teaching calculation.
-- **π0.** [Black et al., 2024](https://arxiv.org/abs/2410.24164), Section IV: action chunks of $H=50$, flow matching loss with $x_\tau=\tau A+(1-\tau)\epsilon$ and target $A-\epsilon$, forward Euler with 10 steps of 0.1, and the statement that flow matching gives the model "multimodal modeling capability". Appendix D: 50 Hz robots run inference every 0.5 seconds after 25 actions, chunks run open loop, and temporal ensembling hurt performance.
+- **π0.** [Black et al., 2024](https://arxiv.org/abs/2410.24164), Section IV of arXiv v4 (8 January 2026): action chunks of $H=50$, flow matching loss with $x_\tau=\tau A+(1-\tau)\epsilon$ and target $A-\epsilon$ (v1 to v3 print $\epsilon-A$), forward Euler with 10 steps of 0.1, and the statement that flow matching gives the model "multimodal modeling capability". Appendix D: 50 Hz robots run inference every 0.5 seconds after 25 actions, chunks run open loop, and temporal ensembling hurt performance.
 - **Diffusion Policy.** [Chi et al., 2023](https://arxiv.org/abs/2303.04137), Section 4.1 and Figure 3: the Push-T left or right example, with the authors' description of how their baselines behave.
 - **ACT.** [Zhao et al., 2023](https://arxiv.org/abs/2304.13705): action chunking to shorten the effective horizon, and a conditional variational autoencoder because human demonstrators use different trajectories for the same task.
 - **Flow matching.** [Lipman et al., 2022](https://arxiv.org/abs/2210.02747).

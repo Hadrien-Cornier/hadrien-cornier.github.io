@@ -106,7 +106,7 @@ With $\epsilon=0.2$, the clipped ratio stays between 0.8 and 1.2. The $\min$ tak
 
 The paper's own description is that clipping removes the incentive for moving the ratio outside the interval, and it only ignores the change when that change would make the objective improve. That's different from a hard limit. Nothing stops the ratio from leaving the interval: other actions in the batch, shared weights and several passes over the data can all push it out. That's why PPO implementations also control the learning rate and the number of passes, and many stop a batch early when the measured KL divergence between the old and new policy grows too large, as [Spinning Up's PPO](https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/ppo.py) does with `target_kl`. The paper's entropy bonus is a separate term for exploration, not part of the clip.
 
-My game [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) has a CartPole level that shows the difference. With 10 passes over each batch, the plain update moved the policy by a KL divergence of about 1.5 per update and the pole stayed up for 158 steps at the end. With clipping, the KL was 0.008 per update and the final run lasted 395 steps (out of a 500-step limit, simulation).
+My game [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) has a CartPole level that shows the difference. With 10 passes over each batch at step size 0.03, the plain update moved the policy by a KL divergence of about 1.5 per update, and at the end of training the pole stayed up for 158 steps on average. With clipping at the same settings, the KL was 0.008 per update and the average was about 395 steps, out of a 500-step limit (simulation, 3 seeds). The step size matters as much as the clip here: at step size 0.001, the plain update with 10 passes also stayed at a KL of 0.008 and averaged about 379 steps.
 
 <h2 id="sec-groups">Groups that teach nothing</h2>
 
@@ -131,7 +131,7 @@ The two cases mean different things. A group of all successes on an easy start i
 
 There are two published responses, and neither is free.
 
-- **Filter the groups.** [DAPO (Yu et al., 2025)](https://arxiv.org/abs/2503.14476) over-samples and drops prompts where every sample is right or every sample is wrong, then keeps sampling until the batch is full of groups with a signal. The cost is the extra samples, and the number needed changes from batch to batch. For a language model those are extra generations. For a robot, each one would be a real attempt with a reset. DAPO measured language-model generations, so that robot cost is untested.
+- **Filter the groups.** [DAPO (Yu et al., 2025)](https://arxiv.org/abs/2503.14476) over-samples and drops prompts where every sample is right or every sample is wrong, then keeps sampling until the batch is full of groups with a signal. The cost is the extra samples, and the number needed changes from batch to batch. For a language model those are extra generations. For a robot, each one would be a real attempt with a reset. DAPO measured language-model generations, so that robot cost is untested. DAPO also removes GRPO's KL penalty, so the pull toward the reference described above doesn't apply to it.
 - **Remove the normalization biases.** [Dr. GRPO (Liu et al., 2025)](https://arxiv.org/abs/2503.20783) shows that dividing by the response length and by the group's standard deviation biases GRPO, and removes both. That fixes a different problem. An identical group still has every reward equal to its mean, so its advantages are still zero.
 
 In the game's pass-or-fail goal grid, a group-mean baseline solved all of the tasks. By the end of training, 92.4% of the groups had identical rewards (3 seeds, simulation). Since every task was solved by then, those groups were most likely all successes. That's the easy-start case: once the task was learned, most groups had nothing left to say.
@@ -143,7 +143,7 @@ In the game's pass-or-fail goal grid, a group-mean baseline solved all of the ta
 | Credit for the past | Actions share blame for earlier rewards | Reward-to-go | Same average update, and each score is still one noisy sample | S&B §13.3 |
 | No comparison | All actions in decent attempts go up | Baseline, advantage | Needs a good $V$ or several attempts | S&B §13.4, GAE |
 | Overshooting on reused data | Ratio grows with every pass | PPO clip | Not a hard bound, so learning rate, passes and KL still matter | Schulman et al. 2017 |
-| Identical groups | Every advantage is zero | DAPO filtering | Extra attempts, and the KL term still acts | Yu et al. 2025 |
+| Identical groups | Every advantage is zero | DAPO filtering | Extra attempts, a different number each batch | Yu et al. 2025 |
 
 </div>
 
@@ -157,9 +157,9 @@ Part 7 leaves the policy's own data behind and asks what can be learned from a f
 - **PPO.** [Schulman et al., 2017](https://arxiv.org/abs/1707.06347), Section 2.1 (several steps on the plain objective lead to destructively large updates), Section 3, equation 7 (clipped objective, $\epsilon=0.2$) and equation 9 (entropy bonus as a separate term).
 - **KL early stopping.** [Spinning Up PPO implementation](https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/ppo.py), `target_kl`.
 - **GRPO.** [Shao et al., 2024](https://arxiv.org/abs/2402.03300), Sections 4.1.1 and 4.1.2: group-normalized advantages and a KL penalty added to the loss.
-- **DAPO.** [Yu et al., 2025](https://arxiv.org/abs/2503.14476), Section 3.2, dynamic sampling.
+- **DAPO.** [Yu et al., 2025](https://arxiv.org/abs/2503.14476), Section 2.3 (KL penalty removed) and Section 3.2 (dynamic sampling).
 - **Dr. GRPO.** [Liu et al., 2025](https://arxiv.org/abs/2503.20783), Section 3.1: length and standard-deviation normalization biases.
-- **Breaking Bellman.** CartPole reuse level and pass-or-fail goal grid from the game's [experiment log](https://github.com/Hadrien-Cornier/breaking-bellman/blob/681cae3820f05f8604d212c0ab048ebf0e017e73/EXPERIMENTS.md) at commit 681cae3. Simulation, not a robot.
+- **Breaking Bellman.** CartPole reuse level and pass-or-fail goal grid from the game's [experiment log](https://github.com/Hadrien-Cornier/breaking-bellman/blob/681cae3820f05f8604d212c0ab048ebf0e017e73/EXPERIMENTS.md) at commit 681cae3. The CartPole numbers are the runs `st-plain-e10-lr03`, `st-clip-e10-lr03` and `st-plain-e10-lr001` in its `web/measured.js`: mean final evaluation return and mean KL per update over 3 seeds. Simulation, not a robot.
 - **Block example.** The rewards −2, 0 and +10 and the four attempts are made up to show the arithmetic. The robot reset cost of DAPO filtering is an untested consequence, not a measured result.
 
 </details>
