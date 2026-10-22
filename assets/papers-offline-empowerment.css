@@ -1,0 +1,17 @@
+/* Offline empowerment: one blackboard canvas. The wide drawing fits desktops, the tall one phones. */
+.paper-header .paper-takeaway { display: none; }
+.oe-canvas { margin: 0; padding: 0; background: #1d1d1b; border: 1px solid var(--line); }
+.oe-canvas svg { display: block; width: 100%; height: auto; }
+.oe-canvas .oe-tall { display: none; }
+.oe-after { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 26px; padding-top: 14px; }
+.oe-credit { margin: 0; font: 10px/1.5 var(--mono); color: var(--muted); }
+.oe-sources { display: flex; gap: 26px; font-size: 12px; }
+.oe-sources a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); }
+@media (max-width: 999px) {
+  .oe-canvas .oe-wide { display: none; }
+  .oe-canvas .oe-tall { display: block; max-width: 640px; margin: 0 auto; }
+}
+@media (max-width: 700px) {
+  .oe-canvas { margin: 0 -1px; }
+  .oe-after { flex-direction: column; align-items: start; }
+}

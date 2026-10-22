@@ -1,0 +1,10 @@
+{
+  "slug": "offline-empowerment",
+  "shortTitle": "Offline empowerment",
+  "title": "Learn where to explore from old data.",
+  "description": "Empowerment measured from unlabeled data guides online exploration.",
+  "date": "2026-10-22",
+  "paperTitle": "Measuring Empowerment from Offline Data for Intrinsically Motivated Exploration",
+  "paperUrl": "https://arxiv.org/abs/2610.24461",
+  "codeUrl": "https://github.com/ishirgarg/offline-empowerment"
+}
