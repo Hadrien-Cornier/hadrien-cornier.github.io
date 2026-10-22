@@ -29,7 +29,7 @@
   <a class="header-github" href="https://github.com/Hadrien-Cornier">GitHub <span aria-hidden="true">↗</span></a>
 </header>
 <main id="main" class="robotics-main">
-<header class="robotics-header post-header post-header-essay"><a class="eyebrow" href="/robotics/recent-papers/">Writing / Recent papers</a><h1>Faster-WAM in LeRobot: from 300 cache reads to 10</h1><p class="post-description">Faster-WAM cuts a world action model&#39;s action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights.</p><p class="post-meta"><time datetime="2026-10-21">October 21, 2026</time><span>4 min read</span></p><p class="post-tags"><a class="tag-chip" href="/robotics/#tag-world-action-models">world-action-models</a><a class="tag-chip" href="/robotics/#tag-lerobot">lerobot</a><a class="tag-chip" href="/robotics/#tag-kv-cache">kv-cache</a><a class="tag-chip" href="/robotics/#tag-flow-matching">flow-matching</a></p></header>
+<header class="robotics-header post-header post-header-essay"><a class="eyebrow" href="/robotics/recent-papers/">Writing / Recent papers</a><h1>Faster-WAM in LeRobot: from 300 cache reads to 10</h1><p class="post-description">Faster-WAM cuts a world action model&#39;s action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights.</p><p class="post-meta"><time datetime="2026-10-21">October 21, 2026</time><span>5 min read</span></p><p class="post-tags"><a class="tag-chip" href="/robotics/#tag-world-action-models">world-action-models</a><a class="tag-chip" href="/robotics/#tag-lerobot">lerobot</a><a class="tag-chip" href="/robotics/#tag-kv-cache">kv-cache</a><a class="tag-chip" href="/robotics/#tag-flow-matching">flow-matching</a></p></header>
 <div class="post-layout post-layout-essay post-layout-without-toc"><article class="article-body" aria-label="Faster-WAM in LeRobot: from 300 cache reads to 10"><p>A world action model is a video model with an action model attached. In <a href="https://arxiv.org/abs/2603.16666">Fast-WAM</a>, the 30-layer Wan2.2 video model runs once per action chunk and caches every layer's keys and values. Then a 30-layer action expert denoises a 32 x 7 action chunk over 10 steps, each layer reading its matching video layer's cache. That's 300 cache reads per chunk.</p>
 <p><a href="https://arxiv.org/abs/2608.02365v2">Faster-WAM</a> keeps one action layer. Lite KV-Fusion learns, per attention head, a softmax-weighted mix of all 30 cached layers (720 weights), builds the fused cache once, and the single layer reads it at each step. So 300 reads become 10. The paper reports 98.3% on LIBERO against 97.6%, 90.5% on RoboTwin 2.0 against 91.8%, and 52 ms per chunk against 196 ms in its LIBERO setup on a 24 GiB GPU. Fast-WAM doesn't fit on that GPU as one pipeline, so the authors timed it part by part.</p>
 <p>My take: the action expert was the expensive part, and Faster-WAM shows it can be one layer. The next speedup has to come from the encoders and the video prefill, because that's where the time goes now.</p>
@@ -38,6 +38,23 @@
 <iframe src="/assets/robotics/faster-wam-in-lerobot/explainer.html" title="Interactive explainer: from 300 cache reads to 10, Fast-WAM versus Faster-WAM" loading="lazy" style="display:block;width:100%;height:1400px;border:0;"></iframe>
 <figcaption>Interactive explainer. Use the play and step buttons in each widget. <a href="/assets/robotics/faster-wam-in-lerobot/explainer.html">Open it on its own page.</a></figcaption>
 </figure>
+<h2 id="section-follow-one-observation">Follow one observation</h2>
+<p>“Pick up the black bowl between the plate and the ramekin and place it on the plate.” Start with that <a href="https://huggingface.co/datasets/yuanty/LIBERO-fastwam/tree/ee018b997c430bb12b5bf3c892d744798c5a2f91">LIBERO demonstration</a>. The input is two camera views, the instruction and the robot state. The label is 32 recorded actions, each with seven control values. The 30 video layers are successive transformations of image tokens, not 30 frames; their depth comes from the pretrained Wan backbone.</p>
+<p>The two experts have different jobs. The video model starts from video pretraining; the action expert maps its features to robot controls. During joint training it learns to denoise future video latents, while the action expert learns to denoise demonstrated actions. Both use a velocity-prediction loss, and action loss also trains the video backbone through attention. At inference, only the observed-frame cache is needed. The example below follows those connections through an actual LeRobot run. (<a href="https://arxiv.org/html/2608.02365v2#A3">Paper, training details</a>)</p>
+<figure class="wide-explainer" style="width:max(100%, min(1120px, 100vw - 48px)); margin:32px 0 36px calc((100% - max(100%, min(1120px, 100vw - 48px))) / 2);">
+<iframe id="wam-worked-example" src="/assets/robotics/faster-wam-in-lerobot/example.html" title="Worked LIBERO example: input, layers, cached attention, training loss and inference" loading="lazy" style="display:block;width:100%;height:1200px;border:1px solid var(--line);border-radius:12px;"></iframe>
+<figcaption>Images and labels: LIBERO simulation data, CC BY 4.0. Attention, losses and inference: a dry run with random weights and reduced widths, including both encoders. These outputs explain the mechanics; they don't demonstrate a trained policy. This is separate from the A100 timing setup below. <a href="/assets/robotics/faster-wam-in-lerobot/example.html">Open the example on its own page.</a></figcaption>
+</figure>
+<script>
+(() => {
+  const frame = document.getElementById('wam-worked-example');
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin || event.source !== frame.contentWindow || event.data?.kind !== 'wam-embed-height') return;
+    const height = Number(event.data.height);
+    if (Number.isFinite(height) && height > 200 && height < 4000) frame.style.height = `${Math.ceil(height) + 4}px`;
+  });
+})();
+</script>
 <h2 id="section-how-i-added-it-to-lerobot">How I added it to LeRobot</h2>
 <p>I opened <a href="https://github.com/huggingface/lerobot/issues/5048">issue #5048</a> and <a href="https://github.com/huggingface/lerobot/pull/5049">PR #5049</a>, which is ready for review and not merged. It adds four opt-in flags to <code>FastWAMConfig</code>:</p>
 <pre><code class="language-python">action_expert_layers=1, lite_kv_fusion=True, retracted_1d_rope=True, world_model_only_conditioning=True
