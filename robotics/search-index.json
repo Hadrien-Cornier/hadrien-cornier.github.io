@@ -56,7 +56,7 @@
   },
   {
     "title": "Foundations of value-based RL: a family tree and a Q table",
-    "description": "One selected branch of RL, the value-based methods from trial and error to DQN, where each method fixes a problem an earlier one handles badly. Then Q-learning, which nudges one score toward the reward plus its best guess about the next cell.",
+    "description": "One selected branch of RL, the value-based methods from the trial-and-error idea to DQN, where each later method fixes a problem an earlier one handles badly. Then Q-learning, which nudges one score toward the reward plus its best guess about the next cell.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"
@@ -108,7 +108,7 @@
   },
   {
     "title": "The deadly triad: how a guess can train itself upward",
-    "description": "Function approximation, bootstrapping and off-policy data each make RL practical, and DQN and SAC use all three, even though together they can let a prediction feed its own target.",
+    "description": "Function approximation, bootstrapping and off-policy data each make RL practical. Off-policy value learners such as DQN and SAC use all three, even though together they can let a prediction feed its own target with nothing to pull it back down.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"
