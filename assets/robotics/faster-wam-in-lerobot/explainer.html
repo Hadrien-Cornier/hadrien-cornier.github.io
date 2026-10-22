@@ -260,19 +260,6 @@ select {
 .w-caption b { color: var(--ink); }
 .w-note { padding: 0 14px 12px; font-size: 12.5px; color: var(--ink-3); background: var(--surface); }
 
-/* layer zoom op list */
-.lz { display: grid; grid-template-columns: 250px minmax(0, 1fr); }
-.lz-ops { border-right: 1px solid var(--line); padding: 8px 0; font-size: 13.5px; }
-.lz-ops ol { list-style: none; margin: 0; padding: 0; counter-reset: op; }
-.lz-ops li button {
-  width: 100%; text-align: left; font: inherit; color: var(--ink-2); background: transparent; border: 0;
-  padding: 7px 14px; cursor: pointer; display: grid; grid-template-columns: 22px 1fr; gap: 4px; line-height: 1.3;
-}
-.lz-ops li button .shape { grid-column: 2; font: 11px var(--mono); color: var(--ink-3); }
-.lz-ops li button[aria-current="step"] { background: var(--surface-2); color: var(--ink); box-shadow: inset 3px 0 0 var(--action); }
-.lz-ops li button.off { opacity: .45; text-decoration: line-through; }
-.lz-ops li button .i { font: 11px var(--mono); color: var(--ink-3); padding-top: 2px; }
-
 /* drawers */
 details.drawer { margin: 18px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 details.drawer > summary {
@@ -297,15 +284,60 @@ table.data th.n { text-align: right; }
 .eq .tex-fallback { font-family: var(--mono); font-size: 14px; }
 .callout { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; margin: 16px 0; color: var(--ink-2); }
 
-.depth-calc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; padding: 14px; align-items: center; }
-.depth-calc label { display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); }
-.depth-calc input[type=range] { width: 100%; accent-color: var(--fused); }
-.depth-out { grid-column: 1 / -1; font-size: 15px; }
-.depth-out .eqn { font: 600 22px var(--mono); }
-.bar-row { display: grid; grid-template-columns: 96px 1fr 64px; gap: 10px; align-items: center; font-size: 13px; margin: 4px 0; }
-.bar-row .track { height: 12px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
-.bar-row .fill { height: 100%; border-radius: 3px; transition: width .35s ease; }
-.bar-row .num { font-family: var(--mono); text-align: right; }
+/* static before/after figures (fusion, RoPE) */
+figure.widget { margin-left: 0; margin-right: 0; }
+.ba { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ba-panel { padding: 14px 16px 6px; min-width: 0; }
+.ba-panel + .ba-panel { border-left: 1px solid var(--line); }
+.ba-label { font: 600 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); margin: 0; }
+.ba-sub { font-size: 15px; color: var(--ink); margin: 2px 0 8px; }
+.ba svg { display: block; width: 100%; max-width: 440px; height: auto; margin: 0 auto; overflow: visible; }
+.sv-h { font: 500 12px var(--mono); fill: var(--ink-3); text-anchor: middle; letter-spacing: .04em; }
+.sv-t { font: 600 15px var(--sans); fill: var(--ink); text-anchor: middle; }
+.sv-s { font: 400 13.5px var(--sans); fill: var(--ink-2); text-anchor: middle; }
+.sv-c { font: 700 12px var(--mono); fill: #fff; text-anchor: middle; }
+.sv-dots { font: 600 20px var(--sans); fill: var(--ink-3); text-anchor: middle; }
+.sv-big { font: 600 16.5px var(--sans); fill: var(--ink); text-anchor: middle; }
+.sv-video-ink { fill: var(--video); }
+.sv-fused-ink { fill: var(--fused); }
+.sv-video { fill: color-mix(in srgb, var(--video) 16%, var(--surface)); stroke: var(--video); stroke-width: 1.5; }
+.sv-action { fill: color-mix(in srgb, var(--action) 18%, var(--surface)); stroke: var(--action); stroke-width: 1.5; }
+.sv-fused { fill: color-mix(in srgb, var(--fused) 14%, var(--surface)); stroke: var(--fused); stroke-width: 2; }
+.sv-k { fill: var(--k); }
+.sv-v { fill: var(--v); }
+.sv-arrow { stroke: var(--ink-3); stroke-width: 1.6; fill: none; }
+.sv-mix { stroke: var(--fused); stroke-width: 2; fill: none; opacity: .75; }
+.sv-rule { stroke: var(--line); stroke-width: 1; }
+.rp { display: grid; gap: 0; }
+.rp-panel { padding: 14px 16px 12px; min-width: 0; }
+.rp-panel + .rp-panel { border-top: 1px solid var(--line); }
+.rg { display: grid; gap: 6px; margin-top: 10px; }
+.rg-row { display: grid; grid-template-columns: 170px repeat(3, minmax(0, 1fr)); gap: 6px; align-items: stretch; }
+.rg-name { font-size: 14px; font-weight: 600; color: var(--ink); align-self: center; line-height: 1.25; }
+.rg-name small { display: block; font-weight: 400; font-size: 12.5px; color: var(--ink-3); }
+.rg-head { font: 500 11.5px var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; align-self: end; }
+.rg-cell { border-radius: 7px; padding: 8px 10px; font-size: 14.5px; font-weight: 600; line-height: 1.25; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rg-span { grid-column: 2 / -1; justify-content: center; }
+.c-qcell { background: color-mix(in srgb, var(--q) 16%, var(--surface)); color: var(--q); border: 1.5px solid var(--q); }
+.c-kcell { background: color-mix(in srgb, var(--k) 14%, var(--surface)); color: var(--k); border: 1.5px solid var(--k); }
+.c-none { background: var(--surface-2); color: var(--ink-2); border: 1.5px dashed var(--ink-3); font-weight: 500; }
+.c-ok { background: color-mix(in srgb, var(--good) 14%, var(--surface)); color: var(--good); border: 1.5px solid var(--good); }
+.c-bad { background: color-mix(in srgb, var(--k) 8%, var(--surface)); color: var(--k); border: 1.5px dashed var(--k); }
+.legend i.i-none { background: var(--surface-2); border: 1px dashed var(--ink-3); }
+.syms { font-size: 15px; color: var(--ink-2); }
+ul.syms { padding-left: 20px; }
+@media (max-width: 760px) {
+  .ba { grid-template-columns: minmax(0, 1fr); }
+  .ba-panel + .ba-panel { border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (max-width: 600px) {
+  .rg-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rg-name { grid-column: 1 / -1; margin-top: 4px; }
+  .rg-name:empty { display: none; }
+  .rg-span { grid-column: 1 / -1; }
+  .rg-cell { font-size: 13.5px; padding: 7px 8px; }
+  .rp-panel, .ba-panel { padding-left: 12px; padding-right: 12px; }
+}
 
 .sources li { margin-bottom: 8px; }
 footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.5px; color: var(--ink-3); }
@@ -323,19 +355,10 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
   .wrap { padding: 0 16px; }
   .topbar { padding: 8px 16px; }
   .hero { padding-top: 36px; }
-  .lz { grid-template-columns: minmax(0, 1fr); }
-  .lz-ops { border-right: 0; border-bottom: 1px solid var(--line); padding: 0; }
-  .lz-ops ol { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px; gap: 4px; }
-  .lz-ops li { flex: 0 0 auto; scroll-snap-align: start; }
-  .lz-ops li button { grid-template-columns: 18px auto; padding: 6px 10px; border-radius: 8px; max-width: 220px; }
-  .lz-ops li button[aria-current="step"] { box-shadow: inset 0 -3px 0 var(--action); }
-  .lz-ops li button .shape { display: none; }
   .w-controls { padding: 10px; }
   .range input { width: 90px; }
-  .depth-calc { grid-template-columns: 1fr; }
   .stat .val { font-size: 17px; }
   .widget { margin-left: -6px; margin-right: -6px; }
-  .bar-row { grid-template-columns: 78px 1fr 56px; }
 }
 @media (max-width: 420px) {
   .facts { grid-template-columns: minmax(0, 1fr); }
@@ -357,7 +380,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
   .tname { font-size: 12.5px; }
   .ttot { font-size: 12.5px; }
 }
-@media (prefers-reduced-motion: reduce) { .tseg, .bar-row .fill { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .tseg { transition: none; } }
 
 .range.scrub input { width: 170px; }
 @media (max-width: 720px) { .range.scrub input { width: 130px; } }
@@ -405,14 +428,11 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
       <ol>
         <li><a href="#machine"><span class="n">01</span>The race</a></li>
         <li><a href="#tokens"><span class="n">02</span>Tokens in</a></li>
-        <li><a href="#attention"><span class="n">03</span>Attention</a></li>
-        <li><a href="#cache"><span class="n">04</span>The KV cache</a></li>
-        <li><a href="#layer"><span class="n">05</span>One action layer</a></li>
-        <li><a href="#fusion"><span class="n">06</span>Lite KV-Fusion</a></li>
-        <li><a href="#conditioning"><span class="n">07</span>Two side changes</a></li>
-        <li><a href="#time"><span class="n">08</span>Where time goes</a></li>
-        <li><a href="#quality"><span class="n">09</span>Did quality hold?</a></li>
-        <li><a href="#limits"><span class="n">10</span>Limits, sources</a></li>
+        <li><a href="#fusion"><span class="n">03</span>Lite KV-Fusion</a></li>
+        <li><a href="#conditioning"><span class="n">04</span>Two side changes</a></li>
+        <li><a href="#time"><span class="n">05</span>Where time goes</a></li>
+        <li><a href="#quality"><span class="n">06</span>Did quality hold?</a></li>
+        <li><a href="#limits"><span class="n">07</span>Limits, sources</a></li>
       </ol>
     </nav>
 
@@ -497,189 +517,219 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
       </section>
 
       <!-- 03 -->
-      <section class="chapter" id="attention">
-        <p class="kicker">Step 2 · attention</p>
-        <h2 class="ch"><span class="n">03</span>How one token reads the others</h2>
+      <section class="chapter" id="fusion">
+        <p class="kicker">The change</p>
+        <h2 class="ch"><span class="n">03</span>Lite KV-Fusion: one cache made from thirty</h2>
         <div class="prose">
-          <p>Inside every layer, each token asks a question and every token offers an answer. The question is the <span class="c-q">query</span> vector q. The label on each answer is the <span class="c-k">key</span> vector k. The content behind it is the <span class="c-v">value</span> vector v. A layer makes all three by multiplying each token's vector by three learned matrices.</p>
-          <p>How well a query matches a key is their dot product. Divide by √d, add a mask, and apply softmax along the row: you get weights that sum to 1. The token's output is the weighted sum of the values.</p>
+          <p>Here's the one piece of attention you need for the rest of this page. Each video layer turns every image token into a <span class="c-k">key</span> and a <span class="c-v">value</span>. When an action token reads the image, it compares its <span class="c-q">query</span> with all 98 keys, and the better a key matches, the more of that token's value it takes in. The video tokens never look at the actions, so their keys and values stay the same through all 10 denoising steps. Fast-WAM computes them once per chunk and stores them. That store is the <b>KV cache</b>, one set of keys and values for each of the 30 video layers.</p>
+          <p>Fast-WAM pairs the layers. Action layer <i>j</i> reads cache <i>j</i> and nothing else, so 30 action layers times 10 steps makes 300 reads per chunk. The pairing is also why you can't just delete action layers: drop action layer 17 and nothing reads video layer 17 anymore.</p>
+          <p>Faster-WAM breaks the pairing. It mixes the 30 caches into one <span class="c-fused">fused cache</span>, once per chunk, and a single action layer reads that at every step. For each attention head it learns one number per video layer, turns those 30 numbers into weights that add up to 1, and takes the weighted sum:</p>
         </div>
-        <div class="eq"><span data-tex="\operatorname{Attention}(Q,K,V)=\operatorname{softmax}\!\Big(\frac{QK^{\top}}{\sqrt{d}}+M\Big)\,V" data-display data-plain="Attention(Q, K, V) = softmax(Q·Kᵀ / √d + M) · V"></span></div>
+        <div class="eq"><span data-tex="\beta_{h\ell}=\frac{e^{\alpha_{h\ell}}}{\sum_{r=1}^{30}e^{\alpha_{hr}}},\qquad \widehat{K}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,K_{\ell h},\qquad \widehat{V}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,V_{\ell h}" data-display data-plain="β_hℓ = softmax over ℓ of α_hℓ;   K̂_h = Σ_ℓ β_hℓ K_ℓh;   V̂_h = Σ_ℓ β_hℓ V_ℓh"></span></div>
         <div class="prose">
-          <p>The mask <i>M</i> decides who may read whom. In Fast-WAM, <span class="c-video">video tokens</span> read only video tokens. <span class="c-action">Action tokens</span> read the observed frame's video tokens and all the action tokens. So the video side never depends on the actions. Keep that in mind: it is what makes the cache possible.</p>
+          <p class="syms">Here ℓ is the video layer, 1 to 30, and <i>h</i> is the attention head, 1 to 24. The α<sub>hℓ</sub> are the learned numbers. The softmax turns them into weights β<sub>hℓ</sub> that are positive and add up to 1. <i>K</i><sub>ℓh</sub> and <i>V</i><sub>ℓh</sub> are layer ℓ's cached keys and values for head <i>h</i>, and the hats mark the fused cache. Keys and values share the same weights.</p>
         </div>
-        <div class="widget" id="w-attn">
-          <div class="w-head"><span class="title">attention(one head) · toy numbers, d = 4</span>
-            <span class="legend"><span><i style="background:var(--q)"></i>q</span><span><i style="background:var(--k)"></i>k</span><span><i style="background:var(--v)"></i>v</span><span><i style="background:var(--score)"></i>weight</span></span>
+        <figure class="widget" id="f-fusion">
+          <div class="w-head"><span class="title">which cache each action layer reads</span>
+            <span class="legend"><span><i style="background:var(--video)"></i>video layer</span><span><i style="background:var(--k)"></i>K</span><span><i style="background:var(--v)"></i>V</span><span><i style="background:var(--fused)"></i>fused cache</span><span><i style="background:var(--action)"></i>action layer</span></span>
           </div>
-          <div class="w-stage"></div>
-          <div class="w-controls">
-            <label class="range">query <select name="fw-field-4" data-act="query" aria-label="Query token"></select></label>
-            <button class="btn primary" type="button" data-act="play">Play</button>
-            <button class="btn" type="button" data-act="step">Step</button>
-            <button class="btn" type="button" data-act="all" aria-pressed="false">Show every row</button>
+          <div class="ba">
+            <div class="ba-panel">
+              <p class="ba-label">Before · Fast-WAM</p>
+              <p class="ba-sub">Action layer <i>j</i> reads only cache <i>j</i></p>
+              <svg viewBox="0 0 360 352" role="img" aria-labelledby="f-fusion-a-t">
+                <title id="f-fusion-a-t">Fast-WAM: 30 video layers each leave a K and V cache. Action layer 1 reads cache 1, action layer 2 reads cache 2, and so on to layer 30. 30 action layers times 10 steps is 300 reads per chunk.</title>
+                <defs><marker id="ah-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--ink-3)"/></marker></defs>
+                <text x="70" y="18" class="sv-h">video model</text>
+                <text x="290" y="18" class="sv-h">action expert</text>
+                <g class="sv-row" transform="translate(0,34)">
+                  <rect x="10" y="0" width="120" height="34" rx="6" class="sv-video"/><text x="70" y="22" class="sv-t">layer 1</text>
+                  <rect x="140" y="4" width="17" height="26" rx="3" class="sv-k"/><text x="148.5" y="22" class="sv-c">K</text>
+                  <rect x="159" y="4" width="17" height="26" rx="3" class="sv-v"/><text x="167.5" y="22" class="sv-c">V</text>
+                  <line x1="180" y1="17" x2="226" y2="17" class="sv-arrow" marker-end="url(#ah-a)"/>
+                  <rect x="230" y="0" width="120" height="34" rx="6" class="sv-action"/><text x="290" y="22" class="sv-t">action 1</text>
+                </g>
+                <g class="sv-row" transform="translate(0,84)">
+                  <rect x="10" y="0" width="120" height="34" rx="6" class="sv-video"/><text x="70" y="22" class="sv-t">layer 2</text>
+                  <rect x="140" y="4" width="17" height="26" rx="3" class="sv-k"/><text x="148.5" y="22" class="sv-c">K</text>
+                  <rect x="159" y="4" width="17" height="26" rx="3" class="sv-v"/><text x="167.5" y="22" class="sv-c">V</text>
+                  <line x1="180" y1="17" x2="226" y2="17" class="sv-arrow" marker-end="url(#ah-a)"/>
+                  <rect x="230" y="0" width="120" height="34" rx="6" class="sv-action"/><text x="290" y="22" class="sv-t">action 2</text>
+                </g>
+                <g class="sv-row" transform="translate(0,134)">
+                  <rect x="10" y="0" width="120" height="34" rx="6" class="sv-video"/><text x="70" y="22" class="sv-t">layer 3</text>
+                  <rect x="140" y="4" width="17" height="26" rx="3" class="sv-k"/><text x="148.5" y="22" class="sv-c">K</text>
+                  <rect x="159" y="4" width="17" height="26" rx="3" class="sv-v"/><text x="167.5" y="22" class="sv-c">V</text>
+                  <line x1="180" y1="17" x2="226" y2="17" class="sv-arrow" marker-end="url(#ah-a)"/>
+                  <rect x="230" y="0" width="120" height="34" rx="6" class="sv-action"/><text x="290" y="22" class="sv-t">action 3</text>
+                </g>
+                <text x="70" y="196" class="sv-dots">⋮</text><text x="290" y="196" class="sv-dots">⋮</text>
+                <g class="sv-row" transform="translate(0,212)">
+                  <rect x="10" y="0" width="120" height="34" rx="6" class="sv-video"/><text x="70" y="22" class="sv-t">layer 30</text>
+                  <rect x="140" y="4" width="17" height="26" rx="3" class="sv-k"/><text x="148.5" y="22" class="sv-c">K</text>
+                  <rect x="159" y="4" width="17" height="26" rx="3" class="sv-v"/><text x="167.5" y="22" class="sv-c">V</text>
+                  <line x1="180" y1="17" x2="226" y2="17" class="sv-arrow" marker-end="url(#ah-a)"/>
+                  <rect x="230" y="0" width="120" height="34" rx="6" class="sv-action"/><text x="290" y="22" class="sv-t">action 30</text>
+                </g>
+                <line x1="10" y1="272" x2="350" y2="272" class="sv-rule"/>
+                <text x="180" y="302" class="sv-big">30 action layers × 10 steps</text>
+                <text x="180" y="332" class="sv-big sv-video-ink">= 300 reads per chunk</text>
+              </svg>
+            </div>
+            <div class="ba-panel">
+              <p class="ba-label">After · Faster-WAM</p>
+              <p class="ba-sub">One action layer reads a mix of all 30</p>
+              <svg viewBox="0 0 360 352" role="img" aria-labelledby="f-fusion-b-t">
+                <title id="f-fusion-b-t">Faster-WAM: the same 30 caches are mixed once per chunk into one fused cache. One action layer reads the fused cache at each of the 10 steps, which is 10 reads per chunk.</title>
+                <defs><marker id="ah-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--ink-3)"/></marker></defs>
+                <text x="70" y="18" class="sv-h">video model</text>
+                <text x="290" y="18" class="sv-h">action expert</text>
+                <g transform="translate(0,34)">
+                  <rect x="10" y="0" width="120" height="34" rx="6" class="sv-video"/><text x="70" y="22" class="sv-t">layer 1</text>
+                  <rect x="140" y="4" width="17" height="26" rx="3" class="sv-k"/><text x="148.5" y="22" class="sv-c">K</text>
+                  <rect x="159" y="4" width="17" height="26" rx="3" class="sv-v"/><text x="167.5" y="22" class="sv-c">V</text>
+                </g>
+                <g transform="translate(0,84)">
+                  <rect x="10" y="0" width="120" height="34" rx="6" class="sv-video"/><text x="70" y="22" class="sv-t">layer 2</text>
+                  <rect x="140" y="4" width="17" height="26" rx="3" class="sv-k"/><text x="148.5" y="22" class="sv-c">K</text>
+                  <rect x="159" y="4" width="17" height="26" rx="3" class="sv-v"/><text x="167.5" y="22" class="sv-c">V</text>
+                </g>
+                <g transform="translate(0,134)">
+                  <rect x="10" y="0" width="120" height="34" rx="6" class="sv-video"/><text x="70" y="22" class="sv-t">layer 3</text>
+                  <rect x="140" y="4" width="17" height="26" rx="3" class="sv-k"/><text x="148.5" y="22" class="sv-c">K</text>
+                  <rect x="159" y="4" width="17" height="26" rx="3" class="sv-v"/><text x="167.5" y="22" class="sv-c">V</text>
+                </g>
+                <text x="70" y="196" class="sv-dots">⋮</text>
+                <g transform="translate(0,212)">
+                  <rect x="10" y="0" width="120" height="34" rx="6" class="sv-video"/><text x="70" y="22" class="sv-t">layer 30</text>
+                  <rect x="140" y="4" width="17" height="26" rx="3" class="sv-k"/><text x="148.5" y="22" class="sv-c">K</text>
+                  <rect x="159" y="4" width="17" height="26" rx="3" class="sv-v"/><text x="167.5" y="22" class="sv-c">V</text>
+                </g>
+                <path d="M180 51 C 204 51, 204 92, 226 92" class="sv-mix"/>
+                <path d="M180 101 C 204 101, 204 104, 226 104" class="sv-mix"/>
+                <path d="M180 151 C 204 151, 204 116, 226 116" class="sv-mix"/>
+                <path d="M180 229 C 210 229, 204 128, 226 128" class="sv-mix"/>
+                <rect x="226" y="40" width="128" height="104" rx="8" class="sv-fused"/>
+                <text x="290" y="66" class="sv-t">fused cache</text>
+                <text x="290" y="89" class="sv-s">mix of all 30</text>
+                <text x="290" y="108" class="sv-s">built once</text>
+                <text x="290" y="127" class="sv-s">per chunk</text>
+                <line x1="290" y1="146" x2="290" y2="205" class="sv-arrow" marker-end="url(#ah-b)"/>
+                <rect x="230" y="212" width="120" height="34" rx="6" class="sv-action"/><text x="290" y="234" class="sv-t">1 action layer</text>
+                <line x1="10" y1="272" x2="350" y2="272" class="sv-rule"/>
+                <text x="180" y="302" class="sv-big">1 action layer × 10 steps</text>
+                <text x="180" y="332" class="sv-big sv-fused-ink">= 10 reads per chunk</text>
+              </svg>
+            </div>
           </div>
-          <div class="w-caption"></div>
-          <div class="w-note">Toy example: 5 video tokens and 4 action tokens, 4 numbers each. The real model has 98 video tokens, 32 action tokens and 24 heads of 128 numbers. Tap a row to pick its query.</div>
+          <figcaption class="w-note">A schematic, not data. It shows which cache each action layer reads. Layers 4 to 29 are left out of the drawing, and the four lines into the fused cache stand for all 30. The lines don't show weight values.</figcaption>
+        </figure>
+        <div class="prose">
+          <p>That's 24 × 30 = <b>720 learned numbers</b> for the whole fusion. They start at zero, so training starts from a plain average with every β = 1/30.</p>
+          <p>What does training learn? In the paper's Figure 4 (LIBERO), every learned weight stays between 0.030 and 0.037, close to 1/30 ≈ 0.033 (read off the figure by eye). The middle of the stack, about layers 12 to 19, gets a little more, and the pattern changes from head to head. So the fused cache is close to an average of the whole video stack. It still beats reading only the last video layer: in the paper's step-by-step ablation (Figure 3), fusion goes from 97.7% to 98.0% on LIBERO and from 60.3% to 68.7% on LIBERO-Plus, where the same scenes are perturbed. <span class="tag paper">Paper</span></p>
+          <p>Fusion also makes the depth a free choice. Any number of action layers can read all 30 video layers now, so the action expert doesn't have to be 30 deep. The paper only tests one layer, and it says that doesn't make one layer the best depth.</p>
         </div>
       </section>
 
       <!-- 04 -->
-      <section class="chapter" id="cache">
-        <p class="kicker">Step 3 · caching</p>
-        <h2 class="ch"><span class="n">04</span>The KV cache: do the video work once</h2>
-        <div class="prose">
-          <p>The action chunk changes at every denoising step, so the action tokens' queries, keys and values must be computed again at every step. The video tokens do not change. The camera frame is clean, and the mask stops video tokens from reading actions. So a video layer's keys and values are the same at step 1 and at step 10.</p>
-          <p>Fast-WAM therefore runs the video tower once per chunk, a <b>prefill</b>, and keeps each layer's K and V. That store is the <b>KV cache</b>. One layer's cache holds 98 tokens × 3,072 numbers for K and the same for V: <b>602,112 numbers</b>. There are 30 of them.</p>
-          <p>Then, at each denoising step, action layer <i>j</i> reads cache <i>j</i>. The ledger counts the work for one chunk. Compare it with the counterfactual where nothing is cached.</p>
-        </div>
-        <div class="widget" id="w-ledger">
-          <div class="w-head"><span class="title">ledger(one chunk)</span>
-            <span class="legend"><span><i style="background:var(--video)"></i>video layer run</span><span><i style="background:var(--action)"></i>action pass</span><span><i style="background:var(--fused)"></i>reads fused cache</span></span>
-          </div>
-          <div class="w-stage"></div>
-          <div class="w-controls">
-            <div class="seg" data-seg="mode" role="group" aria-label="Scheme">
-              <button type="button" data-v="nocache" aria-pressed="false">No cache</button>
-              <button type="button" data-v="fast" aria-pressed="true">Fast-WAM</button>
-              <button type="button" data-v="faster" aria-pressed="false">Faster-WAM</button>
-            </div>
-            <button class="btn" type="button" data-act="play">Replay</button>
-          </div>
-          <div class="w-stats">
-            <div class="stat"><div class="k">video-layer runs</div><div class="val" data-out="vruns">0</div></div>
-            <div class="stat"><div class="k">cache reads</div><div class="val" data-out="reads">0</div></div>
-            <div class="stat"><div class="k">numbers read <span class="tag der">Derived</span></div><div class="val" data-out="numbers">0</div></div>
-            <div class="stat"><div class="k">text cross-attn reads</div><div class="val" data-out="text">0</div></div>
-          </div>
-          <div class="w-note">Numbers read = reads × 602,112 (K and V of one layer: 98 tokens × 3,072 × 2). For Faster-WAM this adds the one-time fusion pass over all 30 caches (18.1 M). Counts only; real cost also depends on the precision and on the kernels.</div>
-        </div>
-        <div class="callout">The cache already removes most of the video work. The remaining cost is the action side: 300 passes, each one a full transformer layer with its own projections and feed-forward network, not only a read.</div>
-      </section>
-
-      <!-- 05 -->
-      <section class="chapter" id="layer">
-        <p class="kicker">Step 4 · one layer, one step</p>
-        <h2 class="ch"><span class="n">05</span>Inside one action layer</h2>
-        <div class="prose">
-          <p>Zoom into a single action layer during a single denoising step. Each grid is a tensor. <span style="color:var(--weight);font-weight:600">Blue-grey</span> squares are learned weights; coloured squares are data, coloured by role. Squares are blocks of numbers, and the labels give the true sizes. When two matrices multiply, the row of the left matrix and the column of the top matrix meet at the cell being computed.</p>
-        </div>
-        <div class="widget" id="w-layer">
-          <div class="w-head"><span class="title">action_layer(x, σ, cache)</span>
-            <span class="legend"><span><i style="background:var(--weight)"></i>weights</span><span><i style="background:var(--action)"></i>action data</span><span><i style="background:var(--q)"></i>Q</span><span><i style="background:var(--k)"></i>K</span><span><i style="background:var(--v)"></i>V</span><span><i style="background:var(--score)"></i>attention</span></span>
-          </div>
-          <div class="lz">
-            <div class="lz-ops"><ol></ol></div>
-            <div class="w-stage"></div>
-          </div>
-          <div class="w-controls">
-            <div class="seg" data-seg="variant" role="group" aria-label="Model">
-              <button type="button" data-v="fast" aria-pressed="true">Fast-WAM layer</button>
-              <button type="button" data-v="faster" aria-pressed="false">Faster-WAM layer</button>
-            </div>
-            <button class="btn" type="button" data-act="prev">← Prev</button>
-            <button class="btn primary" type="button" data-act="play">Play all</button>
-            <button class="btn" type="button" data-act="next">Next →</button>
-          </div>
-          <div class="w-caption"></div>
-        </div>
-        <div class="prose">
-          <p>Fast-WAM runs all nine operations in each of 30 layers at each of 10 steps. Faster-WAM runs eight of them, without text cross-attention, in one layer at each of 10 steps, and its operation 3 reads the fused cache. The attention shapes stay the same, because the fused cache has the shape of one layer's cache.</p>
-        </div>
-      </section>
-
-      <!-- 06 -->
-      <section class="chapter" id="fusion">
-        <p class="kicker">The change</p>
-        <h2 class="ch"><span class="n">06</span>Lite KV-Fusion: one cache made from thirty</h2>
-        <div class="prose">
-          <p>Fast-WAM pairs its layers: action layer <i>j</i> can read only video layer <i>j</i>. With that pairing, removing action layers also removes access to the video layers they were paired with. Faster-WAM breaks the pairing. For each attention head <i>h</i> it learns 30 numbers α, one per video layer, turns them into weights with a softmax, and mixes the 30 cached keys and values:</p>
-        </div>
-        <div class="eq"><span data-tex="\beta_{h\ell}=\frac{e^{\alpha_{h\ell}}}{\sum_{r=1}^{30}e^{\alpha_{hr}}},\qquad \widehat{K}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,K_{\ell h},\qquad \widehat{V}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,V_{\ell h}" data-display data-plain="β_hℓ = softmax over ℓ of α_hℓ;   K̂_h = Σ_ℓ β_hℓ K_ℓh;   V̂_h = Σ_ℓ β_hℓ V_ℓh"></span></div>
-        <div class="prose">
-          <p>Keys and values share the same weights. With 24 heads, 30 video layers and 1 action layer, that is 24 × 30 × 1 = <b>720 learned numbers</b>: the whole fusion module. The logits start at zero, so training starts from a plain average, every β = 1/30. The mix is computed once per chunk and reused for all 10 steps.</p>
-        </div>
-        <div class="widget" id="w-fusion">
-          <div class="w-head"><span class="title">lite_kv_fusion(cache[1..30], α)</span>
-            <span class="legend"><span><i style="background:var(--k)"></i>positive</span><span><i style="background:var(--video)"></i>negative</span><span><i style="background:var(--fused)"></i>weight β</span></span>
-          </div>
-          <div class="w-stage"></div>
-          <div class="w-controls">
-            <div class="seg" data-seg="preset" role="group" aria-label="Weights">
-              <button type="button" data-v="uniform" aria-pressed="false">Start (all 1/30)</button>
-              <button type="button" data-v="paper" aria-pressed="true">Paper-shaped</button>
-              <button type="button" data-v="last" aria-pressed="false">Last layer only</button>
-              <button type="button" data-v="random" aria-pressed="false">Random</button>
-              <button type="button" data-v="custom" aria-pressed="false" disabled hidden>Custom</button>
-            </div>
-            <select name="fw-field-5" data-act="head" aria-label="Attention head"></select>
-          </div>
-          <div class="w-stats">
-            <div class="stat"><div class="k">head</div><div class="val" data-out="head">6 / 24</div></div>
-            <div class="stat"><div class="k">largest <span class="nc">β</span></div><div class="val" data-out="max">0</div></div>
-            <div class="stat"><div class="k">smallest <span class="nc">β</span></div><div class="val" data-out="min">0</div></div>
-            <div class="stat"><div class="k">Σ <span class="nc">β</span></div><div class="val" data-out="sum">1.000</div></div>
-            <div class="stat"><div class="k">parameters</div><div class="val">720</div></div>
-          </div>
-          <div class="w-caption" data-out="note"></div>
-          <div class="w-note">Tiles are illustrative cache contents (one channel of one head). The weights, the softmax and the mixing are computed live. Drag the logit bars; tap the heat map to pick a head.</div>
-        </div>
-        <div class="prose">
-          <p>What did training learn? In the paper's Figure 4 (LIBERO), every learned weight stays between 0.030 and 0.037, close to 1/30 ≈ 0.033. The middle of the stack, about layers 12 to 19 of 30, gets a little more; the early layers get a little less; the pattern differs from head to head. So the fused cache is close to an average of the whole video hierarchy, tilted toward the middle. The paper compares this against reading the final layer only and finds fusion better both on LIBERO and under distribution shift.</p>
-        </div>
-        <div class="widget" id="w-depth">
-          <div class="w-head"><span class="title">reads = action layers × steps</span><span>depth is now a free choice</span></div>
-          <div class="depth-calc">
-            <label>Action layers L<sub>a</sub>: <b data-out="la">1</b><input name="fw-field-6" type="range" min="1" max="30" value="1" data-act="la" aria-label="Action layers"></label>
-            <label>Denoising steps N: <b data-out="n">10</b><input name="fw-field-7" type="range" min="1" max="20" value="10" data-act="n" aria-label="Denoising steps"></label>
-            <div class="depth-out">
-              <div class="eqn" data-out="eq"></div>
-              <div class="bar-row"><span>Fast-WAM</span><div class="track"><div class="fill" style="width:50%;background:var(--video)"></div></div><span class="num">300</span></div>
-              <div class="bar-row"><span>your setting</span><div class="track"><div class="fill" data-out="bar-you" style="background:var(--fused)"></div></div><span class="num" data-out="you">10</span></div>
-              <div class="bar-row"><span>Faster-WAM</span><div class="track"><div class="fill" style="width:1.67%;background:var(--fused)"></div></div><span class="num">10</span></div>
-            </div>
-          </div>
-          <div class="w-note">With fusion, every action layer can read every video layer, so the number of action layers no longer has to equal 30. The paper tests only L<sub>a</sub> = 1 and says it does not claim one layer is the best depth.</div>
-        </div>
-      </section>
-
-      <!-- 07 -->
       <section class="chapter" id="conditioning">
         <p class="kicker">Two smaller changes</p>
-        <h2 class="ch"><span class="n">07</span>Changes that travel with fusion</h2>
+        <h2 class="ch"><span class="n">04</span>Changes that travel with fusion</h2>
         <div class="prose">
           <h3>World-model-only conditioning</h3>
           <p>In Fast-WAM, every action layer also cross-attends to the 128 <span class="c-ctx">text tokens</span> and the robot-state token, at every step: another 300 reads per chunk. Faster-WAM deletes that cross-attention. The instruction and robot state still reach the actions, but only through the video transformer, which reads them in every layer and writes what it learned into its cache. The paper's argument is that this keeps the small action expert from leaning on the text and state directly and helps the policy generalise.</p>
-          <h3>Retracted 1D-RoPE</h3>
-          <p>Transformers mark position by rotating pairs of numbers inside each query and key (rotary position encoding, RoPE). The video transformer rotates by time, row and column; the action expert rotates by the action's time index only. When an action query meets a video key with both native rotations, the angles do not line up. Faster-WAM undoes the video rotation of the fused key and re-applies the action's rotation for time 0.</p>
+          <h3>Retracted 1D RoPE: put the keys on the action's clock</h3>
+          <p>Attention also needs to know where tokens are. Both experts use rotary position encoding (RoPE): each query and key is cut into 64 pairs of numbers, and each pair is turned by an angle that grows with the token's position. When a query meets a key, the score in each pair depends only on the difference between their two angles. That difference is what tells the layer how far apart two tokens are, and it only means something if both sides turn by the same coordinate at the same rate.</p>
+          <p>Here they don't. The video model turns 22 pairs of every key by frame time, 21 by row and 21 by column. The action expert turns all 64 pairs of every query by the action step. Let's follow one example through the rest of this section: <b>action step 5 reads the patch at row 3, column 4</b> of the camera frame, and that frame sits at time 0.</p>
         </div>
-        <details class="drawer">
-          <summary>How the rotation fix works <span class="sub">optional, with a dial widget</span></summary>
-          <div class="inner prose">
-            <p>Each 128-number head is 64 pairs. In the video transformer, 22 pairs rotate with the frame time <i>t</i>, 21 with the patch row and 21 with the patch column. In the action expert, all 64 pairs rotate with the action index <i>i</i>. Faster-WAM computes, for every fused video key at position <i>p</i>:</p>
-            <div class="eq"><span data-tex="k^{v\to a}(p)=R^{a}(t)\,R^{v}(p)^{\top}\,\widehat{k}^{v}(p),\qquad R^{a}(0)=I" data-display data-plain="k(p) = Rₐ(t) · Rᵥ(p)ᵀ · k̂(p),  with Rₐ(0) = I"></span></div>
-            <p>This is exact because all 30 video layers rotate the token at position <i>p</i> with the same rotation, so mixing first and rotating later give the same result (paper, Proposition 2.2). The observed frame is at <i>t</i> = 0, so the re-applied action rotation is the identity.</p>
-            <div class="widget" id="w-rope">
-              <div class="w-head"><span class="title">retract(key, p)</span><span class="legend"><span><i style="background:var(--k)"></i>video key pairs</span><span><i style="background:var(--q)"></i>action query pairs</span></span></div>
-              <div class="w-stage"></div>
-              <div class="w-controls">
-                <div class="seg" data-seg="mode" role="group" aria-label="Key rotation">
-                  <button type="button" data-v="native" aria-pressed="true">Native 3D rotation</button>
-                  <button type="button" data-v="retracted" aria-pressed="false">Retracted</button>
+        <figure class="widget" id="f-rope">
+          <div class="w-head"><span class="title">one action query meets one video key</span>
+            <span class="legend"><span><i style="background:var(--q)"></i>turned by action step</span><span><i style="background:var(--k)"></i>turned by row or column</span><span><i class="i-none"></i>not turned</span></span>
+          </div>
+          <div class="rp">
+            <div class="rp-panel">
+              <p class="ba-label">Before · native rotations</p>
+              <div class="rg" role="table" aria-label="Before: what each group of pairs compares">
+                <div class="rg-row" role="row">
+                  <div class="rg-name" role="rowheader"></div>
+                  <div class="rg-head" role="columnheader">22 time pairs</div>
+                  <div class="rg-head" role="columnheader">21 row pairs</div>
+                  <div class="rg-head" role="columnheader">21 column pairs</div>
                 </div>
-                <label class="range">action index i <input name="fw-field-8" type="range" min="0" max="31" value="5" data-act="i" aria-label="Action index"> <span data-out="i">5</span></label>
+                <div class="rg-row" role="row">
+                  <div class="rg-name" role="rowheader">Action query<small>step 5</small></div>
+                  <div class="rg-cell c-qcell" role="cell">step 5</div>
+                  <div class="rg-cell c-qcell" role="cell">step 5</div>
+                  <div class="rg-cell c-qcell" role="cell">step 5</div>
+                </div>
+                <div class="rg-row" role="row">
+                  <div class="rg-name" role="rowheader">Video key<small>time 0, row 3, column 4</small></div>
+                  <div class="rg-cell c-none" role="cell">time 0, so no turn</div>
+                  <div class="rg-cell c-kcell" role="cell">row 3</div>
+                  <div class="rg-cell c-kcell" role="cell">column 4</div>
+                </div>
+                <div class="rg-row" role="row">
+                  <div class="rg-name" role="rowheader">The score sees</div>
+                  <div class="rg-cell c-ok" role="cell">time 0 − step 5 <span aria-label="consistent">✓</span></div>
+                  <div class="rg-cell c-bad" role="cell">row 3 − step 5 <span aria-label="mismatched">✗</span></div>
+                  <div class="rg-cell c-bad" role="cell">column 4 − step 5 <span aria-label="mismatched">✗</span></div>
+                </div>
               </div>
-              <div class="w-caption"></div>
-              <div class="w-note">Three of each group's pairs are drawn. Frequencies follow the code: base 10,000, split 22/21/21 for the video head and 64 pairs for the action head.</div>
+            </div>
+            <div class="rp-panel">
+              <p class="ba-label">After · retracted 1D RoPE</p>
+              <div class="rg" role="table" aria-label="After: what each group of pairs compares">
+                <div class="rg-row" role="row">
+                  <div class="rg-name" role="rowheader"></div>
+                  <div class="rg-head" role="columnheader">22 time pairs</div>
+                  <div class="rg-head" role="columnheader">21 row pairs</div>
+                  <div class="rg-head" role="columnheader">21 column pairs</div>
+                </div>
+                <div class="rg-row" role="row">
+                  <div class="rg-name" role="rowheader">Action query<small>step 5</small></div>
+                  <div class="rg-cell c-qcell" role="cell">step 5</div>
+                  <div class="rg-cell c-qcell" role="cell">step 5</div>
+                  <div class="rg-cell c-qcell" role="cell">step 5</div>
+                </div>
+                <div class="rg-row" role="row">
+                  <div class="rg-name" role="rowheader">Video key<small>same patch, turn undone</small></div>
+                  <div class="rg-cell c-none rg-span" role="cell">no turn in any pair</div>
+                </div>
+                <div class="rg-row" role="row">
+                  <div class="rg-name" role="rowheader">The score sees</div>
+                  <div class="rg-cell c-ok rg-span" role="cell">time 0 − step 5, in all 64 pairs <span aria-label="consistent">✓</span></div>
+                </div>
+              </div>
             </div>
           </div>
-        </details>
+          <figcaption class="w-note">A schematic of one attention head, which has 64 pairs. The pair counts and the axis of each pair follow the LeRobot code and the paper's Appendix B.3. A key at time 0 is not turned in its time pairs, because its angle there is 0.</figcaption>
+        </figure>
+        <div class="prose">
+          <p>In the 22 time pairs things already work. The frame is at time 0, a turn by 0 is no turn, and the score sees a clean gap of 5 steps. The two sides do turn their time pairs at different rates, which would matter for a frame at any other time, but Faster-WAM's actions only read time 0.</p>
+          <p>The other 42 pairs subtract 5 steps from 3 rows, or from 4 columns. Take the first row pair. The key turns 1 radian per row and the query 0.042 radians per step, so the score sees 3 − 0.042 × 5 = 2.79. At step 6 the same patch gives 2.75, as if it had moved 0.04 rows. Nothing in the image moved. Other pairs drift at other rates, from 0.002 to about 15 rows or columns per step, so they don't even agree with each other. <span class="tag der">Derived</span> So each action step reads the image with its own skewed sense of where things are, and that skew comes from token order, not from the scene. The paper proves this as its Proposition 2.3.</p>
+          <p>Faster-WAM's fix puts the keys on the action expert's clock. After it builds the fused cache, it turns each fused key back by its own video angles, which removes the time, row and column turn. Then it turns the key forward by the action expert's angle for the frame's time. The frame is at time 0, so that second turn does nothing, and in practice the whole fix is the undo. The query keeps its turn for step 5. Now all 64 pairs see the same thing, that the action is 5 steps after the frame, at the action expert's own rates. That's the same way two action tokens already compare with each other. The key's content can still carry what the video model worked out about where things are, because the video model keeps its 3D rotation inside its own 30 layers. Only the explicit turn on the keys handed to the action expert is gone.</p>
+          <p>In symbols, here's the fix, then the score between action step <i>i</i> and the video token at position <i>p</i>, before and after:</p>
+        </div>
+        <div class="eq"><span data-tex="\begin{aligned}\text{fix:}\quad &amp; k^{v\to a}(p)=R^{a}(0)\,R^{v}(p)^{\top}\,\widehat{k}(p)=\bar{k}(p)\\[4pt] \text{before:}\quad &amp; s(i,p)=\sum_{j}q_j^{\top}\,R\big(\omega_j\,p_{b(j)}-\nu_j\,i\big)\,\bar{k}_j(p)\\[4pt] \text{after:}\quad &amp; s(i,p)=\sum_{j}q_j^{\top}\,R\big(\nu_j\,(0-i)\big)\,\bar{k}_j(p)\end{aligned}" data-display data-plain="fix: k(p) = Rₐ(0) · Rᵥ(p)ᵀ · k̂(p) = k̄(p);  before: s(i,p) = Σⱼ qⱼᵀ R(ωⱼ·p_b(j) − νⱼ·i) k̄ⱼ(p);  after: s(i,p) = Σⱼ qⱼᵀ R(νⱼ·(0 − i)) k̄ⱼ(p)"></span></div>
+        <div class="prose">
+          <ul class="syms">
+            <li><i>i</i> is the action step, 0 to 31. In the example, <i>i</i> = 5.</li>
+            <li><i>p</i> = (<i>t</i>, <i>y</i>, <i>x</i>) is the video token's frame time, row and column. In the example, <i>p</i> = (0, 3, 4).</li>
+            <li><i>j</i> runs over the 64 pairs of one head. <i>q<sub>j</sub></i> is the query's pair before any turn, and <i>k̄<sub>j</sub></i>(<i>p</i>) is the fused key's pair with no turn.</li>
+            <li><i>k̂</i>(<i>p</i>) is the fused key as it comes out of the cache, turned by the video angles.</li>
+            <li><i>R</i>(θ) turns a pair by the angle θ. <i>R<sup>v</sup></i>(<i>p</i>) applies the video turns to all 64 pairs, and <i>R<sup>a</sup></i>(<i>t</i>) applies the action expert's turns for time <i>t</i>. The transpose ⊤ turns a rotation back, and <i>R<sup>a</sup></i>(0) turns nothing.</li>
+            <li>ν<sub><i>j</i></sub> is the action expert's rate for pair <i>j</i>, in radians per step. ω<sub><i>j</i></sub> is the video model's rate for pair <i>j</i>, in radians per frame, row or column, and <i>b</i>(<i>j</i>) says which of <i>t</i>, <i>y</i> or <i>x</i> that pair uses.</li>
+          </ul>
+          <p>With the example, the first row pair has ω = 1 and ν = 0.042. Before the fix its angle is 1 × 3 − 0.042 × 5 = 2.79. After the fix it's 0.042 × (0 − 5) = −0.21, the same for every patch in the frame.</p>
+          <p>Which comes first, the fusion or the undo? The fusion. The cache holds keys that are already turned, and all 30 layers turn the token at position <i>p</i> by exactly the same angles. A weighted sum of keys that were all turned the same way equals that turn applied to the weighted sum. So undoing it after the fusion gives exactly the key you'd get by undoing it in every layer first (the paper's Proposition 2.2), with one undo per token instead of thirty. The LeRobot code works in that order: fuse the cached keys, then undo the turn on the fused keys, once per chunk. Values never get turned, so they're left alone.</p>
+          <p>How much does it matter? Less than the math might suggest. In the paper's step-by-step ablation (Figure 3), adding retracted RoPE to the model without text cross-attention moves LIBERO from 97.8% to 98.3% and LIBERO-Plus from 77.6% to 78.3%. <span class="tag paper">Paper</span> The paper's other fix, giving action tokens stand-in spatial positions (lifted 3D RoPE), reached 98.2% and 74.0%. The authors guess the mismatch matters more once the robot state can only reach the actions through the video model. The figure doesn't say how many runs each intermediate row averages.</p>
+        </div>
       </section>
 
-      <!-- 08 -->
+      <!-- 05 -->
       <section class="chapter" id="time">
         <p class="kicker">Measured</p>
-        <h2 class="ch"><span class="n">08</span>Where the time goes</h2>
+        <h2 class="ch"><span class="n">05</span>Where the time goes</h2>
         <div class="prose">
           <p>Fewer passes only help if the passes were the slow part. They were. Pick a source: the paper's own timing, or the LeRobot implementation timed on an A100.</p>
         </div>
@@ -715,10 +765,10 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
         </details>
       </section>
 
-      <!-- 09 -->
+      <!-- 06 -->
       <section class="chapter" id="quality">
         <p class="kicker">From the paper</p>
-        <h2 class="ch"><span class="n">09</span>Did the quality hold?</h2>
+        <h2 class="ch"><span class="n">06</span>Did the quality hold?</h2>
         <div class="prose">
           <p>A one-layer action expert is a big cut. The paper's success rates say it mostly held, and it generalised better under distribution shift. These are the authors' numbers <span class="tag paper">Paper</span>; the LeRobot runs measured speed only.</p>
         </div>
@@ -738,17 +788,18 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
         </div>
       </section>
 
-      <!-- 10 -->
+      <!-- 07 -->
       <section class="chapter" id="limits">
         <p class="kicker">Read this before you quote a number</p>
-        <h2 class="ch"><span class="n">10</span>Limits and sources</h2>
+        <h2 class="ch"><span class="n">07</span>Limits and sources</h2>
         <div class="prose">
           <h3>Limits</h3>
           <ul>
             <li>The LeRobot timings use <b>random</b> video and action weights and real pretrained VAE and text encoders. They measure speed, not task quality. No trained Faster-WAM policy was run.</li>
             <li>The paper timed a 24 GiB consumer GPU with parts of Fast-WAM measured separately; LeRobot timed an A100 end to end including tokenization and transfers. Do not compare the two sets of milliseconds directly.</li>
             <li>The LeRobot ratios moved between sessions (fp32 2.66× → 2.51×, bf16 5.10× → 5.34×). The intervals cover sampling within one session only.</li>
-            <li>The animations simplify. The attention widget uses toy numbers. Cache tiles, scores and action curves are illustrative pictures; token counts, layer counts, widths, the step schedule and all read counts match the model and code. The paper-shaped fusion profile was read off Figure 4 by eye.</li>
+            <li>The pictures simplify. The action curves in the race are illustrative, and the race shades its fusion lines with a head-average profile read off the paper's Figure 4 by eye. The two before/after figures in sections 03 and 04 are schematics, not measured weights or attention scores. Token counts, layer counts, widths, the step schedule and all read counts match the model and code.</li>
+            <li>The RoPE example uses the rates in the LeRobot code (base 10,000, 64 action pairs, video pairs split 22/21/21). The drift range of 0.002 to about 15 rows or columns per step is derived from the paper's Eq. 9 with those rates.</li>
             <li>“Read” here means one action-layer pass that attends to a cache. Each pass also runs projections and a feed-forward network; the saving comes from running 10 passes instead of 300, not from memory traffic alone.</li>
           </ul>
           <h3>Sources</h3>
@@ -756,8 +807,9 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
             <li>Faster-WAM (Lite KV-Fusion), the method on this page: <a href="https://arxiv.org/html/2608.02365v2">“Faster-WAM: Do World Action Models Need Deep Action Modules?”, arXiv 2608.02365v2</a>, Huawei Noah's Ark Lab and collaborators. Authors' code: <a href="https://github.com/TeamFasterwam/FasterWAM">TeamFasterwam/FasterWAM</a> (PolyForm Noncommercial 1.0.0).</li>
             <li>Fast-WAM, the baseline: <a href="https://arxiv.org/abs/2603.16666">“Fast-WAM: Do World Action Models Need Test-time Future Imagination?”, arXiv 2603.16666</a>.</li>
             <li>A different paper with the same name: <a href="https://arxiv.org/abs/2608.04404">“Faster-WAM: Efficient Inference-Time Future Conditioning for Robust World Action Models”, arXiv 2608.04404</a> (hustvl). It uses SparseMoT and Interval KV-Fusion and is not covered here.</li>
-            <li>LeRobot implementation and measurements: <a href="https://github.com/huggingface/lerobot/issues/5048">huggingface/lerobot issue 5048</a> and <a href="https://github.com/huggingface/lerobot/pull/5049">pull request 5049</a> (ready for review, not merged).</li>
-            <li>Visual ideas borrowed from <a href="https://poloclub.github.io/transformer-explainer/">Transformer Explainer</a> (Q/K/V colours, attention dots), <a href="https://bbycroft.net/llm">Brendan Bycroft's LLM Visualization</a> (weights versus data, step-by-step tensors), <a href="https://www.3blue1brown.com/lessons/attention">3Blue1Brown on attention</a> (queries as questions, the score grid), <a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a> (one worked example before the matrix form) and <a href="https://kvcache.cobanov.dev/">KV Cache and Flash Attention</a> (cached versus recomputed ledgers with counters).</li>
+            <li>LeRobot implementation and measurements: <a href="https://github.com/huggingface/lerobot/issues/5048">huggingface/lerobot issue 5048</a> and <a href="https://github.com/huggingface/lerobot/pull/5049">pull request 5049</a> (ready for review, not merged). The RoPE rates and the fuse-then-undo order were checked in its <code>wan/model.py</code>, <code>wan/modular.py</code> and <code>wan/video_dit.py</code> at commit <code>f68b6da</code>.</li>
+            <li>Rotary position encoding: <a href="https://arxiv.org/abs/2104.09864">“RoFormer: Enhanced Transformer with Rotary Position Embedding”, arXiv 2104.09864</a>.</li>
+            <li>Visual ideas borrowed from <a href="https://poloclub.github.io/transformer-explainer/">Transformer Explainer</a> (Q/K/V colours) and <a href="https://jalammar.github.io/illustrated-transformer/">The Illustrated Transformer</a> (one worked example before the formula).</li>
           </ul>
         </div>
       </section>
@@ -962,12 +1014,6 @@ function seg(el, onChange) {
 function setText(el, s) { if (el && el.textContent !== s) el.textContent = s; }
 function setHTML(el, s) { if (el && el.innerHTML !== s) el.innerHTML = s; }
 
-/* ----- shared facts used by several widgets ----- */
-const FACTS = {
-  videoLayers: 30, heads: 24, headDim: 128, videoWidth: 3072, actionWidth: 1024, actionFFN: 4096, videoFFN: 14336,
-  videoTokens: 98, textTokens: 128, stateTokens: 1, actionTokens: 32, actionDim: 7, steps: 10,
-  cacheNumbersPerLayer: 98 * 3072 * 2, // K and V for one video layer
-};
 /* noise level schedule used by both models: sigma_k = phi(1 - k/N), phi(u) = 5u / (1 + 4u) */
 const SIGMAS = Array.from({ length: 11 }, (_, k) => { const u = 1 - k / 10; return 5 * u / (1 + 4 * u); });
 /* head-mean fusion weights read off the paper's Figure 4 (LIBERO) by eye; approximate */
@@ -1758,1014 +1804,6 @@ function initTokens() {
   return { redraw: () => stage.draw() };
 }
 
-/* ===== Widget 3: attention by hand, one head, toy numbers ===== */
-function initAttention() {
-  const root = $('#w-attn');
-  const host = $('.w-stage', root);
-  const N = 9, D = 4, NV = 5;
-  const names = ['V1', 'V2', 'V3', 'V4', 'V5', 'A1', 'A2', 'A3', 'A4'];
-  const isV = i => i < NV;
-  const r = rng(2024);
-  const vec = s => Array.from({ length: D }, () => +(gauss(r) * s).toFixed(1));
-  const Q = names.map(() => vec(1.25)), K = names.map(() => vec(1.25)), V = names.map(() => vec(1.0));
-  const allowed = (i, j) => isV(i) ? isV(j) : true; // video never reads actions; actions read everything
-  const dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
-  const raw = Q.map(q => K.map(k => dot(q, k)));
-  const scaled = raw.map((row, i) => row.map((s, j) => allowed(i, j) ? s / Math.sqrt(D) : -Infinity));
-  const weights = scaled.map(row => {
-    const m = Math.max(...row.filter(isFinite));
-    const e = row.map(s => isFinite(s) ? Math.exp(s - m) : 0);
-    const z = e.reduce((a, b) => a + b, 0);
-    return e.map(x => x / z);
-  });
-  const outs = weights.map(w => Array.from({ length: D }, (_, d) => w.reduce((s, wj, j) => s + wj * V[j][d], 0)));
-
-  const W = { q: 6, stage: 0, sp: 0, auto: false, all: false };
-  const STAGES = ['', 'Dot products', 'Scale and mask', 'Softmax', 'Mix the values'];
-  let G = null;
-
-  function layout(w) {
-    const wide = w >= 720;
-    const gridW = wide ? Math.min(430, w * 0.52) : w - 24;
-    const leftLab = wide ? 92 : 64;
-    const cs = Math.floor((gridW - leftLab) / N);
-    const head = Math.max(84, cs * 0.6 + 14 + D * 9 * 2 + 10);
-    const gx = 12 + leftLab, gy = 26 + head;
-    const gridH = cs * N;
-    const px = wide ? gx + cs * N + 34 : 12;
-    const py = wide ? 26 : gy + gridH + 26;
-    const pw = wide ? w - px - 12 : w - 24;
-    const ph = 300;
-    return { wide, cs, gx, gy, leftLab, head, px, py, pw, ph, H: wide ? Math.max(gy + gridH + 20, py + ph) : py + ph };
-  }
-
-  const stage = new Stage(host, {
-    label: 'Attention for one head with toy numbers: a 9 by 9 grid of query-key scores, the mask, softmax weights and the weighted sum of values.',
-    height: w => layout(w).H,
-    draw: (ctx, w) => {
-      if (!C.ink) readColors();
-      G = layout(w);
-      const { cs, gx, gy, head, px, py, pw } = G;
-      const sel = W.q;
-      const st = W.stage, sp = W.sp;
-      // column headers: key and value vectors
-      const vc = Math.min(9, cs * 0.28);
-      for (let j = 0; j < N; j++) {
-        const cx = gx + j * cs + cs / 2;
-        text(ctx, names[j], cx, gy - head + 6, { size: 11, weight: 650, align: 'center', color: isV(j) ? C.video : C.action });
-        for (let d = 0; d < D; d++) {
-          const a = clamp(Math.abs(K[j][d]) / 2.2, 0.15, 1);
-          ctx.fillStyle = rgba(C.k, a); ctx.fillRect(cx - vc - 1, gy - head + 18 + d * (vc + 1), vc, vc);
-          const b = clamp(Math.abs(V[j][d]) / 2, 0.15, 1);
-          let glow = 1;
-          if (st === 4 && !W.all) glow = 0.4 + 0.6 * weights[sel][j] / Math.max(...weights[sel]);
-          ctx.fillStyle = rgba(C.v, b * glow); ctx.fillRect(cx + 1, gy - head + 18 + d * (vc + 1), vc, vc);
-        }
-      }
-      if (G.wide) {
-        text(ctx, 'k', gx - 18, gy - head + 18 + 1.5 * (vc + 1), { size: 11, font: 'mono', color: C.k, align: 'center' });
-        text(ctx, 'v', gx + cs * N + 12, gy - head + 18 + 1.5 * (vc + 1), { size: 11, font: 'mono', color: C.v, align: 'center' });
-      }
-      text(ctx, 'keys →', gx, gy - 8, { size: 10, font: 'mono', color: C.ink3 });
-      text(ctx, 'queries ↓', 12, gy - 8, { size: 10, font: 'mono', color: C.ink3 });
-      // rows: query vectors
-      for (let i = 0; i < N; i++) {
-        const cy = gy + i * cs + cs / 2;
-        const on = i === sel;
-        if (on) { ctx.fillStyle = rgba(C.q, 0.08); ctx.fillRect(12, gy + i * cs, gx - 12 + cs * N, cs); }
-        text(ctx, names[i], 14, cy, { size: 11, weight: on ? 700 : 500, color: isV(i) ? C.video : C.action });
-        const qc = Math.min(8, (G.leftLab - 34) / D);
-        for (let d = 0; d < D; d++) {
-          ctx.fillStyle = rgba(C.q, clamp(Math.abs(Q[i][d]) / 2.2, 0.15, 1));
-          ctx.fillRect(14 + 22 + d * (qc + 1), cy - qc / 2, qc, qc);
-        }
-      }
-      // grid cells
-      for (let i = 0; i < N; i++) {
-        for (let j = 0; j < N; j++) {
-          const x = gx + j * cs, y = gy + i * cs;
-          const ok = allowed(i, j);
-          ctx.fillStyle = C.surface2; ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
-          const showMask = st >= 2 || W.all;
-          if (!ok && showMask) {
-            ctx.save(); ctx.beginPath(); ctx.rect(x + 1, y + 1, cs - 2, cs - 2); ctx.clip();
-            ctx.strokeStyle = rgba(C.ink3, 0.35); ctx.lineWidth = 1;
-            for (let t = -cs; t < cs; t += 5) line(ctx, x + t, y + cs, x + t + cs, y, rgba(C.ink3, 0.35), 1);
-            ctx.restore();
-          }
-          const rowOn = i === sel;
-          let wgt = null, label = null;
-          if (W.all && st !== 1 && st !== 2) wgt = weights[i][j];
-          if (rowOn) {
-            if (st === 1) {
-              const shown = sp * N > j;
-              if (shown) label = raw[i][j].toFixed(1);
-              if (Math.floor(sp * N) === j && sp < 1) { ctx.strokeStyle = C.q; ctx.lineWidth = 2; ctx.strokeRect(x + 1, y + 1, cs - 2, cs - 2); }
-            } else if (st === 2) {
-              label = ok ? (lerp(raw[i][j], raw[i][j] / 2, ease(sp))).toFixed(1) : (sp > 0.5 ? '−∞' : raw[i][j].toFixed(1));
-            } else if (st >= 3) {
-              wgt = ok ? weights[i][j] * (st === 3 ? ease(sp) : 1) : 0;
-              if (cs >= 30) label = ok ? weights[i][j].toFixed(2) : '0';
-            }
-          }
-          if (wgt != null && wgt > 0) {
-            const rad = Math.sqrt(wgt) * (cs / 2 - 2);
-            ctx.beginPath(); ctx.arc(x + cs / 2, y + cs / 2, Math.max(1, rad), 0, 7);
-            ctx.fillStyle = rgba(C.score, rowOn ? 0.85 : 0.55); ctx.fill();
-          }
-          if (label != null) {
-            const tc = (wgt && wgt > 0.25) ? '#fff' : (label === '−∞' ? C.ink3 : C.ink);
-            text(ctx, label, x + cs / 2, y + cs / 2 + (st >= 3 ? cs * 0.3 : 0), { size: cs >= 38 ? 10.5 : 9, font: 'mono', align: 'center', color: tc });
-          }
-        }
-      }
-      // block labels on the grid
-      ctx.strokeStyle = rgba(C.ink3, 0.6); ctx.lineWidth = 1;
-      line(ctx, gx + NV * cs, gy - 2, gx + NV * cs, gy + N * cs + 2, rgba(C.ink3, 0.6), 1, [3, 3]);
-      line(ctx, gx - 2, gy + NV * cs, gx + N * cs + 2, gy + NV * cs, rgba(C.ink3, 0.6), 1, [3, 3]);
-
-      /* ----- detail panel for the selected query ----- */
-      let y = py;
-      text(ctx, `query ${names[sel]}`, px, y + 6, { size: 13, weight: 700, color: isV(sel) ? C.video : C.action });
-      text(ctx, STAGES[st] ? `stage ${st} of 4: ${STAGES[st]}` : 'press Play or Step', px + pw, y + 6, { size: 10.5, font: 'mono', align: 'right', color: C.ink3 });
-      y += 22;
-      const vbox = (v, x0, yy, col, cw = 34) => {
-        for (let d = 0; d < D; d++) {
-          ctx.fillStyle = rgba(col, clamp(Math.abs(v[d]) / 2.2, 0.12, 0.9));
-          ctx.fillRect(x0 + d * (cw + 2), yy, cw, 18);
-          text(ctx, v[d].toFixed(2).replace('-0.00', '0.00'), x0 + d * (cw + 2) + cw / 2, yy + 9.5, { size: 9.5, font: 'mono', align: 'center', color: C.ink });
-        }
-      };
-      text(ctx, 'q', px, y + 9, { size: 12, font: 'mono', color: C.q });
-      vbox(Q[sel], px + 16, y, C.q);
-      y += 30;
-      // per-key rows
-      const rowH = 21;
-      const barX = px + 120, barW = Math.max(40, pw - 170);
-      text(ctx, 'key', px, y, { size: 10, font: 'mono', color: C.ink3 });
-      text(ctx, st >= 3 ? 'weight' : 'score', px + 50, y, { size: 10, font: 'mono', color: C.ink3 });
-      y += 12;
-      for (let j = 0; j < N; j++) {
-        const yy = y + j * rowH;
-        const ok = allowed(sel, j);
-        text(ctx, names[j], px, yy + rowH / 2, { size: 11, weight: 600, color: isV(j) ? C.video : C.action });
-        let s = '';
-        if (st === 1) s = sp * N > j ? raw[sel][j].toFixed(2) : '';
-        else if (st === 2) s = ok ? (raw[sel][j] / 2).toFixed(2) : '−∞ (masked)';
-        else if (st >= 3) s = ok ? weights[sel][j].toFixed(3) : '0';
-        text(ctx, s, px + 50, yy + rowH / 2, { size: 10.5, font: 'mono', color: ok ? C.ink : C.ink3 });
-        ctx.fillStyle = C.surface2; ctx.fillRect(barX, yy + 5, barW, rowH - 10);
-        if (st >= 3 && ok) {
-          ctx.fillStyle = rgba(C.score, 0.85);
-          ctx.fillRect(barX, yy + 5, barW * weights[sel][j] * (st === 3 ? ease(sp) : 1), rowH - 10);
-        }
-        if (st === 4 && ok) {
-          // value flowing into the output
-          const q = clamp(sp * 1.4 - j * 0.04, 0, 1);
-          if (q > 0 && q < 1) {
-            const [bx, by] = [lerp(barX + barW + 8, px + pw / 2, ease(q)), lerp(yy + rowH / 2, y + N * rowH + 20, ease(q))];
-            ctx.fillStyle = rgba(C.v, 0.9); ctx.fillRect(bx - 3, by - 3, 6 * (0.4 + weights[sel][j] * 2), 6);
-          }
-        }
-      }
-      y += N * rowH + 12;
-      text(ctx, 'output = Σ weight × v', px, y + 4, { size: 11, font: 'mono', color: C.ink3 });
-      y += 14;
-      const shownOut = st === 4 ? outs[sel].map(x => x * ease(sp)) : st > 4 ? outs[sel] : [0, 0, 0, 0];
-      if (st >= 4) vbox(shownOut, px, y, C.v);
-      else { for (let d = 0; d < D; d++) { ctx.strokeStyle = rgba(C.ink3, 0.4); ctx.strokeRect(px + d * 36 + 0.5, y + 0.5, 33, 17); } }
-    },
-  });
-
-  const cap = $('.w-caption', root);
-  const sel = $('[data-act=query]', root);
-  names.forEach((n, i) => { const o = document.createElement('option'); o.value = i; o.textContent = `${n} (${isV(i) ? 'video' : 'action'} token)`; sel.appendChild(o); });
-  sel.value = W.q;
-  function caption() {
-    const n = names[W.q];
-    const vq = isV(W.q);
-    const msgs = [
-      `Pick a query. Each row of the grid is one token asking a question; each column is a token that can answer. <b>${n}</b> is selected.`,
-      `<b>Dot products.</b> Multiply <span class="c-q">q</span> of ${n} with each <span class="c-k">k</span>, number by number, and add. A large result means the key matches the question.`,
-      `<b>Scale and mask.</b> Divide by √d = 2 (the real head uses √128). ${vq ? `${n} is a video token, so the mask sets its scores for the action keys to −∞: video never reads actions.` : `${n} is an action token, so it may read every video token and every action token.`}`,
-      `<b>Softmax.</b> Exponentiate and normalise the row so the weights sum to 1. Masked keys get weight 0. The purple dots now show how much ${n} reads from each token.`,
-      `<b>Mix the values.</b> The output is the weighted sum of the <span class="c-v">v</span> vectors. This is what ${n} takes away from attention.`,
-    ];
-    cap.innerHTML = msgs[W.stage];
-  }
-  caption();
-  const playBtn = $('[data-act=play]', root);
-  const go = (stg) => { W.stage = stg; W.sp = 0; caption(); stage.draw(); };
-  playBtn.addEventListener('click', () => { W.auto = true; go(1); Loop.kick(); });
-  $('[data-act=step]', root).addEventListener('click', () => { W.auto = false; go(W.stage >= 4 ? 1 : W.stage + 1); W.sp = 0; Loop.kick(); });
-  sel.addEventListener('change', () => { W.q = +sel.value; go(0); });
-  const allBtn = $('[data-act=all]', root);
-  allBtn.addEventListener('click', () => {
-    W.all = !W.all; allBtn.setAttribute('aria-pressed', W.all); stage.draw();
-  });
-  stage.cv.addEventListener('pointerdown', ev => {
-    if (!G) return;
-    const p = stage.point(ev);
-    const i = Math.floor((p.y - G.gy) / G.cs);
-    if (i >= 0 && i < N && p.x < G.gx + G.cs * N) { W.q = i; sel.value = i; W.auto = true; go(1); Loop.kick(); }
-  });
-  W.active = () => W.stage > 0 && W.sp < 1;
-  W.tick = dt => {
-    W.sp = Math.min(1, W.sp + dt / (W.stage === 1 ? 1.8 : 1.2));
-    if (W.sp >= 1 && W.auto && W.stage < 4) { W.stage++; W.sp = 0; caption(); }
-    stage.draw();
-  };
-  Loop.add(W);
-  watchVisible(root, W, () => { if (!REDUCED) { W.auto = true; go(1); Loop.kick(); } });
-  return { redraw: () => stage.draw() };
-}
-
-/* ===== Widget 4: the work ledger (what is computed, what is reused) ===== */
-function initLedger() {
-  const root = $('#w-ledger');
-  const host = $('.w-stage', root);
-  const W = { mode: 'fast', t: 0, playing: false };
-  const T_PRE = 1.0, T_STEP = 0.9;
-  const total = () => T_PRE + 10 * T_STEP + (W.mode === 'faster' ? 0.6 : 0);
-  // progress helpers
-  function counts(t) {
-    const m = W.mode;
-    const La = m === 'faster' ? 1 : 30;
-    const pre = m === 'nocache' ? 0 : clamp(t / T_PRE, 0, 1);
-    const t0 = (m === 'nocache' ? 0 : T_PRE) + (m === 'faster' ? 0.6 : 0);
-    const fuse = m === 'faster' ? clamp((t - T_PRE) / 0.6, 0, 1) : 0;
-    const x = clamp((t - t0) / T_STEP, 0, 10); // steps elapsed, fractional
-    const k = Math.min(9, Math.floor(x)), f = x - Math.floor(x);
-    const full = Math.floor(x);
-    let vruns, passes;
-    if (m === 'nocache') {
-      const vNow = x >= 10 ? 0 : Math.floor(clamp(f * 2, 0, 1) * 30);
-      vruns = full * 30 + vNow;
-      passes = full * 30 + (x >= 10 ? 0 : Math.floor(clamp(f * 2 - 1, 0, 1) * 30));
-    } else {
-      vruns = Math.floor(pre * 30);
-      passes = full * La + (x >= 10 ? 0 : Math.floor(f * La));
-    }
-    return { m, La, pre, fuse, x, k, f, vruns, passes };
-  }
-  let G = null;
-  function layout(w) {
-    const wide = w >= 720;
-    const gw = wide ? (w - 12 - 34 - 70 - 12) / 2 : w - 12 - 34 - 12;
-    const cw = gw / 30, ch = Math.min(16, Math.max(11, cw * 1.05));
-    const gh = ch * 10;
-    const ax = 12 + 34, ay = 44;
-    const bx = wide ? ax + gw + 40 + 30 : ax, by = wide ? ay : ay + gh + 70;
-    return { wide, gw, cw, ch, gh, ax, ay, bx, by, H: (wide ? ay + gh : by + gh) + 46 };
-  }
-  const stage = new Stage(host, {
-    label: 'Two ledgers of 10 denoising steps by 30 layers: video-layer runs and action-layer cache reads.',
-    height: w => layout(w).H,
-    draw: (ctx, w) => {
-      if (!C.ink) readColors();
-      G = layout(w);
-      const c = counts(W.t);
-      const { cw, ch, gw, gh } = G;
-      const grid = (x0, y0, title, sub, cellFn) => {
-        text(ctx, title, x0, y0 - 28, { size: 12.5, weight: 650, color: C.ink });
-        text(ctx, sub, x0, y0 - 13, { size: 10, font: 'mono', color: C.ink3 });
-        for (let k = 0; k < 10; k++) {
-          text(ctx, String(k + 1), x0 - 8, y0 + k * ch + ch / 2, { size: 9, font: 'mono', align: 'right', color: C.ink3 });
-          for (let j = 0; j < 30; j++) cellFn(x0 + j * cw, y0 + k * ch, k, j);
-        }
-        for (const j of [0, 9, 19, 29]) text(ctx, String(j + 1), x0 + j * cw + cw / 2, y0 + gh + 10, { size: 9, font: 'mono', align: 'center', color: C.ink3 });
-        text(ctx, 'step', x0 - 8, y0 - 3, { size: 9, font: 'mono', align: 'right', color: C.ink3 });
-      };
-      // left: video-layer runs
-      grid(G.ax, G.ay, 'Video-layer runs', c.m === 'nocache' ? 'rerun all 30 layers at every step' : 'run once (prefill), then reused', (x, y, k, j) => {
-        let filled = false, reused = false;
-        if (c.m === 'nocache') filled = k < c.x && (k < Math.floor(c.x) || j < clamp(c.f * 2, 0, 1) * 30);
-        else { filled = k === 0 && j < c.pre * 30; reused = k > 0 && k <= c.x && c.pre >= 1; }
-        ctx.fillStyle = C.surface2; ctx.fillRect(x, y, cw - 1, ch - 1);
-        if (filled) { ctx.fillStyle = rgba(C.video, 0.8); ctx.fillRect(x, y, cw - 1, ch - 1); }
-        else if (reused) { ctx.strokeStyle = rgba(C.video, 0.45); ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, cw - 2, ch - 2); }
-      });
-      if (c.m !== 'nocache' && G.wide) text(ctx, 'outlined = read from the cache, not recomputed', G.ax, G.ay + gh + 26, { size: 10, font: 'mono', color: C.ink3 });
-      // right: action-layer passes, each one a cache read
-      const bTitle = c.m === 'faster' ? 'Action-layer passes: 1 layer reads the fused cache' : 'Action-layer passes: layer j reads video cache j';
-      grid(G.bx, G.by, bTitle, 'each filled square = one cache read', (x, y, k, j) => {
-        const exists = c.m !== 'faster' || j === 0;
-        if (!exists) {
-          ctx.setLineDash([1.5, 2]); ctx.strokeStyle = rgba(C.ink3, 0.25); ctx.strokeRect(x + 0.5, y + 0.5, cw - 2, ch - 2); ctx.setLineDash([]);
-          return;
-        }
-        ctx.fillStyle = C.surface2; ctx.fillRect(x, y, cw - 1, ch - 1);
-        let on;
-        if (c.m === 'nocache') on = k < Math.floor(c.x) || (k === Math.floor(c.x) && j < clamp(c.f * 2 - 1, 0, 1) * 30);
-        else on = k < Math.floor(c.x) || (k === Math.floor(c.x) && c.x < 10 && j < c.f * c.La);
-        if (on) {
-          ctx.fillStyle = rgba(C.action, 0.85); ctx.fillRect(x, y, cw - 1, ch - 1);
-          ctx.fillStyle = c.m === 'faster' ? C.fused : C.video; ctx.fillRect(x, y + ch - 4, cw - 1, 3);
-        }
-      });
-      if (c.m === 'faster') {
-        // fusion: all 30 caches are read once to build the fused cache
-        const fy = G.by + gh + 22;
-        const fx = G.bx;
-        text(ctx, 'once per chunk, Lite KV-Fusion reads all 30 caches:', fx, fy, { size: 10, font: 'mono', color: C.fused });
-        const tw = Math.min(gw * 0.36, 120);
-        ctx.fillStyle = C.surface2; ctx.fillRect(fx + gw - tw, fy - 5, tw, 10);
-        ctx.fillStyle = rgba(C.fused, 0.8); ctx.fillRect(fx + gw - tw, fy - 5, tw * c.fuse, 10);
-      }
-    },
-  });
-  const out = k => $(`[data-out=${k}]`, root);
-  function update() {
-    const c = counts(W.t);
-    setText(out('vruns'), fmt(c.vruns));
-    setText(out('reads'), fmt(c.passes));
-    const nums = c.passes * FACTS.cacheNumbersPerLayer + (c.m === 'faster' ? Math.round(c.fuse * 30) * FACTS.cacheNumbersPerLayer : 0);
-    setHTML(out('numbers'), `${fmt(nums / 1e6, 1)}<small> M</small>`);
-    setText(out('text'), fmt(c.m === 'faster' ? 0 : c.passes));
-  }
-  seg($('[data-seg=mode]', root), v => { W.mode = v; W.t = 0; W.playing = true; Loop.kick(); update(); stage.draw(); });
-  $('[data-act=play]', root).addEventListener('click', () => { W.t = 0; W.playing = true; Loop.kick(); });
-  W.active = () => W.playing;
-  W.tick = dt => {
-    W.t += dt;
-    if (W.t >= total()) { W.t = total(); W.playing = false; }
-    update(); stage.draw();
-  };
-  Loop.add(W);
-  watchVisible(root, W, () => { if (!REDUCED) { W.playing = true; Loop.kick(); } else { W.t = total(); update(); stage.draw(); } });
-  update();
-  return { redraw: () => stage.draw() };
-}
-
-/* ===== Widget 5: inside one action layer, one denoising step ===== */
-function hash01(seed, r, c) {
-  let h = (seed * 374761393 + r * 668265263 + c * 2147483647) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  h ^= h >>> 16;
-  return ((h >>> 0) % 10007) / 10007;
-}
-/* draw one tensor as a grid of squares */
-function tensor(ctx, x, y, rows, cols, u, colorFn, o = {}) {
-  const gap = u >= 3 ? 0.6 : 0;
-  const n = o.filled == null ? rows * cols : o.filled;
-  if (o.bg !== false) { ctx.fillStyle = C.surface2; ctx.fillRect(x, y, cols * u, rows * u); }
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (r * cols + c >= n) break;
-      ctx.fillStyle = colorFn(r, c);
-      ctx.fillRect(x + c * u, y + r * u, u - gap, u - gap);
-    }
-  }
-  if (o.outline) { ctx.strokeStyle = o.outline; ctx.lineWidth = o.lw || 1.5; ctx.strokeRect(x - 1, y - 1, cols * u + 2, rows * u + 2); }
-}
-const tint = (col, seed, lo = 0.18, hi = 0.8) => (r, c) => rgba(col, lo + hi * hash01(seed, r, c));
-
-/* matrix multiply drawn as a box: A on the left, B on top, C = A · B below B */
-function boxMatmul(ctx, area, A, B, Cm, p, o = {}) {
-  const g = 10;
-  const labelH = 30;
-  const wu = A.cols + Cm.cols, hu = B.rows + Cm.rows;
-  const u = Math.min(o.umax || 7, (area.w - g - 8) / wu, (area.h - g - labelH * 2) / hu);
-  const W = wu * u + g, H = hu * u + g;
-  const x0 = area.x + (area.w - W) / 2, y0 = area.y + labelH + (area.h - labelH * 2 - H) / 2;
-  const ax = x0, ay = y0 + B.rows * u + g, bx = x0 + A.cols * u + g, by = y0, cx = bx, cy = ay;
-  const total = Cm.rows * Cm.cols;
-  const filled = Math.floor(p * total);
-  const ci = Math.min(Cm.rows - 1, Math.floor(filled / Cm.cols)), cj = filled % Cm.cols;
-  tensor(ctx, ax, ay, A.rows, A.cols, u, A.color);
-  tensor(ctx, bx, by, B.rows, B.cols, u, B.color);
-  tensor(ctx, cx, cy, Cm.rows, Cm.cols, u, Cm.color, { filled });
-  if (o.decor) o.decor({ ax, ay, bx, by, cx, cy, u });
-  if (p > 0 && p < 1) {
-    // the row of A and column of B that meet in the cell being computed
-    ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2;
-    ctx.strokeRect(ax - 0.5, ay + ci * u - 0.5, A.cols * u + 1, u + 1);
-    ctx.strokeRect(bx + cj * u - 0.5, by - 0.5, u + 1, B.rows * u + 1);
-    ctx.fillStyle = C.ink; ctx.fillRect(cx + cj * u, cy + ci * u, u, u);
-  }
-  const fs = area.w < 380 ? 9.5 : 10.5;
-  ctx.font = `400 ${fs}px JetBrains Mono, ui-monospace, monospace`;
-  const aW = ctx.measureText(A.label).width;
-  const yA = ay + A.rows * u + 12, yC = cy + Cm.rows * u + 12;
-  // when the left label runs into the result's label, drop the result's label one line
-  const clash = Math.abs(yA - yC) < 12 && ax + aW + 8 > cx;
-  text(ctx, A.label, ax, yA, { size: fs, font: 'mono', color: C.ink2 });
-  text(ctx, B.label, bx, by - 9, { size: fs, font: 'mono', color: C.ink2 });
-  text(ctx, Cm.label, clash ? Math.max(cx, ax + aW + 12) : cx, yC, { size: fs, font: 'mono', color: C.ink2 });
-  if (B.sub) text(ctx, B.sub, bx, by - 22, { size: fs - 0.5, font: 'mono', color: C.ink3 });
-  return { ax, ay, bx, by, cx, cy, u, W, H };
-}
-
-function initLayer() {
-  const root = $('#w-layer');
-  const host = $('.w-stage', root);
-  const W = { variant: 'fast', op: 0, p: 0, playing: false, auto: false };
-  const OPS = [
-    { id: 'mod', name: 'Modulate by the noise level', shape: '32 × 1,024',
-      cap: 'The step\'s noise level σ goes through a small network that outputs a scale and a shift for every channel. The 32 action tokens are normalised, then scaled and shifted (adaptive LayerNorm). This is how the layer knows which denoising step it is in.' },
-    { id: 'qkv', name: 'Project to Q, K, V', shape: '[32 × 1,024] · [1,024 × 3,072] ×3',
-      cap: 'Three learned matrices turn each action token into a <span class="c-q">query</span>, a <span class="c-k">key</span> and a <span class="c-v">value</span>, each 3,072 numbers wide: 24 heads of 128. Weights are blue-grey; data is coloured by its role.' },
-    { id: 'cache', name: 'Join the video cache', shape: 'K, V: [98 + 32] × 3,072',
-      cap: 'The keys and values of the 98 video tokens are not computed here. They come straight from the cache. The 32 new action keys and values are appended below them, giving 130 rows.' },
-    { id: 'scores', name: 'Scores Q · Kᵀ / √128', shape: '24 heads × [32 × 130]',
-      cap: 'Every action query is compared with all 130 keys: 98 from the video cache, 32 from the actions. Shown for one head; the other 23 heads do the same in parallel.' },
-    { id: 'softmax', name: 'Softmax over each row', shape: '24 heads × [32 × 130]',
-      cap: 'Each row becomes a set of weights that sum to 1. Darker squares are the tokens this action token reads most.' },
-    { id: 'mixv', name: 'Mix the values', shape: '[32 × 130] · [130 × 128]',
-      cap: 'Weights times values: each action token collects a blend of what the video tokens and the other action tokens carry.' },
-    { id: 'oproj', name: 'Output projection + residual', shape: '[32 × 3,072] · [3,072 × 1,024]',
-      cap: 'The 24 heads are joined and projected back to 1,024 numbers per token, then added to the input (a gated residual connection).' },
-    { id: 'xattn', name: 'Text cross-attention', shape: '[32 × 1,024] reads [129 × 1,024]',
-      cap: 'Fast-WAM only. The action tokens also attend to the 128 text tokens and the 1 robot-state token. In Fast-WAM this happens in every action layer at every step: 300 more reads per chunk.' },
-    { id: 'ffn', name: 'Feed-forward network', shape: '1,024 → 4,096 → 1,024',
-      cap: 'Each token goes through a two-layer network on its own: expand to 4,096 numbers, apply GELU, shrink back to 1,024, and add the result to the input.' },
-  ];
-  const opsEl = $('.lz-ops ol', root);
-  OPS.forEach((o, i) => {
-    const li = document.createElement('li');
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.innerHTML = `<span class="i">${i + 1}</span><span>${o.name}</span><span class="shape">${o.shape}</span>`;
-    b.addEventListener('click', () => { W.op = i; W.p = 0; W.playing = true; W.auto = false; sync(); Loop.kick(); });
-    li.appendChild(b); opsEl.appendChild(li);
-  });
-  const btns = $$('button', opsEl);
-
-  const stage = new Stage(host, {
-    label: 'Animated tensors inside one action layer: modulation, Q K V projection, cache join, attention scores, softmax, value mixing, output projection, cross-attention and feed-forward.',
-    height: w => w < 560 ? 420 : 400,
-    draw: (ctx, w, h) => {
-      if (!C.ink) readColors();
-      const area = { x: 10, y: 8, w: w - 20, h: h - 16 };
-      const op = OPS[W.op];
-      const p = W.p;
-      const faster = W.variant === 'faster';
-      const narrow = w < 420;
-      const Act = tint(C.action, 1), Wt = tint(C.weight, 2, 0.12, 0.6);
-      switch (op.id) {
-        case 'mod': {
-          const u = Math.min(9, area.w / 34, (area.h - 90) / 34);
-          const xw = 8 * u, xh = 32 * u;
-          const gap = Math.min(70, area.w * 0.12);
-          const x1 = area.x + (area.w - (xw * 2 + gap)) / 2, y1 = area.y + 72;
-          tensor(ctx, x1, y1, 32, 8, u, Act);
-          text(ctx, 'x  [32 × 1,024]', x1, y1 + xh + 14, { size: 10.5, font: 'mono', color: C.ink2 });
-          const x2 = x1 + xw + gap;
-          // scale and shift vectors from the noise level
-          const sy = area.y + 20;
-          tensor(ctx, x2, sy, 1, 8, u, tint(C.score, 5));
-          tensor(ctx, x2, sy + u + 6, 1, 8, u, tint(C.score, 6));
-          text(ctx, 'scale', x2 - 6, sy + u / 2, { size: 10, font: 'mono', align: 'right', color: C.score });
-          text(ctx, 'shift', x2 - 6, sy + u * 1.5 + 6, { size: 10, font: 'mono', align: 'right', color: C.score });
-          text(ctx, `from σ = ${SIGMAS[3].toFixed(3)} (step 4)`, x2 + xw + 8, sy + u, { size: 10, font: 'mono', color: C.ink3 });
-          tensor(ctx, x2, y1, 32, 8, u, (r, c) => rgba(C.action, 0.15 + 0.8 * clamp(hash01(1, r, c) * (0.7 + 0.6 * hash01(5, 0, c)) + 0.2 * hash01(6, 0, c) - 0.1, 0, 1)),
-            { filled: Math.floor(p * 32) * 8 + (p >= 1 ? 0 : 0) });
-          text(ctx, 'norm(x) × (1 + scale) + shift', x2, y1 + xh + 14, { size: 10.5, font: 'mono', color: C.ink2 });
-          const ax = x1 + xw + 8, ay = y1 + xh / 2;
-          ctx.fillStyle = C.ink3; ctx.beginPath(); ctx.moveTo(x2 - 8, ay); ctx.lineTo(x2 - 16, ay - 5); ctx.lineTo(x2 - 16, ay + 5); ctx.fill();
-          line(ctx, ax, ay, x2 - 14, ay, C.ink3, 1.2);
-          break;
-        }
-        case 'qkv': {
-          const colOf = c => c < 24 ? C.q : c < 48 ? C.k : C.v;
-          boxMatmul(ctx, area,
-            { rows: 32, cols: 8, color: Act, label: 'x  [32 × 1,024]' },
-            { rows: 8, cols: 72, color: Wt, label: narrow ? 'W_q | W_k | W_v' : 'W_q | W_k | W_v   [1,024 × 3,072] each', sub: 'learned weights' },
-            { rows: 32, cols: 72, color: (r, c) => rgba(colOf(c), 0.2 + 0.75 * hash01(9, r, c)), label: narrow ? 'Q | K | V' : 'Q | K | V   [32 × 3,072] each = 24 heads × 128' },
-            p, { decor: ({ bx, by, u }) => { for (const k of [24, 48]) line(ctx, bx + k * u, by - 3, bx + k * u, by + 8 * u + 3, C.surface, 2); } });
-          break;
-        }
-        case 'cache': {
-          const u = Math.min(3.2, (area.h - 70) / 132);
-          const colW = 8 * u;
-          const gapX = Math.min(120, area.w * 0.18);
-          const tot = colW * 2 + gapX;
-          const x0 = area.x + (area.w - tot) / 2, y0 = area.y + 34;
-          const cacheCol = faster ? C.fused : C.video;
-          const slide = ease(clamp(p * 1.3, 0, 1));
-          const doCol = (x, col, seed, name) => {
-            tensor(ctx, x, y0, 98, 8, u, tint(col, seed), { outline: cacheCol, lw: 2 });
-            const ty = y0 + 98 * u + 3;
-            const sx = lerp(x + colW + 40, x, slide);
-            tensor(ctx, sx, ty, 32, 8, u, tint(col, seed + 1, 0.25, 0.75), { outline: C.action, lw: 1.5 });
-            text(ctx, `${name}  [130 × 3,072]`, x + colW / 2, y0 - 22, { size: 11, font: 'mono', weight: 600, align: 'center', color: col });
-          };
-          doCol(x0, C.k, 21, 'K');
-          doCol(x0 + colW + gapX, C.v, 23, 'V');
-          const lx = x0 + colW + gapX / 2;
-          text(ctx, faster ? 'fused cache' : 'video cache', lx, y0 + 98 * u * 0.42, { size: 11, weight: 650, align: 'center', color: cacheCol });
-          text(ctx, faster ? 'mix of all 30 layers' : 'from video layer j', lx, y0 + 98 * u * 0.42 + 14, { size: 10, font: 'mono', align: 'center', color: C.ink3 });
-          text(ctx, '98 rows, read only', lx, y0 + 98 * u * 0.42 + 28, { size: 10, font: 'mono', align: 'center', color: C.ink3 });
-          text(ctx, 'new action', lx, y0 + 98 * u + 16 * u - 6, { size: 11, weight: 650, align: 'center', color: C.action });
-          text(ctx, '32 rows, this step', lx, y0 + 98 * u + 16 * u + 8, { size: 10, font: 'mono', align: 'center', color: C.ink3 });
-          break;
-        }
-        case 'scores': {
-          const cacheCol = faster ? C.fused : C.video;
-          boxMatmul(ctx, area,
-            { rows: 32, cols: 8, color: tint(C.q, 31), label: 'Q, head 1  [32 × 128]' },
-            { rows: 8, cols: 130, color: (r, c) => rgba(c < 98 ? C.k : mix(C.k, C.action, 0.5), 0.2 + 0.7 * hash01(32, r, c)), label: narrow ? 'Kᵀ [128 × 130]' : 'Kᵀ, head 1  [128 × 130]', sub: narrow ? '' : '98 cached video keys | 32 action keys' },
-            { rows: 32, cols: 130, color: (r, c) => rgba(C.score, 0.12 + 0.75 * scoreVal(r, c)), label: 'scores S  [32 × 130]' },
-            p, { umax: 5, decor: ({ bx, by, cx, cy, u }) => {
-              line(ctx, bx + 98 * u, by - 4, bx + 98 * u, cy + 32 * u + 4, cacheCol, 1.5, [3, 2]);
-            } });
-          break;
-        }
-        case 'softmax': {
-          const u = Math.min(5, (area.w - 60) / 130, (area.h - 80) / 32);
-          const x0 = area.x + (area.w - 130 * u - 40) / 2, y0 = area.y + 40;
-          const rowsDone = p * 32;
-          tensor(ctx, x0, y0, 32, 130, u, (r, c) => {
-            const t = clamp(rowsDone - r, 0, 1);
-            const a = lerp(0.12 + 0.75 * scoreVal(r, c), 0.04 + 0.95 * Math.min(1, softVal(r, c) * 9), t);
-            return rgba(C.score, a);
-          });
-          for (let r = 0; r < 32; r++) {
-            if (rowsDone - r >= 1) text(ctx, '1', x0 + 130 * u + 10, y0 + r * u + u / 2, { size: Math.min(9, u * 1.6), font: 'mono', color: C.ink3 });
-          }
-          text(ctx, 'each row sums to 1', x0 + 130 * u + 6, y0 - 10, { size: 10, font: 'mono', color: C.ink3, align: 'right' });
-          text(ctx, 'weights P = softmax(S)  [32 × 130]', x0, y0 + 32 * u + 14, { size: 10.5, font: 'mono', color: C.ink2 });
-          text(ctx, '← video tokens (cache) →', x0 + 49 * u, y0 - 10, { size: 10, font: 'mono', align: 'center', color: faster ? C.fused : C.video });
-          break;
-        }
-        case 'mixv': {
-          boxMatmul(ctx, area,
-            { rows: 32, cols: 130, color: (r, c) => rgba(C.score, 0.04 + 0.95 * Math.min(1, softVal(r, c) * 9)), label: 'P  [32 × 130]' },
-            { rows: 130, cols: 8, color: (r, c) => rgba(C.v, (r < 98 ? 0.2 : 0.3) + 0.6 * hash01(41, r, c)), label: 'V, head 1', sub: '[130 × 128]' },
-            { rows: 32, cols: 8, color: tint(C.action, 42), label: 'out  [32 × 128]' },
-            p, { umax: 4 });
-          break;
-        }
-        case 'oproj': {
-          const r = boxMatmul(ctx, { x: area.x, y: area.y, w: area.w * 0.78, h: area.h },
-            { rows: 32, cols: 24, color: tint(C.action, 51), label: '24 heads joined  [32 × 3,072]' },
-            { rows: 24, cols: 8, color: Wt, label: 'W_o', sub: '[3,072 × 1,024]' },
-            { rows: 32, cols: 8, color: tint(C.action, 52), label: '[32 × 1,024]' },
-            p, { umax: 6 });
-          const rx = area.x + area.w * 0.8, ry = r.cy;
-          text(ctx, '+ x', rx, ry - 10, { size: 12, font: 'mono', weight: 650, color: C.ink2 });
-          tensor(ctx, rx, ry, 32, 8, r.u, Act, { filled: p > 0.98 ? 256 : 0 });
-          text(ctx, 'gated residual', rx, ry + 32 * r.u + 12, { size: 10, font: 'mono', color: C.ink3 });
-          break;
-        }
-        case 'xattn': {
-          boxMatmul(ctx, area,
-            { rows: 32, cols: 8, color: tint(C.q, 61), label: 'Q  [32 × 1,024]' },
-            { rows: 8, cols: 129, color: tint(C.ctx, 62), label: narrow ? 'text + state keys' : 'keys of 128 text tokens + 1 state token', sub: '[1,024 × 129]' },
-            { rows: 32, cols: 129, color: (r, c) => rgba(C.ctx, 0.08 + 0.6 * hash01(63, r, c) * (c < 9 || c === 128 ? 1 : 0.3)), label: 'then softmax, mix values, add to x' },
-            faster ? 0 : p, { umax: 5 });
-          if (faster) {
-            ctx.fillStyle = rgba(C.surface, 0.86); ctx.fillRect(area.x, area.y, area.w, area.h);
-            text(ctx, 'Removed in Faster-WAM', area.x + area.w / 2, area.y + area.h / 2 - 14, { size: 17, weight: 700, align: 'center', color: C.ink });
-            text(ctx, 'Text and robot state reach the action expert only', area.x + area.w / 2, area.y + area.h / 2 + 10, { size: 12, align: 'center', color: C.ink2 });
-            text(ctx, 'through the fused video cache.', area.x + area.w / 2, area.y + area.h / 2 + 27, { size: 12, align: 'center', color: C.ink2 });
-          }
-          break;
-        }
-        case 'ffn': {
-          const half = area.w / 2;
-          const p1 = clamp(p * 2, 0, 1), p2 = clamp(p * 2 - 1, 0, 1);
-          boxMatmul(ctx, { x: area.x, y: area.y, w: half - 6, h: area.h },
-            { rows: 32, cols: 8, color: Act, label: 'x  [32 × 1,024]' },
-            { rows: 8, cols: 32, color: Wt, label: 'W₁', sub: '[1,024 × 4,096]' },
-            { rows: 32, cols: 32, color: tint(C.action, 71, 0.05, 0.85), label: 'GELU(x·W₁) [32 × 4,096]' },
-            p1, { umax: 6 });
-          boxMatmul(ctx, { x: area.x + half + 6, y: area.y, w: half - 6, h: area.h },
-            { rows: 32, cols: 32, color: tint(C.action, 71, 0.05, 0.85), label: 'h' },
-            { rows: 32, cols: 8, color: Wt, label: 'W₂', sub: '[4,096 × 1,024]' },
-            { rows: 32, cols: 8, color: tint(C.action, 72), label: '+ x  [32 × 1,024]' },
-            p2, { umax: 6 });
-          break;
-        }
-      }
-    },
-  });
-  // smooth-looking attention scores: the video part has blobs, the action part a diagonal band
-  function scoreVal(r, c) {
-    if (c < 98) {
-      const y = Math.floor(c / 14), x = c % 14;
-      const fy = 2 + (r % 5), fx = 3 + (r * 7) % 11;
-      const d = Math.hypot(y - fy * 0.9, (x - fx) * 0.7);
-      return clamp(0.85 * Math.exp(-d * d / 6) + 0.25 * hash01(81, r, c), 0, 1);
-    }
-    const a = c - 98;
-    return clamp(0.7 * Math.exp(-((a - r) ** 2) / 18) + 0.2 * hash01(82, r, c), 0, 1);
-  }
-  const softRows = Array.from({ length: 32 }, (_, r) => {
-    const e = Array.from({ length: 130 }, (_, c) => Math.exp(4 * scoreVal(r, c)));
-    const z = e.reduce((a, b) => a + b, 0);
-    return e.map(x => x / z);
-  });
-  const softVal = (r, c) => softRows[r][c];
-
-  const cap = $('.w-caption', root);
-  function sync() {
-    btns.forEach((b, i) => {
-      b.setAttribute('aria-current', i === W.op ? 'step' : 'false');
-      b.classList.toggle('off', W.variant === 'faster' && OPS[i].id === 'xattn');
-    });
-    const op = OPS[W.op];
-    let c = op.cap;
-    if (W.variant === 'faster') {
-      if (op.id === 'cache') c = 'In Faster-WAM the 98 video rows come from the <span class="c-fused">fused cache</span>: the per-head mix of all 30 video layers, built once per chunk. It has exactly the size of one layer\'s cache, so the attention below costs the same as in Fast-WAM.';
-      if (op.id === 'xattn') c = 'Faster-WAM removes this operation. This is the paper\'s "world-model-only conditioning": the instruction and robot state condition the video transformer, and the action layer sees them only through the fused cache.';
-    }
-    cap.innerHTML = `<b>${W.op + 1}. ${op.name}.</b> ${c}`;
-    const b = btns[W.op];
-    if (b && b.parentElement.parentElement.scrollWidth > b.parentElement.parentElement.clientWidth) {
-      const ol = b.parentElement.parentElement;
-      ol.scrollTo({ left: b.parentElement.offsetLeft - 8, behavior: REDUCED ? 'auto' : 'smooth' });
-    }
-    stage.draw();
-  }
-  seg($('[data-seg=variant]', root), v => { W.variant = v; sync(); });
-  const playBtn = $('[data-act=play]', root);
-  const setPlay = on => { W.auto = on; W.playing = on; playBtn.textContent = on ? 'Pause' : 'Play all'; if (on) Loop.kick(); };
-  playBtn.addEventListener('click', () => { if (W.auto) setPlay(false); else { if (W.op === OPS.length - 1 && W.p >= 1) W.op = 0; W.p = W.p >= 1 ? 0 : W.p; setPlay(true); sync(); } });
-  $('[data-act=prev]', root).addEventListener('click', () => { setPlay(false); W.op = (W.op + OPS.length - 1) % OPS.length; W.p = 0; W.playing = true; sync(); Loop.kick(); });
-  $('[data-act=next]', root).addEventListener('click', () => { setPlay(false); W.op = (W.op + 1) % OPS.length; W.p = 0; W.playing = true; sync(); Loop.kick(); });
-  W.active = () => W.playing;
-  W.tick = dt => {
-    const dur = OPS[W.op].id === 'scores' || OPS[W.op].id === 'mixv' ? 3.0 : 2.4;
-    W.p = Math.min(1, W.p + dt / dur);
-    if (W.p >= 1) {
-      if (W.auto) {
-        W.hold = (W.hold || 0) + dt;
-        if (W.hold > 0.9) {
-          W.hold = 0;
-          let nx = W.op + 1;
-          if (nx < OPS.length && W.variant === 'faster' && OPS[nx].id === 'xattn') nx++;
-          if (nx >= OPS.length) { setPlay(false); W.p = 1; }
-          else { W.op = nx; W.p = 0; sync(); }
-        }
-      } else W.playing = false;
-    }
-    stage.draw();
-  };
-  Loop.add(W);
-  watchVisible(root, W, () => { if (!REDUCED) setPlay(true); });
-  sync();
-  return { redraw: () => stage.draw() };
-}
-
-/* ===== Widget 6: Lite KV-Fusion mixer ===== */
-function initFusion() {
-  const root = $('#w-fusion');
-  const host = $('.w-stage', root);
-  const L = 30, H = 24, TY = 7, TX = 14;
-  const softmax = a => { const m = Math.max(...a); const e = a.map(x => Math.exp(x - m)); const z = e.reduce((s, x) => s + x, 0); return e.map(x => x / z); };
-  /* illustrative cache contents: shared object structure plus per-layer texture */
-  const fields = (() => {
-    const r = rng(77);
-    const blobs = [[4.2, 2.0, 1.6], [5.2, 4.6, 1.5], [3.8, 10.2, 2.6], [1.0, 3.5, 1.2]];
-    const common = [];
-    for (let y = 0; y < TY; y++) for (let x = 0; x < TX; x++) {
-      let v = 0;
-      blobs.forEach(([by, bx, s], i) => { v += (i % 2 ? -0.8 : 0.9) * Math.exp(-((y - by) ** 2 + ((x - bx) * 0.8) ** 2) / (2 * s * s)); });
-      common.push(v);
-    }
-    return Array.from({ length: L }, (_, l) => {
-      const d = l / (L - 1);
-      const fa = 1.2 + r() * 1.6, fb = 0.9 + r() * 1.8, ph = r() * 6, ph2 = r() * 6;
-      const out = [];
-      for (let y = 0; y < TY; y++) for (let x = 0; x < TX; x++) {
-        const hf = Math.sin(x * fa + ph) * Math.cos(y * fb + ph2);
-        const noise = gauss(r) * 0.25;
-        const shared = common[y * TX + x] * (0.35 + 0.65 * Math.sin(Math.PI * clamp(d * 1.1, 0, 1)));
-        out.push(clamp((1 - d) * 0.75 * hf + shared + noise * (1 - 0.5 * d), -1.4, 1.4));
-      }
-      return out;
-    });
-  })();
-  const presets = {
-    uniform: () => Array.from({ length: H }, () => new Array(L).fill(0)),
-    paper: () => {
-      const r = rng(4);
-      return Array.from({ length: H }, (_, h) => {
-        const ph = r() * 6, amp = 0.025 + r() * 0.03;
-        const b = FIG4_MEAN.map((m, l) => m * (1 + amp * Math.sin(ph + l * (0.35 + 0.25 * r())) + (r() - 0.5) * 0.03));
-        const lg = b.map(x => Math.log(x));
-        const mean = lg.reduce((s, x) => s + x, 0) / L;
-        return lg.map(x => x - mean); // softmax ignores a shared shift, so centre the logits on 0
-      });
-    },
-    last: () => Array.from({ length: H }, () => Array.from({ length: L }, (_, l) => l === L - 1 ? 8 : 0)),
-    random: () => { const r = rng((Math.random() * 1e9) | 0); return Array.from({ length: H }, () => Array.from({ length: L }, () => gauss(r) * 1.0)); },
-  };
-  const W = { alpha: presets.paper(), head: 5, preset: 'paper', hoverL: -1, anim: 0, from: null };
-  let beta = W.alpha.map(softmax);
-  let shown = beta.map(b => b.slice()); // what is drawn: animates toward beta
-  const fusedOf = b => {
-    const out = new Array(TY * TX).fill(0);
-    for (let l = 0; l < L; l++) { const f = fields[l]; for (let i = 0; i < out.length; i++) out[i] += b[l] * f[i]; }
-    return out;
-  };
-  const div = v => {
-    // diverging colour: indigo for negative, red for positive
-    const t = clamp(Math.abs(v) / 1.0, 0, 1);
-    return v >= 0 ? rgba(C.k, 0.08 + 0.85 * t) : rgba(C.video, 0.08 + 0.85 * t);
-  };
-  const heat = b => {
-    // the paper's colour scale: 0.030 (blue) to 1/30 (white) to 0.037 (red)
-    const mid = 1 / 30;
-    const blue = C.dark ? '#5b8fe8' : '#2f62b8', red = C.dark ? '#f06b5a' : '#c6352a', white = C.dark ? '#2a2a2e' : '#ffffff';
-    if (b >= mid) return mix(white, red, clamp((b - mid) / (0.037 - mid), 0, 1));
-    return mix(white, blue, clamp((mid - b) / (mid - 0.030), 0, 1));
-  };
-  let G = null;
-  function layout(w) {
-    const wide = w >= 700;
-    const pad = 12;
-    if (wide) {
-      const lw = w * 0.6;
-      const tc = 6, tr = 5;
-      const tw = (lw - pad - (tc - 1) * 8) / tc, th = tw / 2;
-      const tilesY = 26;
-      const tilesH = tr * (th + 22);
-      const barsY = tilesY + tilesH + 26, barsH = 150;
-      const rx = lw + 28, rw = w - rx - pad;
-      const fw = Math.min(rw, 300), fh = fw / 2;
-      const hmY = 26 + fh + 80;
-      const hmH = Math.max(150, barsY + barsH - hmY);
-      return { wide, pad, tc, tr, tw, th, tilesY, barsY, barsH, barsX: pad + 30, barsW: lw - pad - 30, fx: rx, fy: 26, fw, fh, hmX: rx + 24, hmY, hmW: rw - 24, hmH, H: Math.max(barsY + barsH + 34, hmY + hmH + 34) };
-    }
-    const tc = 5, tr = 6;
-    const tw = (w - 2 * pad - (tc - 1) * 6) / tc, th = tw / 2;
-    const tilesY = 26, tilesH = tr * (th + 20);
-    const fw = Math.min(w - 2 * pad, 300), fh = fw / 2;
-    const fy = tilesY + tilesH + 30;
-    const barsY = fy + fh + 56, barsH = 150;
-    const hmY = barsY + barsH + 72, hmH = 230;
-    return { wide, pad, tc, tr, tw, th, tilesY, barsY, barsH, barsX: pad + 30, barsW: w - 2 * pad - 30, fx: (w - fw) / 2, fy, fw, fh, hmX: pad + 24, hmY, hmW: w - 2 * pad - 24, hmH, H: hmY + hmH + 30 };
-  }
-  const stage = new Stage(host, {
-    label: 'Thirty small cache tiles, one per video layer, are mixed with learned softmax weights into one fused tile. Bars show the logits and weights; a heat map shows all 720 weights.',
-    height: w => layout(w).H,
-    draw: (ctx, w) => {
-      if (!C.ink) readColors();
-      G = layout(w);
-      const b = shown[W.head];
-      const bmax = Math.max(...b);
-      // tiles
-      text(ctx, G.wide ? `cached keys, head ${W.head + 1}: one tile per video layer (98 tokens, 1 channel shown)` : `cached keys, head ${W.head + 1}, one tile per layer`, G.pad, G.tilesY - 14, { size: 10.5, font: 'mono', color: C.ink3 });
-      for (let l = 0; l < L; l++) {
-        const cx = l % G.tc, cy = Math.floor(l / G.tc);
-        const x = G.pad + cx * (G.tw + (G.wide ? 8 : 6)), y = G.tilesY + cy * (G.th + (G.wide ? 22 : 20));
-        const cw = G.tw / TX, ch = G.th / TY;
-        const f = fields[l];
-        const op = 0.25 + 0.75 * Math.sqrt(b[l] / bmax);
-        ctx.globalAlpha = op;
-        for (let yy = 0; yy < TY; yy++) for (let xx = 0; xx < TX; xx++) {
-          ctx.fillStyle = div(f[yy * TX + xx]);
-          ctx.fillRect(x + xx * cw, y + yy * ch, cw - 0.4, ch - 0.4);
-        }
-        ctx.globalAlpha = 1;
-        if (l === W.hoverL) { ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.strokeRect(x - 1, y - 1, G.tw + 2, G.th + 2); }
-        // weight bar under the tile
-        ctx.fillStyle = C.surface2; ctx.fillRect(x, y + G.th + 3, G.tw, 4);
-        ctx.fillStyle = C.fused; ctx.fillRect(x, y + G.th + 3, G.tw * b[l] / bmax, 4);
-        text(ctx, `L${l + 1}`, x, y + G.th + 13, { size: 9, font: 'mono', color: C.ink3 });
-        text(ctx, b[l].toFixed(3), x + G.tw, y + G.th + 13, { size: 9, font: 'mono', align: 'right', color: C.ink2 });
-      }
-      // fused tile
-      const fused = fusedOf(b);
-      text(ctx, `fused key = Σ β·K, head ${W.head + 1}`, G.fx, G.fy - 14, { size: 11, weight: 650, color: C.fused });
-      const fcw = G.fw / TX, fch = G.fh / TY;
-      for (let yy = 0; yy < TY; yy++) for (let xx = 0; xx < TX; xx++) {
-        ctx.fillStyle = div(fused[yy * TX + xx]);
-        ctx.fillRect(G.fx + xx * fcw, G.fy + yy * fch, fcw - 0.6, fch - 0.6);
-      }
-      ctx.strokeStyle = C.fused; ctx.lineWidth = 2; ctx.strokeRect(G.fx - 1, G.fy - 1, G.fw + 2, G.fh + 2);
-      text(ctx, 'same shape as one layer: 98 tokens × 3,072', G.fx, G.fy + G.fh + 14, { size: 10, font: 'mono', color: C.ink3 });
-      text(ctx, 'the values V use the same weights β', G.fx, G.fy + G.fh + 28, { size: 10, font: 'mono', color: C.ink3 });
-
-      // bars: logits (draggable) and weights
-      const bx = G.barsX, by = G.barsY, bw = G.barsW, bh = G.barsH;
-      const colW = bw / L;
-      const aH = bh * 0.42, aMid = by + aH / 2;
-      text(ctx, G.wide ? `logits α (drag to change), head ${W.head + 1}` : 'logits α (drag)', bx, by - 12, { size: 10.5, font: 'mono', color: C.ink3 });
-      line(ctx, bx, aMid, bx + bw, aMid, rgba(C.ink3, 0.5), 1);
-      const al = W.alpha[W.head];
-      const amax = 4; // fixed scale, so dragging matches the bar height
-      const lo = Math.min(...al), hi = Math.max(...al);
-      text(ctx, G.wide ? `this head: α from ${lo.toFixed(2)} to ${hi.toFixed(2)}` : `${lo.toFixed(2)} to ${hi.toFixed(2)}`, bx + bw, by - 12, { size: 10.5, font: 'mono', align: 'right', color: C.ink2 });
-      for (let l = 0; l < L; l++) {
-        const v = al[l] / amax * (aH / 2 - 2);
-        ctx.fillStyle = l === W.hoverL ? C.ink : rgba(C.ink2, 0.75);
-        ctx.fillRect(bx + l * colW + 1, v >= 0 ? aMid - v : aMid, colW - 2, Math.max(1, Math.abs(v)));
-      }
-      text(ctx, '0', bx - 6, aMid, { size: 9, font: 'mono', align: 'right', color: C.ink3 });
-      text(ctx, '+4', bx - 6, by + 2, { size: 9, font: 'mono', align: 'right', color: C.ink3 });
-      text(ctx, '−4', bx - 6, by + aH - 2, { size: 9, font: 'mono', align: 'right', color: C.ink3 });
-      const wy = by + aH + 26, wH = bh - aH - 26;
-      text(ctx, 'weights β = softmax(α)', bx, wy - 9, { size: 10.5, font: 'mono', color: C.ink3 });
-      const scaleMax = Math.max(0.04, bmax * 1.05);
-      for (let l = 0; l < L; l++) {
-        const hh = b[l] / scaleMax * wH;
-        ctx.fillStyle = l === W.hoverL ? C.ink : C.fused;
-        ctx.fillRect(bx + l * colW + 1, wy + wH - hh, colW - 2, hh);
-      }
-      const yu = wy + wH - (1 / 30) / scaleMax * wH;
-      line(ctx, bx, yu, bx + bw, yu, rgba(C.k, 0.8), 1, [4, 3]);
-      text(ctx, '1/30', bx - 6, yu, { size: 9, font: 'mono', align: 'right', color: C.k });
-      for (const l of [0, 9, 19, 29]) text(ctx, String(l + 1), bx + l * colW + colW / 2, wy + wH + 10, { size: 9, font: 'mono', align: 'center', color: C.ink3 });
-      text(ctx, 'video layer →', bx + bw / 2, wy + wH + 22, { size: 9, font: 'mono', align: 'center', color: C.ink3 });
-
-      // heat map of all 720 weights, laid out like the paper's Figure 4
-      const hx = G.hmX, hy = G.hmY, hw = G.hmW, hh2 = G.hmH;
-      text(ctx, 'all 720 weights β: video layer × head', hx - 24, hy - 26, { size: 10.5, font: 'mono', color: C.ink3 });
-      const cw = hw / H, ch = hh2 / L;
-      for (let l = 0; l < L; l++) for (let h = 0; h < H; h++) {
-        ctx.fillStyle = heat(shown[h][l]);
-        ctx.fillRect(hx + h * cw, hy + l * ch, cw - 0.5, ch - 0.5);
-      }
-      ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.strokeRect(hx + W.head * cw - 1, hy - 1, cw + 1, hh2 + 1);
-      for (const l of [0, 9, 19, 29]) text(ctx, String(l + 1), hx - 5, hy + l * ch + ch / 2, { size: 9, font: 'mono', align: 'right', color: C.ink3 });
-      for (const h of [0, 11, 23]) text(ctx, String(h + 1), hx + h * cw + cw / 2, hy - 9, { size: 9, font: 'mono', align: 'center', color: C.ink3 });
-      // colour scale
-      const sy = hy + hh2 + 12;
-      for (let i = 0; i < 40; i++) { ctx.fillStyle = heat(0.030 + 0.007 * i / 39); ctx.fillRect(hx + i * hw / 40, sy, hw / 40 + 0.5, 6); }
-      text(ctx, '0.030', hx, sy + 14, { size: 9, font: 'mono', color: C.ink3 });
-      text(ctx, '1/30', hx + hw * (1 / 30 - 0.030) / 0.007, sy + 14, { size: 9, font: 'mono', align: 'center', color: C.ink3 });
-      text(ctx, '0.037', hx + hw, sy + 14, { size: 9, font: 'mono', align: 'right', color: C.ink3 });
-    },
-  });
-
-  const out = k => $(`[data-out=${k}]`, root);
-  function readouts() {
-    const b = beta[W.head];
-    let mx = 0, mn = 0;
-    b.forEach((x, i) => { if (x > b[mx]) mx = i; if (x < b[mn]) mn = i; });
-    setHTML(out('max'), `${b[mx].toFixed(4)}<small> layer ${mx + 1}</small>`);
-    setHTML(out('min'), `${b[mn].toFixed(4)}<small> layer ${mn + 1}</small>`);
-    setText(out('sum'), b.reduce((s, x) => s + x, 0).toFixed(3));
-    setText(out('head'), `${W.head + 1} / 24`);
-  }
-  function retarget(animate = true) {
-    beta = W.alpha.map(softmax);
-    if (!animate || REDUCED) { shown = beta.map(x => x.slice()); stage.draw(); }
-    else { W.from = shown.map(x => x.slice()); W.anim = 1e-6; Loop.kick(); }
-    readouts();
-  }
-  const note = $('[data-out=note]', root);
-  const notes = {
-    uniform: 'Start of training: every logit is 0, so every weight is 1/30. The fused cache is the plain average of the 30 layers. Texture that differs between layers averages out; structure they share survives.',
-    paper: 'Shaped like the paper\'s Figure 4 (LIBERO). The head-mean profile was read off the figure by eye; the per-head variation is made up. In the paper every weight stays between 0.030 and 0.037: close to uniform, with a little more weight on the middle layers.',
-    last: 'The "final layer only" readout from the paper\'s ablation: almost all weight on layer 30. A single-layer expert already beat Fast-WAM out of distribution this way; learning the fusion did better in and out of distribution.',
-    random: 'Random logits, to see how sharp a softmax can get. Training on LIBERO did not end up anywhere near this.',
-    custom: 'Your own mix. Dragging a logit up raises that layer\'s weight, and every other weight of the head drops so the sum stays 1.',
-  };
-  const presetSeg = seg($('[data-seg=preset]', root), v => { W.preset = v; W.alpha = presets[v](); retarget(); note.textContent = notes[v]; });
-  note.textContent = notes.paper;
-  const headSel = $('[data-act=head]', root);
-  for (let h = 0; h < H; h++) { const o = document.createElement('option'); o.value = h; o.textContent = `head ${h + 1}`; headSel.appendChild(o); }
-  headSel.value = W.head;
-  headSel.addEventListener('change', () => { W.head = +headSel.value; readouts(); stage.draw(); });
-
-  let dragging = false;
-  const onPointer = (ev, down) => {
-    if (!G) return;
-    const p = stage.point(ev);
-    const bx = G.barsX, bw = G.barsW, by = G.barsY, aH = G.barsH * 0.42;
-    // heat map click selects a head
-    if (down && p.x >= G.hmX && p.x <= G.hmX + G.hmW && p.y >= G.hmY && p.y <= G.hmY + G.hmH) {
-      W.head = clamp(Math.floor((p.x - G.hmX) / (G.hmW / H)), 0, H - 1); headSel.value = W.head; readouts(); stage.draw(); return;
-    }
-    const inBars = p.x >= bx && p.x <= bx + bw && p.y >= by - 10 && p.y <= by + aH + 10;
-    const l = clamp(Math.floor((p.x - bx) / (bw / L)), 0, L - 1);
-    if (down && inBars) { dragging = true; stage.cv.setPointerCapture(ev.pointerId); }
-    if (dragging) {
-      const amax = 4;
-      const v = clamp(((by + aH / 2) - p.y) / (aH / 2 - 2) * amax, -4, 4);
-      W.alpha[W.head][l] = v;
-      W.preset = 'custom'; presetSeg.set('custom'); note.textContent = notes.custom;
-      W.hoverL = l;
-      retarget(false);
-      ev.preventDefault();
-      return;
-    }
-    const nh = (p.x >= bx && p.x <= bx + bw && p.y >= by - 10 && p.y <= by + G.barsH + 10) ? l : -1;
-    if (nh !== W.hoverL) { W.hoverL = nh; stage.draw(); }
-  };
-  stage.cv.classList.add('drag');
-  stage.cv.addEventListener('pointerdown', e => onPointer(e, true));
-  stage.cv.addEventListener('pointermove', e => onPointer(e, false));
-  const end = () => { dragging = false; };
-  stage.cv.addEventListener('pointerup', end);
-  stage.cv.addEventListener('pointercancel', end);
-  stage.cv.addEventListener('pointerleave', () => { if (!dragging && W.hoverL >= 0) { W.hoverL = -1; stage.draw(); } });
-
-  W.active = () => W.anim > 0;
-  W.tick = dt => {
-    W.anim = Math.min(1, W.anim + dt / 0.7);
-    const e = ease(W.anim);
-    shown = beta.map((b, h) => b.map((x, l) => lerp(W.from[h][l], x, e)));
-    if (W.anim >= 1) W.anim = 0;
-    stage.draw();
-  };
-  Loop.add(W);
-  watchVisible(root, W);
-  readouts();
-  return { redraw: () => stage.draw() };
-}
-
-/* ===== Widget 7: retracted 1D-RoPE ===== */
-function initRope() {
-  const root = $('#w-rope');
-  const host = $('.w-stage', root);
-  const freq = (m, dim) => Math.pow(10000, -2 * m / dim);
-  const groups = [
-    { name: 'key: time', n: 22, dim: 44, axis: 't', ms: [0, 4, 12] },
-    { name: 'key: row', n: 21, dim: 42, axis: 'y', ms: [0, 4, 12] },
-    { name: 'key: column', n: 21, dim: 42, axis: 'x', ms: [0, 4, 12] },
-  ];
-  const base = (() => { const r = rng(55); return groups.map(() => [r() * 6.28, r() * 6.28, r() * 6.28]); })();
-  const qbase = (() => { const r = rng(56); return [r() * 6.28, r() * 6.28, r() * 6.28]; })();
-  const W = { y: 3, x: 9, i: 5, mode: 'native', k: 1, target: 1 };
-  let G = null;
-  function layout(w) {
-    const wide = w >= 640;
-    const pick = { x: 12, y: 30, cw: wide ? 13 : Math.min(16, (w - 24) / 14), };
-    pick.w = pick.cw * 14; pick.h = pick.cw * 7;
-    const dialsY = wide ? 30 : pick.y + pick.h + 50;
-    const dx0 = wide ? pick.x + pick.w + 30 : 12;
-    const dw = w - dx0 - 12;
-    const R = Math.min(52, (dw / 4 - 16) / 2);
-    return { wide, pick, dialsY, dx0, dw, R, H: dialsY + R * 2 + (wide ? 70 : 84) };
-  }
-  const stage = new Stage(host, {
-    label: 'Rotary position dials: the video key pairs rotate with time, row and column; retraction undoes the rotation; the action query rotates with its own index.',
-    height: w => layout(w).H,
-    draw: (ctx, w) => {
-      if (!C.ink) readColors();
-      G = layout(w);
-      const { pick } = G;
-      text(ctx, 'pick a video token', pick.x, pick.y - 12, { size: 10.5, font: 'mono', color: C.ink3 });
-      for (let y = 0; y < 7; y++) for (let x = 0; x < 14; x++) {
-        const on = y === W.y && x === W.x;
-        ctx.fillStyle = on ? C.video : rgba(C.video, 0.15 + 0.1 * ((x + y) % 2));
-        ctx.fillRect(pick.x + x * pick.cw, pick.y + y * pick.cw, pick.cw - 1, pick.cw - 1);
-      }
-      text(ctx, `position p = (t 0, row ${W.y}, col ${W.x})`, pick.x, pick.y + pick.h + 14, { size: 10.5, font: 'mono', color: C.ink2 });
-      const pos = { t: 0, y: W.y, x: W.x };
-      const slot = G.dw / 4;
-      const dial = (cx, cy, title, sub, arrows, col) => {
-        ctx.beginPath(); ctx.arc(cx, cy, G.R, 0, 7); ctx.strokeStyle = rgba(C.ink3, 0.35); ctx.lineWidth = 1; ctx.stroke();
-        line(ctx, cx - G.R, cy, cx + G.R, cy, rgba(C.ink3, 0.15), 1);
-        line(ctx, cx, cy - G.R, cx, cy + G.R, rgba(C.ink3, 0.15), 1);
-        arrows.forEach(([ang, len, a], idx) => {
-          const ex = cx + Math.cos(ang) * G.R * len, ey = cy - Math.sin(ang) * G.R * len;
-          line(ctx, cx, cy, ex, ey, rgba(col, a), 2.2);
-          ctx.beginPath(); ctx.arc(ex, ey, 2.8, 0, 7); ctx.fillStyle = rgba(col, a); ctx.fill();
-        });
-        text(ctx, title, cx, cy + G.R + 14, { size: 11, weight: 650, align: 'center', color: col });
-        const lines = G.wide ? [sub.join(' · ')] : sub;
-        lines.forEach((s, li) => text(ctx, s, cx, cy + G.R + 28 + li * 13, { size: 9.5, font: 'mono', align: 'center', color: C.ink3 }));
-      };
-      const cy = G.dialsY + G.R + 4;
-      groups.forEach((g, gi) => {
-        const arrows = g.ms.map((m, j) => {
-          const rot = pos[g.axis] * freq(m, g.dim) * W.k;
-          return [base[gi][j] + rot, 0.95 - j * 0.22, 1 - j * 0.25];
-        });
-        const sub = [`${g.n} pairs`, W.k > 0.5 ? (g.axis === 't' ? 't = 0' : g.axis === 'y' ? 'row ' + W.y : 'col ' + W.x) : 'unrotated'];
-        dial(G.dx0 + slot * gi + slot / 2, cy, g.name, sub, arrows, C.k);
-      });
-      const qa = [0, 4, 12].map((m, j) => [qbase[j] + W.i * freq(m, 128), 0.95 - j * 0.22, 1 - j * 0.25]);
-      dial(G.dx0 + slot * 3 + slot / 2, cy, 'action query', ['64 pairs', `i = ${W.i}`], qa, C.q);
-      // state banner
-      const msg = W.mode === 'native' ? 'native: video key rotated by 3D RoPE at p' : 'retracted: Rᵥ(p)ᵀ undoes the rotation, Rₐ(0) = I';
-      text(ctx, msg, G.dx0, G.dialsY - 12, { size: 10.5, font: 'mono', color: W.mode === 'native' ? C.k : C.fused });
-    },
-  });
-  const cap = $('.w-caption', root);
-  const caption = () => {
-    cap.innerHTML = W.mode === 'native'
-      ? `<b>Native.</b> The video key's row and column pairs are turned by angles set by the patch position. The action query's pairs are turned by its own index i, on a different frequency grid. Their dot product then depends on i, row and column at once: the mismatch the paper calls out in Prop. 2.3.`
-      : `<b>Retracted.</b> Faster-WAM turns the fused key back by Rᵥ(p)ᵀ and applies the action rotation for time 0, which is no rotation. The video token now sits at time 0 on the action's own time axis, so the query-key angle depends only on i − 0.`;
-  };
-  caption();
-  seg($('[data-seg=mode]', root), v => { W.mode = v; W.target = v === 'native' ? 1 : 0; caption(); Loop.kick(); });
-  const iIn = $('[data-act=i]', root), iOut = $('[data-out=i]', root);
-  iIn.addEventListener('input', () => { W.i = +iIn.value; iOut.textContent = W.i; stage.draw(); });
-  stage.cv.addEventListener('pointerdown', ev => {
-    if (!G) return;
-    const p = stage.point(ev);
-    const { pick } = G;
-    if (p.x >= pick.x && p.x < pick.x + pick.w && p.y >= pick.y && p.y < pick.y + pick.h) {
-      W.x = Math.floor((p.x - pick.x) / pick.cw); W.y = Math.floor((p.y - pick.y) / pick.cw); stage.draw();
-    }
-  });
-  W.active = () => Math.abs(W.k - W.target) > 1e-3;
-  W.tick = dt => {
-    W.k = W.target > W.k ? Math.min(W.target, W.k + dt / 0.9) : Math.max(W.target, W.k - dt / 0.9);
-    stage.draw();
-  };
-  Loop.add(W);
-  watchVisible(root, W);
-  return { redraw: () => stage.draw() };
-}
-
 /* ===== Widget 8: where the time goes (measured and paper numbers) ===== */
 const TIMING = {
   paper: {
@@ -2829,23 +1867,6 @@ function initTiming() {
   io.observe(root);
 }
 
-/* depth x steps calculator: reads = action layers x denoising steps */
-function initDepth() {
-  const root = $('#w-depth');
-  const la = $('[data-act=la]', root), n = $('[data-act=n]', root);
-  const o = k => $(`[data-out=${k}]`, root);
-  const upd = () => {
-    const a = +la.value, s = +n.value;
-    setText(o('la'), a); setText(o('n'), s);
-    setHTML(o('eq'), `${a} × ${s} = <span style="color:var(--fused)">${a * s}</span> reads`);
-    const mx = 600;
-    o('bar-you').style.width = (a * s / mx * 100) + '%';
-    setText(o('you'), a * s);
-  };
-  la.addEventListener('input', upd); n.addEventListener('input', upd);
-  upd();
-}
-
 /* ===== start everything ===== */
 (function main() {
   readColors();
@@ -2856,13 +1877,7 @@ function initDepth() {
   };
   safe('race', initRace);
   safe('tokens', initTokens);
-  safe('attention', initAttention);
-  safe('ledger', initLedger);
-  safe('layer', initLayer);
-  safe('fusion', initFusion);
-  safe('rope', initRope);
   safe('timing', initTiming);
-  safe('depth', initDepth);
   const redrawAll = () => { readColors(); widgets.forEach(w => w.redraw && w.redraw()); };
 
   // theme: auto -> light -> dark

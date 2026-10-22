@@ -19,7 +19,7 @@ Watch out for [arXiv 2608.04404](https://arxiv.org/abs/2608.04404): a different 
 
 <figure class="wide-explainer" style="width:max(100%, min(1120px, 100vw - 48px)); margin:32px 0 36px calc((100% - max(100%, min(1120px, 100vw - 48px))) / 2);">
 <iframe src="/assets/robotics/faster-wam-in-lerobot/explainer.html" title="Interactive explainer: from 300 cache reads to 10, Fast-WAM versus Faster-WAM" loading="lazy" style="display:block;width:100%;height:1400px;border:0;"></iframe>
-<figcaption>Interactive explainer. Use the play and step buttons in each widget. <a href="/assets/robotics/faster-wam-in-lerobot/explainer.html">Open it on its own page.</a></figcaption>
+<figcaption>Explainer. The race and the token picture play by themselves, and every other figure is static. <a href="/assets/robotics/faster-wam-in-lerobot/explainer.html">Open it on its own page.</a></figcaption>
 </figure>
 
 ## Follow one observation
@@ -54,7 +54,7 @@ action_expert_layers=1, lite_kv_fusion=True, retracted_1d_rope=True, world_model
 
 All default to off, so Fast-WAM's behavior and checkpoint layout don't change. The last two are side changes:
 
-- **Retracted 1D RoPE** moves the position encoding of the fused keys onto the action queries' time axis.
+- **Retracted 1D RoPE** removes the video model's position rotation from the fused keys, so action queries and video keys compare positions on one time axis. Section 04 of the explainer shows why that matters.
 - **World-model-only conditioning** sends text and robot state into the video model only, so the action expert drops its text cross-attention.
 
 You can't flip these flags on a trained Fast-WAM checkpoint. The one-layer expert and the fusion weights have to be trained jointly.
@@ -82,7 +82,7 @@ Why does bfloat16 gain more? Kernel launches. In eager mode Fast-WAM's bf16 deno
 - **Ratios moved between sessions.** float32 went 2.66x to 2.51x, bfloat16 5.10x to 5.34x, and the default bf16 mean ranged from 802.2 to 938.0 ms across repeats. The intervals only cover one session.
 - **Eager PyTorch on one host.** Compiled speedups are untested, and host speed affects eager timings.
 - **Not comparable to the paper.** Its 52 ms uses a different GPU and excludes tokenization and transfers.
-- **The explainer simplifies.** Attention numbers, action curves and cache tiles are illustrative. Layer, token and read counts and the noise schedule match the code.
+- **The explainer simplifies.** The action curves are illustrative, and the before/after figures are schematics, not learned weights. Layer, token and read counts and the noise schedule match the code.
 - **An ablation I haven't run.** In the paper's Figure 4, all 720 fusion weights sit between 0.030 and 0.037 (read off the figure by eye), close to a uniform 1/30 = 0.033. A fixed plain average would be worth testing.
 
 ## License of the authors' code
