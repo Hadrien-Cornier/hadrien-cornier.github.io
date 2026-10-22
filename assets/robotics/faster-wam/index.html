@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fast-WAM to Faster-WAM: deconstruct the action loop</title>
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="diagram.css">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+<main>
+<header><p class="eyebrow">Inside the model / interactive 3D</p><h1>Keep the world model.<br>Shrink the action loop.</h1><p class="intro">One action chunk, two architectures. Pull them apart.</p></header>
+<div class="toolbar"><div class="modes" role="group" aria-label="Architecture"><button id="baseline" aria-pressed="true">Fast-WAM</button><button id="faster" aria-pressed="false">Faster-WAM</button></div><button id="view">Reset view ↺</button></div>
+<section class="viewport" aria-label="Rotatable model architecture">
+<div id="scene" role="img" aria-label="30 video layers produce 30 key/value caches. Fast-WAM uses 30 matching action layers. Faster-WAM fuses all caches for one action layer."></div>
+<div id="labels" aria-hidden="true"></div>
+<div class="scene-hint">Drag to orbit · pinch or scroll to zoom</div>
+<div id="fallback" hidden>3D needs WebGL. Fast-WAM reads 30 matching caches at each of 10 steps (300 reads). Faster-WAM fuses the 30 caches once, then one layer reads the mix at each step (10 reads). The controls and counters below still explain the sequence.</div>
+</section>
+<div class="legend"><span class="video">Video layers</span><span class="cache">Cached keys + values</span><span class="action">Action layers</span><span class="fusion">Weighted mix</span></div>
+<section class="explanation" aria-labelledby="stage-title"><div><p id="stage-kicker" class="eyebrow"></p><h2 id="stage-title"></h2><p id="stage-copy"></p></div><div class="counter"><div><output id="default-count" aria-live="off" aria-label="Fast-WAM reads">0</output><span>/ 300</span><small>Fast-WAM reads</small></div><div><output id="faster-count" aria-live="off" aria-label="Faster-WAM reads">0</output><span>/ 10</span><small>Faster-WAM reads</small></div></div></section>
+<div class="transport"><button id="play" aria-label="Play animation">Play ▷</button><button id="previous" aria-label="Previous chapter">←</button><label for="timeline" class="sr-only">Scrub the architecture animation</label><input id="timeline" type="range" min="0" max="1000" value="0" step="1"><button id="next" aria-label="Next chapter">→</button></div>
+<nav class="chapters" aria-label="Animation chapters"><button data-time="0">01 Cache</button><button data-time="120">02 Read × 300</button><button data-time="430">03 Remove</button><button data-time="520">04 Fuse</button><button data-time="660">05 Read × 10</button></nav>
+<p id="announcement" class="sr-only" aria-live="polite"></p>
+<details><summary>How to read this schematic</summary><p>Each slab is a layer, each teal pair a layer's key/value cache. All 30 layers are shown. Ten numbered markers show denoising steps. A “read” means one action layer attending to cached video tokens, including all attention heads. It is not a memory transaction or a latency measurement.</p><p>Fusion uses learned softmax weights per attention head, shared between K and V. All lines here have equal width: learned weights are not visualized. One gold pair represents the full fused cache. Layer sizes, animation speed and token geometry are schematic. This is a comparison between separately trained architectures, not a checkpoint conversion.</p><p>Not drawn: the VAE, text encoder, text/state conditioning, action self-attention, feed-forward blocks and scheduler. Faster-WAM routes text/state through the video backbone only, and retracts video-key 3D RoPE into the action temporal basis before attention. The observed frame is at t = 0; inference here generates no future video.</p><p>Method: <a href="https://arxiv.org/html/2608.02365v2#S2">Faster-WAM, Section 2</a>. Implementation: <a href="https://github.com/huggingface/lerobot/pull/5049">LeRobot change</a>. Three.js 0.180.0, vendored under MIT.</p></details>
+<noscript><p>Enable JavaScript for 3D. Fast-WAM: 30 action layers × 10 steps = 300 cache reads. Faster-WAM: fuse 30 caches once; 1 action layer × 10 steps = 10 reads.</p></noscript>
+</main>
+<script type="module" src="diagram.js"></script>
+</body>
+</html>

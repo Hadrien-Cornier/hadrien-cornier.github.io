@@ -1,5 +1,16 @@
 [
   {
+    "title": "Faster-WAM: pull the action loop apart",
+    "description": "An interactive 3D view of the connections Faster-WAM removes, the caches it fuses, and my LeRobot implementation. With random-weight A100 timings and their limits.",
+    "tags": [
+      "world-action-models",
+      "inference",
+      "lerobot"
+    ],
+    "date": "2026-10-21",
+    "url": "/robotics/faster-wam/"
+  },
+  {
     "title": "Reinforcement learning: the problems behind the methods",
     "description": "From playing Breaking Bellman to the problems behind reinforcement learning: delayed credit, exploration, scale and learning from guesses.",
     "tags": [
