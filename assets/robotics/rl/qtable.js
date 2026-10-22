@@ -74,7 +74,7 @@
     '.qt-chips button:hover,.qt-step button:hover{background:#f4f5f0}' +
     '.qt-chips button[aria-pressed="true"]{background:#8f1d36;color:#fff;border-color:#8f1d36}' +
     '.qt-chips button[disabled],.qt-step button[disabled]{opacity:.45;cursor:default}' +
-    '.qt-step{display:flex;gap:8px;margin:0 0 8px}' +
+    '.qt-step{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}' +
     '.qt-sub{font:600 12.5px/1.3 Arial,Helvetica,sans-serif;margin:14px 0 6px;color:var(--ink,#242622)}' +
     '.qt-grid{display:block;width:100%;height:auto;max-width:600px;margin:0 auto}' +
     '.qt-grid .qt-cell{cursor:pointer}' +
@@ -167,7 +167,7 @@
       html += '<th scope="col" title="V_Q(s) = max over moves of Q(s,a)">max</th><th scope="col" title="greedy move">pick</th></tr></thead><tbody>';
       states.forEach(function (s) {
         var row = rowOf(T, s), b = bestOf(row), seen = row.some(function (x) { return x !== 0; });
-        html += '<tr data-s="' + s + '"' + (s === sel ? ' class="qt-sel"' : '') + '><td>' + cellName(s) + (s === START ? ' start' : '') + '</td>';
+        html += '<tr data-s="' + s + '" tabindex="0"' + (s === sel ? ' class="qt-sel"' : '') + '><td>' + cellName(s) + (s === START ? ' start' : '') + '</td>';
         row.forEach(function (x, a) {
           var cls = '';
           if (seen && x === b.v && !b.tie) cls += ' qt-max';
@@ -178,7 +178,9 @@
       });
       host.innerHTML = html + '</tbody></table>';
       Array.prototype.forEach.call(host.querySelectorAll('tbody tr'), function (tr) {
-        tr.addEventListener('click', function () { var s = +tr.getAttribute('data-s'); pinned = pinned === s ? -1 : s; draw(); });
+        var s = +tr.getAttribute('data-s');
+        tr.addEventListener('click', function () { pinned = pinned === s ? -1 : s; draw(); });
+        tr.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pinned = pinned === s ? -1 : s; draw(); var again = host.querySelector('tr[data-s="' + s + '"]'); if (again) again.focus(); } });
       });
     }
 
