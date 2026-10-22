@@ -27,7 +27,7 @@ thumbnail_alt: 'Six problems that shape reinforcement learning'
 
 I'm learning reinforcement learning because it seems key to understanding AI and robotics right now. It's part of how today's language models get better, and part of how robots learn from their own attempts.
 
-I learn it in two ways. I made a small game, [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), where you watch an RL algorithm fail, work out why, and fix it by changing one word of its update rule. I also write blog articles like this series as I go.
+I learn it in a few ways. I made a small game, [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/), where you watch an RL algorithm fail, work out why, and fix it by changing one word of its update rule. I contribute to open-source robot learning libraries such as Hugging Face's LeRobot, and you can find that work on [my GitHub](https://github.com/Hadrien-Cornier). I also write blog articles like this series as I go.
 
 This series maps out the key problems that drive the algorithms. Most methods in this series exist because an earlier one broke on something: a reward that arrives late, a lucky first result, too many situations to keep in a table. Follow those problems and you also get a genealogy of the algorithms: which one grew out of which, and why.
 
