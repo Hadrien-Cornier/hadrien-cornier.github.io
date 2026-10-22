@@ -160,7 +160,7 @@
       if (isTerminal(s)) out += terminalCell(x, y, L.c, s, true);
       else out += '<rect x="' + x + '" y="' + y + '" width="' + L.c + '" height="' + L.c + '" fill="none" class="s-faint" stroke-width=".8"/>';
     }
-    out += '<text x="' + (L.x - 4) + '" y="' + (L.y + 3.5 * L.c + 5) + '" text-anchor="end" font-size="13" class="c-dim">S</text>';
+    out += '<text x="' + (L.x - 4) + '" y="' + (L.y + 3.5 * L.c + 5) + '" text-anchor="end" font-size="13" class="c-dim" data-qm-t="s">S</text>';
     (marks || []).forEach(function (m) {
       var x = L.x + (m % W) * L.c, y = L.y + Math.floor(m / W) * L.c;
       out += '<rect x="' + (x - 1.5) + '" y="' + (y - 1.5) + '" width="' + (L.c + 3) + '" height="' + (L.c + 3) + '" fill="none" class="s-red" stroke-width="2.6"/>';
@@ -171,9 +171,9 @@
   // The color key, on the title row of the map.
   function legend() {
     var x = 606, y = 25, w = 18, out = '<g class="qm-legend" aria-hidden="true">';
-    out += '<text x="' + (x - 6) + '" y="' + (y + 13) + '" text-anchor="end" font-size="15" class="c-dim">score −13</text>';
+    out += '<text x="' + (x - 6) + '" y="' + (y + 13) + '" text-anchor="end" font-size="15" class="c-dim" data-qm-t="key">score −13</text>';
     [-13, -10, -7, -4, -1].forEach(function (v, k) { out += '<rect x="' + (x + k * w) + '" y="' + y + '" width="' + w + '" height="16" fill="' + heat(v) + '" class="s-faint" stroke-width="1"/>'; });
-    out += '<text x="' + (x + 5 * w + 6) + '" y="' + (y + 13) + '" font-size="15" class="c-dim">−1, better</text>';
+    out += '<text x="' + (x + 5 * w + 6) + '" y="' + (y + 13) + '" font-size="15" class="c-dim" data-qm-t="key">−1, better</text>';
     return out + '</g>';
   }
 
@@ -189,9 +189,9 @@
       out += '<g class="qm-cell" data-s="' + s + '">' + cross(x, y, M.c, row, { numbers: seen && opts.numbers !== false ? 14 : 0, arrow: true, hi: u && u.s === s ? u.a : -1 }) + '</g>';
     }
     out += legend();
-    out += '<text x="' + (M.x + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-blue">start</text>';
-    out += '<text x="' + (M.x + 5.5 * M.c + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-red">cliff: −100, back to start</text>';
-    out += '<text x="' + (M.x + 11 * M.c + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-green">flag</text>';
+    out += '<text x="' + (M.x + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-blue" data-qm-t="lab">start</text>';
+    out += '<text x="' + (M.x + 5.5 * M.c + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-red" data-qm-t="lab">cliff: −100, back to start</text>';
+    out += '<text x="' + (M.x + 11 * M.c + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-green" data-qm-t="lab">flag</text>';
     if (u && !u.done) {
       // the move just learned from: from the cell, in the direction taken, to where it landed
       var sx = M.x + (u.s % W) * M.c + M.c / 2, sy = M.y + Math.floor(u.s / W) * M.c + M.c / 2;
@@ -204,10 +204,11 @@
     }
     return out;
   }
-  function statusText(Q, f) {
+  // narrow: the phone form, short enough to draw at a readable size across the 12 columns.
+  function statusText(Q, f, narrow) {
     var T = Q.tableAt(f.t), wk = Q.greedyWalk(T), falls = Q.fallsAt(f.t);
-    var head = 'After ' + f.t.toLocaleString('en-US') + ' update' + (f.t === 1 ? '' : 's') + (f.kind === 'snapshot' ? ' (recorded table)' : '');
-    return head + ' · ' + falls + ' fall' + (falls === 1 ? '' : 's') + ' · arrows from the start: ' +
+    var head = 'After ' + f.t.toLocaleString('en-US') + ' update' + (f.t === 1 ? '' : 's') + (f.kind === 'snapshot' && !narrow ? ' (recorded table)' : '');
+    return head + ' · ' + falls + ' fall' + (falls === 1 ? '' : 's') + (narrow ? ' · ' : ' · arrows from the start: ') +
       (wk.goal ? 'flag in ' + wk.steps + ' moves' : 'no flag yet');
   }
   function renderCell(Q, t, sel) {
@@ -229,7 +230,9 @@
     out += locator(LOC, [sel]);
     return out;
   }
-  function renderMath(Q, f) {
+  // narrow: the phone layout. The view is 600 units wide there, so the cells and small labels grow
+  // to stay near 10 CSS px, and the side notes move right of the larger cells.
+  function renderMath(Q, f, narrow) {
     var x0 = 34, y0 = 760, out = '';
     var u = f.kind === 'update' ? Q.updateAt(f.t) : null;
     if (!u) {
@@ -237,41 +240,52 @@
       out += '<text x="' + x0 + '" y="' + (y0 + 48) + '" font-size="21" class="c-dim">' + (f.t === 0 ? 'Every score is 0. Step forward to watch one update.' : 'Step to an update between 1 and ' + Q.N + ' to see its arithmetic.') + '</text>';
       return out;
     }
-    var cs = 92, sx = x0, sy = y0 + 22, s2x = x0 + 270;
+    var cs = narrow ? 120 : 92, nf = narrow ? 17 : 13, lf = narrow ? 17 : 16, sx = x0, sy = y0 + 22, s2x = x0 + 270;
     out += '<text x="' + x0 + '" y="' + y0 + '" font-size="25" class="c-yellow">Update ' + u.t + '</text>';
-    out += cross(sx, sy, cs, Q.rowOf(Q.tableAt(u.t - 1), u.s), { numbers: 13, long: true, hi: u.a });
+    out += cross(sx, sy, cs, Q.rowOf(Q.tableAt(u.t - 1), u.s), { numbers: nf, long: true, hi: u.a });
     var verb = u.r === -100 ? 'falls off the cliff' : u.done ? 'reaches the flag' : u.s2 === u.s ? 'bumps the wall' : 'moves';
     out += '<text x="' + (sx + cs / 2) + '" y="' + (sy + cs + 24) + '" text-anchor="middle" font-size="17" class="c-dim">s: ' + ARROW[u.a] + ' ' + ACT[u.a] + '</text>';
     out += '<path d="M' + (sx + cs + 12) + ' ' + (sy + cs / 2) + 'Q' + ((sx + cs + s2x) / 2) + ' ' + (sy + cs / 2 - 22) + ' ' + (s2x - 12) + ' ' + (sy + cs / 2) + '" fill="none" class="s-chalk" stroke-width="2.2"/>' +
       '<path d="M' + (s2x - 22) + ' ' + (sy + cs / 2 - 9) + 'L' + (s2x - 11) + ' ' + (sy + cs / 2) + 'L' + (s2x - 24) + ' ' + (sy + cs / 2 + 6) + '" fill="none" class="s-chalk" stroke-width="2.2"/>';
-    out += '<text x="' + ((sx + cs + s2x) / 2) + '" y="' + (sy + cs / 2 - 30) + '" text-anchor="middle" font-size="16" class="c-chalk">' + verb + ', r = ' + fmt(u.r) + '</text>';
+    var mid = (sx + cs + s2x) / 2;
+    if (narrow) out += '<text x="' + mid + '" y="' + (sy + cs / 2 - 46) + '" text-anchor="middle" font-size="' + lf + '" class="c-chalk">' + verb + ',</text>' +
+      '<text x="' + mid + '" y="' + (sy + cs / 2 - 26) + '" text-anchor="middle" font-size="' + lf + '" class="c-chalk">r = ' + fmt(u.r) + '</text>';
+    else out += '<text x="' + mid + '" y="' + (sy + cs / 2 - 30) + '" text-anchor="middle" font-size="' + lf + '" class="c-chalk">' + verb + ', r = ' + fmt(u.r) + '</text>';
     if (u.done) {
       out += '<text x="' + (s2x + 6) + '" y="' + (sy + cs / 2 + 6) + '" font-size="19" class="c-green">flag: nothing follows</text>';
     } else {
-      out += cross(s2x, sy, cs, u.row2, { numbers: 13, long: true, borrow: u.maxA });
+      out += cross(s2x, sy, cs, u.row2, { numbers: nf, long: true, borrow: u.maxA });
       out += '<text x="' + (s2x + cs / 2) + '" y="' + (sy + cs + 24) + '" text-anchor="middle" font-size="17" class="c-dim">s′: best score</text>';
-      if (u.s2 === u.s) out += '<text x="' + (s2x + cs / 2) + '" y="' + (sy + cs + 43) + '" text-anchor="middle" font-size="16" class="c-dim">the same cell as s</text>';
+      if (u.s2 === u.s) out += '<text x="' + (s2x + cs / 2) + '" y="' + (sy + cs + 43) + '" text-anchor="middle" font-size="' + lf + '" class="c-dim">the same cell as s</text>';
     }
     // where the updated cell is, as on the map above
-    out += '<text x="430" y="' + (sy + cs + 8) + '" font-size="15" class="c-dim">on the map:</text>';
-    out += locator({ x: 430, y: sy + cs + 16, c: 15 }, [u.s]);
+    var lx = narrow ? 446 : 430;
+    out += '<text x="' + lx + '" y="' + (sy + cs + 8) + '" font-size="' + (narrow ? 17 : 15) + '" class="c-dim">on the map:</text>';
+    out += locator({ x: lx, y: sy + cs + 16, c: narrow ? 14 : 15 }, [u.s]);
     // A large negative score in either drawn cell that an earlier fall wrote: say where it came from.
     var fall = fallNote(Q, u);
-    if (fall) {
+    if (fall && narrow) {
+      // The phone column right of s′ is about 180 units wide, so the same note takes six short lines.
+      [[fmt(fall.nq) + ' came from', 'c-red'], ['update ' + fall.t + ':', 'c-red'], ['a fall off the cliff,', 'c-dim'], ['r = −100,', 'c-dim'],
+        [fmt(fall.old) + ' moved halfway', 'c-dim'], ['to ' + fmt(fall.target), 'c-dim']].forEach(function (l, i) {
+        out += '<text x="434" y="' + (y0 + 22 * i) + '" font-size="' + lf + '" class="' + l[1] + '">' + l[0] + '</text>';
+      });
+    } else if (fall) {
       var fx = 416, fy = sy + 16;
-      out += '<text x="' + fx + '" y="' + fy + '" font-size="16" class="c-red">' + fmt(fall.nq) + ' came from update ' + fall.t + ':</text>';
-      out += '<text x="' + fx + '" y="' + (fy + 24) + '" font-size="16" class="c-dim">a fall off the cliff, r = −100,</text>';
-      out += '<text x="' + fx + '" y="' + (fy + 48) + '" font-size="16" class="c-dim">' + fmt(fall.old) + ' moved halfway to ' + fmt(fall.target) + '</text>';
+      out += '<text x="' + fx + '" y="' + fy + '" font-size="' + lf + '" class="c-red">' + fmt(fall.nq) + ' came from update ' + fall.t + ':</text>';
+      out += '<text x="' + fx + '" y="' + (fy + 24) + '" font-size="' + lf + '" class="c-dim">a fall off the cliff, r = −100,</text>';
+      out += '<text x="' + fx + '" y="' + (fy + 48) + '" font-size="' + lf + '" class="c-dim">' + fmt(fall.old) + ' moved halfway to ' + fmt(fall.target) + '</text>';
     }
-    var ly = sy + cs + 70;
+    // The phone layout keeps the same lines a little closer, so the larger cells still end above the credit panel.
+    var ly = sy + cs + (narrow ? 66 : 70), dy = narrow ? [34, 78, 112, 148, 170] : [36, 84, 120, 162, 186];
     out += '<text x="' + x0 + '" y="' + ly + '" font-size="23" class="c-chalk">target = r + γ · <tspan class="c-blue">max Q(s′, ·)</tspan></text>';
-    if (u.done) out += '<text x="' + x0 + '" y="' + (ly + 36) + '" font-size="23" class="c-chalk">target = r = ' + fmt(u.r) + '</text>';
-    else out += '<text x="' + (x0 + 72) + '" y="' + (ly + 36) + '" font-size="23" class="c-chalk">= ' + fmt(u.r) + ' + 0.99 × <tspan class="c-blue">(' + fmt(u.max) + ')</tspan> = ' + fmt(u.target) + '</text>';
-    out += '<text x="' + x0 + '" y="' + (ly + 84) + '" font-size="23" class="c-chalk"><tspan class="c-yellow">Q(s, a)</tspan> ← old + α · (target − old)</text>';
+    if (u.done) out += '<text x="' + x0 + '" y="' + (ly + dy[0]) + '" font-size="23" class="c-chalk">target = r = ' + fmt(u.r) + '</text>';
+    else out += '<text x="' + (x0 + 72) + '" y="' + (ly + dy[0]) + '" font-size="23" class="c-chalk">= ' + fmt(u.r) + ' + 0.99 × <tspan class="c-blue">(' + fmt(u.max) + ')</tspan> = ' + fmt(u.target) + '</text>';
+    out += '<text x="' + x0 + '" y="' + (ly + dy[1]) + '" font-size="23" class="c-chalk"><tspan class="c-yellow">Q(s, a)</tspan> ← old + α · (target − old)</text>';
     var res = '= <tspan class="c-yellow">' + fmt(u.old) + '</tspan> + 0.5 × (' + fmt(u.target) + ' − (' + fmt(u.old) + ')) = ';
-    out += '<text x="' + (x0 + 72) + '" y="' + (ly + 120) + '" font-size="23" class="c-chalk">' + res + '<tspan class="c-yellow" font-weight="700">' + fmt(u.nq) + '</tspan></text>';
-    out += '<text x="' + x0 + '" y="' + (ly + 162) + '" font-size="17" class="c-dim">γ = 0.99, the discount: later rewards count a little less</text>';
-    out += '<text x="' + x0 + '" y="' + (ly + 186) + '" font-size="17" class="c-dim">α = 0.5, the step size: move halfway to the target</text>';
+    out += '<text x="' + (x0 + 72) + '" y="' + (ly + dy[2]) + '" font-size="23" class="c-chalk">' + res + '<tspan class="c-yellow" font-weight="700">' + fmt(u.nq) + '</tspan></text>';
+    out += '<text x="' + x0 + '" y="' + (ly + dy[3]) + '" font-size="17" class="c-dim">γ = 0.99, the discount: later rewards count a little less</text>';
+    out += '<text x="' + x0 + '" y="' + (ly + dy[4]) + '" font-size="17" class="c-dim">α = 0.5, the step size: move halfway to the target</text>';
     return out;
   }
   // The latest fall that wrote a score of at most -20 into the cell being updated (its other moves)
@@ -336,16 +350,16 @@
     var bar = rc.querySelector('.qm-toolbar'); if (!gMap || !bar) return;
     var slider = bar.querySelector('input[type="range"]'), back = bar.querySelector('[data-qm-step="-1"]'), fwd = bar.querySelector('[data-qm-step="1"]');
     var readout = bar.querySelector('.qm-readout'), live = rc.querySelector('.qm-live');
-    var frames = Q.frames, idx = 0, pinned = -1, view = null;
+    var frames = Q.frames, idx = 0, pinned = -1, view = null, isNarrow = false;
     slider.max = String(frames.length - 1);
     function frameIndex(t) { for (var k = 0; k < frames.length; k++) if (frames[k].t === t) return k; return 0; }
     function draw(announce) {
       var f = frames[idx], u = f.kind === 'update' ? Q.updateAt(f.t) : null;
       var sel = pinned >= 0 ? pinned : (u ? u.s : START);
       gMap.innerHTML = renderMap(Q, f.t, sel, { update: true });
-      if (gStatus) gStatus.textContent = statusText(Q, f);
+      if (gStatus) gStatus.textContent = statusText(Q, f, isNarrow);
       if (gCell) gCell.innerHTML = renderCell(Q, f.t, sel);
-      if (gMath) gMath.innerHTML = renderMath(Q, f);
+      if (gMath) gMath.innerHTML = renderMath(Q, f, isNarrow);
       if (gCredit) gCredit.innerHTML = renderCredit(Q, f.t);
       slider.value = String(idx);
       var label = (f.kind === 'snapshot' ? 'recorded table after ' : 'after ') + f.t.toLocaleString('en-US') + ' update' + (f.t === 1 ? '' : 's');
@@ -390,11 +404,14 @@
       if (DEFAULT[v] !== undefined) { pinned = -1; go(frameIndex(DEFAULT[v]), false); }
     }
     new MutationObserver(onView).observe(rc, { attributes: true, attributeFilter: ['data-active-view'] });
-    // Small screens show the close-up instead of the tiny map numbers.
+    // Small screens show the close-up instead of the tiny map numbers, and draw the update larger.
     var vw = rc.querySelector('.rc-view');
-    function narrow() { rc.classList.toggle('qm-narrow', vw.clientWidth < 560); }
+    function narrow() {
+      var n = vw.clientWidth < 560; rc.classList.toggle('qm-narrow', n);
+      if (n !== isNarrow) { isNarrow = n; draw(false); }
+    }
     if (root.ResizeObserver) new ResizeObserver(narrow).observe(vw);
-    narrow();
+    isNarrow = vw.clientWidth < 560; rc.classList.toggle('qm-narrow', isNarrow);
     go(frameIndex(10000), false);
     onView();
   }

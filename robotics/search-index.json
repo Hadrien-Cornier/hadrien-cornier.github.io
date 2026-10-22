@@ -108,7 +108,7 @@
   },
   {
     "title": "The deadly triad: how a guess can train itself upward",
-    "description": "Function approximation, bootstrapping and off-policy data each make RL practical. Off-policy value learners such as DQN and SAC use all three, even though together they can let a prediction feed its own target with nothing to pull it back down.",
+    "description": "Function approximation, bootstrapping and off-policy data each make RL practical. Off-policy value learners such as deep Q-networks (DQN) and soft actor-critic (SAC) use all three, even though together they can let a prediction feed its own target with nothing to pull it back down.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"

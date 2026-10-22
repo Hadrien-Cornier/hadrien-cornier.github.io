@@ -12,7 +12,7 @@
     var views = JSON.parse(svg.getAttribute('data-views')), whole = svg.getAttribute('data-whole').split(' ').map(Number);
     var narrowAt = +svg.getAttribute('data-narrow') || 0; /* optional: below this stage width (a phone), prefer the _n views */
     var marks = [].slice.call(rc.querySelectorAll('.rc-mark')), where = stage.querySelector('.rc-where'), reset = stage.querySelector('.rc-reset');
-    var cam = null, target = null, raf = 0, idx = -1, hold = false, holdAt = -1, tick = 0;
+    var cam = null, target = null, raf = 0, idx = -1, hold = false, holdAt = -1, peekY = null, tick = 0;
     function label(i) { var n = marks[i].getAttribute('data-num'); if (n === null) n = String(i + 1); return (n ? n + '. ' : '') + marks[i].getAttribute('data-title'); }
     var nav = document.createElement('div'); nav.className = 'rc-nav';
     var prev = document.createElement('button'), next = document.createElement('button'), sel = document.createElement('select');
@@ -48,8 +48,9 @@
     function onScroll() {
       if (tick) return; tick = requestAnimationFrame(function () {
         tick = 0; var k = current();
-        if (hold && k === holdAt) return; /* Whole canvas stays until the text reaches another section */
-        if (k !== idx) { hold = false; apply(k); }
+        /* Whole canvas stays until the text reaches another section; a peek also ends once the reader scrolls on */
+        if (hold && k === holdAt && (peekY === null || Math.abs(window.pageYOffset - peekY) < 60)) return;
+        if (k !== idx) { hold = false; peekY = null; apply(k); }
       });
     }
     function setTop() {
@@ -58,13 +59,13 @@
       rc.style.setProperty('--rc-top', (d ? nav.offsetHeight + 12 : stage.offsetHeight + nav.offsetHeight + 12) + 'px');
     }
     function go(i) {
-      hold = false; apply(i, false);
+      hold = false; peekY = null; apply(i, false);
       if (i >= 0) marks[i].scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'start' });
       else window.scrollTo({ top: rc.getBoundingClientRect().top + window.pageYOffset - 8, behavior: reduce.matches ? 'auto' : 'smooth' });
     }
-    /* Show another section's view without scrolling the text; it holds until the text reaches another section. */
-    function peek(id) { var i = marks.findIndex(function (m) { return m.id === id; }); if (i < 0) return; hold = true; holdAt = current(); apply(i); }
-    reset.addEventListener('click', function () { hold = true; holdAt = current(); apply(-1); });
+    /* Show another section's view without scrolling the text; it holds until the reader scrolls about 60 px or reaches another section. */
+    function peek(id) { var i = marks.findIndex(function (m) { return m.id === id; }); if (i < 0) return; hold = true; holdAt = current(); peekY = window.pageYOffset; apply(i); }
+    reset.addEventListener('click', function () { hold = true; holdAt = current(); peekY = null; apply(-1); });
     sel.addEventListener('change', function () { go(parseInt(sel.value, 10)); });
     prev.addEventListener('click', function () { go(Math.max(-1, (hold ? holdAt : idx) - 1)); });
     next.addEventListener('click', function () { go(Math.min(marks.length - 1, (hold ? holdAt : idx) + 1)); });

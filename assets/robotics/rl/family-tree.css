@@ -11,6 +11,16 @@
 #rc .ft-hint{font:13px/1.35 Arial,sans-serif;margin:0;padding:6px 9px;flex:none}
 #rc .ft-viewport{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y;position:relative}
 #rc .ft-viewport svg.ft-graph{display:block;max-width:none;max-height:none;margin:0 auto;padding:0}
+/* Phones and small tablets: family-tree.js swaps the wide tree for an indented list of the same nodes, full width, scrolled downward. */
+#rc .ft-viewport svg.ft-list,#rc .ft-more{display:none}
+#rc .ft-viewer[data-layout="list"] svg.ft-list{display:block}
+#rc .ft-viewer[data-layout="list"] svg.ft-graph:not(.ft-list){display:none}
+#rc .ft-viewer[data-layout="list"] .ft-viewport{overflow-x:hidden;overscroll-behavior:auto;scrollbar-gutter:stable}
+#rc .ft-viewer[data-layout="list"] .ft-more{display:block;position:sticky;bottom:0;margin:0;padding:12px 0 5px;text-align:center;font:13px/1 Arial,sans-serif;color:var(--bb-dim);background:linear-gradient(to bottom,transparent,var(--bb-board) 65%);pointer-events:none}
+#rc .ft-viewer[data-layout="list"][data-end="1"] .ft-more{visibility:hidden}
+#rc .ft-list .ft-edge-link,#rc .ft-list .ft-edge-link text{text-decoration:none}
+#rc .ft-toolbar[data-layout="list"] button{display:none}
+#rc .ft-toolbar[data-layout="list"] .ft-zoom-readout{margin-left:4px;font-size:13px}
 #rc .ft-graph .ft-edge-link{cursor:pointer}
 #rc .ft-graph .ft-edge-link:hover .ft-edge-label,#rc .ft-graph .ft-edge-link:focus .ft-edge-label{stroke:#b44c2c;stroke-width:2}
 #rc .ft-graph .ft-edge-link:focus{outline:none}
