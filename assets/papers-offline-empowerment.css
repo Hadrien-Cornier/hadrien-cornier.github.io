@@ -1,5 +1,6 @@
-/* Offline empowerment: one blackboard canvas. The wide drawing fits desktops, the tall one phones. */
+/* Offline empowerment: one intro paragraph, then one blackboard canvas. The wide drawing fits desktops, the tall one phones. */
 .paper-header .paper-takeaway { display: none; }
+.oe-intro { max-width: 760px; margin: 0 0 30px; font-size: 18px; line-height: 1.65; color: var(--ink); }
 .oe-canvas { margin: 0; padding: 0; background: #1d1d1b; border: 1px solid var(--line); }
 .oe-canvas svg { display: block; width: 100%; height: auto; }
 .oe-canvas .oe-tall { display: none; }
@@ -12,6 +13,7 @@
   .oe-canvas .oe-tall { display: block; max-width: 640px; margin: 0 auto; }
 }
 @media (max-width: 700px) {
+  .oe-intro { margin-bottom: 24px; font-size: 16px; line-height: 1.6; }
   .oe-canvas { margin: 0 -1px; }
   .oe-after { flex-direction: column; align-items: start; }
 }
