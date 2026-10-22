@@ -42,7 +42,7 @@
 .article-body .rc-route a { padding: 3px 9px; border: 1px solid var(--line); background: #fff; color: var(--ink); text-decoration: none; }
 .article-body .rc-route a:hover, .article-body .rc-route a:focus-visible { border-color: var(--accent); color: var(--accent); }
 .article-body .rc-route span { color: var(--muted); }
-.article-body .rc-body > h2 { scroll-margin-top: var(--rc-top); }
+.article-body .rc-body > h2, .article-body .rc-body > h3[id] { scroll-margin-top: var(--rc-top); }
 @media (min-width: 1000px) {
   .article-body .rc { width: min(1260px, calc(100vw - 64px)); position: relative; left: 50%; transform: translateX(-50%); display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 540px); gap: 40px; align-items: start; --rc-h: calc(100vh - 32px - var(--rc-bar)); }
   .article-body .rc-stage { top: 16px; }

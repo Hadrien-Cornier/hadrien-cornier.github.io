@@ -41,13 +41,14 @@ Now train a Q-function on this log, the same kind of action-value estimate as in
 
 Q-learning's target for the move that brought the gripper above the mug takes the largest next-action estimate. With reward 0 for that move and discount $\gamma=0.9$:
 
-$$\underbrace{0+0.9\times 9}_{\text{max over all actions}}=8.1
-\qquad\text{instead of}\qquad
-\underbrace{0+0.9\times 4}_{\text{max over recorded actions}}=3.6.$$
+$$\begin{aligned}
+\text{max over all actions:}&\quad 0+0.9\times 9=8.1,\\
+\text{max over recorded actions:}&\quad 0+0.9\times 4=3.6.
+\end{aligned}$$
 
 The earlier state now inherits a value that came from an action nobody took. The policy that reads this table chooses the sweep. If the robot could act, it would try the sweep, see the mug fall and correct the estimate. With a fixed log, nothing ever corrects it, and the next target built from the inflated value carries the error further back. This is the same feedback as in [the deadly triad](/robotics/rl-5-the-deadly-triad/), with the missing correction coming from a dataset that can't grow.
 
-<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-labelledby="f7-q-title f7-q-desc"><title id="f7-q-title">The largest estimate belongs to an action nobody tried</title><desc id="f7-q-desc">Bars for three actions. Lower slowly has estimate 4, lower fast 3, both from data. Sweep sideways has a dashed bar of 9 with no data and a true value of minus 5. The max picks the dashed bar.</desc><g font-family="Arial,sans-serif" fill="#242622"><line x1="30" y1="170" x2="285" y2="170" stroke="#656b62"/><rect x="50" y="122" width="50" height="48" fill="#3d6f9e"/><rect x="125" y="134" width="50" height="36" fill="#3d6f9e"/><rect x="200" y="62" width="50" height="108" fill="none" stroke="#b44c2c" stroke-width="2" stroke-dasharray="5 3"/><g font-size="12" text-anchor="middle"><text x="75" y="116">4</text><text x="150" y="128">3</text><text x="225" y="56" fill="#b44c2c" font-weight="700">9 ?</text></g><g font-size="10" text-anchor="middle"><text x="75" y="186">lower slowly</text><text x="75" y="199">60 in log</text><text x="150" y="186">lower fast</text><text x="150" y="199">40 in log</text><text x="225" y="186">sweep sideways</text><text x="225" y="199" fill="#b44c2c">0 in log</text></g><text x="225" y="160" font-size="10" text-anchor="middle" fill="#b44c2c">true: −5</text><path d="M262,40 L238,58" stroke="#b44c2c" stroke-width="1.5"/><text x="262" y="34" font-size="11" text-anchor="middle" fill="#b44c2c">max</text><text x="150" y="216" font-size="10" text-anchor="middle">Estimates above the mug, illustrative numbers.</text></g></svg><figcaption>The two recorded actions have estimates that real outcomes keep correcting. The unrecorded action's estimate is never checked, and a max can pick it.</figcaption></figure>
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" style="width:min(100%,440px)" viewBox="0 0 300 220" role="img" aria-labelledby="f7-q-title f7-q-desc"><title id="f7-q-title">The largest estimate belongs to an action nobody tried</title><desc id="f7-q-desc">Bars for three actions. Lower slowly has estimate 4, lower fast 3, both from data. Sweep sideways has a dashed bar of 9 with no data and a true value of minus 5. The max picks the dashed bar.</desc><g font-family="Arial,sans-serif" fill="#242622"><line x1="30" y1="170" x2="285" y2="170" stroke="#656b62"/><rect x="50" y="122" width="50" height="48" fill="#3d6f9e"/><rect x="125" y="134" width="50" height="36" fill="#3d6f9e"/><rect x="200" y="62" width="50" height="108" fill="none" stroke="#b44c2c" stroke-width="2" stroke-dasharray="5 3"/><g font-size="12" text-anchor="middle"><text x="75" y="116">4</text><text x="150" y="128">3</text><text x="225" y="56" fill="#b44c2c" font-weight="700">9 ?</text></g><g font-size="10" text-anchor="middle"><text x="75" y="186">lower slowly</text><text x="75" y="199">60 in log</text><text x="150" y="186">lower fast</text><text x="150" y="199">40 in log</text><text x="225" y="186">sweep sideways</text><text x="225" y="199" fill="#b44c2c">0 in log</text></g><text x="225" y="160" font-size="10" text-anchor="middle" fill="#b44c2c">true: −5</text><path d="M262,40 L238,58" stroke="#b44c2c" stroke-width="1.5"/><text x="262" y="34" font-size="11" text-anchor="middle" fill="#b44c2c">max</text><text x="150" y="216" font-size="10" text-anchor="middle">Estimates above the mug, illustrative numbers.</text></g></svg><figcaption>The two recorded actions have estimates that real outcomes keep correcting. The unrecorded action's estimate is never checked, and a max can pick it.</figcaption></figure>
 
 [Fujimoto, Meger and Precup (2019)](https://arxiv.org/abs/1812.02900) named this extrapolation error: an error introduced by the mismatch between the dataset and the states and actions the learned policy would visit. The problem isn't limited to actions with zero examples. An action with two noisy examples, or a region the network interpolates poorly, can also produce estimates that the data barely constrains. And it doesn't mean every offline method fails. It means a method has to say what it does about actions the data doesn't support.
 
@@ -63,9 +64,10 @@ The fixes share one idea: limit how far the learner can move from what the data 
 
 **TD3+BC** ([Fujimoto and Gu, 2021](https://arxiv.org/abs/2106.06860)) keeps an ordinary actor-critic and adds one term to the policy objective. In state $s$ with recorded action $a$, the policy $\pi$ maximizes
 
-$$\lambda\,Q(s,\pi(s))-\big(\pi(s)-a\big)^2,
-\qquad
-\lambda=\frac{\alpha}{\frac1N\sum_i|Q(s_i,a_i)|}.$$
+$$\begin{aligned}
+&\lambda\,Q(s,\pi(s))-\big(\pi(s)-a\big)^2,\\
+&\lambda=\frac{\alpha}{\frac1N\sum_i|Q(s_i,a_i)|}.
+\end{aligned}$$
 
 The first term pulls the action toward higher estimates. The second pulls it back toward the recorded action. Dividing by the average size of $Q$ over the $N$ recorded pairs keeps the balance independent of the reward scale, and the authors use $\alpha=2.5$. It's simple, a few lines added to an existing method. Its limit is the trade-off itself: if a critic error is large enough, the first term can still win, and the second term pulls toward whatever was recorded in that state.
 
@@ -125,7 +127,7 @@ With $\beta=1$, the good grasp's total weight is its 70% share times $e^{1}$, ab
 
 **Pull toward better actions.** TD3+BC's $Q$ term also uses the reward, by tilting the copy toward actions with higher estimates. The squared-distance term still pulls toward every recorded action in that state.
 
-<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 200" role="img" aria-labelledby="f7-awr-title f7-awr-desc"><title id="f7-awr-title">Advantage weights shift the copy toward the good grasp</title><desc id="f7-awr-desc">Three stacked bars. Plain copying: 70 percent good, 30 percent bad. AWR with temperature 5: 81 percent good. AWR with temperature 1: 98 percent good.</desc><g font-family="Arial,sans-serif" fill="#242622"><g font-size="11"><text x="10" y="54">plain copy</text><text x="10" y="104">AWR, β = 5</text><text x="10" y="154">AWR, β = 1</text></g><rect x="90" y="38" width="140" height="24" fill="#3d6f9e"/><rect x="230" y="38" width="60" height="24" fill="#b44c2c"/><rect x="90" y="88" width="162" height="24" fill="#3d6f9e"/><rect x="252" y="88" width="38" height="24" fill="#b44c2c"/><rect x="90" y="138" width="196" height="24" fill="#3d6f9e"/><rect x="286" y="138" width="4" height="24" fill="#b44c2c"/><g font-size="11" fill="#fff" font-weight="700"><text x="98" y="55">70%</text><text x="98" y="105">81%</text><text x="98" y="155">98%</text></g><text x="90" y="22" font-size="11">share of the copy: good grasp (blue), straight grasp (red)</text><text x="150" y="190" font-size="10" text-anchor="middle">Advantages +1 and −2, 70/30 split, illustrative.</text></g></svg><figcaption>The same 100 attempts, weighted three ways. A lower temperature puts almost all of the copy on the good grasp, if the advantages are right.</figcaption></figure>
+<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" style="width:min(100%,440px)" viewBox="0 0 300 200" role="img" aria-labelledby="f7-awr-title f7-awr-desc"><title id="f7-awr-title">Advantage weights shift the copy toward the good grasp</title><desc id="f7-awr-desc">Three stacked bars. Plain copying: 70 percent good, 30 percent bad. AWR with temperature 5: 81 percent good. AWR with temperature 1: 98 percent good.</desc><g font-family="Arial,sans-serif" fill="#242622"><g font-size="11"><text x="10" y="54">plain copy</text><text x="10" y="104">AWR, β = 5</text><text x="10" y="154">AWR, β = 1</text></g><rect x="90" y="38" width="140" height="24" fill="#3d6f9e"/><rect x="230" y="38" width="60" height="24" fill="#b44c2c"/><rect x="90" y="88" width="162" height="24" fill="#3d6f9e"/><rect x="252" y="88" width="38" height="24" fill="#b44c2c"/><rect x="90" y="138" width="196" height="24" fill="#3d6f9e"/><rect x="286" y="138" width="4" height="24" fill="#b44c2c"/><g font-size="11" fill="#fff" font-weight="700"><text x="98" y="55">70%</text><text x="98" y="105">81%</text><text x="98" y="155">98%</text></g><text x="10" y="22" font-size="11">Blue: good grasp. Red: straight grasp.</text><text x="150" y="190" font-size="10" text-anchor="middle">Advantages +1 and −2, 70/30 split, illustrative.</text></g></svg><figcaption>The same 100 attempts, weighted three ways. A lower temperature puts almost all of the copy on the good grasp, if the advantages are right.</figcaption></figure>
 
 ### What these methods need
 
@@ -138,6 +140,8 @@ All of them work by trusting a number attached to each recorded action. So they 
 
 None of this is guaranteed by a method's name. In the game's version of this problem, the log mixes 50 episodes of a good controller with 50 episodes of random commands. Copying everything ended 0.56 m from the target. IQL ended at 0.22 m, copying only the best episodes at 0.35 m, CQL at 0.33 m, TD3+BC at 0.50 m, the one-bit advantage tag at 0.51 m, and AWR at 0.57 m, no better than copying (3 seeds, 8,000 training steps, simulation). In this toy, how the advantage was estimated mattered more than the idea of weighting.
 
+<div class="ct">
+
 | Method | Uses | Helps when | Limits |
 | --- | --- | --- | --- |
 | Behavior cloning | Actions only | The log is uniformly good | Copies mistakes and can't beat the data |
@@ -146,6 +150,8 @@ None of this is guaranteed by a method's name. In the game's version of this pro
 | IQL | In-sample Q and expectile V | Good actions are recorded somewhere | Best of the data at most, with $\tau$ and $\beta$ to tune |
 | Advantage conditioning | Advantage as an input | Many data sources of different quality | Depends on the advantage estimate and threshold |
 | TD3+BC | Q gradient plus copy term | Data near good actions, modest critic error | Copy term pulls toward recorded mistakes too |
+
+</div>
 
 <h2 id="sec-corruption">Bad behavior or bad records?</h2>
 
@@ -159,12 +165,16 @@ Everything above assumed the log tells the truth. The new operator's straight gr
 
 A reward-aware method takes every record at face value. A false success has a high advantage, so AWR gives it a large weight and the advantage tag marks it as good. Off-policy learning can't repair this either: it can reuse a transition from another policy, but only if that transition is real. These fixes belong to the data pipeline: synchronize the clocks, record the executed action next to the command, audit success labels, and drop episodes that fail consistency checks.
 
+<div class="ct">
+
 | | Extrapolation error | Poor behavior | Corrupted records |
 | --- | --- | --- | --- |
 | What's wrong | A question the data can't answer | Bad actions, true labels | False states, actions or rewards |
 | Example above the mug | Sweep never recorded, estimate 9 | Straight grasp recorded, often fails | Failed grasp labeled success |
 | What helps | BCQ, CQL, IQL, TD3+BC, BC | AWR, IQL, advantage conditioning, filtering | Fixing the data pipeline |
 | What doesn't | Replaying the log more often | Copying everything | Any method that trusts the labels |
+
+</div>
 
 The next part looks at a problem that remains even when every demonstration is good and correctly recorded: two good ways to do the same thing. [Part 8: mode averaging](/robotics/rl-8-mode-averaging/).
 
