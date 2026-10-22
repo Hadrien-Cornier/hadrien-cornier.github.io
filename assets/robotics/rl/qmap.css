@@ -13,6 +13,10 @@
 #rc [data-qm="map"] .qm-arrow-big { display: none; }
 #rc.qm-narrow [data-qm="map"] .qm-arrow-big { display: inline; }
 #rc.qm-narrow [data-qm="map"] .qm-arrow { display: none; }
+/* The credit drawing has two copies of its mini map: beside the cells when wide, under the math on a phone. */
+#rc .qm-loc-below { display: none; }
+#rc.qm-narrow .qm-loc-below { display: inline; }
+#rc.qm-narrow .qm-loc-side { display: none; }
 #rc .qm-live { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .article-body .qm-jump { display: flex; flex-wrap: wrap; gap: 8px; }
 .article-body .qm-jump button { font: 600 14px/1.2 Arial, sans-serif; padding: 9px 12px; min-height: 40px; border: 1px solid var(--line); border-radius: 3px; cursor: pointer; }

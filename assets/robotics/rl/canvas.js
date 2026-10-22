@@ -43,7 +43,7 @@
       rc.setAttribute('data-active-panel', panel || 'whole'); rc.setAttribute('data-active-index', String(i)); rc.setAttribute('data-active-view', i >= 0 ? marks[i].getAttribute('data-view') : 'whole');
       where.textContent = whereLabel; goCam(fit(v, s[0], s[1]), instant);
     }
-    function topEdge() { var d = window.matchMedia('(min-width: 1000px)').matches; return d ? window.innerHeight * 0.36 : stage.getBoundingClientRect().bottom + nav.offsetHeight + 110; }
+    function topEdge() { var d = window.matchMedia('(min-width: 1000px)').matches; return d ? window.innerHeight * 0.36 : stage.getBoundingClientRect().bottom + nav.offsetHeight + 48; }
     function current() { var lim = topEdge(), k = -1; for (var i = 0; i < marks.length; i++) { if (marks[i].getBoundingClientRect().top <= lim) k = i; } return k; }
     function onScroll() {
       if (tick) return; tick = requestAnimationFrame(function () {
@@ -62,6 +62,8 @@
       if (i >= 0) marks[i].scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'start' });
       else window.scrollTo({ top: rc.getBoundingClientRect().top + window.pageYOffset - 8, behavior: reduce.matches ? 'auto' : 'smooth' });
     }
+    /* Show another section's view without scrolling the text; it holds until the text reaches another section. */
+    function peek(id) { var i = marks.findIndex(function (m) { return m.id === id; }); if (i < 0) return; hold = true; holdAt = current(); apply(i); }
     reset.addEventListener('click', function () { hold = true; holdAt = current(); apply(-1); });
     sel.addEventListener('change', function () { go(parseInt(sel.value, 10)); });
     prev.addEventListener('click', function () { go(Math.max(-1, (hold ? holdAt : idx) - 1)); });
@@ -75,7 +77,7 @@
       if (idx >= 0 && !hold) marks[idx].scrollIntoView({ behavior: 'auto', block: 'start' });
     });
     setTop(); apply(current(), true);
-    window.RC = { state: function () { return { index: idx, panel: rc.getAttribute('data-active-panel'), view: rc.getAttribute('data-active-view'), viewBox: rc.getAttribute('data-viewbox') }; }, go: go };
+    window.RC = { state: function () { return { index: idx, panel: rc.getAttribute('data-active-panel'), view: rc.getAttribute('data-active-view'), viewBox: rc.getAttribute('data-viewbox') }; }, go: go, peek: peek };
   }
   function boot() { [].forEach.call(document.querySelectorAll('.rc'), init); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

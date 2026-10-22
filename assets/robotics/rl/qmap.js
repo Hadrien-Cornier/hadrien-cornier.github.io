@@ -90,10 +90,12 @@
     if (isCliff(s)) return 'the cliff';
     return 'row ' + (r + 1) + ' of 4 from the top, column ' + (c + 1) + ' of 12';
   }
+  // Brighter blue is a higher (better) score, from about -14 (dim) up to 0; untried scores stay empty.
+  // Scores of -20 or less come from falls and are red.
   function heat(v) {
     if (v === 0) return 'none';
     if (v <= -20) return 'rgba(255,159,136,' + (0.26 + 0.16 * Math.min(1, (-v - 20) / 90)).toFixed(2) + ')';
-    return 'rgba(147,212,255,' + (0.05 + 0.25 * Math.min(1, -v / 13)).toFixed(2) + ')';
+    return 'rgba(147,212,255,' + (0.07 + 0.38 * Math.max(0, 1 + v / 14)).toFixed(2) + ')';
   }
 
   // ------------------------------------------------------------------ SVG pieces
@@ -103,7 +105,8 @@
     return 'M' + p[0][0] + ' ' + p[0][1] + 'L' + p[1][0] + ' ' + p[1][1] + 'L' + cx + ' ' + cy + 'Z';
   }
   function numPos(x, y, C, a) {
-    if (C < 100) return [[x + C / 2, y + C * 0.18], [x + C * 0.8, y + C / 2], [x + C / 2, y + C * 0.83], [x + C * 0.2, y + C / 2]][a];
+    // Map cells: the side scores sit in from the edge, so they do not run into the next cell's scores.
+    if (C < 100) return [[x + C / 2, y + C * 0.18], [x + C * 0.765, y + C / 2], [x + C / 2, y + C * 0.83], [x + C * 0.235, y + C / 2]][a];
     return [[x + C / 2, y + C * 0.2], [x + C * 0.79, y + C / 2], [x + C / 2, y + C * 0.81], [x + C * 0.21, y + C / 2]][a];
   }
   function arrowPath(cx, cy, a, len) {
@@ -130,7 +133,7 @@
     if (opts.arrow && b.seen && !b.tie) {
       if (C > 100) out += '<path d="' + arrowPath(x + C / 2, y + C / 2, b.a, C * 0.13) + '" fill="none" class="s-chalk" stroke-width="3"/>';
       // Map cells: a small arrow between the numbers, and a large one for phones, where CSS hides the numbers.
-      else out += '<path d="' + arrowPath(x + C / 2, y + C / 2, b.a, C * 0.09) + '" fill="none" class="qm-arrow s-chalk" stroke-width="2.2"/>' +
+      else out += '<path d="' + arrowPath(x + C / 2 - DC[b.a] * C * 0.036, y + C / 2 - DR[b.a] * C * 0.036, b.a, C * 0.09) + '" fill="none" class="qm-arrow s-chalk" stroke-width="2.2"/>' +
         '<path d="' + arrowPath(x + C / 2, y + C / 2, b.a, C * 0.27) + '" fill="none" class="qm-arrow-big s-chalk" stroke-width="4"/>';
     }
     return out;
@@ -165,6 +168,15 @@
     return out;
   }
 
+  // The color key, on the title row of the map.
+  function legend() {
+    var x = 606, y = 25, w = 18, out = '<g class="qm-legend" aria-hidden="true">';
+    out += '<text x="' + (x - 6) + '" y="' + (y + 13) + '" text-anchor="end" font-size="15" class="c-dim">score −13</text>';
+    [-13, -10, -7, -4, -1].forEach(function (v, k) { out += '<rect x="' + (x + k * w) + '" y="' + y + '" width="' + w + '" height="16" fill="' + heat(v) + '" class="s-faint" stroke-width="1"/>'; });
+    out += '<text x="' + (x + 5 * w + 6) + '" y="' + (y + 13) + '" font-size="15" class="c-dim">−1, better</text>';
+    return out + '</g>';
+  }
+
   // ------------------------------------------------------------------ the four live groups
   function renderMap(Q, t, sel, opts) {
     opts = opts || {};
@@ -174,8 +186,9 @@
       var x = M.x + (s % W) * M.c, y = M.y + Math.floor(s / W) * M.c;
       if (isTerminal(s)) { out += terminalCell(x, y, M.c, s, false); continue; }
       var row = Q.rowOf(T, s), seen = row.some(function (v) { return v !== 0; });
-      out += '<g class="qm-cell" data-s="' + s + '">' + cross(x, y, M.c, row, { numbers: seen && opts.numbers !== false ? 15 : 0, arrow: true, hi: u && u.s === s ? u.a : -1 }) + '</g>';
+      out += '<g class="qm-cell" data-s="' + s + '">' + cross(x, y, M.c, row, { numbers: seen && opts.numbers !== false ? 14 : 0, arrow: true, hi: u && u.s === s ? u.a : -1 }) + '</g>';
     }
+    out += legend();
     out += '<text x="' + (M.x + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-blue">start</text>';
     out += '<text x="' + (M.x + 5.5 * M.c + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-red">cliff: −100, back to start</text>';
     out += '<text x="' + (M.x + 11 * M.c + M.c / 2) + '" y="' + (M.y + 4 * M.c + 22) + '" text-anchor="middle" font-size="17" class="c-green">flag</text>';
@@ -237,7 +250,11 @@
     } else {
       out += cross(s2x, sy, cs, u.row2, { numbers: 13, long: true, borrow: u.maxA });
       out += '<text x="' + (s2x + cs / 2) + '" y="' + (sy + cs + 24) + '" text-anchor="middle" font-size="17" class="c-dim">s′: best score</text>';
+      if (u.s2 === u.s) out += '<text x="' + (s2x + cs / 2) + '" y="' + (sy + cs + 43) + '" text-anchor="middle" font-size="16" class="c-dim">the same cell as s</text>';
     }
+    // where the updated cell is, as on the map above
+    out += '<text x="430" y="' + (sy + cs + 8) + '" font-size="15" class="c-dim">on the map:</text>';
+    out += locator({ x: 430, y: sy + cs + 16, c: 15 }, [u.s]);
     // A large negative score in either drawn cell that an earlier fall wrote: say where it came from.
     var fall = fallNote(Q, u);
     if (fall) {
@@ -285,15 +302,18 @@
     // information flows from the cell you arrive in back to the move that led there
     out += '<path d="M' + (x1 + C * 0.62) + ' ' + (y + C * 0.62) + 'C' + (x1 + C + 40) + ' ' + (y + C + 60) + ' ' + (x2 - 40) + ' ' + (y + C + 30) + ' ' + (x2 + C * 0.2) + ' ' + (y + C * 0.56) + '" fill="none" class="s-blue" stroke-width="3"/>';
     out += '<path d="M' + (x2 + C * 0.2 - 14) + ' ' + (y + C * 0.56 + 2) + 'L' + (x2 + C * 0.2) + ' ' + (y + C * 0.56) + 'L' + (x2 + C * 0.2 - 6) + ' ' + (y + C * 0.56 + 14) + '" fill="none" class="s-blue" stroke-width="3"/>';
-    out += '<text x="' + ((x1 + x2 + C) / 2) + '" y="' + (y + C + 62) + '" text-anchor="middle" font-size="18" class="c-blue">the cost seen after arriving flows back</text>';
+    out += '<text x="' + ((x1 + x2 + C) / 2) + '" y="' + (y + C + 62) + '" text-anchor="middle" font-size="18" class="c-blue">the cost seen after arriving flows back, against the move</text>';
     // update 24's move goes the other way: from the right cell into the left one
     var my = y + C * 0.3, mx1 = x2 - 10, mx2 = x1 + C + 10;
     out += '<path d="M' + mx1 + ' ' + my + 'Q' + ((mx1 + mx2) / 2) + ' ' + (my - 8) + ' ' + mx2 + ' ' + my + 'M' + (mx2 + 11) + ' ' + (my - 8) + 'L' + mx2 + ' ' + my + 'L' + (mx2 + 11) + ' ' + (my + 7) + '" fill="none" class="s-chalk" stroke-width="2.4"/>';
     out += '<text x="' + ((mx1 + mx2) / 2) + '" y="' + (my - 16) + '" text-anchor="middle" font-size="16" class="c-chalk">move at 24</text>';
     out += '<text x="34" y="' + (y + C + 104) + '" font-size="22" class="c-chalk">target = −1 + 0.99 × <tspan class="c-blue">(' + fmt(a24.max) + ')</tspan> = ' + fmt(a24.target) + '</text>';
     out += '<text x="34" y="' + (y + C + 138) + '" font-size="22" class="c-chalk">new ← score = 0 + 0.5 × (' + fmt(a24.target) + ' − 0) = <tspan class="c-yellow">' + fmt(a24.nq) + '</tspan></text>';
-    out += '<text x="560" y="' + (y + 2) + '" font-size="16" class="c-dim">on the map:</text>';
-    out += locator({ x: 560, y: y + 14, c: 20 }, [a19.s, a24.s]);
+    // The mini map sits beside the cells on a wide drawing, and under the math on a phone (qmap.css).
+    out += '<g class="qm-loc-side"><text x="560" y="' + (y + 2) + '" font-size="16" class="c-dim">on the map:</text>' +
+      locator({ x: 560, y: y + 14, c: 20 }, [a19.s, a24.s]) + '</g>';
+    out += '<g class="qm-loc-below"><text x="34" y="' + (y + C + 196) + '" font-size="17" class="c-dim">on the map:</text>' +
+      locator({ x: 150, y: y + C + 170, c: 20 }, [a19.s, a24.s]) + '</g>';
     return out;
   }
   function describe(Q, t, sel) {
@@ -333,16 +353,19 @@
       readout.textContent = (f.kind === 'snapshot' ? '' : 'update ') + f.t.toLocaleString('en-US') + (f.kind === 'snapshot' ? ' (recorded)' : '');
       back.disabled = idx === 0;
       fwd.disabled = idx >= frames.length - 1;
+      back.setAttribute('aria-label', f.kind === 'snapshot' && frames[idx - 1].kind === 'snapshot' ? 'Previous recorded table' : 'One update back');
+      fwd.setAttribute('aria-label', f.kind === 'snapshot' || idx === Q.N ? 'Next recorded table' : 'One update forward');
+      back.title = back.getAttribute('aria-label'); fwd.title = fwd.getAttribute('aria-label');
       if (announce && live) live.textContent = label + '. ' + describe(Q, f.t, sel);
     }
     function go(k, announce) { idx = Math.max(0, Math.min(frames.length - 1, k)); draw(announce); }
-    slider.addEventListener('input', function () { pinned = -1; go(+slider.value, true); });
-    back.addEventListener('click', function () { pinned = -1; go(idx - 1, true); });
-    fwd.addEventListener('click', function () { pinned = -1; go(idx + 1, true); });
+    slider.addEventListener('input', function () { go(+slider.value, true); });
+    back.addEventListener('click', function () { go(idx - 1, true); });
+    fwd.addEventListener('click', function () { go(idx + 1, true); });
     // Click or tap a cell to select it; arrow keys move the selection while the map has focus.
     gMap.addEventListener('click', function (e) {
       var c = e.target.closest && e.target.closest('.qm-cell'); if (!c) return;
-      pinned = +c.getAttribute('data-s'); draw(true);
+      var s = +c.getAttribute('data-s'); pinned = pinned === s ? -1 : s; draw(true);
     });
     gMap.addEventListener('keydown', function (e) {
       var d = { ArrowUp: -W, ArrowDown: W, ArrowLeft: -1, ArrowRight: 1 }[e.key]; if (!d) return;
@@ -352,9 +375,13 @@
       if (n < 0 || n >= W * H || isTerminal(n)) return;
       pinned = n; draw(true);
     });
-    // Text buttons such as "show update 19" jump the map to a recorded update.
+    // Text buttons such as "show update 19" switch the drawing to the map and jump to that update.
+    // The view is set first, so onView does not reset the frame to the section default.
     [].forEach.call(document.querySelectorAll('[data-qm-frame]'), function (b) {
-      b.addEventListener('click', function () { pinned = -1; go(frameIndex(+b.getAttribute('data-qm-frame')), true); });
+      b.addEventListener('click', function () {
+        if (root.RC && root.RC.peek) { view = 'table'; root.RC.peek('sec-table'); }
+        pinned = -1; go(frameIndex(+b.getAttribute('data-qm-frame')), true);
+      });
     });
     // Follow the reading position: each section starts from the update its text discusses.
     function onView() {

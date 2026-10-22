@@ -14,6 +14,10 @@
 #rc .ft-graph .ft-edge-link{cursor:pointer}
 #rc .ft-graph .ft-edge-link:hover .ft-edge-label,#rc .ft-graph .ft-edge-link:focus .ft-edge-label{stroke:#b44c2c;stroke-width:2}
 #rc .ft-graph .ft-edge-link:focus{outline:none}
+/* The scope caption sits under the drawing as HTML text, so it stays readable at every zoom. */
+#rc .ft-viewer .ft-caption{flex:none;margin:0;padding:7px 12px 9px;font:400 16px/1.35 var(--bb-hand);color:var(--bb-dim)!important;border-top:1px dashed var(--bb-faint)}
+#rc .ft-viewer .ft-cap-lead{color:var(--bb-yellow)}
+@media (max-width:699px){#rc .ft-viewer .ft-caption{font-size:13.5px;line-height:1.28;padding:4px 10px 6px}}
 #rc .ft-detail{margin:20px 0;padding:14px 0;border-top:1px solid #d3d6cb;scroll-margin-top:var(--rc-top)}
 #rc .ft-detail summary{font-size:17px;line-height:1.4;cursor:pointer;font-weight:600;color:#242622}
 #rc .ft-detail p{font-size:16px;line-height:1.65;margin:14px 0}
