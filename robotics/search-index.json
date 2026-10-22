@@ -55,8 +55,8 @@
     "url": "/robotics/rl-0-overview/"
   },
   {
-    "title": "RL methods: a family tree and a Q table",
-    "description": "Every RL method fixes a problem an earlier one handles badly, and Q-learning learns by nudging one score toward the reward plus its best guess about the next cell.",
+    "title": "Foundations of value-based RL: a family tree and a Q table",
+    "description": "One selected branch of RL, the value-based methods from trial and error to DQN, where each method fixes a problem an earlier one handles badly. Then Q-learning, which nudges one score toward the reward plus its best guess about the next cell.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"
@@ -108,7 +108,7 @@
   },
   {
     "title": "The deadly triad: how a guess can train itself upward",
-    "description": "When shared weights, bootstrapping and off-policy data meet, a prediction can feed its own target and keep growing even when every reward is zero.",
+    "description": "Function approximation, bootstrapping and off-policy data each make RL practical, and DQN and SAC use all three, even though together they can let a prediction feed its own target.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"

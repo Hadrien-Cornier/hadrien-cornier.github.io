@@ -35,7 +35,7 @@ What I'm really after is taste. To me, RL is more of an art than a recipe: the m
 
 The six problems on the canvas come back throughout the series. Part 5 reaches the deadly triad, where three of the fixes (learning from guesses, sharing what you learn across situations, and reusing old data) combine into a loop where an error feeds the next prediction.
 
-**Part 0.** Next: [the method tree and a Q table](/robotics/rl-1-q-learning/).
+**Part 0.** Next: [a value-based family tree and a Q table](/robotics/rl-1-q-learning/).
 
 In reinforcement learning, we have an **agent** that takes actions, observes what happens and receives rewards. Its **policy** is the rule it uses to choose actions. We want the agent to earn more reward over time, but it has to learn which choices will get it there.
 
@@ -130,7 +130,7 @@ Each of these ideas fixes one problem and opens the door to others. Think of the
 
 ## The route through the series
 
-1. [The method tree and a Q table](/robotics/rl-1-q-learning/): connect methods to their problems, then watch one table learn.
+1. [A value-based family tree and a Q table](/robotics/rl-1-q-learning/): connect one branch of methods to their problems, then watch one table learn.
 2. [Bootstrapping](/robotics/rl-2-bootstrapping/): choose how much observed reward to use before a guess. This also leads to [Generalized Advantage Estimation (GAE)](/robotics/rl-2-bootstrapping/#sec-gae), which mixes return lengths to assign action credit.
 3. [Function approximation](/robotics/rl-3-function-approximation/): see what changes when predictions share weights.
 4. [On-policy and off-policy learning](/robotics/rl-4-on-policy-and-off-policy/): separate the policy collecting data from the one being evaluated.

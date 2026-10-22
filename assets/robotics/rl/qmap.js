@@ -309,11 +309,11 @@
     out += '<text x="' + ((mx1 + mx2) / 2) + '" y="' + (my - 16) + '" text-anchor="middle" font-size="16" class="c-chalk">move at 24</text>';
     out += '<text x="34" y="' + (y + C + 104) + '" font-size="22" class="c-chalk">target = −1 + 0.99 × <tspan class="c-blue">(' + fmt(a24.max) + ')</tspan> = ' + fmt(a24.target) + '</text>';
     out += '<text x="34" y="' + (y + C + 138) + '" font-size="22" class="c-chalk">new ← score = 0 + 0.5 × (' + fmt(a24.target) + ' − 0) = <tspan class="c-yellow">' + fmt(a24.nq) + '</tspan></text>';
-    // The mini map sits beside the cells on a wide drawing, and under the math on a phone (qmap.css).
-    out += '<g class="qm-loc-side"><text x="560" y="' + (y + 2) + '" font-size="16" class="c-dim">on the map:</text>' +
-      locator({ x: 560, y: y + 14, c: 20 }, [a19.s, a24.s]) + '</g>';
-    out += '<g class="qm-loc-below"><text x="34" y="' + (y + C + 196) + '" font-size="17" class="c-dim">on the map:</text>' +
-      locator({ x: 150, y: y + C + 170, c: 20 }, [a19.s, a24.s]) + '</g>';
+    // One mini map under the math, in the same left column as the cells, so no width clips it.
+    var ly = y + C + 166;
+    out += '<g class="qm-loc">' + locator({ x: x1, y: ly, c: 22 }, [a19.s, a24.s]) +
+      '<text x="' + x2 + '" y="' + (ly + 30) + '" font-size="17" class="c-dim">← the two cells on the map,</text>' +
+      '<text x="' + x2 + '" y="' + (ly + 54) + '" font-size="17" class="c-dim">outlined in red (S = start)</text></g>';
     return out;
   }
   function describe(Q, t, sel) {
