@@ -141,9 +141,9 @@ L^{\text{CLIP}}=\min\!\Big(&amp;r(\theta)\hat A,\\
 <div class="table-scroll" role="region" aria-label="Table" tabindex="0"><table>
 <thead>
 <tr>
-<th style="text-align:right">Advantage</th>
-<th style="text-align:right">Ratio</th>
-<th style="text-align:right">Unclipped <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mover accent="true"><mi>A</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">r\hat A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9468em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mord katex-accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9468em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">A</span></span><span style="top:-3.2523em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1111em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></th>
+<th style="text-align:right"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>A</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">\hat A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9468em;"></span><span class="mord katex-accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9468em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">A</span></span><span style="top:-3.2523em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1111em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></th>
+<th style="text-align:right">Ratio <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi></mrow><annotation encoding="application/x-tex">r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span></span></span></span></th>
+<th style="text-align:right"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mover accent="true"><mi>A</mi><mo>^</mo></mover></mrow><annotation encoding="application/x-tex">r\hat A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.9468em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">r</span><span class="mord katex-accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.9468em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord mathnormal">A</span></span><span style="top:-3.2523em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.1111em;"><span class="mord">^</span></span></span></span></span></span></span></span></span></span></th>
 <th style="text-align:right">Clipped</th>
 <th style="text-align:right"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>L</mi><mtext>CLIP</mtext></msup></mrow><annotation encoding="application/x-tex">L^{\text{CLIP}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.8413em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">CLIP</span></span></span></span></span></span></span></span></span></span></span></span></span></th>
 <th>Gradient</th>
@@ -235,7 +235,6 @@ L^{\text{CLIP}}=\min\!\Big(&amp;r(\theta)\hat A,\\
 <th>What goes wrong</th>
 <th>Fix</th>
 <th>What it costs or leaves open</th>
-<th>Source</th>
 </tr>
 </thead>
 <tbody>
@@ -244,28 +243,24 @@ L^{\text{CLIP}}=\min\!\Big(&amp;r(\theta)\hat A,\\
 <td>Actions share blame for earlier rewards</td>
 <td>Reward-to-go</td>
 <td>Same average update, and each score is still one noisy sample</td>
-<td>S&amp;B §13.3</td>
 </tr>
 <tr>
 <td>No comparison</td>
 <td>All actions in decent attempts go up</td>
 <td>Baseline, advantage</td>
 <td>Needs a good <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>V</mi></mrow><annotation encoding="application/x-tex">V</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.2222em;">V</span></span></span></span> or several attempts</td>
-<td>S&amp;B §13.4, GAE</td>
 </tr>
 <tr>
 <td>Overshooting on reused data</td>
 <td>Ratio grows with every pass</td>
 <td>PPO clip</td>
 <td>Not a hard bound, so learning rate, passes and KL still matter</td>
-<td>Schulman et al. 2017</td>
 </tr>
 <tr>
 <td>Identical groups</td>
 <td>Every advantage is zero</td>
 <td>DAPO filtering</td>
 <td>Extra attempts, a different number each batch</td>
-<td>Yu et al. 2025</td>
 </tr>
 </tbody>
 </table></div>

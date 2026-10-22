@@ -69,8 +69,8 @@
 <p>Each of these ideas fixes one problem and opens the door to others. Here are the failures the series covers, grouped by what goes wrong, with the section that explains each one and the methods that address it.</p>
 <p><strong>Too little signal.</strong> The learner can't improve because nothing in its experience points to a better choice.</p>
 <ul>
-<li>A lucky first result keeps a greedy learner on a worse choice. Random exploration, optimistic starting values and upper confidence bounds: <a href="/robotics/rl-1-q-learning/#sec-bandit">Part 1's bandit</a>.</li>
-<li>A late reward takes many updates to reach early choices. Bootstrapping and multi-step returns: <a href="/robotics/rl-2-bootstrapping/">Part 2</a>.</li>
+<li>A lucky first result keeps a greedy learner on a worse choice. Random exploration: <a href="/robotics/rl-1-q-learning/#sec-bandit">Part 1's bandit</a>. Optimistic starting values and upper confidence bounds: <a href="/robotics/rl-1-q-learning/#sec-explore-more">Part 1, &quot;Two other ways to explore&quot;</a>.</li>
+<li>A late reward takes many updates to reach early choices. Multi-step returns, which trade error from the estimate for noise from later outcomes: <a href="/robotics/rl-1-q-learning/#sec-backup-rounds">Part 1's corridor</a> and <a href="/robotics/rl-2-bootstrapping/#sec-nstep">Part 2</a>.</li>
 <li>A group of attempts that all score the same gives every attempt zero credit. Filtering those groups, at the cost of extra attempts: <a href="/robotics/rl-6-credit-and-careful-updates/#sec-groups">Part 6</a>.</li>
 </ul>
 <p><strong>Credit in the wrong place.</strong> The learner gets a signal, but it rewards or blames the wrong action.</p>
@@ -93,7 +93,7 @@
 <ul>
 <li>The log includes bad attempts, so copying it copies the mistakes. Reward-aware reuse with AWR, IQL, advantage conditioning or TD3+BC, when the rewards and values are good enough: <a href="/robotics/rl-7-learning-from-fixed-data/#sec-mixed">Part 7</a>.</li>
 <li>The log itself is wrong, with misaligned timestamps or false success labels. Fixing the data, not the learner: <a href="/robotics/rl-7-learning-from-fixed-data/#sec-corruption">Part 7</a>.</li>
-<li>Two good ways to do the task get averaged into one bad one. Policies that can represent both, such as flow policies: <a href="/robotics/rl-8-mode-averaging/">Part 8</a>.</li>
+<li>Two good ways to do the task get averaged into one bad one. Policies that can represent both, such as flow policies: <a href="/robotics/rl-8-mode-averaging/">Part 8</a>. Representing both routes still doesn't guarantee that a sample is safe or that every route is covered: <a href="/robotics/rl-8-mode-averaging/#sec-flow-limits">Part 8's limits</a>.</li>
 </ul>
 <h2 id="section-the-route-through-the-series">The route through the series</h2>
 <ol>

@@ -93,7 +93,7 @@ With $\epsilon=0.2$, the clipped ratio stays between 0.8 and 1.2. The $\min$ tak
 
 <div class="ct ct-words">
 
-| Advantage | Ratio | Unclipped $r\hat A$ | Clipped | $L^{\text{CLIP}}$ | Gradient |
+| $\hat A$ | Ratio $r$ | $r\hat A$ | Clipped | $L^{\text{CLIP}}$ | Gradient |
 | ---: | ---: | ---: | ---: | ---: | --- |
 | +2 | 1.3 | 2.6 | 2.4 | 2.4 | none: already raised enough |
 | −2 | 0.7 | −1.4 | −1.6 | −1.6 | none: already lowered enough |
@@ -138,12 +138,12 @@ In the game's pass-or-fail goal grid, a group-mean baseline solved all of the ta
 
 <div class="ct ct-words">
 
-| Problem | What goes wrong | Fix | What it costs or leaves open | Source |
-| --- | --- | --- | --- | --- |
-| Credit for the past | Actions share blame for earlier rewards | Reward-to-go | Same average update, and each score is still one noisy sample | S&B §13.3 |
-| No comparison | All actions in decent attempts go up | Baseline, advantage | Needs a good $V$ or several attempts | S&B §13.4, GAE |
-| Overshooting on reused data | Ratio grows with every pass | PPO clip | Not a hard bound, so learning rate, passes and KL still matter | Schulman et al. 2017 |
-| Identical groups | Every advantage is zero | DAPO filtering | Extra attempts, a different number each batch | Yu et al. 2025 |
+| Problem | What goes wrong | Fix | What it costs or leaves open |
+| --- | --- | --- | --- |
+| Credit for the past | Actions share blame for earlier rewards | Reward-to-go | Same average update, and each score is still one noisy sample |
+| No comparison | All actions in decent attempts go up | Baseline, advantage | Needs a good $V$ or several attempts |
+| Overshooting on reused data | Ratio grows with every pass | PPO clip | Not a hard bound, so learning rate, passes and KL still matter |
+| Identical groups | Every advantage is zero | DAPO filtering | Extra attempts, a different number each batch |
 
 </div>
 

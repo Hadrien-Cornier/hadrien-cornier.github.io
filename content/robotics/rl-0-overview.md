@@ -84,8 +84,8 @@ Each of these ideas fixes one problem and opens the door to others. Here are the
 
 **Too little signal.** The learner can't improve because nothing in its experience points to a better choice.
 
-- A lucky first result keeps a greedy learner on a worse choice. Random exploration, optimistic starting values and upper confidence bounds: [Part 1's bandit](/robotics/rl-1-q-learning/#sec-bandit).
-- A late reward takes many updates to reach early choices. Bootstrapping and multi-step returns: [Part 2](/robotics/rl-2-bootstrapping/).
+- A lucky first result keeps a greedy learner on a worse choice. Random exploration: [Part 1's bandit](/robotics/rl-1-q-learning/#sec-bandit). Optimistic starting values and upper confidence bounds: [Part 1, "Two other ways to explore"](/robotics/rl-1-q-learning/#sec-explore-more).
+- A late reward takes many updates to reach early choices. Multi-step returns, which trade error from the estimate for noise from later outcomes: [Part 1's corridor](/robotics/rl-1-q-learning/#sec-backup-rounds) and [Part 2](/robotics/rl-2-bootstrapping/#sec-nstep).
 - A group of attempts that all score the same gives every attempt zero credit. Filtering those groups, at the cost of extra attempts: [Part 6](/robotics/rl-6-credit-and-careful-updates/#sec-groups).
 
 **Credit in the wrong place.** The learner gets a signal, but it rewards or blames the wrong action.
@@ -108,7 +108,7 @@ Each of these ideas fixes one problem and opens the door to others. Here are the
 
 - The log includes bad attempts, so copying it copies the mistakes. Reward-aware reuse with AWR, IQL, advantage conditioning or TD3+BC, when the rewards and values are good enough: [Part 7](/robotics/rl-7-learning-from-fixed-data/#sec-mixed).
 - The log itself is wrong, with misaligned timestamps or false success labels. Fixing the data, not the learner: [Part 7](/robotics/rl-7-learning-from-fixed-data/#sec-corruption).
-- Two good ways to do the task get averaged into one bad one. Policies that can represent both, such as flow policies: [Part 8](/robotics/rl-8-mode-averaging/).
+- Two good ways to do the task get averaged into one bad one. Policies that can represent both, such as flow policies: [Part 8](/robotics/rl-8-mode-averaging/). Representing both routes still doesn't guarantee that a sample is safe or that every route is covered: [Part 8's limits](/robotics/rl-8-mode-averaging/#sec-flow-limits).
 
 ## The route through the series
 

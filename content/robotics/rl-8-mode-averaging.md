@@ -116,7 +116,7 @@ and the table applies the Euler rule above from $\tau=0$ to $\tau=1$. This is a 
 
 </details>
 
-## What a flow policy doesn't guarantee
+<h2 id="sec-flow-limits">What a flow policy doesn't guarantee</h2>
 
 Being able to represent two modes is not the same as learning both of them.
 
