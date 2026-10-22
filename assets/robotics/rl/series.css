@@ -58,9 +58,10 @@
 .article-body .rb-widget p { margin: 0 0 8px; font-size: 13px; line-height: 1.5; color: #242622; }
 .article-body .rb-widget .rb-title { font-size: 14px; }
 .article-body .rb-widget .rb-assume { padding: 8px 10px; background: #f4f5f0; border-left: 3px solid #8f1d36; }
-.article-body .rb-ctrl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 10px 0 12px; }
-.article-body .rb-ctrl label { display: flex; flex: 1 1 220px; align-items: center; gap: 10px; font-weight: 600; }
-.article-body .rb-ctrl input[type="range"] { flex: 1; min-width: 120px; accent-color: #8f1d36; }
+.article-body .rb-ctrl { margin: 10px 0 12px; }
+.article-body .rb-ctrl label { display: block; margin: 0 0 6px; font-weight: 600; }
+.article-body .rb-row { display: flex; align-items: center; gap: 8px; }
+.article-body .rb-row input[type="range"] { flex: 1; min-width: 60px; margin: 0; accent-color: #8f1d36; }
 .article-body .rb-ctrl button { font: 600 13px/1 Arial, Helvetica, sans-serif; border: 1px solid #242622; background: #fff; color: #242622; padding: 8px 12px; min-height: 36px; min-width: 36px; cursor: pointer; border-radius: 2px; }
 .article-body .rb-ctrl button:hover { background: #f4f5f0; }
 .article-body .rb-ctrl button[disabled] { opacity: .45; cursor: default; }
@@ -68,11 +69,12 @@
 .article-body .rb-lane { margin: 0 0 12px; }
 .article-body .rb-lane .rb-lane-h { margin: 0 0 4px; font-weight: 700; }
 .article-body .rb-lane .rb-lane-h span { font-weight: 400; color: #656b62; }
-.article-body .rb-cells { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 3px; }
+.article-body .rb-widget b, .article-body .rb-widget strong, .article-body .rb-widget output, .article-body .rb-widget label { color: #242622; }
+.article-body .rb-cells { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
 .article-body .rb-cell { padding: 5px 0 4px; text-align: center; border: 1px solid #c9ccc2; color: #242622; font-variant-numeric: tabular-nums; }
-.article-body .rb-cell span { display: block; font-size: 10px; color: #656b62; }
-.article-body .rb-cell b { display: block; font-size: 11.5px; }
-.article-body .rb-cell.rb-dark, .article-body .rb-cell.rb-dark span { color: #fff; }
+.article-body .rb-cell span { display: block; font-size: 11px; color: #656b62; }
+.article-body .rb-cell b { display: block; font-size: 13px; }
+.article-body .rb-cell.rb-dark, .article-body .rb-cell.rb-dark span, .article-body .rb-cell.rb-dark b { color: #fff; }
 .article-body .rb-checks { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 12px; }
 .article-body .rb-checks label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
 .article-body .rb-checks input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: #8f1d36; flex: none; }
@@ -80,8 +82,6 @@
 .article-body .rb-out > div { padding: 8px 10px; border: 1px solid #dcded6; }
 .article-body .rb-out span, .article-body .rb-out small { display: block; color: #656b62; font-size: 12px; }
 .article-body .rb-out output { display: block; font: 700 20px/1.3 Arial, Helvetica, sans-serif; font-variant-numeric: tabular-nums; }
-@media (max-width: 640px) { .article-body .rb-cells { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
-
 /* Reinforcement learning series: readable equations and mechanism drawings. */
 .article-body .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: .55rem .15rem; text-align: left; }
 .article-body .katex-display > .katex { display: block; width: max-content; min-width: 100%; text-align: left; font-size: 1em; }

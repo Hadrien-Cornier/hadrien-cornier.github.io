@@ -75,8 +75,9 @@
       var b = bias.checked ? BIAS : 0, s = shock.checked ? SHOCK : 0;
       var e1 = GAMMA * b;
       var e8b = Math.pow(GAMMA, 8) * b, e8s = Math.pow(GAMMA, SHOCK_STEP - 1) * s;
-      targets.querySelector('#rb-t1').textContent = (truth + e1).toFixed(3);
-      targets.querySelector('#rb-t8').textContent = (truth + e8b + e8s).toFixed(3);
+      var num = function (x) { return x.toFixed(3).replace('-', '−'); };
+      targets.querySelector('#rb-t1').textContent = num(truth + e1);
+      targets.querySelector('#rb-t8').textContent = num(truth + e8b + e8s);
       var part = function (x, what) { return (x > 0 ? '+' : '−') + Math.abs(x).toFixed(2) + ' ' + what; };
       var d1 = b ? part(e1, 'from the estimate') : 'no error';
       var d8 = [b ? part(e8b, 'from the estimate') : '', s ? part(e8s, 'from step 4') : ''].filter(Boolean).join(', ') || 'no error';
