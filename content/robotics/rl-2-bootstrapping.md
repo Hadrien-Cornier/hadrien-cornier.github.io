@@ -63,6 +63,8 @@ In our corridor, let's start every estimate at zero and set both the step size a
 
 The cost is having to wait. If an episode lasts a million steps, we can't make the first completed-return update until it ends. In a continuing task, there's no terminal event to give us this particular target.
 
+The same problem shows up when a policy might never finish. In the windy gridworld of [Sutton and Barto, Example 6.5](http://incompleteideas.net/book/RLbook2020.pdf), some policies never reach the goal, so Monte Carlo methods can't easily be used, while Sarsa learns during the episode that those policies are poor. Stopping the walk at a time limit does give us a number, but it's a truncated return: it leaves out whatever would have come next. [Time limits](#sec-time-limits) below look at what that does to the targets.
+
 <figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-labelledby="b2-mc-title"><title id="b2-mc-title">Monte Carlo waits then updates earlier states</title><defs><marker id="b2-mc-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#b44c2c"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="28">During walk: estimates wait</text><path d="M32 65H265" stroke="#656b62" stroke-width="2"/><circle cx="40" cy="65" r="20" fill="#fff" stroke="#242622"/><circle cx="135" cy="65" r="20" fill="#fff" stroke="#242622"/><circle cx="260" cy="65" r="20" fill="#e7c5b8" stroke="#242622"/><text x="35" y="71">0</text><text x="130" y="71">0</text><text x="251" y="71">+1</text><text x="16" y="110">Episode ends: return is known</text><path d="M260 93V145H42" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#b2-mc-arr)"/><text x="16" y="179">All eight targets = 1</text><text x="16" y="205">All eight estimates: 0 → 1</text></g></svg><figcaption>Timeline view. Fixed: the completed path. Values change after the end. Compare the waiting estimates above with the backward return calculation below.</figcaption></figure>
 
 <div class="rc-mark" id="sec-td" data-panel="td" data-view="td" data-title="Borrow the next estimate"></div>
@@ -233,6 +235,25 @@ Here `v[t]` stores the frozen $V(S_t)$. At $\lambda=1$, cancellation gives
 $$\hat A_t=\sum_{\ell=0}^{H-t-1}\gamma^\ell R_{t+\ell+1}+\gamma^{H-t}V(S_H)-V(S_t).$$
 
 Only a true terminal endpoint removes that tail. A truncated return still includes it.
+
+<h3 id="sec-time-limits">When the clock ends the episode</h3>
+
+That rule assumes we know whether an ending is real. Training runs usually stop every episode after a fixed number of steps, and that cutoff can mean two different things. [Pardo et al. (2018)](https://arxiv.org/abs/1712.00378) separate them.
+
+**The time limit is part of the task.** Say the robot really has 14 moves to reach a goal. Then the value of a state depends on how many moves are left: the same square is worth a lot with 10 moves left and nothing with 1 move left if the goal is 3 moves away. If the state doesn't include the remaining time, those two situations look identical, and the learner averages targets that disagree. Their fix is to put the remaining time in the input.
+
+Their Last Moment example shows how much this matters. At each step the agent can stay, for reward 0, or jump into a trap that gives +1 once and then −1 on every step until the episode ends. The best plan is to stay and jump on the very last step, collecting +1 with no penalty. An agent that can't see the clock can't tell when the last step is. With more than two steps in the episode, its best fixed choice is to never jump, and the paper notes that even Monte Carlo methods, which don't bootstrap, can't learn the right plan without the time input.
+
+**The time limit is only for training.** If the task would really go on, the cutoff isn't an end. Treating it as terminal teaches the learner that a state near the cutoff is worth less, even though nothing about that state changed. Their fix is **partial-episode bootstrapping**: at the cutoff, use $R+\gamma V(S')$ instead of $R$, which is the truncation rule from the GAE section.
+
+| How the limit is meant | Value depends on | Target at the limit | Fix from Pardo et al. |
+| --- | --- | --- | --- |
+| Part of the task | State and time left | Real end: last reward only | Add the remaining time to the input |
+| Only for training | State only | Not an end: bootstrap from $V(S')$ | Partial-episode bootstrapping |
+
+So the right handling depends on the objective. Bootstrapping through a limit that's really part of the task is also a mistake: it assumes a future that the task doesn't have.
+
+My game [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) has a pass-or-fail goal grid where this seems to happen: 14 moves, reward 1 at the goal and 0 otherwise, no discount. PPO with a learned value and GAE solved 13.3% of the tasks, and its value estimate at the start was about 1.44, above the largest possible return of 1. Scoring actions with real completed returns instead solved 95%, and with no baseline at all, 100% (3 seeds, simulation). The game's own reading is that the value bootstraps through the time limit and can't see the clock. That fits the first case, but the log has no run with the remaining time in the input that would confirm it.
 
 The next question is how to store values when almost every state is new. [Part 3: function approximation](/robotics/rl-3-function-approximation/) replaces separate table entries with shared weights.
 

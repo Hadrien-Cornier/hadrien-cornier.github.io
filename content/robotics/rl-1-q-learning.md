@@ -383,12 +383,40 @@ For example, a machine with two payouts totaling 4 has estimate 2. A third payou
 
 </div>
 
+### Two other ways to explore
+
+Random pulls never stop. Even once you know the best machine, one pull in ten goes somewhere else. Two other rules aim the exploration at what you haven't tried.
+
+**Start optimistic.** Set every estimate to +5, far above any machine's likely average, and act greedily. Each pull disappoints, so the pulled machine's estimate drops and the learner moves to another one still at +5, until every machine has been tried. [Sutton and Barto, §2.6](http://incompleteideas.net/book/RLbook2020.pdf), show this with a constant step size of 0.1. With the running average above, the first payout replaces the start value completely, since $1/n(a)=1$ on the first pull. So optimism buys exactly one pull of each machine. The book also calls it far from a generally useful approach: the push to explore is temporary, so it can't help when the machines change over time.
+
+**Add a bonus for what you haven't tried.** The **upper confidence bound (UCB)** rule picks
+
+$$A_t=\arg\max_a\Big[Q_t(a)+c\sqrt{\frac{\ln t}{N_t(a)}}\,\Big],$$
+
+where $t$ counts all pulls so far, $N_t(a)$ is the same count as $n(a)$, and $c>0$ sets the size of the bonus ([§2.7, Eq. 2.10](http://incompleteideas.net/book/RLbook2020.pdf)). A machine that has never been pulled counts as the largest, so each one gets tried first. The bonus shrinks as a machine gets pulled and grows slowly while it's left alone. The book's limits: UCB is harder than random pulls to extend beyond bandits, to machines that change, and to large state spaces, and it's usually not practical with function approximation.
+
+<div class="ct">
+
+| Rule, same 200 runs, no random pulls | Share of the last 200 pulls on the best machine |
+| --- | ---: |
+| Greedy, start 0, running average | 35.5% |
+| Greedy, start +5, running average | 63.5% |
+| Greedy, start 0, step 0.1 | 51.4% |
+| Greedy, start +5, step 0.1 | 83.5% |
+| UCB, $c=2$, running average | 82.0% |
+
+</div>
+
+The rules interact. In the game's log, UCB with a constant step of 0.1 dropped to 67.0%. The log's explanation, backed by a follow-up probe: a constant step keeps only about the last 20 payouts, so its error stops shrinking, while the bonus keeps shrinking as if the estimate were still getting more precise. And the constant step alone lifts plain greedy from 35.5% to 51.4%, a gain the log doesn't explain.
+
 <details>
 <summary>Exact numbers: slot machines</summary>
 
 Re-run of settings the game already uses, with its own `RLA.run` at commit [681cae3](https://github.com/Hadrien-Cornier/breaking-bellman/tree/681cae3820f05f8604d212c0ab048ebf0e017e73).
 
 Here $n$ counts pulls of one machine, so $1/n$ is its running-average step size. These are measured finite-run results, not a convergence claim. Ten machines with true averages drawn from a standard normal distribution, payout noise with standard deviation 1, 1,000 pulls, running averages (step size $1/n$), 200 runs. Greedy starts all numbers at zero and breaks ties at random. Share of the last 200 pulls on the best machine, averaged over runs: greedy 35.5%, with random pulls 77.5%. Runs with less than half of the last 200 pulls on the best machine: 64.5% for greedy, 15.0% with random pulls. Even with perfect greedy choices, the expected best-machine share is 91%: $0.9 + 0.1/10$. A finite run can be higher or lower.
+
+The optimistic-start and UCB rows come from the game's batch 24 in its [experiment log](https://github.com/Hadrien-Cornier/breaking-bellman/blob/681cae3820f05f8604d212c0ab048ebf0e017e73/EXPERIMENTS.md), on the same 200 seeds and the same world, with standard errors of 1.6 to 3.5 points over seeds. The 67.0% is UCB with step 0.1 and start 0.
 
 The clip pair uses one run where greedy never pulled the best machine in its last 200 pulls and the other robot spent 92.5% there. I chose it because it shows the gap clearly. It is an example, not a typical run. Both robots share one set of machines.
 
