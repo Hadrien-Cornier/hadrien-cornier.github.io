@@ -1,5 +1,17 @@
 [
   {
+    "title": "Faster-WAM in LeRobot: from 300 cache reads to 10",
+    "description": "Faster-WAM cuts a world action model's action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights.",
+    "tags": [
+      "world-action-models",
+      "lerobot",
+      "kv-cache",
+      "flow-matching"
+    ],
+    "date": "2026-10-21",
+    "url": "/robotics/faster-wam-in-lerobot/"
+  },
+  {
     "title": "Policy gradients: fair credit and careful steps",
     "description": "Four ways a policy-gradient update can go wrong on a robot task: blaming actions for the past, rewarding every attempt, overshooting on reused data, and groups that teach nothing. Reward-to-go, baselines, PPO clipping and group advantages, with their limits.",
     "tags": [
