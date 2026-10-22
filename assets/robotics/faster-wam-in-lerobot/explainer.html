@@ -277,11 +277,18 @@ details.drawer .widget { margin: 10px 0; box-shadow: none; }
 table.data { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
 table.data th, table.data td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 table.data th { font: 500 11.5px var(--mono); color: var(--ink-3); text-transform: uppercase; letter-spacing: .05em; }
-table.data td.n { text-align: right; font-family: var(--mono); font-size: 13.5px; }
+table.data td.n { text-align: right; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; }
+@media (max-width: 520px) { table.data th, table.data td { padding: 6px 6px; } table.data td.n { font-size: 12px; } }
 table.data th.n { text-align: right; }
 
 .eq { margin: 16px 0; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; font-size: 16px; }
 .eq .tex-fallback { font-family: var(--mono); font-size: 14px; }
+.eq .eq-narrow { display: none; }
+@media (max-width: 520px) {
+  .eq { padding: 12px 10px; font-size: 13px; }
+  .eq .eq-wide { display: none; }
+  .eq .eq-narrow { display: block; }
+}
 .callout { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; margin: 16px 0; color: var(--ink-2); }
 
 /* static before/after figures (fusion, RoPE) */
@@ -390,8 +397,8 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
 .embed[data-theme="dark"] { --bg: #191c19; }
 .embed .topbar, .embed .toc { display: none; }
 .embed .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding-bottom: 8px; }
-.embed .hero { padding: 4px 0 8px; }
-.embed .hero > div:first-child { display: none; }
+/* the article intro gives the short answer and the article lists the limits, so the embed skips them */
+.embed .hero, .embed #quality, .embed #limits { display: none; }
 .embed .answer, .embed .prose, .embed .chapter > .kicker, .embed h2.ch, .embed details.drawer, .embed .tbl-wrap { max-width: 720px; margin-left: auto; margin-right: auto; }
 .embed footer { max-width: 720px; margin: 0 auto; }
 </style>
@@ -412,7 +419,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
     </div>
     <div class="answer">
       <h2>The short answer</h2>
-      <p>Fast-WAM runs a big video transformer once on the camera image and keeps every layer's keys and values: its <b>KV cache</b>. Then a 30-layer <span class="c-action">action expert</span> turns random noise into 32 actions over 10 denoising steps. Each action layer reads the cache of its matching video layer, so one chunk costs <b>30 × 10 = 300 reads</b>.</p>
+      <p>Fast-WAM runs a big video transformer once on the camera image and keeps every layer's keys and values: its <b>KV cache</b>. Then a 30-layer <span class="c-action">action expert</span> turns random noise into 32 actions over 10 denoising steps. Each action layer reads the cache of its matching video layer, so one chunk costs <b>30 × 10 = 300 reads</b>, where a read is one action-layer pass over a cache.</p>
       <p>Faster-WAM learns one weighted mix of all 30 caches, builds it once per chunk, and keeps a single action layer. That layer reads the <span class="c-fused">fused cache</span> at each step: <b>1 × 10 = 10 reads</b>.</p>
       <div class="facts">
         <div class="fact"><div class="big">30</div><div class="lbl">video layers, run once per chunk in both models</div></div>
@@ -443,7 +450,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
         <h2 class="ch"><span class="n">01</span>One action chunk, two models, one clock</h2>
         <div class="prose">
           <p>A robot arm on the LIBERO benchmark looks at one camera frame, reads an instruction such as “put the bowl on the plate”, and outputs an <b>action chunk</b>: its next 32 moves, 7 numbers each. It does this again every time it replans, so the time per chunk decides how quickly the robot can react.</p>
-          <p>Both models make the chunk the same way. The <span class="c-video">video model</span>, the 5-billion-parameter Wan2.2 transformer, runs its 30 layers once on the image and leaves each layer's keys (<span class="c-k">K</span>) and values (<span class="c-v">V</span>) in a cache. Then the <span class="c-action">action expert</span> starts from pure noise and cleans it up in 10 <b>flow-matching</b> steps. At each step it reads the cache and predicts a direction, and the chunk moves a little toward a clean motion. Press play and watch the chunk on the right of each panel.</p>
+          <p>Both models make the chunk the same way. The <span class="c-video">video model</span>, the 5-billion-parameter Wan2.2 transformer, runs its 30 layers once on the image and leaves each layer's keys (<span class="c-k">K</span>) and values (<span class="c-v">V</span>) in a cache. Then the <span class="c-action">action expert</span> starts from pure noise and cleans it up in 10 <b>flow-matching</b> steps. At each step it reads the cache and predicts a direction, and the chunk moves a little toward a clean motion. Watch the action chunk in each panel.</p>
         </div>
         <div class="widget" id="w-race">
           <div class="w-head">
@@ -468,7 +475,6 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
               <button type="button" data-v="lock" aria-pressed="false">Step by step</button>
             </div>
             <label class="range scrub">time <input name="fw-field-1" type="range" min="0" max="1000" step="1" value="0" data-act="scrub" aria-label="Timeline position"></label>
-            <label class="range">speed <input name="fw-field-2" type="range" min="-2" max="2" step="0.5" value="0" data-act="speed" aria-label="Animation speed"> <span data-out="speed">1×</span></label>
           </div>
           <div class="w-stats">
             <div class="stat"><div class="k">model time</div><div class="val" data-out="time">0</div></div>
@@ -478,15 +484,11 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
             <div class="stat"><div class="k">denoiser kernels</div><div class="val" data-out="kernels">0</div></div>
           </div>
           <div class="w-caption"></div>
-          <div class="w-note">Clock: <select name="fw-field-3" data-act="clock" aria-label="Timing source">
-            <option value="bf16" selected>LeRobot PR, A100, bf16 (Measured)</option>
-            <option value="fp32">LeRobot PR, A100, fp32 (Measured)</option>
-            <option value="paper">Paper, Table 7 (24 GiB GPU, bf16)</option>
-          </select> <span data-out="clocknote"></span> Model time adds up the phase times of the chosen source. <b>Same clock</b> moves both models on one millisecond axis; <b>Step by step</b> gives both the same screen time per step, so it is not to scale. The noise levels σ are the real schedule (10 steps, shift 5). The action curves are illustrative, and only 3 of the 7 joints are drawn. Kernel counts are measured totals per chunk from a separate profiler run, shown in proportion to the reads done.</div>
+          <div class="w-note">Clock: LeRobot on an A100 in bf16, random weights <span class="tag meas">Measured</span>. Model time adds up the phase means from a separate 20-chunk run, so Fast-WAM ends at 945.6 ms here and at 938.0 ms in the end-to-end timer. <b>Same clock</b> moves both models on one millisecond axis. <b>Step by step</b> gives both the same screen time per step, so it isn't to scale. The noise levels σ are the real schedule (10 steps, shift 5). The action curves are illustrative, with 3 of the 7 action values drawn. Denoiser kernels counts the GPU kernel launches per chunk, measured in a separate profiler run and shown in proportion to the reads done.</div>
           <p class="sr-only" aria-live="polite" data-out="live"></p>
         </div>
         <div class="prose">
-          <p>Three things to notice. First, the <span class="c-video">video model</span> does the same work in both: 30 layers, once per chunk. Second, the chunk goes through the same 10 noise levels in both models. Most of the noise only goes away in the last three steps, because the schedule spends its early steps at high noise. Third, Faster-WAM's whole denoising loop is shorter than one of Fast-WAM's steps on the A100 bf16 clock. Use <b>Step →</b> to walk through its 10 steps one at a time.</p>
+          <p>Three things to notice. First, the <span class="c-video">video model</span> does the same work in both: 30 layers, once per chunk. Second, the chunk goes through the same 10 noise levels in both models. Most of the noise only goes away in the last three steps, because the schedule spends its early steps at high noise. Third, Faster-WAM's whole denoising loop is shorter than one of Fast-WAM's steps on the A100 bf16 clock.</p>
         </div>
       </section>
 
@@ -497,7 +499,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
         <div class="prose">
           <p>A transformer works on <b>tokens</b>: one vector of numbers per piece of input. Fast-WAM has four kinds.</p>
           <ul>
-            <li><span class="c-video">Video.</span> Two 224 × 224 camera views (agent and wrist) sit side by side as one 224 × 448 image. The Wan2.2 VAE compresses it 16 times in each direction, and the transformer groups 2 × 2 latent cells into one token. That leaves 7 × 14 = <b>98 video tokens</b>, each 3,072 numbers wide.</li>
+            <li><span class="c-video">Video.</span> Two 224 × 224 camera views (agent and wrist) sit side by side as one 224 × 448 image. The Wan2.2 VAE, its image autoencoder, compresses it 16 times in each direction, and the transformer groups 2 × 2 latent cells into one token. That leaves 7 × 14 = <b>98 video tokens</b>, each 3,072 numbers wide.</li>
             <li><span class="c-ctx">Text.</span> The UMT5-XXL text encoder turns the instruction into up to <b>128 tokens</b>.</li>
             <li><span class="c-ctx">Robot state.</span> 8 numbers that describe the robot's current state are projected to <b>1 extra token</b> that joins the text tokens.</li>
             <li><span class="c-action">Actions.</span> The chunk is 32 time steps × 7 numbers. It starts as pure noise. Each time step is <b>one action token</b>, 1,024 numbers wide inside the action expert.</li>
@@ -525,9 +527,9 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
           <p>Fast-WAM pairs the layers. Action layer <i>j</i> reads cache <i>j</i> and nothing else, so 30 action layers times 10 steps makes 300 reads per chunk. The pairing is also why you can't just delete action layers: drop action layer 17 and nothing reads video layer 17 anymore.</p>
           <p>Faster-WAM breaks the pairing. It mixes the 30 caches into one <span class="c-fused">fused cache</span>, once per chunk, and a single action layer reads that at every step. For each attention head it learns one number per video layer, turns those 30 numbers into weights that add up to 1, and takes the weighted sum:</p>
         </div>
-        <div class="eq"><span data-tex="\beta_{h\ell}=\frac{e^{\alpha_{h\ell}}}{\sum_{r=1}^{30}e^{\alpha_{hr}}},\qquad \widehat{K}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,K_{\ell h},\qquad \widehat{V}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,V_{\ell h}" data-display data-plain="β_hℓ = softmax over ℓ of α_hℓ;   K̂_h = Σ_ℓ β_hℓ K_ℓh;   V̂_h = Σ_ℓ β_hℓ V_ℓh"></span></div>
+        <div class="eq"><span class="eq-wide" data-tex="\beta_{h\ell}=\frac{e^{\alpha_{h\ell}}}{\sum_{\ell'=1}^{30}e^{\alpha_{h\ell'}}},\qquad \widehat{K}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,K_{h\ell},\qquad \widehat{V}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,V_{h\ell}" data-display data-plain="β_hℓ = softmax over ℓ of α_hℓ;   K̂_h = Σ_ℓ β_hℓ K_hℓ;   V̂_h = Σ_ℓ β_hℓ V_hℓ"></span><span class="eq-narrow" data-tex="\begin{gathered}\beta_{h\ell}=\frac{e^{\alpha_{h\ell}}}{\sum_{\ell'=1}^{30}e^{\alpha_{h\ell'}}}\\[6pt]\widehat{K}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,K_{h\ell}\\[6pt]\widehat{V}_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,V_{h\ell}\end{gathered}" data-display data-plain="β_hℓ = softmax over ℓ of α_hℓ;   K̂_h = Σ_ℓ β_hℓ K_hℓ;   V̂_h = Σ_ℓ β_hℓ V_hℓ"></span></div>
         <div class="prose">
-          <p class="syms">Here ℓ is the video layer, 1 to 30, and <i>h</i> is the attention head, 1 to 24. The α<sub>hℓ</sub> are the learned numbers. The softmax turns them into weights β<sub>hℓ</sub> that are positive and add up to 1. <i>K</i><sub>ℓh</sub> and <i>V</i><sub>ℓh</sub> are layer ℓ's cached keys and values for head <i>h</i>, and the hats mark the fused cache. Keys and values share the same weights.</p>
+          <p class="syms">Here ℓ is the video layer, 1 to 30, and <i>h</i> is the attention head, 1 to 24. The α<sub>hℓ</sub> are the learned numbers. The softmax turns them into weights β<sub>hℓ</sub> that are positive and add up to 1. <i>K</i><sub>hℓ</sub> and <i>V</i><sub>hℓ</sub> are layer ℓ's cached keys and values for head <i>h</i>, and the hats mark the fused cache. Keys and values share the same weights.</p>
         </div>
         <figure class="widget" id="f-fusion">
           <div class="w-head"><span class="title">which cache each action layer reads</span>
@@ -622,7 +624,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
               </svg>
             </div>
           </div>
-          <figcaption class="w-note">A schematic, not data. It shows which cache each action layer reads. Layers 4 to 29 are left out of the drawing, and the four lines into the fused cache stand for all 30. The lines don't show weight values.</figcaption>
+          <figcaption class="w-note">Schematic. It shows which cache each action layer reads. Layers 4 to 29 are left out of the drawing, and the four lines into the fused cache stand for all 30. The lines don't show weight values.</figcaption>
         </figure>
         <div class="prose">
           <p>That's 24 × 30 = <b>720 learned numbers</b> for the whole fusion. They start at zero, so training starts from a plain average with every β = 1/30.</p>
@@ -637,7 +639,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
         <h2 class="ch"><span class="n">04</span>Two side changes</h2>
         <div class="prose">
           <h3>World-model-only conditioning</h3>
-          <p>In Fast-WAM, every action layer also cross-attends to the 128 <span class="c-ctx">text tokens</span> and the robot-state token, at every step: another 300 reads per chunk. Faster-WAM deletes that cross-attention. The instruction and robot state still reach the actions, but only through the video transformer, which reads them in every layer and writes what it learned into its cache. The paper's argument is that this keeps the small action expert from leaning on the text and state directly and helps the policy generalise.</p>
+          <p>In Fast-WAM, every action layer also cross-attends to the 128 <span class="c-ctx">text tokens</span> and the robot-state token, at every step: another 300 reads per chunk. Faster-WAM deletes that cross-attention. The instruction and robot state still reach the actions, but only through the video model, which reads them in every layer and writes what it learned into its cache. The paper's argument is that this keeps the small action expert from leaning on the text and state directly and helps the policy generalise. In its step-by-step ablation (Figure 3), this step moves LIBERO-Plus from 68.7% to 77.6% and LIBERO from 98.0% to 97.8%. <span class="tag paper">Paper</span></p>
           <h3>Retracted 1D RoPE: put the keys on the action's clock</h3>
           <p>Attention also needs to know where tokens are. Both experts use rotary position encoding (RoPE): each query and key is cut into 64 pairs of numbers, and each pair is turned by an angle that grows with the token's position. When a query meets a key, the score in each pair depends only on the difference between their two angles. That difference is what tells the layer how far apart two tokens are, and it only means something if both sides turn by the same coordinate at the same rate.</p>
           <p>Here they don't. The video model turns 22 pairs of every key by frame time, 21 by row and 21 by column. The action expert turns all 64 pairs of every query by the action's position in the chunk, 0 to 31. Let's follow one example through the rest of this section: <b>action 5 of the chunk reads the patch at row 3, column 4</b> of the camera frame, and that frame sits at time 0. Rows, columns and actions all count from 0.</p>
@@ -705,12 +707,13 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
           <figcaption class="w-note">A schematic of one attention head, which has 64 pairs. The pair counts and the axis of each pair follow the LeRobot code and the paper's Appendix B.3. A key at time 0 is not turned in its time pairs, because its angle there is 0.</figcaption>
         </figure>
         <div class="prose">
-          <p>In the 22 time pairs things already work. The frame is at time 0, a turn by 0 is no turn, and the score sees a clean gap of 5 actions. The two sides do turn their time pairs at different rates, which would matter for a frame at any other time, but Faster-WAM's actions only read time 0.</p>
-          <p>The other 42 pairs subtract an action position from a row or a column. Take the first row pair. The key turns 1 radian per row and the query 0.042 radians per action, so the score sees 3 − 0.042 × 5 = 2.79. For action 6 the same patch gives 2.75, as if it had moved 0.04 rows. Nothing in the image moved. Other pairs drift at other rates, from 0.002 to about 15 rows or columns per action, so they don't even agree with each other. <span class="tag der">Derived</span> So each action in the chunk reads the image with its own skewed sense of where things are, and that skew comes from token order, not from the scene. The paper proves this as its Proposition 2.3.</p>
+          <p>In the 22 time pairs things already work. The frame is at time 0, a turn by 0 is no turn, and the score sees a clean gap of 5 actions.</p>
+          <p>The other 42 pairs subtract an action position from a row or a column. Take the first row pair. The key turns 1 radian per row and the query 0.042 radians per action, so the score sees 3 − 0.042 × 5 = 2.79. For action 6 the same patch gives 2.75, as if it had moved 0.04 rows. Nothing in the image moved. Other pairs drift at other rates, an apparent shift of 0.002 to about 15 rows or columns per action, so they don't even agree with each other. <span class="tag der">Derived</span> So each action in the chunk reads the image with its own skewed sense of where things are, and that skew comes from the position numbers, not from the scene. The paper proves this as its Proposition 2.3.</p>
           <p>Faster-WAM's fix puts the keys on the action expert's clock. After it builds the fused cache, it turns each fused key back by its own video angles, which removes the time, row and column turn. Then it turns the key forward by the action expert's angle for the frame's time. The frame is at time 0, so that second turn does nothing, and in practice the whole fix is the undo. The query keeps its turn for action 5. Now all 64 pairs see the same thing, that action 5 comes 5 positions after the frame, at the action expert's own rates. That's the same way two action tokens already compare with each other. The key's content can still carry what the video model worked out about where things are, because the video model keeps its 3D rotation inside its own 30 layers. Only the explicit turn on the keys handed to the action expert is gone.</p>
+          <p>The second turn matters for a frame at any other time. The two sides turn their time pairs at different rates, so without it the time pairs would be skewed too. Faster-WAM's actions only read the frame at time 0, so that case doesn't come up.</p>
           <p>In symbols, here's the fix, then the score between action <i>i</i> and the video token at position <i>p</i>, before and after:</p>
         </div>
-        <div class="eq"><span data-tex="\begin{aligned}\text{fix:}\quad &amp; k^{v\to a}(p)=R^{a}(0)\,R^{v}(p)^{\top}\,\widehat{k}(p)=\bar{k}(p)\\[4pt] \text{before:}\quad &amp; s(i,p)=\sum_{r=0}^{63}q_r^{\top}\,R\big(\omega_r\,p_{b(r)}-\nu_r\,i\big)\,\bar{k}_r(p)\\[4pt] \text{after:}\quad &amp; s(i,p)=\sum_{r=0}^{63}q_r^{\top}\,R\big(\nu_r\,(0-i)\big)\,\bar{k}_r(p)\end{aligned}" data-display data-plain="fix: k(p) = Rₐ(0) · Rᵥ(p)ᵀ · k̂(p) = k̄(p);  before: s(i,p) = Σᵣ qᵣᵀ R(ωᵣ·p_b(r) − νᵣ·i) k̄ᵣ(p);  after: s(i,p) = Σᵣ qᵣᵀ R(νᵣ·(0 − i)) k̄ᵣ(p)"></span></div>
+        <div class="eq"><span class="eq-wide" data-tex="\begin{aligned}\text{fix:}\quad &amp; k^{v\to a}(p)=R^{a}(0)\,R^{v}(p)^{\top}\,\widehat{k}(p)=\bar{k}(p)\\[4pt] \text{before:}\quad &amp; s(i,p)=\sum_{r=0}^{63}q_r^{\top}\,R\big(\omega_r\,p_{b(r)}-\nu_r\,i\big)\,\bar{k}_r(p)\\[4pt] \text{after:}\quad &amp; s(i,p)=\sum_{r=0}^{63}q_r^{\top}\,R\big(\nu_r\,(0-i)\big)\,\bar{k}_r(p)\end{aligned}" data-display data-plain="fix: k(p) = Rₐ(0) · Rᵥ(p)ᵀ · k̂(p) = k̄(p);  before: s(i,p) = Σᵣ qᵣᵀ R(ωᵣ·p_b(r) − νᵣ·i) k̄ᵣ(p);  after: s(i,p) = Σᵣ qᵣᵀ R(νᵣ·(0 − i)) k̄ᵣ(p)"></span><span class="eq-narrow" data-tex="\begin{aligned}&amp;\text{fix:}\\ &amp;k^{v\to a}(p)=R^{a}(0)\,R^{v}(p)^{\top}\,\widehat{k}(p)=\bar{k}(p)\\[8pt] &amp;\text{before:}\\ &amp;s(i,p)=\sum_{r=0}^{63}q_r^{\top}\,R\big(\omega_r\,p_{b(r)}-\nu_r\,i\big)\,\bar{k}_r(p)\\[8pt] &amp;\text{after:}\\ &amp;s(i,p)=\sum_{r=0}^{63}q_r^{\top}\,R\big(\nu_r\,(0-i)\big)\,\bar{k}_r(p)\end{aligned}" data-display data-plain="fix: k(p) = Rₐ(0) · Rᵥ(p)ᵀ · k̂(p) = k̄(p);  before: s(i,p) = Σᵣ qᵣᵀ R(ωᵣ·p_b(r) − νᵣ·i) k̄ᵣ(p);  after: s(i,p) = Σᵣ qᵣᵀ R(νᵣ·(0 − i)) k̄ᵣ(p)"></span></div>
         <div class="prose">
           <ul class="syms">
             <li><span data-tex="i" data-plain="i"></span> is the action's position in the chunk, 0 to 31. In the example, <span data-tex="i=5" data-plain="i = 5"></span>.</li>
@@ -790,7 +793,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
 
       <!-- 07 -->
       <section class="chapter" id="limits">
-        <p class="kicker">Read this before you quote a number</p>
+        <p class="kicker">Reference</p>
         <h2 class="ch"><span class="n">07</span>Limits and sources</h2>
         <div class="prose">
           <h3>Limits</h3>
@@ -799,7 +802,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
             <li>The paper timed a 24 GiB consumer GPU with parts of Fast-WAM measured separately; LeRobot timed an A100 end to end including tokenization and transfers. Do not compare the two sets of milliseconds directly.</li>
             <li>The LeRobot ratios moved between sessions (fp32 2.66× → 2.51×, bf16 5.10× → 5.34×). The intervals cover sampling within one session only.</li>
             <li>The pictures simplify. The action curves in the race are illustrative, and the race shades its fusion lines with a head-average profile read off the paper's Figure 4 by eye. The two before/after figures in sections 03 and 04 are schematics, not measured weights or attention scores. Token counts, layer counts, widths, the step schedule and all read counts match the model and code.</li>
-            <li>The RoPE example uses the rates in the LeRobot code (base 10,000, 64 action pairs, video pairs split 22/21/21). The drift range of 0.002 to about 15 rows or columns per step is derived from the paper's Eq. 9 with those rates.</li>
+            <li>The RoPE example uses the rates in the LeRobot code (base 10,000, 64 action pairs, video pairs split 22/21/21). The drift range of 0.002 to about 15 rows or columns per action is derived from the paper's Eq. 9 with those rates.</li>
             <li>“Read” here means one action-layer pass that attends to a cache. Each pass also runs projections and a feed-forward network; the saving comes from running 10 passes instead of 300, not from memory traffic alone.</li>
           </ul>
           <h3>Sources</h3>
@@ -1037,26 +1040,12 @@ function renderTex() {
 /* ===== Widget 1: the race, one action chunk on one clock ===== */
 /* phase means in ms per chunk; the LeRobot ones come from a 20-chunk diagnostic pass with CUDA events */
 const CLOCKS = {
-  paper: {
-    name: 'Paper, Table 7 (LIBERO, 24 GiB GPU, bf16)', tag: 'paper',
-    fast: { enc: 17.48 + 8.05, prefill: 20.38, fuse: 0, denoise: 150.12 },
-    faster: { enc: 17.48 + 8.09, prefill: 20.63, fuse: 0, denoise: 5.84 },
-    kernels: null,
-    note: 'Paper totals: 196.0 ms and 52.0 ms, reported as 3.8×. The paper timed Fast-WAM\'s parts one at a time, because it does not fit on the 24 GiB GPU as one pipeline.',
-  },
   bf16: {
     name: 'LeRobot PR, A100, bf16, random weights', tag: 'meas',
     fast: { enc: 12.901 + 42.969 + 2.751, prefill: 89.667 + 0.019, fuse: 0, denoise: 797.305 },
     faster: { enc: 12.615 + 41.884 + 2.707, prefill: 87.597, fuse: 0.964, denoise: 23.725 },
     kernels: { fast: 29020, faster: 770 },
     note: 'These are phase means from a 20-chunk diagnostic run. The end-to-end timer (100 paired chunks) gives <b>938.0 → 175.6 ms, 5.34×</b>.',
-  },
-  fp32: {
-    name: 'LeRobot PR, A100, fp32, random weights', tag: 'meas',
-    fast: { enc: 89.903 + 75.651 + 2.825, prefill: 125.771 + 0.004, fuse: 0, denoise: 493.005 },
-    faster: { enc: 89.935 + 75.750 + 2.932, prefill: 129.568, fuse: 0.842, denoise: 20.360 },
-    kernels: { fast: 21210, faster: 630 },
-    note: 'These are phase means from a 20-chunk diagnostic run. The end-to-end timer (100 paired chunks) gives <b>802.2 → 319.5 ms, 2.51×</b>.',
   },
 };
 /* seconds of animation per phase in step-by-step pace; not to scale */
@@ -1294,7 +1283,7 @@ function drawChunkPlot(ctx, R, st, narrow) {
   const ph = y + h - pad - top;
   const sx = i => x + pad + (w - 2 * pad) * i / 31;
   const sy = v => top + ph / 2 - clamp(v, -1.7, 1.7) * (ph / 2) / 1.7;
-  text(ctx, narrow ? 'action chunk' : w > 230 ? 'action chunk, 3 of 7 joints' : 'action chunk', x + pad, y + (narrow ? 9 : 11), { size: narrow ? 9 : 9.5, font: 'mono', color: C.ink3 });
+  text(ctx, narrow ? 'action chunk' : w > 230 ? 'action chunk, 3 of 7 values' : 'action chunk', x + pad, y + (narrow ? 9 : 11), { size: narrow ? 9 : 9.5, font: 'mono', color: C.ink3 });
   // the clean target, dashed
   ctx.beginPath();
   for (let i = 0; i < 32; i++) { const X = sx(i), Y = sy(CHUNK.X0[0][i]); if (i) ctx.lineTo(X, Y); else ctx.moveTo(X, Y); }
@@ -1465,7 +1454,7 @@ function drawTowers(ctx, R, tl, st, narrow) {
   else text(ctx, 'text + state → video model only', x + (narrow ? 4 : 10), fy, { size: fs - 1.5, font: 'mono', color: C.ctx });
 }
 
-function drawRacePanel(ctx, R, tl, st) {
+function drawRacePanel(ctx, R, tl, st, mini) {
   const { x, y, w, h } = R;
   const fast = tl.variant === 'fast';
   const narrow = w < 470;
@@ -1473,7 +1462,9 @@ function drawRacePanel(ctx, R, tl, st) {
   text(ctx, fast ? (narrow ? '30 action layers, 1 cache each' : '30 action layers, each reads one video layer') : (narrow ? '1 action layer, 1 fused cache' : '1 action layer reads one fused cache'), x, y + 28, { size: narrow ? 9.5 : 10.5, font: 'mono', color: C.ink3 });
   drawPill(ctx, x + w, y + 11, racePhaseLabel(tl, st), phaseColor(st), narrow);
   const top = y + 44;
-  if (narrow) {
+  if (mini) {
+    drawChunkCard(ctx, { x, y: top, w, h: Math.min(116, y + h - top) }, tl, st, true);
+  } else if (narrow) {
     const ch = 116;
     drawChunkCard(ctx, { x, y: top, w, h: ch }, tl, st, true);
     drawTowers(ctx, { x, y: top + ch + 6, w, h: y + h - top - ch - 6 }, tl, st, true);
@@ -1495,9 +1486,10 @@ function initRace() {
   };
   rebuild();
   const side = w => w >= 820;
+  const mini = w => w < 600; // phones: the clock and the chunks, no layer towers
   const stage = new Stage(host, {
     label: 'Animated race on one clock. Both models encode the inputs and run the 30-layer video model once. Then Fast-WAM denoises the action chunk with 30 action layers per step, 300 cache reads, while Faster-WAM fuses the 30 caches once and uses 1 action layer per step, 10 cache reads.',
-    height: w => side(w) ? clamp(w * 0.6, 540, 660) : 98 + 2 * 450 + 24,
+    height: w => side(w) ? clamp(w * 0.6, 540, 660) : mini(w) ? 98 + 22 + 2 * 172 : 98 + 2 * 450 + 24,
     draw: (ctx, w, h) => {
       if (!C.ink) readColors();
       const sts = { fast: raceState(W.tls.fast, W.t), faster: raceState(W.tls.faster, W.t) };
@@ -1511,9 +1503,9 @@ function initRace() {
         drawRacePanel(ctx, { x: pad + pw + 28, y: top, w: pw, h: h - top - 12 }, W.tls.faster, sts.faster);
       } else {
         const ph = (h - top - 22) / 2;
-        drawRacePanel(ctx, { x: pad, y: top, w: w - 2 * pad, h: ph - 10 }, W.tls.fast, sts.fast);
+        drawRacePanel(ctx, { x: pad, y: top, w: w - 2 * pad, h: ph - 10 }, W.tls.fast, sts.fast, mini(w));
         line(ctx, pad, top + ph + 4, w - pad, top + ph + 4, C.line, 1);
-        drawRacePanel(ctx, { x: pad, y: top + ph + 18, w: w - 2 * pad, h: ph - 10 }, W.tls.faster, sts.faster);
+        drawRacePanel(ctx, { x: pad, y: top + ph + 18, w: w - 2 * pad, h: ph - 10 }, W.tls.faster, sts.faster, mini(w));
       }
     },
   });
@@ -1548,13 +1540,7 @@ function initRace() {
     W.t = pv === undefined ? 0 : pv; setPlaying(false); redraw();
   });
   scrub.addEventListener('input', () => { W.t = +scrub.value / 1000 * W.end; setPlaying(false); redraw(); });
-  const speed = $('[data-act=speed]', root);
-  speed.addEventListener('input', () => {
-    W.speed = Math.pow(2, +speed.value);
-    setText(out('speed'), (W.speed < 1 ? W.speed.toFixed(2) : W.speed.toFixed(W.speed % 1 ? 1 : 0)) + '×');
-  });
   seg($('[data-seg=pace]', root), v => { W.pace = v; rebuild(); W.t = 0; redraw(); setPlaying(true); });
-  $('[data-act=clock]', root).addEventListener('change', e => { W.clock = e.target.value; rebuild(); W.t = 0; redraw(); setPlaying(true); });
 
   const cap = $('.w-caption', root);
   const live = $('[data-out=live]', root);
@@ -1589,7 +1575,6 @@ function initRace() {
     setHTML(out('text'), pair(a.passes, 0));
     const kc = CLOCKS[W.clock].kernels;
     setHTML(out('kernels'), kc ? pair(fmt(Math.round(kc.fast * a.passes / 300)), fmt(Math.round(kc.faster * b.passes / 10))) : '<small>not measured</small>');
-    setHTML(out('clocknote'), CLOCKS[W.clock].note);
     scrub.value = String(Math.round(W.t / W.end * 1000));
     let lead = '';
     if (b.done && !a.done) lead = `<b>Faster-WAM is done</b> while Fast-WAM is ${a.ph === 'step' ? `at step ${a.k + 1} of 10` : 'still before its first denoising step'}. `;
@@ -1607,7 +1592,14 @@ function initRace() {
     update(); stage.draw();
   };
   Loop.add(W);
-  watchVisible(root, W, () => { if (!REDUCED) setPlaying(true); });
+  watchVisible(root, W);
+  // start once the race reaches the middle of the screen, so the reader sees it from the beginning
+  const starter = new IntersectionObserver(es => {
+    if (!es.some(e => e.isIntersecting)) return;
+    starter.disconnect();
+    if (!REDUCED && W.t === 0 && !W.playing) setPlaying(true);
+  }, { rootMargin: '0px 0px -50% 0px' });
+  starter.observe(host);
   update();
   return { redraw: () => stage.draw() };
 }
@@ -1686,7 +1678,7 @@ function initTokens() {
       G = layout(w);
       const { iw, ih, ix, iy, sx, sw, s1, s1h, s2, s2h, s3, s3h } = G;
       const pw = iw / 14, ph = ih / 7;
-      text(ctx, 'camera: agent view + wrist view, 224 × 448 pixels', ix, iy - 14, { size: 11, font: 'mono', color: C.ink3 });
+      text(ctx, w < 420 ? 'agent + wrist view, 224 × 448 px' : 'camera: agent view + wrist view, 224 × 448 pixels', ix, iy - 14, { size: 11, font: 'mono', color: C.ink3 });
       // image, then the tiles that are on their way to the token strip
       ctx.globalAlpha = 1 - 0.75 * ease(clamp(W.P * 1.3, 0, 1));
       ctx.drawImage(scene, ix, iy, iw, ih);
