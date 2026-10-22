@@ -22,6 +22,28 @@ Watch out for [arXiv 2608.04404](https://arxiv.org/abs/2608.04404): a different 
 <figcaption>Interactive explainer. Use the play and step buttons in each widget. <a href="/assets/robotics/faster-wam-in-lerobot/explainer.html">Open it on its own page.</a></figcaption>
 </figure>
 
+## Follow one observation
+
+“Pick up the black bowl between the plate and the ramekin and place it on the plate.” Start with that [LIBERO demonstration](https://huggingface.co/datasets/yuanty/LIBERO-fastwam/tree/ee018b997c430bb12b5bf3c892d744798c5a2f91). The input is two camera views, the instruction and the robot state. The label is 32 recorded actions, each with seven control values. The 30 video layers are successive transformations of image tokens, not 30 frames; their depth comes from the pretrained Wan backbone.
+
+The two experts have different jobs. The video model starts from video pretraining; the action expert maps its features to robot controls. During joint training it learns to denoise future video latents, while the action expert learns to denoise demonstrated actions. Both use a velocity-prediction loss, and action loss also trains the video backbone through attention. At inference, only the observed-frame cache is needed. The example below follows those connections through an actual LeRobot run. ([Paper, training details](https://arxiv.org/html/2608.02365v2#A3))
+
+<figure class="wide-explainer" style="width:max(100%, min(1120px, 100vw - 48px)); margin:32px 0 36px calc((100% - max(100%, min(1120px, 100vw - 48px))) / 2);">
+<iframe id="wam-worked-example" src="/assets/robotics/faster-wam-in-lerobot/example.html" title="Worked LIBERO example: input, layers, cached attention, training loss and inference" loading="lazy" style="display:block;width:100%;height:1200px;border:1px solid var(--line);border-radius:12px;"></iframe>
+<figcaption>Images and labels: LIBERO simulation data, CC BY 4.0. Attention, losses and inference: a dry run with random weights and reduced widths, including both encoders. These outputs explain the mechanics; they don't demonstrate a trained policy. This is separate from the A100 timing setup below. <a href="/assets/robotics/faster-wam-in-lerobot/example.html">Open the example on its own page.</a></figcaption>
+</figure>
+
+<script>
+(() => {
+  const frame = document.getElementById('wam-worked-example');
+  window.addEventListener('message', event => {
+    if (event.origin !== location.origin || event.source !== frame.contentWindow || event.data?.kind !== 'wam-embed-height') return;
+    const height = Number(event.data.height);
+    if (Number.isFinite(height) && height > 200 && height < 4000) frame.style.height = `${Math.ceil(height) + 4}px`;
+  });
+})();
+</script>
+
 ## How I added it to LeRobot
 
 I opened [issue #5048](https://github.com/huggingface/lerobot/issues/5048) and [PR #5049](https://github.com/huggingface/lerobot/pull/5049), which is ready for review and not merged. It adds four opt-in flags to `FastWAMConfig`:
