@@ -249,6 +249,45 @@ The route-cell count compares learned row maxima with value iteration, counting 
 <figure class="tri-clip"><video class="tri-video" data-clip="cliff-table-202" controls muted loop playsinline preload="none" src="/assets/robotics/rl/clips/cliff-table-202-desktop.mp4"></video><figcaption><b>The finished table, walked with no random moves</b>Arrows: the largest number in each cell. Same recorded run as the widget.</figcaption></figure>
 </div>
 
+<h3 id="sec-backup-rounds">A reward at the end, moving backward</h3>
+
+The cliff grid charges −1 on every move, so even an early update has something to read. A reward that only comes at the end is harder: until it reaches a state, that state's estimate stays at zero and says nothing. To watch it travel, take a simpler task than the grid. It's a corridor of 16 states, S0 to S15, with one action in each. The step out of S15 pays +1, every other step pays 0, and the discount is 0.95. So the right value of state $S_i$ is $0.95^{15-i}$: 1 for S15, 0.95 for S14, and about 0.463 for S0. Every estimate starts at 0.
+
+The one-step target is the Q-learning target from above, with only one action to take the maximum over: $r+0.95\,Q(\text{next})$. The eight-step target adds up the next eight rewards before it reads the table, then adds $0.95^8$ times the estimate eight states ahead. Near the end there are fewer than eight steps left, and the target is just the rewards that remain.
+
+<div class="rb-widget" id="rb-rounds">
+<p class="rb-title"><b>Rounds of updates, all values starting at 0</b></p>
+<p class="rb-assume"><b>Assumptions in this visual.</b> Each round updates every state at once from a snapshot of the previous round's table. The step size is α = 1, so each update copies its target. The only reward is the +1 at the end. Together these make the round counts below exact for this corridor. Online learning updates states in the order the agent visits them, and replay in the order it samples them, so real counts differ.</p>
+<div class="rb-ctrl"><label for="rb-range">Completed rounds: <output id="rb-round" for="rb-range">0</output> of 16</label><div class="rb-row"><button type="button" data-rb="prev" aria-label="Previous round">−</button><input type="range" id="rb-range" min="0" max="16" step="1" value="0"><button type="button" data-rb="next" aria-label="Next round">+</button><button type="button" data-rb="reset">Reset</button></div></div>
+<div class="rb-lane"><p class="rb-lane-h">One-step target <span>r + 0.95 × Q(next)</span></p><div class="rb-cells" id="rb-one" role="list" aria-label="One-step estimates, S0 to S15"></div></div>
+<div class="rb-lane"><p class="rb-lane-h">Eight-step target <span>8 rewards + 0.95⁸ × Q(8 ahead)</span></p><div class="rb-cells" id="rb-eight" role="list" aria-label="Eight-step estimates, S0 to S15"></div></div>
+<p id="rb-status" aria-live="polite"></p>
+</div>
+
+With one-step targets, each round moves the reward back by one state, because a state can only read the next one, and the next one only changed last round. S15 gets its value in round 1 and S0 in round 16. With eight-step targets, round 1 already fills in S8 to S15, since their eight steps reach the end without reading the table. In round 2, S0 to S7 read those values eight states ahead, and every state is done.
+
+Those counts come from the snapshot schedule. [Part 2's corridor](/robotics/rl-2-bootstrapping/#sec-corridor) uses forward online updates instead and gets the same one-state-per-walk pattern for one-step targets. It also shows that replaying the same transitions backward would carry the reward the whole way in one pass. [Sutton and Barto's Figure 7.4](http://incompleteideas.net/book/RLbook2020.pdf) makes the same point after a single episode: the one-step method strengthens only the last action that led to the reward, and the n-step method strengthens the last n.
+
+Moving the reward back faster isn't free. Here's the target for S0 from one attempt, starting from the finished table, where every estimate is right:
+
+<div class="rb-widget" id="rb-targets">
+<p class="rb-title"><b>One target for S0, two kinds of error</b></p>
+<p class="rb-assume">The right value of S0 is 0.95¹⁵ ≈ 0.463. Tick a box to add an error to this one target.</p>
+<div class="rb-checks"><label><input type="checkbox" id="rb-bias"> Every estimate in the table is 0.4 too high</label><label><input type="checkbox" id="rb-shock"> This attempt hit a one-off −2 at step 4, which most attempts don't</label></div>
+<div class="rb-out"><div><span>One-step target</span><output id="rb-t1">0.463</output><small id="rb-t1d">no error</small></div><div><span>Eight-step target</span><output id="rb-t8">0.463</output><small id="rb-t8d">no error</small></div></div>
+</div>
+
+A wrong estimate enters the one-step target almost whole: $0.95\times0.4=0.38$. The eight-step target reads the table only after eight real rewards, so the same error is scaled down to $0.95^8\times0.4\approx0.27$. That's the **bias** from an inaccurate continuation, and a longer target has less of it. In exchange, the eight-step target contains whatever actually happened in those eight steps. The one-off −2 moves it by $0.95^3\times2\approx1.71$ in this attempt, and the one-step target doesn't see it at all, because the estimate it reads is an average over many attempts.
+
+That doesn't mean a bad later step erases the credit for a good early one. Averaged over many attempts, later outcomes are part of the right answer for the policy that produced them. What they add is **variance**: each single target swings more. So a longer target trades error from the estimate for noise from later outcomes, and which one matters more depends on how good the estimates are and how random the later steps are. [Part 2's horizon section](/robotics/rl-2-bootstrapping/#sec-horizon) explains why that isn't a fixed rule. One more catch for Q-learning: it wants the value of the greedy policy, so if the later steps were exploratory moves, an eight-step target measures the exploring policy instead. Off-policy n-step methods correct for that ([Sutton and Barto, Section 7.3](http://incompleteideas.net/book/RLbook2020.pdf)).
+
+<details>
+<summary>Where these numbers come from</summary>
+
+Teaching calculation, computed in the page. The one-step update in round $k$ is $Q_k(S_i)=r_{i+1}+0.95\,Q_{k-1}(S_{i+1})$, and the eight-step update is $Q_k(S_i)=\sum_{j=0}^{h-1}0.95^{j}r_{i+j+1}+0.95^{8}\,Q_{k-1}(S_{i+8})$, with $h=\min(8,16-i)$ and the last term dropped when $i+8\ge16$. That is the n-step return of [Sutton and Barto, Section 7.1, Eq. 7.1](http://incompleteideas.net/book/RLbook2020.pdf), applied to every state from a copy of the previous table. The only nonzero reward is $r_{16}=1$. The second box uses the finished values $0.95^{15-i}$, adds 0.4 to every estimate for the first tick box, and adds $0.95^{3}\times(-2)$ to the eight-step sum for the second.
+
+</details>
+
 <div class="rc-mark" id="sec-limits" data-panel="limits" data-view="limits" data-title="Limits"></div>
 
 ## When it converges
@@ -390,10 +429,44 @@ Re-run of settings the game already uses, with its own `RLA.run` at commit [681c
 
 Here $n$ counts pulls of one machine, so $1/n$ is its running-average step size. These are measured finite-run results, not a convergence claim. Ten machines with true averages drawn from a standard normal distribution, payout noise with standard deviation 1, 1,000 pulls, running averages (step size $1/n$), 200 runs. Greedy starts all numbers at zero and breaks ties at random. Share of the last 200 pulls on the best machine, averaged over runs: greedy 35.5%, with random pulls 77.5%. Runs with less than half of the last 200 pulls on the best machine: 64.5% for greedy, 15.0% with random pulls. Even with perfect greedy choices, the expected best-machine share is 91%: $0.9 + 0.1/10$. A finite run can be higher or lower.
 
+
 The clip pair uses one run where greedy never pulled the best machine in its last 200 pulls and the other robot spent 92.5% there. I chose it because it shows the gap clearly. It is an example, not a typical run. Both robots share one set of machines.
 
 </details>
 
+
+</details>
+
+<h3 id="sec-explore-more">Two other ways to explore</h3>
+
+The slot-machine drawer above sets up the simplest case: ten machines, each paying a hidden average plus noise, and a one-row table where $Q(a)$ is the running average of machine $a$'s payouts. Picking a random machine one pull in ten, as ε-greedy does, put 77.5% of the last 200 pulls on the best machine, against 35.5% for pure greedy. But random pulls never stop. Even once you know the best machine, one pull in ten goes somewhere else. Two other rules aim the exploration at what you haven't tried.
+
+**Start optimistic.** Set every estimate to +5, far above any machine's likely average, and act greedily. Each pull disappoints, so the pulled machine's estimate drops and the learner moves to another one still at +5, until every machine has been tried. [Sutton and Barto, §2.6](http://incompleteideas.net/book/RLbook2020.pdf), show this with a constant step size of 0.1. With a running average, the first payout replaces the start value completely, since $1/n(a)=1$ on the first pull. So optimism buys exactly one pull of each machine. The book also calls it far from a generally useful approach: the push to explore is temporary, so it can't help when the machines change over time.
+
+**Add a bonus for what you haven't tried.** The **upper confidence bound (UCB)** rule picks
+
+$$A_t=\arg\max_a\Big[Q_t(a)+c\sqrt{\frac{\ln t}{N_t(a)}}\,\Big],$$
+
+where $t$ counts all pulls so far, $N_t(a)$ is the same count as $n(a)$, and $c>0$ sets the size of the bonus ([§2.7, Eq. 2.10](http://incompleteideas.net/book/RLbook2020.pdf)). A machine that has never been pulled counts as the largest, so each one gets tried first. The bonus shrinks as a machine gets pulled and grows slowly while it's left alone. The book's limits: UCB is harder than random pulls to extend beyond bandits, to machines that change, and to large state spaces, and it's usually not practical with function approximation.
+
+<div class="ct">
+
+| Rule, same 200 runs, no random pulls | Share of the last 200 pulls on the best machine |
+| --- | ---: |
+| Greedy, start 0, running average | 35.5% |
+| Greedy, start +5, running average | 63.5% |
+| Greedy, start 0, step 0.1 | 51.4% |
+| Greedy, start +5, step 0.1 | 83.5% |
+| UCB, $c=2$, running average | 82.0% |
+
+</div>
+
+The rules interact. In the game's log, UCB with a constant step of 0.1 dropped to 67.0%. The log's explanation, backed by a follow-up probe: a constant step keeps only about the last 20 payouts, so its error stops shrinking, while the bonus keeps shrinking as if the estimate were still getting more precise. And the constant step alone lifts plain greedy from 35.5% to 51.4%, a gain the log doesn't explain.
+
+<details>
+<summary>Where these numbers come from</summary>
+
+The rows come from the game's batch 24 in its [experiment log](https://github.com/Hadrien-Cornier/breaking-bellman/blob/681cae3820f05f8604d212c0ab048ebf0e017e73/EXPERIMENTS.md), on the same 200 seeds and the same world as the drawer's greedy and random-pull runs, with standard errors of 1.6 to 3.5 points over seeds. The 67.0% is UCB with step 0.1 and start 0. Simulation, ten machines, 1,000 pulls per run.
 
 </details>
 
@@ -618,6 +691,7 @@ The clips illustrate particular runs; their appearance supplies no additional st
 <script src="/assets/robotics/rl/qtable-data.js" defer></script>
 <script src="/assets/robotics/rl/qtable.js" defer></script>
 <script src="/assets/robotics/rl/rl-videos.js" defer></script>
+<script src="/assets/robotics/rl/reward-backup.js" defer></script>
 <script src="/assets/robotics/rl/canvas.js" defer></script>
 
 <script src="/assets/robotics/rl/family-tree.js" defer></script>

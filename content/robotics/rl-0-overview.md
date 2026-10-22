@@ -78,6 +78,38 @@ Now consider what happens when we combine the three ideas. With bootstrapping, t
 
 We call this combination the **deadly triad**. It can make learning unstable, although it does not cause every learner using these three ideas to fail. In [Part 5](/robotics/rl-5-the-deadly-triad/), we build the feedback loop using two states and one weight, then look at ways to interrupt it.
 
+<h2 id="sec-failures">How learning goes wrong</h2>
+
+Each of these ideas fixes one problem and opens the door to others. Here are the failures the series covers, grouped by what goes wrong, with the section that explains each one and the methods that address it.
+
+**Too little signal.** The learner can't improve because nothing in its experience points to a better choice.
+
+- A lucky first result keeps a greedy learner on a worse choice. Random exploration: [Part 1's bandit](/robotics/rl-1-q-learning/#sec-bandit). Optimistic starting values and upper confidence bounds: [Part 1, "Two other ways to explore"](/robotics/rl-1-q-learning/#sec-explore-more).
+- A late reward takes many updates to reach early choices. Multi-step returns, which trade error from the estimate for noise from later outcomes: [Part 1's corridor](/robotics/rl-1-q-learning/#sec-backup-rounds) and [Part 2](/robotics/rl-2-bootstrapping/#sec-nstep).
+- A group of attempts that all score the same gives every attempt zero credit. Filtering those groups, at the cost of extra attempts: [Part 6](/robotics/rl-6-credit-and-careful-updates/#sec-groups).
+
+**Credit in the wrong place.** The learner gets a signal, but it rewards or blames the wrong action.
+
+- An action shares blame for rewards that came before it. Reward-to-go: [Part 6](/robotics/rl-6-credit-and-careful-updates/#sec-past-credit).
+- Every action in a decent attempt gets pushed up. A baseline, and advantages estimated with GAE: [Part 6](/robotics/rl-6-credit-and-careful-updates/#sec-baseline) and [Part 2](/robotics/rl-2-bootstrapping/#sec-gae).
+
+**Updates that overshoot.** One change goes further than the evidence supports.
+
+- Reusing one batch for many steps moves the policy too far. PPO's clipped objective, which is not a hard limit: [Part 6](/robotics/rl-6-credit-and-careful-updates/#sec-ppo).
+- One update to shared weights changes predictions that were already right. [Part 3](/robotics/rl-3-function-approximation/).
+
+**Value estimates that answer the wrong question.** The target looks reasonable but measures something other than what we want.
+
+- A time limit is treated as the end of the task, or the learner can't see how much time is left. Time-aware inputs or partial-episode bootstrapping, depending on what the limit means: [Part 2](/robotics/rl-2-bootstrapping/#sec-time-limits).
+- A target asks about actions the data never tried, so nothing corrects the answer. Staying close to the data with BCQ, TD3+BC, CQL or IQL: [Part 7](/robotics/rl-7-learning-from-fixed-data/#sec-extrapolation).
+- A prediction feeds its own error through bootstrapping, shared weights and off-policy data. [Part 5](/robotics/rl-5-the-deadly-triad/).
+
+**Copying the wrong thing.** A policy learned from demonstrations does something the demonstrations shouldn't have taught it.
+
+- The log includes bad attempts, so copying it copies the mistakes. Reward-aware reuse with AWR, IQL, advantage conditioning or TD3+BC, when the rewards and values are good enough: [Part 7](/robotics/rl-7-learning-from-fixed-data/#sec-mixed).
+- The log itself is wrong, with misaligned timestamps or false success labels. Fixing the data, not the learner: [Part 7](/robotics/rl-7-learning-from-fixed-data/#sec-corruption).
+- Two good ways to do the task get averaged into one bad one. Policies that can represent both, such as flow policies: [Part 8](/robotics/rl-8-mode-averaging/). Representing both routes still doesn't guarantee that a sample is safe or that every route is covered: [Part 8's limits](/robotics/rl-8-mode-averaging/#sec-flow-limits).
+
 ## The route through the series
 
 1. [The method tree and a Q table](/robotics/rl-1-q-learning/): connect methods to their problems, then watch one table learn.
@@ -85,6 +117,9 @@ We call this combination the **deadly triad**. It can make learning unstable, al
 3. [Function approximation](/robotics/rl-3-function-approximation/): see what changes when predictions share weights.
 4. [On-policy and off-policy learning](/robotics/rl-4-on-policy-and-off-policy/): separate the policy collecting data from the one being evaluated.
 5. [The deadly triad](/robotics/rl-5-the-deadly-triad/): bring the three mechanisms together and examine stability.
+6. [Policy gradients](/robotics/rl-6-credit-and-careful-updates/): give each action fair credit and keep each update small.
+7. [Learning from a fixed dataset](/robotics/rl-7-learning-from-fixed-data/): actions the data never tried, and demonstrations that include mistakes.
+8. [Mode averaging](/robotics/rl-8-mode-averaging/): two good answers, one bad average, and what flow policies change.
 
 We start with these questions. Next, we will look at the tools people developed to answer them.
 

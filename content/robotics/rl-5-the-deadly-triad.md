@@ -324,6 +324,8 @@ Taking a maximum and averaging cannot amplify the largest entrywise difference; 
 
 Across the series, we've used values to connect late rewards to earlier choices. The triad matters because sharing that credit can also share an error, which then becomes the next target. [Return to the method tree](/robotics/rl-1-q-learning/#sec-tree), or [the opening problems](/robotics/rl-0-overview/).
 
+The next three parts look at failures outside the triad: [policy-gradient credit and update size](/robotics/rl-6-credit-and-careful-updates/), [learning from a fixed dataset](/robotics/rl-7-learning-from-fixed-data/), and [mode averaging](/robotics/rl-8-mode-averaging/). The [failure map](/robotics/rl-0-overview/#sec-failures) groups them all.
+
 </div>
 </div>
 <script src="/assets/robotics/rl/canvas.js" defer></script>

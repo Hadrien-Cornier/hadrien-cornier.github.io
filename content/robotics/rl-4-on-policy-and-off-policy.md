@@ -91,6 +91,8 @@ For a visited state $s$ and candidate action $a$, that requirement is $\pi(a\mid
 
 **Designed for:** off-policy methods let the policy being evaluated differ from the data collector, including a past policy or another controller. **Cost:** that freedom makes coverage and sampling distribution part of the learning problem. Age alone tells you neither whether data are off-policy nor whether they are useful. [§5.5](http://incompleteideas.net/book/RLbook2020.pdf).
 
+When the dataset is fixed and can't grow, a missing action becomes a target nothing corrects, and a dataset full of mistakes becomes something to avoid copying. [Part 7](/robotics/rl-7-learning-from-fixed-data/) takes both problems on a robot log.
+
 <div class="rc-mark" id="sec-action-correction" data-panel="weighting" data-view="weighting" data-title="Correcting action probabilities"></div>
 
 ## Correcting action probabilities
@@ -149,7 +151,7 @@ Here `terminal` means the episode ended, so there is no remaining value to boots
 
 ### From action credit to a policy update
 
-How do we turn those values into a better action rule? [Generalized Advantage Estimation (GAE)](/robotics/rl-2-bootstrapping/#sec-gae) estimates whether an action did better or worse than the policy's state-value baseline, using a mixture of return lengths. **Proximal Policy Optimization (PPO)** can use that credit to train the policy. Its clipped objective limits the incentive to change an action's probability too far relative to the policy that collected the rollout. Clipping does not impose a hard bound on the policy step. GAE supplies action credit; PPO clipping shapes the update incentive. [Spinning Up's PPO explanation](https://spinningup.openai.com/en/latest/algorithms/ppo.html).
+How do we turn those values into a better action rule? [Generalized Advantage Estimation (GAE)](/robotics/rl-2-bootstrapping/#sec-gae) estimates whether an action did better or worse than the policy's state-value baseline, using a mixture of return lengths. **Proximal Policy Optimization (PPO)** can use that credit to train the policy. Its clipped objective limits the incentive to change an action's probability too far relative to the policy that collected the rollout. Clipping does not impose a hard bound on the policy step. GAE supplies action credit; PPO clipping shapes the update incentive. [Spinning Up's PPO explanation](https://spinningup.openai.com/en/latest/algorithms/ppo.html). [Part 6](/robotics/rl-6-credit-and-careful-updates/#sec-ppo) works through the clip with numbers.
 
 [Part 5: the deadly triad](/robotics/rl-5-the-deadly-triad/) follows that feedback all the way to a growing number.
 

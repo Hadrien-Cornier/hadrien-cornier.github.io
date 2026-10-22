@@ -1,5 +1,38 @@
 [
   {
+    "title": "Policy gradients: fair credit and careful steps",
+    "description": "Four ways a policy-gradient update can go wrong on a robot task: blaming actions for the past, rewarding every attempt, overshooting on reused data, and groups that teach nothing. Reward-to-go, baselines, PPO clipping and group advantages, with their limits.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning",
+      "robotics"
+    ],
+    "date": "2026-10-21",
+    "url": "/robotics/rl-6-credit-and-careful-updates/"
+  },
+  {
+    "title": "Learning from a fixed dataset: missing actions and bad demonstrations",
+    "description": "Two ways a robot dataset can mislead a learner: questions about actions nobody tried, and demonstrations that include mistakes. What BCQ, CQL, IQL, AWR, TD3+BC and advantage conditioning need to help.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning",
+      "robotics"
+    ],
+    "date": "2026-10-21",
+    "url": "/robotics/rl-7-learning-from-fixed-data/"
+  },
+  {
+    "title": "Mode averaging: two good routes, one bad average",
+    "description": "Why copying demonstrations that go left and right around a box can send a robot into the box, and what flow policies and action chunks change.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning",
+      "robotics"
+    ],
+    "date": "2026-10-21",
+    "url": "/robotics/rl-8-mode-averaging/"
+  },
+  {
     "title": "Reinforcement learning: the problems behind the methods",
     "description": "From playing Breaking Bellman to the problems behind reinforcement learning: delayed credit, exploration, scale and learning from guesses.",
     "tags": [
