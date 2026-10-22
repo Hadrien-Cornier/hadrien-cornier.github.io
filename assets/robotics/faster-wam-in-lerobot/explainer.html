@@ -492,7 +492,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
 
       <!-- 02 -->
       <section class="chapter" id="tokens">
-        <p class="kicker">Step 1 · inputs</p>
+        <p class="kicker">Inputs</p>
         <h2 class="ch"><span class="n">02</span>What goes in: tokens</h2>
         <div class="prose">
           <p>A transformer works on <b>tokens</b>: one vector of numbers per piece of input. Fast-WAM has four kinds.</p>
@@ -626,25 +626,25 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
         </figure>
         <div class="prose">
           <p>That's 24 × 30 = <b>720 learned numbers</b> for the whole fusion. They start at zero, so training starts from a plain average with every β = 1/30.</p>
-          <p>What does training learn? In the paper's Figure 4 (LIBERO), every learned weight stays between 0.030 and 0.037, close to 1/30 ≈ 0.033 (read off the figure by eye). The middle of the stack, about layers 12 to 19, gets a little more, and the pattern changes from head to head. So the fused cache is close to an average of the whole video stack. It still beats reading only the last video layer: in the paper's step-by-step ablation (Figure 3), fusion goes from 97.7% to 98.0% on LIBERO and from 60.3% to 68.7% on LIBERO-Plus, where the same scenes are perturbed. <span class="tag paper">Paper</span></p>
+          <p>What does training learn? In the paper's Figure 4 (LIBERO), every learned weight stays between 0.030 and 0.037, close to 1/30 ≈ 0.033 (read off the figure by eye). The middle of the stack, about layers 12 to 19, gets a little more. The authors read this as non-uniform and head-specific, with different heads leaning on different depths. In absolute terms, though, every weight is within about 10% of 1/30, so the fused cache stays close to a plain average of the whole video stack. It still beats reading only the last video layer: in the paper's step-by-step ablation (Figure 3), fusion goes from 97.7% to 98.0% on LIBERO and from 60.3% to 68.7% on LIBERO-Plus, where the same scenes are perturbed. <span class="tag paper">Paper</span></p>
           <p>Fusion also makes the depth a free choice. Any number of action layers can read all 30 video layers now, so the action expert doesn't have to be 30 deep. The paper only tests one layer, and it says that doesn't make one layer the best depth.</p>
         </div>
       </section>
 
       <!-- 04 -->
       <section class="chapter" id="conditioning">
-        <p class="kicker">Two smaller changes</p>
-        <h2 class="ch"><span class="n">04</span>Changes that travel with fusion</h2>
+        <p class="kicker">They travel with fusion</p>
+        <h2 class="ch"><span class="n">04</span>Two side changes</h2>
         <div class="prose">
           <h3>World-model-only conditioning</h3>
           <p>In Fast-WAM, every action layer also cross-attends to the 128 <span class="c-ctx">text tokens</span> and the robot-state token, at every step: another 300 reads per chunk. Faster-WAM deletes that cross-attention. The instruction and robot state still reach the actions, but only through the video transformer, which reads them in every layer and writes what it learned into its cache. The paper's argument is that this keeps the small action expert from leaning on the text and state directly and helps the policy generalise.</p>
           <h3>Retracted 1D RoPE: put the keys on the action's clock</h3>
           <p>Attention also needs to know where tokens are. Both experts use rotary position encoding (RoPE): each query and key is cut into 64 pairs of numbers, and each pair is turned by an angle that grows with the token's position. When a query meets a key, the score in each pair depends only on the difference between their two angles. That difference is what tells the layer how far apart two tokens are, and it only means something if both sides turn by the same coordinate at the same rate.</p>
-          <p>Here they don't. The video model turns 22 pairs of every key by frame time, 21 by row and 21 by column. The action expert turns all 64 pairs of every query by the action step. Let's follow one example through the rest of this section: <b>action step 5 reads the patch at row 3, column 4</b> of the camera frame, and that frame sits at time 0.</p>
+          <p>Here they don't. The video model turns 22 pairs of every key by frame time, 21 by row and 21 by column. The action expert turns all 64 pairs of every query by the action's position in the chunk, 0 to 31. Let's follow one example through the rest of this section: <b>action 5 of the chunk reads the patch at row 3, column 4</b> of the camera frame, and that frame sits at time 0. Rows, columns and actions all count from 0.</p>
         </div>
         <figure class="widget" id="f-rope">
           <div class="w-head"><span class="title">one action query meets one video key</span>
-            <span class="legend"><span><i style="background:var(--q)"></i>turned by action step</span><span><i style="background:var(--k)"></i>turned by row or column</span><span><i class="i-none"></i>not turned</span></span>
+            <span class="legend"><span><i style="background:var(--q)"></i>turned by action position</span><span><i style="background:var(--k)"></i>turned by row or column</span><span><i class="i-none"></i>not turned</span></span>
           </div>
           <div class="rp">
             <div class="rp-panel">
@@ -657,10 +657,10 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
                   <div class="rg-head" role="columnheader">21 column pairs</div>
                 </div>
                 <div class="rg-row" role="row">
-                  <div class="rg-name" role="rowheader">Action query<small>step 5</small></div>
-                  <div class="rg-cell c-qcell" role="cell">step 5</div>
-                  <div class="rg-cell c-qcell" role="cell">step 5</div>
-                  <div class="rg-cell c-qcell" role="cell">step 5</div>
+                  <div class="rg-name" role="rowheader">Action query<small>action 5 of 32</small></div>
+                  <div class="rg-cell c-qcell" role="cell">action 5</div>
+                  <div class="rg-cell c-qcell" role="cell">action 5</div>
+                  <div class="rg-cell c-qcell" role="cell">action 5</div>
                 </div>
                 <div class="rg-row" role="row">
                   <div class="rg-name" role="rowheader">Video key<small>time 0, row 3, column 4</small></div>
@@ -670,9 +670,9 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
                 </div>
                 <div class="rg-row" role="row">
                   <div class="rg-name" role="rowheader">The score sees</div>
-                  <div class="rg-cell c-ok" role="cell">time 0 − step 5 <span aria-label="consistent">✓</span></div>
-                  <div class="rg-cell c-bad" role="cell">row 3 − step 5 <span aria-label="mismatched">✗</span></div>
-                  <div class="rg-cell c-bad" role="cell">column 4 − step 5 <span aria-label="mismatched">✗</span></div>
+                  <div class="rg-cell c-ok" role="cell">time 0 − action 5 <span aria-label="consistent">✓</span></div>
+                  <div class="rg-cell c-bad" role="cell">row 3 − action 5 <span aria-label="mismatched">✗</span></div>
+                  <div class="rg-cell c-bad" role="cell">column 4 − action 5 <span aria-label="mismatched">✗</span></div>
                 </div>
               </div>
             </div>
@@ -686,10 +686,10 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
                   <div class="rg-head" role="columnheader">21 column pairs</div>
                 </div>
                 <div class="rg-row" role="row">
-                  <div class="rg-name" role="rowheader">Action query<small>step 5</small></div>
-                  <div class="rg-cell c-qcell" role="cell">step 5</div>
-                  <div class="rg-cell c-qcell" role="cell">step 5</div>
-                  <div class="rg-cell c-qcell" role="cell">step 5</div>
+                  <div class="rg-name" role="rowheader">Action query<small>action 5 of 32</small></div>
+                  <div class="rg-cell c-qcell" role="cell">action 5</div>
+                  <div class="rg-cell c-qcell" role="cell">action 5</div>
+                  <div class="rg-cell c-qcell" role="cell">action 5</div>
                 </div>
                 <div class="rg-row" role="row">
                   <div class="rg-name" role="rowheader">Video key<small>same patch, turn undone</small></div>
@@ -697,7 +697,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
                 </div>
                 <div class="rg-row" role="row">
                   <div class="rg-name" role="rowheader">The score sees</div>
-                  <div class="rg-cell c-ok rg-span" role="cell">time 0 − step 5, in all 64 pairs <span aria-label="consistent">✓</span></div>
+                  <div class="rg-cell c-ok rg-span" role="cell">time 0 − action 5, in all 64 pairs <span aria-label="consistent">✓</span></div>
                 </div>
               </div>
             </div>
@@ -705,24 +705,24 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
           <figcaption class="w-note">A schematic of one attention head, which has 64 pairs. The pair counts and the axis of each pair follow the LeRobot code and the paper's Appendix B.3. A key at time 0 is not turned in its time pairs, because its angle there is 0.</figcaption>
         </figure>
         <div class="prose">
-          <p>In the 22 time pairs things already work. The frame is at time 0, a turn by 0 is no turn, and the score sees a clean gap of 5 steps. The two sides do turn their time pairs at different rates, which would matter for a frame at any other time, but Faster-WAM's actions only read time 0.</p>
-          <p>The other 42 pairs subtract 5 steps from 3 rows, or from 4 columns. Take the first row pair. The key turns 1 radian per row and the query 0.042 radians per step, so the score sees 3 − 0.042 × 5 = 2.79. At step 6 the same patch gives 2.75, as if it had moved 0.04 rows. Nothing in the image moved. Other pairs drift at other rates, from 0.002 to about 15 rows or columns per step, so they don't even agree with each other. <span class="tag der">Derived</span> So each action step reads the image with its own skewed sense of where things are, and that skew comes from token order, not from the scene. The paper proves this as its Proposition 2.3.</p>
-          <p>Faster-WAM's fix puts the keys on the action expert's clock. After it builds the fused cache, it turns each fused key back by its own video angles, which removes the time, row and column turn. Then it turns the key forward by the action expert's angle for the frame's time. The frame is at time 0, so that second turn does nothing, and in practice the whole fix is the undo. The query keeps its turn for step 5. Now all 64 pairs see the same thing, that the action is 5 steps after the frame, at the action expert's own rates. That's the same way two action tokens already compare with each other. The key's content can still carry what the video model worked out about where things are, because the video model keeps its 3D rotation inside its own 30 layers. Only the explicit turn on the keys handed to the action expert is gone.</p>
-          <p>In symbols, here's the fix, then the score between action step <i>i</i> and the video token at position <i>p</i>, before and after:</p>
+          <p>In the 22 time pairs things already work. The frame is at time 0, a turn by 0 is no turn, and the score sees a clean gap of 5 actions. The two sides do turn their time pairs at different rates, which would matter for a frame at any other time, but Faster-WAM's actions only read time 0.</p>
+          <p>The other 42 pairs subtract an action position from a row or a column. Take the first row pair. The key turns 1 radian per row and the query 0.042 radians per action, so the score sees 3 − 0.042 × 5 = 2.79. For action 6 the same patch gives 2.75, as if it had moved 0.04 rows. Nothing in the image moved. Other pairs drift at other rates, from 0.002 to about 15 rows or columns per action, so they don't even agree with each other. <span class="tag der">Derived</span> So each action in the chunk reads the image with its own skewed sense of where things are, and that skew comes from token order, not from the scene. The paper proves this as its Proposition 2.3.</p>
+          <p>Faster-WAM's fix puts the keys on the action expert's clock. After it builds the fused cache, it turns each fused key back by its own video angles, which removes the time, row and column turn. Then it turns the key forward by the action expert's angle for the frame's time. The frame is at time 0, so that second turn does nothing, and in practice the whole fix is the undo. The query keeps its turn for action 5. Now all 64 pairs see the same thing, that action 5 comes 5 positions after the frame, at the action expert's own rates. That's the same way two action tokens already compare with each other. The key's content can still carry what the video model worked out about where things are, because the video model keeps its 3D rotation inside its own 30 layers. Only the explicit turn on the keys handed to the action expert is gone.</p>
+          <p>In symbols, here's the fix, then the score between action <i>i</i> and the video token at position <i>p</i>, before and after:</p>
         </div>
-        <div class="eq"><span data-tex="\begin{aligned}\text{fix:}\quad &amp; k^{v\to a}(p)=R^{a}(0)\,R^{v}(p)^{\top}\,\widehat{k}(p)=\bar{k}(p)\\[4pt] \text{before:}\quad &amp; s(i,p)=\sum_{j}q_j^{\top}\,R\big(\omega_j\,p_{b(j)}-\nu_j\,i\big)\,\bar{k}_j(p)\\[4pt] \text{after:}\quad &amp; s(i,p)=\sum_{j}q_j^{\top}\,R\big(\nu_j\,(0-i)\big)\,\bar{k}_j(p)\end{aligned}" data-display data-plain="fix: k(p) = Rₐ(0) · Rᵥ(p)ᵀ · k̂(p) = k̄(p);  before: s(i,p) = Σⱼ qⱼᵀ R(ωⱼ·p_b(j) − νⱼ·i) k̄ⱼ(p);  after: s(i,p) = Σⱼ qⱼᵀ R(νⱼ·(0 − i)) k̄ⱼ(p)"></span></div>
+        <div class="eq"><span data-tex="\begin{aligned}\text{fix:}\quad &amp; k^{v\to a}(p)=R^{a}(0)\,R^{v}(p)^{\top}\,\widehat{k}(p)=\bar{k}(p)\\[4pt] \text{before:}\quad &amp; s(i,p)=\sum_{r=0}^{63}q_r^{\top}\,R\big(\omega_r\,p_{b(r)}-\nu_r\,i\big)\,\bar{k}_r(p)\\[4pt] \text{after:}\quad &amp; s(i,p)=\sum_{r=0}^{63}q_r^{\top}\,R\big(\nu_r\,(0-i)\big)\,\bar{k}_r(p)\end{aligned}" data-display data-plain="fix: k(p) = Rₐ(0) · Rᵥ(p)ᵀ · k̂(p) = k̄(p);  before: s(i,p) = Σᵣ qᵣᵀ R(ωᵣ·p_b(r) − νᵣ·i) k̄ᵣ(p);  after: s(i,p) = Σᵣ qᵣᵀ R(νᵣ·(0 − i)) k̄ᵣ(p)"></span></div>
         <div class="prose">
           <ul class="syms">
-            <li><i>i</i> is the action step, 0 to 31. In the example, <i>i</i> = 5.</li>
-            <li><i>p</i> = (<i>t</i>, <i>y</i>, <i>x</i>) is the video token's frame time, row and column. In the example, <i>p</i> = (0, 3, 4).</li>
-            <li><i>j</i> runs over the 64 pairs of one head. <i>q<sub>j</sub></i> is the query's pair before any turn, and <i>k̄<sub>j</sub></i>(<i>p</i>) is the fused key's pair with no turn.</li>
-            <li><i>k̂</i>(<i>p</i>) is the fused key as it comes out of the cache, turned by the video angles.</li>
-            <li><i>R</i>(θ) turns a pair by the angle θ. <i>R<sup>v</sup></i>(<i>p</i>) applies the video turns to all 64 pairs, and <i>R<sup>a</sup></i>(<i>t</i>) applies the action expert's turns for time <i>t</i>. The transpose ⊤ turns a rotation back, and <i>R<sup>a</sup></i>(0) turns nothing.</li>
-            <li>ν<sub><i>j</i></sub> is the action expert's rate for pair <i>j</i>, in radians per step. ω<sub><i>j</i></sub> is the video model's rate for pair <i>j</i>, in radians per frame, row or column, and <i>b</i>(<i>j</i>) says which of <i>t</i>, <i>y</i> or <i>x</i> that pair uses.</li>
+            <li><span data-tex="i" data-plain="i"></span> is the action's position in the chunk, 0 to 31. In the example, <span data-tex="i=5" data-plain="i = 5"></span>.</li>
+            <li><span data-tex="p=(t,y,x)" data-plain="p = (t, y, x)"></span> is the video token's frame time, row and column. In the example, <span data-tex="p=(0,3,4)" data-plain="p = (0, 3, 4)"></span>.</li>
+            <li><span data-tex="r" data-plain="r"></span> runs over the 64 pairs of one head, 0 to 63. <span data-tex="q_r" data-plain="q_r"></span> is the query's pair before any turn, and <span data-tex="\bar{k}_r(p)" data-plain="k̄_r(p)"></span> is the fused key's pair with no turn.</li>
+            <li><span data-tex="\widehat{k}(p)" data-plain="k̂(p)"></span> is the fused key built from the cache, still turned by the video angles.</li>
+            <li><span data-tex="R(\theta)" data-plain="R(θ)"></span> turns a pair by the angle θ. <span data-tex="R^{v}(p)" data-plain="R^v(p)"></span> applies the video turns to all 64 pairs, and <span data-tex="R^{a}(t)" data-plain="R^a(t)"></span> applies the action expert's turns for time <span data-tex="t" data-plain="t"></span>. The transpose ⊤ turns a rotation back, and <span data-tex="R^{a}(0)" data-plain="R^a(0)"></span> turns nothing.</li>
+            <li><span data-tex="\nu_r=10000^{-2r/128}" data-plain="ν_r = 10000^(−2r/128)"></span> is the action expert's rate for pair <span data-tex="r" data-plain="r"></span>, in radians per action position. <span data-tex="\omega_r" data-plain="ω_r"></span> is the video model's rate, in radians per frame, row or column, and <span data-tex="b(r)" data-plain="b(r)"></span> says which of <span data-tex="t,y,x" data-plain="t, y, x"></span> pair <span data-tex="r" data-plain="r"></span> uses. The time pairs are <span data-tex="r=0\ldots21" data-plain="r = 0 to 21"></span> with <span data-tex="\omega_r=10000^{-2r/44}" data-plain="ω_r = 10000^(−2r/44)"></span>. The row pairs are <span data-tex="r=22\ldots42" data-plain="r = 22 to 42"></span> and the column pairs <span data-tex="r=43\ldots63" data-plain="r = 43 to 63"></span>, each with <span data-tex="\omega=10000^{-2m/42}" data-plain="ω = 10000^(−2m/42)"></span> for the <span data-tex="m" data-plain="m"></span>-th pair of its group.</li>
           </ul>
-          <p>With the example, the first row pair has ω = 1 and ν = 0.042. Before the fix its angle is 1 × 3 − 0.042 × 5 = 2.79. After the fix it's 0.042 × (0 − 5) = −0.21, the same for every patch in the frame.</p>
+          <p>With the example, the first row pair is <span data-tex="r=22" data-plain="r = 22"></span>, so <span data-tex="\omega=1" data-plain="ω = 1"></span> and <span data-tex="\nu=10000^{-44/128}\approx0.042" data-plain="ν = 10000^(−44/128) ≈ 0.042"></span>. Before the fix its angle is 1 × 3 − 0.042 × 5 = 2.79. After the fix it's 0.042 × (0 − 5) = −0.21, the same for every patch in the frame.</p>
           <p>Which comes first, the fusion or the undo? The fusion. The cache holds keys that are already turned, and all 30 layers turn the token at position <i>p</i> by exactly the same angles. A weighted sum of keys that were all turned the same way equals that turn applied to the weighted sum. So undoing it after the fusion gives exactly the key you'd get by undoing it in every layer first (the paper's Proposition 2.2), with one undo per token instead of thirty. The LeRobot code works in that order: fuse the cached keys, then undo the turn on the fused keys, once per chunk. Values never get turned, so they're left alone.</p>
-          <p>How much does it matter? Less than the math might suggest. In the paper's step-by-step ablation (Figure 3), adding retracted RoPE to the model without text cross-attention moves LIBERO from 97.8% to 98.3% and LIBERO-Plus from 77.6% to 78.3%. <span class="tag paper">Paper</span> The paper's other fix, giving action tokens stand-in spatial positions (lifted 3D RoPE), reached 98.2% and 74.0%. The authors guess the mismatch matters more once the robot state can only reach the actions through the video model. The figure doesn't say how many runs each intermediate row averages.</p>
+          <p>How much does it matter? Less than the math might suggest. In the paper's step-by-step ablation (Figure 3), adding retracted RoPE to the model without text cross-attention and without direct robot-state input moves LIBERO from 97.8% to 98.3% and LIBERO-Plus from 77.6% to 78.3%. <span class="tag paper">Paper</span> The paper's other fix, giving action tokens stand-in spatial positions (lifted 3D RoPE), reached 98.2% and 74.0%. The authors guess the mismatch matters more once the robot state can only reach the actions through the video model. The figure doesn't say how many runs each intermediate row averages.</p>
         </div>
       </section>
 
@@ -749,7 +749,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
           <div class="w-caption" data-out="note"></div>
         </div>
         <div class="prose">
-          <p>The action loop shrinks by a factor of 24 to 34, depending on the source. The whole chunk shrinks much less, because the image encoder, the text encoder and the video prefill stay the same. In Faster-WAM those fixed parts are now most of the time, so the next speedup has to come from them.</p>
+          <p>The action loop shrinks by a factor of 24 to 34, depending on the source. The whole chunk shrinks much less, because the image encoder, the text encoder and the video prefill stay the same. In Faster-WAM those fixed parts are now most of the time, so the next speedup has to come from them, or from compiling the whole pipeline, which hasn't been timed.</p>
         </div>
         <details class="drawer">
           <summary>Why bf16 shows 5.3× and fp32 shows 2.5× <span class="sub">eager PyTorch overhead</span></summary>
@@ -784,7 +784,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
           </table>
         </div>
         <div class="prose">
-          <p>Fast-WAM's success rates come from its own paper; Faster-WAM's are means over three evaluation runs. Changing the flags on a trained Fast-WAM checkpoint does not produce Faster-WAM: the smaller action expert and the fusion weights must be trained together with the video backbone.</p>
+          <p>Fast-WAM's LIBERO and RoboTwin rates come from its own paper, and its LIBERO-Plus rate comes from two other papers that Faster-WAM's Table 3 cites. Faster-WAM's rates are means over three evaluation runs. Changing the flags on a trained Fast-WAM checkpoint does not produce Faster-WAM: the smaller action expert and the fusion weights must be trained together with the video backbone.</p>
         </div>
       </section>
 
