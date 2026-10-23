@@ -74,10 +74,10 @@ The article column is about 358 px wide on a 390 px phone. A figure scales down 
 4. An older drawing in the site light palette (`#242622`, `#656b62`, `#2b6a8e`, `#b44c2c`, white paper, and the pale tints) needs no color change. The attribute rules in `chalk.css` map that palette to chalk.
 5. Use 15 user units or more for text in a 480-unit-wide drawing, so the text is about 11 px on a phone.
 
-For the hand wobble and grain of the RL boards, add `chalk-filter` to the class list and put this filter once on the page:
+For the hand wobble and grain of the RL boards, add `chalk-filter` to the class list and put this filter once on the page. It is the RL `#bb-chalk` filter with the board color drawn under the chalk, so the page color does not show through the grain in the light theme:
 
 ```html
-<svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in"/></filter></svg>
+<svg class="chalk-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="chalk-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in" result="chalk"/><feFlood flood-color="#1d2824" result="board"/><feComposite in="chalk" in2="board" operator="over"/></filter></svg>
 ```
 
 The board stays dark in both site themes, as the RL boards do.
