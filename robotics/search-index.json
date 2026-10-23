@@ -10,6 +10,18 @@
     "url": "/robotics/rl-gpi/"
   },
   {
+    "title": "World action models vs VLAs: predict the video, or just the moves",
+    "description": "Both look at a camera image, read an instruction and output robot moves. A VLA starts from an image-and-text model and learns the moves. A WAM starts from a video model and also learns the frames that come next. Eight drawings on what that changes.",
+    "tags": [
+      "world-action-models",
+      "vla",
+      "robotics",
+      "machine-learning"
+    ],
+    "date": "2026-10-23",
+    "url": "/robotics/world-action-models-vs-vlas/"
+  },
+  {
     "title": "Faster-WAM in LeRobot: from 300 cache reads to 10",
     "description": "Faster-WAM cuts a world action model's action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights.",
     "tags": [
