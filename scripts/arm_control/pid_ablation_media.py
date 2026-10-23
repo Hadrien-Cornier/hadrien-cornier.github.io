@@ -13,7 +13,7 @@ hash in metrics.json matches pid_ablation.py at that commit. Frame count (289),
 frame rate (24 fps), the 2x playback of 24 simulated seconds, every label and
 every printed number are the same as in the source. The changes are the chalk
 style (assets/robotics/chalk) and a tall layout for a 358 px phone column
-(960 px wide frames, no font under 13 pt): the four panels of the ablation
+(960 px wide frames, no font under 14 pt): the four panels of the ablation
 video are stacked, each error readout moves to the right end of its panel
 header, and the integral video puts its arm and readouts above its two
 stacked charts. Colors map by meaning: teal -> GREEN, orange -> RED,
@@ -22,6 +22,8 @@ gray-green target -> DIM. The y ticks of the integral charts are set to the
 values the source showed (0 to 0.8 by 0.2, and -5 to 10 by 5). The error-chart
 title says "Red area" where the source said "Orange area", because chalk has no
 orange and the area is chalk RED (the article caption says "red area" too).
+The area is nearly opaque so that it reads as red on the dark board, and a
+torque bar under 0.1 N·m (under half a pixel on a phone) is not drawn.
 
 Run from the blog repository root (Python with matplotlib >= 3.8, numpy,
 Pillow, and ffmpeg on PATH):
@@ -29,8 +31,9 @@ Pillow, and ffmpeg on PATH):
     PYTHONDONTWRITEBYTECODE=1 python3 scripts/arm_control/pid_ablation_media.py \
         --source <maniskill-playground checkout>
 
-Add --no-video to make only the two posters, and --out DIR to write somewhere
-else than assets/robotics/arm-control.
+Add --no-video to make only the two posters, --out DIR to write somewhere
+else than assets/robotics/arm-control, and --workers 1 to render in one
+process (slower, light load; the frames are the same).
 """
 
 import argparse
@@ -39,7 +42,7 @@ import os
 import subprocess
 import sys
 from collections import deque
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import Future, ProcessPoolExecutor
 from pathlib import Path
 
 import matplotlib
@@ -70,6 +73,8 @@ WIDTH = 6.4
 VIDEO_DPI = 150
 FPS = 24
 FRAMES = 289
+BAR_MIN_NM = 0.1  # torque bars below this are not drawn
+WORKERS = os.cpu_count() or 2  # grain processes for the videos; --workers 1 draws in one process
 
 
 def line_height(fontsize, lines=1):
@@ -141,10 +146,26 @@ def chalk_frame(rgb):
     return chalk.chalk_grain(rgb, scale=rgb.shape[1] / 720.0).tobytes()
 
 
+class InlinePool:
+    """Stand-in for ProcessPoolExecutor that runs each job at once in this process."""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def submit(self, fn, *args):
+        future = Future()
+        future.set_result(fn(*args))
+        return future
+
+
 def write(fig, out, name, draw, duration, video, crf):
     """Encode FRAMES frames over the simulated duration (2x playback), then the last frame as poster.
 
-    The grain is the slow step, so worker processes apply it while this process draws."""
+    The grain is the slow step, so worker processes apply it while this process draws.
+    With WORKERS == 1 everything runs in this process."""
     times = [i / (FRAMES - 1) * duration for i in range(FRAMES)]
     if video:
         fig.patch.set_sketch_params(None)
@@ -157,12 +178,13 @@ def write(fig, out, name, draw, duration, video, crf):
             "ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
             "-s", f"{width}x{height}", "-r", str(FPS), "-i", "-",
             "-c:v", "libx264", "-preset", "slow", "-crf", str(crf),
-            "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(out / f"{name}.mp4"),
+            "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-threads", str(WORKERS),
+            str(out / f"{name}.mp4"),
         ]
         proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
-        workers = os.cpu_count() or 2
+        workers = WORKERS
         queue = deque()
-        with ProcessPoolExecutor(max_workers=workers) as pool:
+        with (ProcessPoolExecutor(max_workers=workers) if workers > 1 else InlinePool()) as pool:
             queue.append(pool.submit(chalk_frame, first))
             for i, time in enumerate(times[1:], start=1):
                 draw(time)
@@ -184,7 +206,7 @@ def ablation_video(config, traces, out, video):
     target, dt = config["target_rad"], config["dt_s"]
     row_h = 2.08
     top0 = 1.05
-    s = Sheet(top0 + 4 * row_h + 0.86)
+    s = Sheet(top0 + 4 * row_h + 0.98)
     s.text(WIDTH / 2, 0.15, "Remove one term. Keep the same arm and load.", fontsize=19,
            color=chalk.YELLOW, ha="center")
     s.text(WIDTH / 2, 0.6, "Dashed target: 45.8°  |  Clockwise load: 2 N·m  |  Start: 0°, at rest",
@@ -204,10 +226,11 @@ def ablation_video(config, traces, out, video):
         ax = s.axes(2.35, top + 0.45, 3.85, 1.05)
         chart(ax)
         ax.set(xlim=(0, 24), ylim=(-55, 165), yticks=[0, 45.8, 120], xticks=[0, 12, 24])
+        ax.tick_params(labelsize=15)
         ax.axhline(np.rad2deg(target), color=TARGET_INK, linestyle="--", lw=1.2)
         ax.axhspan(np.rad2deg(target * 0.98), np.rad2deg(target * 1.02), color=TARGET_INK, alpha=0.16)
-        ax.set_ylabel("Angle (°)", fontsize=14)
-        ax.set_xlabel("Time (s)", fontsize=14, labelpad=0)
+        ax.set_ylabel("Angle (°)", fontsize=15)
+        ax.set_xlabel("Time (s)", fontsize=15, labelpad=0)
         (line,) = ax.plot([], [], lw=2.4, color=case["color"])
         (dot,) = ax.plot([], [], "o", color=case["color"], ms=5)
         # The error readout moves from under the arm to the right end of the panel header.
@@ -216,10 +239,10 @@ def ablation_video(config, traces, out, video):
         lines.append(line)
         dots.append(dot)
     bottom = top0 + 4 * row_h
-    clock = s.text(WIDTH / 2, bottom + 0.08, "", ha="center", fontsize=15)
-    s.text(WIDTH / 2, bottom + 0.46,
+    clock = s.text(WIDTH / 2, bottom + 0.18, "", ha="center", fontsize=15)
+    s.text(WIDTH / 2, bottom + 0.57,
            "Simulated rotary link. Same gains: Kp = 16, Ki = 4, Kd = 7; one is set to zero.",
-           ha="center", fontsize=13, color=MUTED)
+           ha="center", fontsize=15, color=MUTED)
 
     def draw(time):
         index = min(round(time / dt), len(traces["pid"]["t"]) - 1)
@@ -238,7 +261,7 @@ def ablation_video(config, traces, out, video):
 def integral_video(config, traces, out, video):
     tr = traces["pid"]
     target, dt, load_nm = config["target_rad"], config["dt_s"], config["constant_clockwise_load_Nm"]
-    s = Sheet(9.36)
+    s = Sheet(9.66)
     s.text(WIDTH / 2, 0.15, "Why keep a memory of past error?", fontsize=19, color=chalk.YELLOW, ha="center")
     s.text(WIDTH / 2, 0.6, "A constant load still needs torque after the arm stops.", fontsize=15, ha="center")
     ax_arm = s.axes(0.35, 1.05, 2.3, 2.3)
@@ -250,26 +273,29 @@ def integral_video(config, traces, out, video):
     error_ax.set(xlim=(0, 24), ylim=(0, 0.84), ylabel="Error (rad)", xticks=[0, 6, 12, 18, 24],
                  yticks=[0, 0.2, 0.4, 0.6, 0.8])
     error_ax.set_title("Red area = accumulated past error", fontsize=16, color=INK, loc="center", pad=10)
-    error_ax.set_xlabel("Time (s)", fontsize=14)
-    (line,) = error_ax.plot([], [], color=CASES[0]["color"], lw=2.7)
+    error_ax.set_xlabel("Time (s)", fontsize=15)
+    error_ax.tick_params(labelsize=15)
+    (line,) = error_ax.plot([], [], color=CASES[0]["color"], lw=2.7, zorder=3)
     fill = [None]
 
     torque_ax = s.axes(1.0, 5.85, 5.2, 1.75)
     chart(torque_ax)
     torque_ax.set(ylim=(-7, 14), ylabel="Motor torque (N·m)", yticks=[-5, 0, 5, 10])
-    bars = torque_ax.bar(np.arange(4), [0] * 4, color=[chalk.GREEN, I_INK, chalk.LAVENDER, INK], width=0.55)
+    bars = torque_ax.bar(np.arange(4), [0] * 4, color=[chalk.GREEN, I_INK, chalk.LAVENDER, INK], width=0.55,
+                         linewidth=0)
     torque_ax.set_xticks(np.arange(4), ["P", "I", "D", "Total"])
     torque_ax.set_xlim(-0.5, 3.5)
     torque_ax.tick_params(axis="x", labelsize=15, pad=6)
+    torque_ax.tick_params(axis="y", labelsize=15)
     torque_ax.axhline(load_nm, color=LOAD_INK, linestyle="--", lw=1.8)
-    torque_ax.text(3.5, load_nm + 0.7, "load: 2", color=LOAD_INK, ha="right", fontsize=13)
+    torque_ax.text(3.5, load_nm + 0.7, "load: 2", color=LOAD_INK, ha="right", fontsize=15)
     memory = s.text(3.6, 8.0, "", ha="center", fontsize=16, color=I_INK)
     s.text(WIDTH / 2, 8.5,
            "At the target, P and D can fade while the stored I term keeps supporting the load.",
            ha="center", fontsize=15)
     s.text(WIDTH / 2, 8.88,
-           "Without I: persistent error supplies load through P. Here: 2 / 16 = 0.125 rad = 7.16°.",
-           ha="center", fontsize=14, color=MUTED)
+           "Without I: persistent error supplies load through P.\nHere: 2 / 16 = 0.125 rad = 7.16°.",
+           ha="center", fontsize=15, color=MUTED)
 
     def draw(time):
         index = min(round(time / dt), len(tr["t"]) - 1)
@@ -278,10 +304,15 @@ def integral_video(config, traces, out, video):
         line.set_data(tr["t"][points], tr["error"][points])
         if fill[0] is not None:
             fill[0].remove()
-        fill[0] = error_ax.fill_between(tr["t"][points], 0, tr["error"][points], color=I_INK, alpha=0.55)
+        # Nearly opaque, so that the area reads as chalk red on the dark board.
+        fill[0] = error_ax.fill_between(tr["t"][points], 0, tr["error"][points], color=I_INK, alpha=0.85,
+                                        linewidth=0, zorder=2)
         values = [tr[key][index] for key in ["P", "I", "D", "torque"]]
         for bar, value in zip(bars, values, strict=True):
             bar.set_height(value)
+            # Under 0.1 N·m a bar is under half a pixel in the phone column; draw nothing
+            # instead of a sliver of sketch wobble.
+            bar.set_visible(abs(value) >= BAR_MIN_NM)
         current.set_text(f"Full PID\nError: {np.rad2deg(tr['error'][index]):.3f}°")
         memory.set_text(f"I = 4 × {tr['integral'][index]:.3f} rad·s = {tr['I'][index]:.3f} N·m")
         clock.set_text(f"Time: {time:04.1f} s\nPlayback: 2×")
@@ -290,12 +321,16 @@ def integral_video(config, traces, out, video):
 
 
 def main():
+    global WORKERS
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", type=Path, required=True, help="maniskill-playground checkout")
     parser.add_argument("--out", type=Path, default=REPO / "assets/robotics/arm-control")
     parser.add_argument("--no-video", action="store_true")
     parser.add_argument("--only", nargs="*", help="subset: ablation integral")
+    parser.add_argument("--workers", type=int, default=WORKERS,
+                        help="grain processes for the videos (1: one process, light load)")
     args = parser.parse_args()
+    WORKERS = max(1, args.workers)
     out = args.out / "v4"
     out.mkdir(parents=True, exist_ok=True)
     chalk.use()
