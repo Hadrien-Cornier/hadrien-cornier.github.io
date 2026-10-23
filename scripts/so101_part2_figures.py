@@ -19,12 +19,13 @@ def chalk_box(ax, xy, width, height, text, edge, face=BOARD):
             color=INK, linespacing=0.95, zorder=3)
 
 
-def tick_rounding():
+def tick_rounding(card=False, out=None):
+    """card=True draws the same figure in a wide layout for the 720 x 424 card thumbnail, saved to out."""
     time = np.linspace(0, 10, 1001)
     true_angle = time * 0.8 + 0.1
     reading = np.round(true_angle)
     error = reading - true_angle
-    fig, axes = plt.subplots(2, 1, figsize=(6.4, 6.6), sharex=True,
+    fig, axes = plt.subplots(2, 1, figsize=(8.6, 5.6) if card else (6.4, 6.6), sharex=True,
                              gridspec_kw={"height_ratios": [1.1, 1]})
     axes[0].plot(time, true_angle, color=BLUE, label="true angle")
     axes[0].step(time, reading, where="mid", color=ORANGE, lw=2.2,
@@ -46,10 +47,14 @@ def tick_rounding():
                  transform=axes[1].transAxes, ha="right", va="top", color=INK)
     for ax in axes:
         ax.grid(True, axis="y")
-    fig.suptitle("Encoder rounding creates a\nbounded reading error", x=0.03, y=0.985,
-                 ha="left", va="top", color=YELLOW)
-    fig.subplots_adjust(left=0.15, right=0.97, top=0.85, bottom=0.10, hspace=0.18)
-    save_figure(fig, "tick-rounding.png")
+    title = "Encoder rounding creates a{}bounded reading error".format(" " if card else "\n")
+    fig.suptitle(title, x=0.03, y=0.985, ha="left", va="top", color=YELLOW)
+    fig.subplots_adjust(left=0.12 if card else 0.15, right=0.97, top=0.89 if card else 0.85,
+                        bottom=0.12 if card else 0.10, hspace=0.18)
+    if card:
+        chalk.save(fig, out)
+    else:
+        save_figure(fig, "tick-rounding.png")
 
 
 def accel_pipelines():
@@ -92,6 +97,7 @@ def one_step_gain():
                      textcoords="offset points", ha="right", color=INK,
                      arrowprops={"arrowstyle": "->", "color": ORANGE, "lw": 1.8})
     axes[0].set_xlim(0, 35)
+    axes[0].set_xticks([0, 10, 20, 30])
     axes[0].set_ylim(0, 1.15)
     axes[0].set_xlabel("time after goal step (ms)")
     axes[0].set_ylabel("joint motion (tick)")
@@ -102,6 +108,7 @@ def one_step_gain():
     axes[1].bar([0, 1], [7, 1], width=0.56, color=[ORANGE, TEAL])
     axes[1].set_xticks([0, 1], ["goal jump", "joint motion\nafter 33 ms"])
     axes[1].set_ylim(0, 8.2)
+    axes[1].set_yticks(range(0, 9))
     axes[1].set_ylabel("angle change (tick)")
     axes[1].set_title("To move 1 tick in one step")
     axes[1].text(0, 7.25, "about 7", ha="center", color=INK)

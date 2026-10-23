@@ -80,7 +80,7 @@ Partly. The model-based controllers avoid it, because `inv`, `solve` and `mpc` t
 
 ### A second amplifier: the one-step inverse
 
-![Left: after a goal step of one tick, the joint moves only 0.15 tick in 33 ms. Right: to move one tick in one step, the goal has to jump about 7 ticks.](/assets/robotics/so101-series/one-step-gain.png "One goal tick moves the joint about 0.15 tick in one step, so a one-step inverse multiplies errors by about 7.")
+![Top: after a goal step of one tick, the joint moves only 0.15 tick in 33 ms. Bottom: to move one tick in one step, the goal has to jump about 7 ticks.](/assets/robotics/so101-series/one-step-gain.png "One goal tick moves the joint about 0.15 tick in one step, so a one-step inverse multiplies errors by about 7.")
 
 There's another way to amplify noise, and this one shows up in almost all of my controllers. A one-step inverse asks which goal will put the joint on the target at the next step. The difficulty is that the servo responds slowly. In the simulator, moving the goal by one tick moves the joint by only 0.14 to 0.17 tick in one 33 ms step. The reason is that one goal tick only adds 13.64 × 0.001534 = 0.021 N·m of torque, and that torque first has to accelerate the arm against the damping, with a servo time constant of 78 ms, longer than two steps.
 

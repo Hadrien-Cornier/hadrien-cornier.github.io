@@ -131,7 +131,7 @@ $$
 
 $\hat d$ is the missing torque that the Kalman filter estimates, and $r_\theta$ is a small recurrent network with weights $\theta$. It reads the recent readings, goals and targets, and outputs a torque for each joint. The controller still chooses the goal by search through the whole model, so the network changes what the controller predicts, not what it sends. If the network learns nothing, the controller is the physics controller again.
 
-![Left: a frozen servo model with an observer plus a small recurrent network (GRU) that learns the residual give a combined prediction. Right: offline and stand-in closed-loop errors: network only 3.90 and 5.50 mrad, servo model with observer 3.70 and 2.76, residual 3.01 and 3.12.](/assets/robotics/so101-series/residual.png "First try: the residual helps offline, and the physics model alone still wins in the stand-in closed loop.")
+![Top: a frozen servo model with an observer plus a small recurrent network (GRU) that learns the residual give a combined prediction. Bottom: offline and stand-in closed-loop errors: network only 3.90 and 5.50 mrad, servo model with observer 3.70 and 2.76, residual 3.01 and 3.12.](/assets/robotics/so101-series/residual.png "First try: the residual helps offline, and the physics model alone still wins in the stand-in closed loop.")
 
 ### The same job as the Kalman disturbance
 
