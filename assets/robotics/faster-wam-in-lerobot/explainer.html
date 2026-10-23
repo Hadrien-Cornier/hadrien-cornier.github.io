@@ -253,7 +253,7 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
 </head>
 <body>
 <div class="topbar">
-  <span class="brand">Fast-WAM → Faster-WAM · an animated walkthrough</span>
+  <span class="brand">Fast-WAM → Faster-WAM</span>
   <button class="theme-btn" type="button" id="theme-btn" aria-label="Switch colour theme">Theme: auto</button>
 </div>
 
@@ -269,7 +269,6 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
       <h2 class="ch">One action chunk, two models, one clock</h2>
         <div class="widget" id="w-race">
           <div class="w-head">
-            <span class="title">race(one chunk): fast-wam vs faster-wam</span>
             <span class="legend">
               <span><i style="background:var(--video)"></i>video layer</span>
               <span><i style="background:var(--k)"></i>K</span>
@@ -295,11 +294,10 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
             <div class="stat"><div class="k">model time</div><div class="val" data-out="time">0</div></div>
             <div class="stat"><div class="k">video-cache reads</div><div class="val" data-out="reads">0</div></div>
             <div class="stat"><div class="k">noise level <span class="nc">σ</span></div><div class="val" data-out="sigma">1</div></div>
-            <div class="stat"><div class="k">text cross-attn reads</div><div class="val" data-out="text">0</div></div>
             <div class="stat"><div class="k">denoiser kernels</div><div class="val" data-out="kernels">0</div></div>
           </div>
           <div class="w-caption"></div>
-          <div class="w-note">Clock: the LeRobot PR on an A100 in bf16, random weights <span class="tag meas">Measured</span>. It adds up phase means from a 20-chunk run, so Fast-WAM ends at 945.6 ms here and at 938.0 ms in the end-to-end timer. <b>Same clock</b> is to scale, and <b>Step by step</b> gives every step the same screen time. The noise levels σ are the real 10-step schedule. The action curves are illustrative, and the fusion lines are shaded by the paper's Figure 4 head average, read by eye. Kernel counts come from a separate profiler run.</div>
+          <div class="w-note">Clock: phase means from a 20-chunk LeRobot run on an A100 in bfloat16 with random weights <span class="tag meas">Measured</span>. The phases leave out about 15 ms (Fast-WAM) and 9 ms (Faster-WAM) of host work, so the race ends at 945.6 against 169.5 ms, where the end-to-end timer gives 938.0 against 175.6 ms. <b>Same clock</b> is to scale for each phase and step, and <b>Step by step</b> gives every step the same screen time. σ is the noise level, and the real 10-step schedule keeps it near 1 until the last steps. The action curves are illustrative (3 of 7 values), and the fusion lines are shaded by the paper's Figure 4 head average, read by eye. Kernel counts come from a separate profiler run.</div>
           <p class="sr-only" aria-live="polite" data-out="live"></p>
         </div>
     </section>
@@ -308,9 +306,9 @@ footer { border-top: 1px solid var(--line); padding: 28px 0 60px; font-size: 13.
   <section class="sources-block prose" aria-labelledby="sources-title">
     <h3 id="sources-title">Sources</h3>
     <ul class="sources">
-      <li>Faster-WAM: <a href="https://arxiv.org/abs/2608.02365v2">“Faster-WAM: Do World Action Models Need Deep Action Modules?”, arXiv 2608.02365v2</a>. Authors' code: <a href="https://github.com/TeamFasterwam/FasterWAM">TeamFasterwam/FasterWAM</a> (PolyForm Noncommercial 1.0.0).</li>
+      <li>Faster-WAM: <a href="https://arxiv.org/abs/2608.02365v2">“Faster-WAM: Do World Action Models Need Deep Action Modules?”, arXiv 2608.02365v2</a>. Authors' code: <a href="https://github.com/TeamFasterwam/FasterWAM">TeamFasterwam/FasterWAM</a>, with its original code under PolyForm Noncommercial 1.0.0.</li>
       <li>Fast-WAM, the baseline: <a href="https://arxiv.org/abs/2603.16666">“Fast-WAM: Do World Action Models Need Test-time Future Imagination?”, arXiv 2603.16666</a>.</li>
-      <li>The clock and kernel counts: <a href="https://github.com/huggingface/lerobot/pull/5049">LeRobot pull request 5049</a>, ready for review and not merged.</li>
+      <li>The clock and kernel counts: my profiler runs for <a href="https://github.com/huggingface/lerobot/pull/5049">LeRobot pull request 5049</a> (open, not merged). The raw records are not public.</li>
       <li>The article around this figure: <a href="/robotics/faster-wam-in-lerobot/">Faster-WAM in LeRobot: from 300 cache reads to 10</a>.</li>
     </ul>
   </section>
@@ -507,11 +505,10 @@ const FIG4_MEAN = [0.03194, 0.03287, 0.0326, 0.03277, 0.03264, 0.03268, 0.0326, 
 /* phase means in ms per chunk; the LeRobot ones come from a 20-chunk diagnostic pass with CUDA events */
 const CLOCKS = {
   bf16: {
-    name: 'LeRobot PR, A100, bf16, random weights', tag: 'meas',
     fast: { enc: 12.901 + 42.969 + 2.751, prefill: 89.667 + 0.019, fuse: 0, denoise: 797.305 },
     faster: { enc: 12.615 + 41.884 + 2.707, prefill: 87.597, fuse: 0.964, denoise: 23.725 },
     kernels: { fast: 29020, faster: 770 },
-    note: 'These are phase means from a 20-chunk diagnostic run. The end-to-end timer (100 paired chunks) gives <b>938.0 → 175.6 ms, 5.34×</b>.',
+    e2e: { fast: 938.0, faster: 175.6 }, // end-to-end means, 100 paired chunks
   },
 };
 /* seconds of animation per phase in step-by-step pace; not to scale */
@@ -802,7 +799,7 @@ function drawTowers(ctx, R, tl, st, narrow) {
     text(ctx, s2, cx, tTop - (narrow ? 8 : 9), { size: fs - 1, font: 'mono', align: 'center', color: C.ink3 });
   };
   lab(narrow ? 'Video' : 'Video model', narrow ? '30 × 1' : '30 layers, once', vx + vw / 2, C.video);
-  lab('KV', 'K | V', sx + sw / 2, C.ink2);
+  lab('KV', '', sx + sw / 2, C.ink2);
   lab(narrow ? 'Action' : 'Action expert', fast ? (narrow ? '30 × 10' : '30 layers × 10') : (narrow ? '1 × 10' : '1 layer × 10'), ax + aw / 2, C.action);
 
   // text + state rail: the video model always reads it; Fast-WAM's action layers read it too
@@ -888,8 +885,12 @@ function drawTowers(ctx, R, tl, st, narrow) {
       ctx.fillStyle = rgba(C.v, 0.9); ctx.fillRect(fxc, fyc + fh / 2 - fh * f, fw / 2, fh * f);
     }
     ctx.strokeStyle = C.fused; ctx.lineWidth = 2; rr(ctx, fxc - fw / 2, fyc - fh / 2, fw, fh, 4); ctx.stroke();
-    text(ctx, narrow ? 'fused' : 'fused cache', fxc, fyc - fh / 2 - 17, { size: fs, weight: 650, align: 'center', color: C.fused });
-    text(ctx, 'built once', fxc, fyc - fh / 2 - 6, { size: fs - 1.5, font: 'mono', align: 'center', color: C.ink3 });
+    // the label starts at the box's left edge, where the fusion lines end, so no line crosses it
+    const fl = narrow ? 'fused' : 'fused cache', lx = fxc - fw / 2;
+    ctx.font = `650 ${fs}px Inter, system-ui, sans-serif`;
+    ctx.fillStyle = C.surface; ctx.fillRect(lx - 2, fyc - fh / 2 - 29, ctx.measureText(fl).width + 6, 26);
+    text(ctx, fl, lx, fyc - fh / 2 - 17, { size: fs, weight: 650, color: C.fused });
+    text(ctx, 'built once', lx, fyc - fh / 2 - 6, { size: fs - 1.5, font: 'mono', color: C.ink3 });
     // ghosts of the 29 removed action layers
     ctx.setLineDash([2, 3]); ctx.strokeStyle = rgba(C.ink3, 0.2); ctx.lineWidth = 1;
     for (let j = 0; j < n; j++) ctx.strokeRect(ax + 0.5, ly(j) + 1, aw - 1, Math.max(1, bh - 2));
@@ -920,7 +921,7 @@ function drawTowers(ctx, R, tl, st, narrow) {
   else text(ctx, 'text + state → video model only', x + (narrow ? 4 : 10), fy, { size: fs - 1.5, font: 'mono', color: C.ctx });
 }
 
-function drawRacePanel(ctx, R, tl, st, mini) {
+function drawRacePanel(ctx, R, tl, st) {
   const { x, y, w, h } = R;
   const fast = tl.variant === 'fast';
   const narrow = w < 470;
@@ -928,9 +929,7 @@ function drawRacePanel(ctx, R, tl, st, mini) {
   text(ctx, fast ? (narrow ? '30 action layers, 1 cache each' : '30 action layers, each reads one video layer') : (narrow ? '1 action layer, 1 fused cache' : '1 action layer reads one fused cache'), x, y + 28, { size: narrow ? 9.5 : 10.5, font: 'mono', color: C.ink3 });
   drawPill(ctx, x + w, y + 11, racePhaseLabel(tl, st), phaseColor(st), narrow);
   const top = y + 44;
-  if (mini) {
-    drawChunkCard(ctx, { x, y: top, w, h: Math.min(116, y + h - top) }, tl, st, true);
-  } else if (narrow) {
+  if (narrow) {
     const ch = 116;
     drawChunkCard(ctx, { x, y: top, w, h: ch }, tl, st, true);
     drawTowers(ctx, { x, y: top + ch + 6, w, h: y + h - top - ch - 6 }, tl, st, true);
@@ -952,10 +951,10 @@ function initRace() {
   };
   rebuild();
   const side = w => w >= 820;
-  const mini = w => w < 600; // phones: the clock and the chunks, no layer towers
+  const phone = w => w < 600; // phones: shorter towers under each chunk card
   const stage = new Stage(host, {
     label: 'Animated race on one clock. Both models encode the inputs and run the 30-layer video model once. Then Fast-WAM denoises the action chunk with 30 action layers per step, 300 cache reads, while Faster-WAM fuses the 30 caches once and uses 1 action layer per step, 10 cache reads.',
-    height: w => side(w) ? clamp(w * 0.6, 540, 660) : mini(w) ? 98 + 22 + 2 * 172 : 98 + 2 * 450 + 24,
+    height: w => side(w) ? clamp(w * 0.6, 540, 660) : 98 + 2 * (phone(w) ? 340 : 450) + 24,
     draw: (ctx, w, h) => {
       if (!C.ink) readColors();
       const sts = { fast: raceState(W.tls.fast, W.t), faster: raceState(W.tls.faster, W.t) };
@@ -969,9 +968,9 @@ function initRace() {
         drawRacePanel(ctx, { x: pad + pw + 28, y: top, w: pw, h: h - top - 12 }, W.tls.faster, sts.faster);
       } else {
         const ph = (h - top - 22) / 2;
-        drawRacePanel(ctx, { x: pad, y: top, w: w - 2 * pad, h: ph - 10 }, W.tls.fast, sts.fast, mini(w));
+        drawRacePanel(ctx, { x: pad, y: top, w: w - 2 * pad, h: ph - 10 }, W.tls.fast, sts.fast);
         line(ctx, pad, top + ph + 4, w - pad, top + ph + 4, C.line, 1);
-        drawRacePanel(ctx, { x: pad, y: top + ph + 18, w: w - 2 * pad, h: ph - 10 }, W.tls.faster, sts.faster, mini(w));
+        drawRacePanel(ctx, { x: pad, y: top + ph + 18, w: w - 2 * pad, h: ph - 10 }, W.tls.faster, sts.faster);
       }
     },
   });
@@ -1024,12 +1023,12 @@ function initRace() {
       case 'step': {
         const a = SIGMAS[st.k].toFixed(3), b = SIGMAS[st.k + 1].toFixed(3);
         if (st.idle) return `finished step ${st.k + 1} and waits.`;
-        if (st.updating > 0) return `step ${st.k + 1} of 10: an Euler step moves the chunk from σ = ${a} to σ = ${b}.`;
+        if (st.updating > 0) return `is at step ${st.k + 1} of 10: an Euler update moves the chunk from σ = ${a} to σ = ${b}.`;
         return fast
-          ? `step ${st.k + 1} of 10, action layer ${st.passJ + 1} reads the cache of video layer ${st.passJ + 1}, and only that one.`
-          : `step ${st.k + 1} of 10, its one action layer reads the fused cache.`;
+          ? `is at step ${st.k + 1} of 10: action layer ${st.passJ + 1} reads the cache of video layer ${st.passJ + 1}, and only that one.`
+          : `is at step ${st.k + 1} of 10: its one action layer reads the fused cache.`;
       }
-      default: return `done at ${fmt(tl.modelTotal, 1)} ms: 32 actions go to the robot.`;
+      default: return `is done at ${fmt(tl.modelTotal, 1)} ms, and its 32 actions go to the robot.`;
     }
   };
   function update() {
@@ -1038,13 +1037,11 @@ function initRace() {
     setHTML(out('time'), `${fmt(a.model, 1)} <small>vs</small> ${fmt(b.model, 1)}<small> ms</small>`);
     setHTML(out('reads'), pair(`${a.passes}<small>/300</small>`, `${b.passes}<small>/10</small>`));
     setHTML(out('sigma'), pair(a.sigma.toFixed(2), b.sigma.toFixed(2)));
-    setHTML(out('text'), pair(a.passes, 0));
     const kc = CLOCKS[W.clock].kernels;
     setHTML(out('kernels'), kc ? pair(fmt(Math.round(kc.fast * a.passes / 300)), fmt(Math.round(kc.faster * b.passes / 10))) : '<small>not measured</small>');
     scrub.value = String(Math.round(W.t / W.end * 1000));
     let lead = '';
-    if (b.done && !a.done) lead = `<b>Faster-WAM is done</b> while Fast-WAM is ${a.ph === 'step' ? `at step ${a.k + 1} of 10` : 'still before its first denoising step'}. `;
-    else if (a.done && b.done) lead = `<b>Both done.</b> Same inputs, same video model, same 10 denoising steps. The difference is ${fmt(a.modelTotal, 1)} versus ${fmt(b.modelTotal, 1)} ms of model time. `;
+    if (a.done && b.done) { const e = CLOCKS[W.clock].e2e; lead = `<b>Both done.</b> Same inputs, same video model, same 10 denoising steps. The phases add up to ${fmt(a.modelTotal, 1)} and ${fmt(b.modelTotal, 1)} ms, and the end-to-end timer gives ${fmt(e.fast, 1)} and ${fmt(e.faster, 1)} ms. `; }
     const html = lead + (a.done && b.done ? '' : `<b>Fast-WAM</b> ${phrase(W.tls.fast, a)} <b>Faster-WAM</b> ${phrase(W.tls.faster, b)}`);
     setHTML(cap, html);
     const key = a.ph + '|' + b.ph + '|' + a.done + b.done;
