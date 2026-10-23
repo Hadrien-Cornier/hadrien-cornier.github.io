@@ -67,7 +67,7 @@ def budget():
     ax.grid(axis="y")
     footnote(fig, "Offline · 40 old-nib s40 repeats · phys, P16 ·\nprediction is an upper bound for feedback")
     margins(fig, top=1.15, bottom=1.6, gap=1.25, rows=2)
-    chalk.save(fig, OUT / "repeat-budget.png")
+    chalk.save(fig, OUT / "repeat-budget.png", panel=True)
 
 
 def learning():
@@ -92,7 +92,7 @@ def learning():
     footnote(fig, "Measured · N64 frozen head, 102 training passes ·\nmean of four Test drawings · one A/B/A block")
     margins(fig, top=0.95, bottom=1.85, right=0.1)
     fig.subplots_adjust(wspace=0.12)
-    chalk.save(fig, OUT / "timing-and-shape.png")
+    chalk.save(fig, OUT / "timing-and-shape.png", panel=True)
 
 
 def twin():
@@ -109,7 +109,7 @@ def twin():
     ax.grid(axis="y")
     footnote(fig, "Simulation vs Offline arm logs · same c2 + play twin ·\ncohorts differ in nib, setup and controllers")
     margins(fig, top=0.65, bottom=1.65, left=1.0)
-    chalk.save(fig, OUT / "twin-across-days.png")
+    chalk.save(fig, OUT / "twin-across-days.png", panel=True)
 
 
 if __name__ == "__main__":

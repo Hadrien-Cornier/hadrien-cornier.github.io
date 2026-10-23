@@ -61,7 +61,8 @@ def set_style():
 
 
 def save_figure(fig, filename):
-    chalk.save(fig, OUTPUT_DIR / filename)
+    # The .svg panel next to each PNG is the figure on the long-form canvas of its article.
+    chalk.save(fig, OUTPUT_DIR / filename, panel=True)
 
 
 def clean_axis(ax, grid=None):
