@@ -11,6 +11,11 @@
   'use strict';
   var WIDE = window.matchMedia('(min-width: 1000px)');
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var printing = window.matchMedia('print');
+  /* Widget scripts load after this one and draw on DOMContentLoaded; snapshots wait for it. */
+  var domReady = document.readyState === 'complete', whenReady = [];
+  function ready() { if (domReady) return; domReady = true; whenReady.forEach(function (f) { f(); }); }
+  document.addEventListener('DOMContentLoaded', ready); window.addEventListener('load', ready);
   var SVGNS = 'http://www.w3.org/2000/svg';
   function fit(v, W, H) {
     var A = W / H, x = v[0], y = v[1], w = v[2], h = v[3];
@@ -114,8 +119,11 @@
     }
 
     /* ---- Inline figures ---- */
-    var figs = null, snaps = [], queue = [], busy = false, docked = -1, pendingDock = null, io = null, boxes = {};
+    var figs = null, snaps = [], queue = [], inflight = -1, docked = -1, io = null, boxes = {}, resnapT = 0;
     var hasLive = !!stage.querySelector('.rc-bar > :not(.rc-reset):not(.rc-where)');
+    /* Widgets (bar controls, HTML drawn over the board) redraw the live board for each step. A board without them is a plain
+       drawing: on narrow screens its live copy stays hidden with display: none, so setting a step there costs no layout. */
+    var widgets = hasLive || [].some.call(view.children, function (el) { return !/^svg$/i.test(el.tagName); });
     function anchorFor(m) {
       var slot = body.querySelector('.rc-slot[data-for="' + m.id + '"]'); if (slot) return slot;
       var heading = null;
@@ -151,31 +159,44 @@
         if (Object.keys(boxes).length > 1) cap.appendChild(boardMap(i));
         box.className = 'rc-view rc-fig-view'; fig.appendChild(cap); fig.appendChild(box);
         var a = anchorFor(m); a.parentNode.insertBefore(fig, a.nextSibling);
-        return { el: fig, cap: cap, box: box, near: false, filled: false };
+        return { el: fig, cap: cap, box: box, near: false, shown: null };
       });
+      /* The snapshots are hidden from screen readers; the first caption carries the board's own title and description once. */
+      var said = [].filter.call(svg.children, function (n) { return /^(title|desc)$/i.test(n.tagName); }).map(function (n) { return n.textContent.trim(); }).join('. ');
+      if (figs.length && said) { var sr = document.createElement('span'); sr.className = 'rc-sr'; sr.textContent = said; figs[0].cap.appendChild(sr); }
       sizeFigures();
+      if (!window.IntersectionObserver) { figs.forEach(function (f, i) { f.near = true; queue.push(i); }); runQueue(); return; }
+      /* Lazy: a figure is copied and drawn only when it comes within two screens of the viewport. */
       io = new IntersectionObserver(function (es) {
         es.forEach(function (e) {
-          if (!e.isIntersecting) return; var i = +e.target.getAttribute('data-step'); figs[i].near = true;
-          if (snaps[i]) fill(i); else { queue = [i].concat(queue.filter(function (q) { return q !== i; })); runQueue(); }
+          var i = +e.target.getAttribute('data-step'); figs[i].near = e.isIntersecting;
+          if (e.isIntersecting) { if (snaps[i]) fill(i); else want(i); }
         });
-      }, { rootMargin: '150% 0px' });
+      }, { rootMargin: '200% 0px' });
       figs.forEach(function (f) { io.observe(f.el); });
     }
+    function want(i) { if (snaps[i] || inflight === i) return; queue = [i].concat(queue.filter(function (q) { return q !== i; })); runQueue(); }
     function sizeFigure(i, W) {
       var f = figs[i], v = figView(i, W), H = figHeight(v, W, snaps[i] && snaps[i].minH); f.box.style.height = H + 'px';
       var s = f.box.querySelector('svg.rc-svg'); if (s) s.setAttribute('viewBox', vbStr(fit(v, W, H)));
     }
     function sizeFigures() { if (figs) { var W = Math.max(1, figs[0].el.clientWidth); figs.forEach(function (f, i) { sizeFigure(i, W); }); } }
-    /* Snapshots come from the live board, one step at a time: set the step, let the widget scripts redraw for two frames, then copy. */
+    /* Snapshots come from the live board, one step at a time and at most one per frame: set the step, then copy it.
+       With widgets, the copy waits two frames so they redraw first; the queue starts after DOMContentLoaded, so the widget
+       scripts that load after this one have drawn. */
+    function nextFrame(f) { requestAnimationFrame(widgets ? function () { requestAnimationFrame(f); } : f); }
     function runQueue() {
-      if (busy || !queue.length || docked >= 0) return; busy = true;
-      var i = queue.shift(); setState(i);
-      requestAnimationFrame(function () { requestAnimationFrame(function () {
-        snaps[i] = snapshot(i); busy = false; fill(i);
-        if (queue.length) runQueue(); else if (pendingDock) { var p = pendingDock; pendingDock = null; dock(p[0], p[1]); }
-      }); });
+      if (inflight >= 0 || !queue.length || docked >= 0 || mode !== 'inline' || !domReady) return;
+      var i = inflight = queue.shift(); setState(i);
+      nextFrame(function () {
+        inflight = -1;
+        /* A mode switch or a dock in between changed the board: copy this step later. */
+        if (mode !== 'inline' || docked >= 0 || idx !== i) { queue.unshift(i); runQueue(); return; }
+        snaps[i] = snapshot(i); fill(i); runQueue();
+      });
     }
+    /* The width changed: widgets may draw differently (qmap switches below 560 px), so copy the near figures again. */
+    function resnap() { if (!figs) return; snaps = []; queue = []; figs.forEach(function (f, i) { if (f.near) queue.push(i); }); runQueue(); }
     function snapshot(i) {
       var c = view.cloneNode(true), s = c.querySelector('svg.rc-svg');
       s.removeAttribute('style');
@@ -183,57 +204,90 @@
       if (rc.classList.contains('rls-canvas')) [].forEach.call(s.querySelectorAll('.rc-panel:not(.is-active)'), function (g) { g.parentNode.removeChild(g); });
       uniqueIds(c, '--f' + i);
       [].forEach.call(c.querySelectorAll('a[href], button, input, select, textarea, [tabindex]'), function (el) { el.setAttribute('tabindex', '-1'); });
-      if (i !== 0) c.setAttribute('aria-hidden', 'true'); /* the board's own title and description are read once, on the first figure */
+      c.setAttribute('aria-hidden', 'true');
       var overlay = [].some.call(view.children, function (el) { return !/^svg$/i.test(el.tagName) && getComputedStyle(el).display !== 'none'; });
       return { node: c, minH: overlay ? view.clientHeight : 0, zoomed: stage.classList.contains('is-zoomed'), panel: stage.getAttribute('data-active-panel'), view: stage.getAttribute('data-active-view'),
         live: hasLive && [].some.call(stage.querySelectorAll('.rc-bar > :not(.rc-reset):not(.rc-where)'), function (el) { return getComputedStyle(el).display !== 'none'; }) };
     }
     function fill(i) {
-      var f = figs[i], sn = snaps[i]; if (!f.near || f.filled || !sn) return;
-      f.filled = true; f.el.classList.toggle('is-zoomed', sn.zoomed); f.el.setAttribute('data-active-panel', sn.panel); f.el.setAttribute('data-active-view', sn.view);
-      var c = sn.node; c.className = f.box.className;
+      var f = figs[i], sn = snaps[i]; if (!f.near || !sn || f.shown === sn) return;
+      f.shown = sn; if (docked !== i) figState(f, sn);
+      var c = sn.node; c.className = 'rc-view rc-fig-view';
       f.box.parentNode.replaceChild(c, f.box); f.box = c; sizeFigure(i, Math.max(1, f.el.clientWidth));
-      if (sn.live) {
-        var b = document.createElement('button'); b.type = 'button'; b.className = 'rc-fig-live'; b.textContent = 'Controls';
-        b.setAttribute('aria-label', 'Open the interactive board here: ' + label(i));
-        b.addEventListener('click', function () { if (docked === i) undock(); else dock(i, false); });
-        f.cap.appendChild(b);
-      }
+      if (sn.live) liveButton(i);
       f.el.classList.add('is-ready');
     }
-    /* Docking moves the live board, with its controls, into one figure; the figure's snapshot hides meanwhile. */
+    /* A figure carries its snapshot's step state for the CSS; it drops it while the live board is docked inside, which carries its own. */
+    function figState(f, sn) {
+      f.el.classList.toggle('is-zoomed', !!sn && sn.zoomed);
+      ['panel', 'view'].forEach(function (k) { if (sn) f.el.setAttribute('data-active-' + k, sn[k]); else f.el.removeAttribute('data-active-' + k); });
+    }
+    function liveButton(i) {
+      var cap = figs[i].cap, b = cap.querySelector('.rc-fig-live'); if (b) return b;
+      b = document.createElement('button'); b.type = 'button'; b.className = 'rc-fig-live'; b.textContent = 'Controls';
+      b.setAttribute('aria-label', 'Open the interactive board here: ' + label(i));
+      b.addEventListener('click', function () { if (docked === i) undock(); else dock(i, false); });
+      cap.appendChild(b); return b;
+    }
+    /* Docking moves the live board, with its controls, into one figure; the figure's snapshot hides meanwhile.
+       A snapshot in progress notices the change and is copied again after the board leaves.
+       On leaving, the board returns to the whole view for a frame, so the widgets reset to each step's default before the next copy. */
     function dock(i, reveal) {
-      if (busy || queue.length) { pendingDock = [i, reveal]; return; }
-      if (docked >= 0) undock();
-      var f = figs[i]; docked = i; f.near = true; fill(i);
-      f.el.classList.add('is-docked'); f.el.appendChild(stage);
-      var b = f.cap.querySelector('.rc-fig-live'); if (b) b.textContent = 'Close';
-      apply(i, true); frameDocked();
+      if (!figs) return;
+      undock(true);
+      var f = figs[i]; docked = i;
+      figState(f, null); f.el.classList.add('is-docked'); f.el.appendChild(stage); liveButton(i).textContent = 'Close';
+      apply(i, true);
       if (reveal) f.el.scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'nearest' });
     }
-    function undock() {
+    function undock(stay) {
       if (docked < 0) return; var f = figs[docked]; docked = -1;
-      f.el.classList.remove('is-docked'); rc.insertBefore(stage, home);
+      f.el.classList.remove('is-docked'); figState(f, f.shown); rc.insertBefore(stage, home);
       var b = f.cap.querySelector('.rc-fig-live'); if (b) b.textContent = 'Controls';
-      svg.removeAttribute('style'); view.style.height = ''; runQueue();
+      svg.removeAttribute('style'); view.style.height = '';
+      if (!stay) { setState(-1); requestAnimationFrame(runQueue); }
     }
     function frameDocked() {
       var f = figs[docked], W = f.box.clientWidth || f.el.clientWidth, v = figView(docked, W), H = figHeight(v, W, snaps[docked] && snaps[docked].minH);
       view.style.height = H + 'px'; svg.removeAttribute('style'); svg.setAttribute('viewBox', vbStr(fit(v, W, H)));
     }
 
+    /* Keep the reader's place when the width changes: the text block at the reading line (30% down the screen) when
+       scrolling stopped returns to the same height; a block that starts above the top keeps the same share above it.
+       Past the canvas, the end of the canvas stays put. The place is read before the resize, because the text reflows
+       before the resize event. */
+    var spot = null, spotT = 0;
+    function readingSpot() {
+      var r = rc.getBoundingClientRect(), at = window.innerHeight * 0.3;
+      if (r.top >= window.innerHeight) return null;
+      if (r.bottom <= at) return { el: rc, y: r.bottom, h: 0, end: true };
+      for (var el = body.firstElementChild; el; el = el.nextElementSibling) {
+        if (/(^|\s)rc-(fig|nav|mark)(\s|$)/.test(el.className)) continue;
+        r = el.getBoundingClientRect();
+        if (r.bottom > at && r.height > 0) return { el: el, y: r.top, h: r.height };
+      }
+      return { el: rc, y: rc.getBoundingClientRect().bottom, h: 0, end: true };
+    }
+    function keepSpot() {
+      if (!spot) return;
+      var r = spot.el.getBoundingClientRect(), now = spot.end ? r.bottom : r.top, want = spot.y < 0 && spot.h ? spot.y * r.height / spot.h : spot.y;
+      if (Math.abs(now - want) < 1) return;
+      /* The site scrolls smoothly by default; this correction must not show. */
+      var html = document.documentElement, sb = html.style.scrollBehavior;
+      html.style.scrollBehavior = 'auto'; window.scrollTo(window.pageXOffset, window.pageYOffset + now - want); html.style.scrollBehavior = sb;
+    }
     function setMode() {
-      var m = WIDE.matches ? 'wide' : 'inline'; if (m === mode) return; mode = m;
+      if (printing.matches) return;
+      var m = WIDE.matches ? 'wide' : 'inline'; if (m === mode) return;
+      var first = !mode; mode = m;
       rc.classList.toggle('rc-inline', m === 'inline'); rc.setAttribute('data-mode', m);
       if (m === 'inline') {
         hold = false; svg.removeAttribute('style'); view.style.height = '';
-        if (!figs) { buildFigures(); queue = queue.concat(marks.map(function (x, i) { return i; }).filter(function (i) { return !snaps[i] && queue.indexOf(i) < 0; })); runQueue(); }
-        else sizeFigures();
-      } else {
-        undock(); view.style.height = ''; pendingDock = null;
-        layoutBoard(); apply(current(), true);
-      }
+        if (!figs) { buildFigures(); rc.classList.toggle('rc-static', !widgets); } else { sizeFigures(); resnap(); }
+      } else { undock(true); view.style.height = ''; layoutBoard(); }
       setTop();
+      if (!first) keepSpot();
+      if (m === 'wide') apply(current(), true); else runQueue();
     }
     reset.addEventListener('click', function () { hold = true; holdAt = current(); peekY = null; apply(-1); });
     sel.addEventListener('change', function () { go(parseInt(sel.value, 10)); });
@@ -243,16 +297,21 @@
       a.addEventListener('click', function (e) { var n = a.getAttribute('data-go'), i = marks.findIndex(function (m) { return m.id === n; }); if (i >= 0) { e.preventDefault(); go(i); } });
     });
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', function () { clearTimeout(spotT); spotT = setTimeout(function () { spot = readingSpot(); }, 150); }, { passive: true });
     var lastW = window.innerWidth;
     window.addEventListener('resize', function () {
-      setMode(); setTop();
-      if (mode === 'wide') {
-        layoutBoard(); apply(idx, true);
-        if (idx >= 0 && !hold) marks[idx].scrollIntoView({ behavior: 'auto', block: 'start' });
-      } else if (window.innerWidth !== lastW) { sizeFigures(); if (docked >= 0) frameDocked(); }
-      lastW = window.innerWidth;
+      var was = mode, widthChanged = window.innerWidth !== lastW; lastW = window.innerWidth;
+      setMode(); if (mode !== was) return;
+      setTop();
+      if (mode === 'wide') { layoutBoard(); keepSpot(); apply(hold ? idx : current(), true); }
+      else if (widthChanged) {
+        sizeFigures(); if (docked >= 0) frameDocked(); keepSpot();
+        clearTimeout(resnapT); resnapT = setTimeout(resnap, 250);
+      }
     });
     onChange(WIDE, setMode);
+    whenReady.push(runQueue);
+    window.addEventListener('load', function () { spot = readingSpot(); });
     setMode();
     window.RC = {
       state: function () { return { index: idx, panel: rc.getAttribute('data-active-panel'), view: rc.getAttribute('data-active-view'), viewBox: rc.getAttribute('data-viewbox'), mode: mode, docked: docked }; },
