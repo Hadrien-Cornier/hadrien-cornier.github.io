@@ -1,5 +1,5 @@
 ---
-title: 'Teach a robot hand how to explore.'
+title: 'EigenDEXplore: Teach a robot hand how to explore'
 description: 'Human motion guides its experiments. Every joint stays free.'
 date: '2026-10-08'
 layout: 'short'

@@ -44,7 +44,7 @@
     "url": "/robotics/imprint/"
   },
   {
-    "title": "Learn where to explore from old data.",
+    "title": "Offline empowerment: Learn where to explore from old data",
     "description": "Empowerment measured from unlabeled data guides online exploration.",
     "tags": [
       "reinforcement-learning",
@@ -119,7 +119,7 @@
     "url": "/robotics/rl-1-q-learning/"
   },
   {
-    "title": "Can you zero-shot robotics with a coding agent?",
+    "title": "ASPIRE: Can you zero-shot robotics with a coding agent?",
     "description": "ASPIRE lets a coding agent debug robot programs from execution traces and save each verified fix as a text skill. What the loop does, and what the numbers cover.",
     "tags": [
       "code-as-policy",
@@ -237,7 +237,7 @@
     "url": "/robotics/so101-6-where-the-last-millimeter-goes/"
   },
   {
-    "title": "Teach a robot hand how to explore.",
+    "title": "EigenDEXplore: Teach a robot hand how to explore",
     "description": "Human motion guides its experiments. Every joint stays free.",
     "tags": [
       "reinforcement-learning",

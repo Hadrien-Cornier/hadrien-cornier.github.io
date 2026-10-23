@@ -4,7 +4,7 @@ description: 'A fixed robot dataset can mislead a learner in two different ways:
 date: '2026-10-21'
 updated: '2026-10-22'
 draft: false
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 7
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning', 'robotics']
