@@ -25,10 +25,10 @@ The script reads the saved data of that checkout and needs no ManiSkill, SAPIEN 
 - experiments/workspace/figures-v3/robot-motion-checks.json (the checked poses that
   robot_visuals_v3.py --stage prepare saved; the audit in native-motion-audit.json covers them)
 
-Color words: the chalk set has no orange and no teal. The old orange slab and cube are RED, and
-the slab title says "Red slab". The old orange hand point is YELLOW in the wrist and wine figures,
-so it differs from the red x axis, and their text says "yellow". The old teal cells are GREEN, and
-the footer says "Green cells". The original figures said "orange" and "teal".
+Color words: the chalk set has no orange and no teal. The old orange slab is RED, and the slab
+title says "Red slab". The old orange hand point and target cube are YELLOW in every figure, so
+they differ from the red x axis; the wrist and wine text says "yellow". The old teal cells are
+GREEN, and the footer says "Green cells". The original figures said "orange" and "teal".
 
 The meshes come from ManiSkill 3.0.1 (CC BY-NC 4.0, Franka notices). The script does not copy
 them into this repository. See assets/robotics/arm-control/ASSET-NOTICES.md.
@@ -44,11 +44,13 @@ to write somewhere else than the site folders.
 """
 
 import argparse
+import contextlib
 import hashlib
 import json
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import matplotlib
@@ -57,10 +59,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import colors as mcolors
-from matplotlib import patheffects
+from matplotlib import patheffects, transforms
 from matplotlib.colors import ListedColormap
 from mpl_toolkits.mplot3d import proj3d
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from PIL import Image
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "assets/robotics/chalk"))
@@ -72,12 +75,10 @@ THUMBNAIL = REPO / "assets/robotics/thumbnails/from-joint-angles-to-a-moving-arm
 # Colors by meaning. The figure text names some of them, so keep these pairs:
 # "Red / green / blue are the carried hand axes", "Red x and green y", "its own blue axis".
 AXES = [chalk.RED, chalk.GREEN, chalk.BLUE]
-# The old orange marks. The chalk set has no orange; chalk.FROM_LIGHT maps the old oranges to RED.
-# The slab, the cube and the hand point of the joint, same-pose and slab figures use RED
-# ("Red slab: 6 cm thick").
-MARK = chalk.RED
-# The hand point in the wrist and wine figures: YELLOW, so it differs from the red x axis
-# ("The yellow hand point stays fixed", "Fixed yellow target").
+# The old orange marks. The chalk set has no orange. The slab uses RED ("Red slab: 6 cm thick").
+SLAB = chalk.RED
+# The hand point and the target cube use YELLOW in every figure, so they differ from the red x
+# axis ("The yellow hand point stays fixed", "Fixed yellow target").
 TARGET = chalk.YELLOW
 # The sampled workspace cells. The chalk set has no teal; chalk.FROM_LIGHT maps teal-700 to GREEN
 # ("Green cells contain a valid sampled hand position").
@@ -108,6 +109,48 @@ WIDTH = 6.4  # inches: the phone column rule of the chalk style
 VIDEO_DPI = 200  # 1280 px wide frames
 FPS = 20
 LIGHT = mcolors.LightSource(azdeg=225, altdeg=19.4712).direction  # matplotlib's shade=True light
+
+
+@contextlib.contextmanager
+def chalk_palette():
+    """Keep the chalk colors in the 256-color palette that chalk.save writes.
+
+    chalk.save quantizes with a median cut. The small hand-axis arrows have too few pixels to get
+    their own palette entries, so their red, green and blue moved toward teal and gray. Inside this
+    context the median cut makes the other entries, and each chalk color (full and grain-thinned)
+    gets a fixed entry. Report to the style owner: chalk.save itself could seed its palette.
+    """
+    original = Image.Image.quantize
+    board = np.array(mcolors.to_rgb(chalk.BOARD)) * 255
+    seeds = []
+    for name in ["CHALK", "DIM", "FAINT", "YELLOW", "RED", "PINK", "BLUE", "GREEN", "LAVENDER",
+                 "SLATE"]:
+        rgb = np.array(mcolors.to_rgb(getattr(chalk, name))) * 255
+        seeds += [rgb, board + (rgb - board) * 0.85]
+    seeds = np.rint(seeds).astype(int).ravel().tolist()
+
+    def quantize(self, colors=256, method=None, kmeans=0, palette=None,
+                 dither=Image.Dither.FLOYDSTEINBERG):
+        if palette is not None or self.mode != "RGB":
+            return original(self, colors=colors, method=method, kmeans=kmeans, palette=palette,
+                            dither=dither)
+        free = colors - len(seeds) // 3
+        cut = original(self, colors=free, method=method, kmeans=kmeans, dither=dither)
+        reference = Image.new("P", (1, 1))
+        reference.putpalette(cut.getpalette()[: 3 * free] + seeds)
+        return original(self, palette=reference, dither=dither)
+
+    Image.Image.quantize = quantize
+    try:
+        yield
+    finally:
+        Image.Image.quantize = original
+
+
+def save(fig, path, **kwargs):
+    """chalk.save with the chalk colors kept in the palette."""
+    with chalk_palette():
+        chalk.save(fig, path, **kwargs)
 
 
 def halo(width=3.0):
@@ -173,7 +216,7 @@ def view_vector(ax):
     return np.array([np.cos(elev) * np.cos(azim), np.cos(elev) * np.sin(azim), np.sin(elev)])
 
 
-def draw_robot(ax, meshes, pose, offset, links=None, point=MARK):
+def draw_robot(ax, meshes, pose, offset, links=None):
     """workspace_viewer.draw_robot on the board: the same meshes, poses and hand frame."""
     eye = view_vector(ax)
     outline = np.r_[mcolors.to_rgb(OUTLINE), 1.0]
@@ -208,9 +251,11 @@ def draw_robot(ax, meshes, pose, offset, links=None, point=MARK):
         collection.set_sketch_params(None)
         ax.add_collection3d(collection)
     tip = np.asarray(pose["p"]) - offset
-    ax.scatter(*tip, s=35, c=point, depthshade=False)
+    # The hand frame is drawn above the meshes, the glass and the labels, at full chalk color.
+    ax.scatter(*tip, s=35, c=TARGET, depthshade=False, zorder=6)
     for i, color in enumerate(AXES):
-        ax.quiver(*tip, *np.asarray(pose["R"])[:, i], length=0.12, color=color)
+        ax.quiver(*tip, *np.asarray(pose["R"])[:, i], length=0.12, color=color, linewidth=3.6,
+                  zorder=5)
 
 
 def clean(ax, limits=((-0.2, 0.9), (-0.55, 0.55), (-0.015, 0.95)), eye=(20, -65), zoom=1.0):
@@ -222,7 +267,7 @@ def clean(ax, limits=((-0.2, 0.9), (-0.55, 0.55), (-0.015, 0.95)), eye=(20, -65)
     ax.patch.set_visible(False)  # panels may overlap the empty corners of their neighbors
 
 
-def table(ax, geometry, offset):
+def table(ax, geometry, offset, clip=True):
     b = np.asarray(geometry["table_bounds"]) - offset
     v = [
         [b[0, 0], b[0, 1], b[1, 2]],
@@ -232,12 +277,16 @@ def table(ax, geometry, offset):
     ]
     ax.add_collection3d(Poly3DCollection([v], facecolor=mcolors.to_rgba(chalk.DIM, 0.045),
                                          edgecolor=mcolors.to_rgba(chalk.DIM, 0.45),
-                                         linewidth=1.2, zorder=-2))
+                                         linewidth=1.2, zorder=-2, clip_on=clip))
 
 
 def base_marker(ax):
-    ax.scatter(0, 0, 0, color=INK, s=28)
-    ax.text(0, 0, -0.035, "fixed base", color=INK, fontsize=13, path_effects=halo())
+    # The marker is drawn above the label halo; the label sits centered under it, clear of the
+    # hand frame.
+    ax.scatter(0, 0, 0, color=INK, s=28, edgecolors=chalk.HALO, linewidths=1.0, zorder=7)
+    shift = transforms.offset_copy(ax.transData, fig=ax.figure, x=0, y=-4, units="points")
+    ax.text(0, 0, 0, "fixed base", color=INK, fontsize=15, path_effects=halo(), ha="center",
+            va="top", transform=shift, zorder=4)
 
 
 def title(fig, text, y):
@@ -328,7 +377,7 @@ def labeled_arm(geometry, meshes, rest, offset, path):
         "These are not the SO-101's joint names.",
         0.015,
     )
-    chalk.save(fig, path)
+    save(fig, path)
 
 
 def same_pose(geometry, meshes, data, offset, path):
@@ -344,8 +393,7 @@ def same_pose(geometry, meshes, data, offset, path):
         draw_robot(ax, meshes, data[name], offset)
         table(ax, geometry, offset)
         ax.add_collection3d(
-            Poly3DCollection(cube[faces], facecolors=mcolors.to_rgba(MARK, 0.35),
-                             edgecolors=MARK, linewidths=1.3)
+            Poly3DCollection(cube[faces], facecolors="none", edgecolors=TARGET, linewidths=1.3)
         )
         panel_title(fig, 0.25 + 0.5 * i, 1 - inches(fig, 0.74),
                     f"Configuration {'A' if i == 0 else 'B'}")
@@ -357,7 +405,7 @@ def same_pose(geometry, meshes, data, offset, path):
         f"Elbow moves {check['elbow_separation_m'] * 100:.0f} cm.",
         0.015,
     )
-    chalk.save(fig, path)
+    save(fig, path)
 
 
 def glass(ax, target, offset):
@@ -375,13 +423,13 @@ def glass(ax, target, offset):
 
 
 def wine_visual(geometry, meshes, data, offset, path):
-    fig = plt.figure(figsize=(WIDTH, 3.6))
+    fig = plt.figure(figsize=(WIDTH, 3.72))
     title(fig, "Same point on a stem. Different approach directions.", 0.985)
     center = np.asarray(data["wine_target"]) - offset
     for i, index in enumerate([0, 30, 60]):
         ax = add_3d(fig, [i / 3, inches(fig, 0.78), 1 / 3, inches(fig, 2.13)])
         clean(ax, tuple((x - 0.25, x + 0.25) for x in center), (19, -65), zoom=1.6)
-        draw_robot(ax, meshes, data["wine"][index], offset, HAND_LINKS, TARGET)
+        draw_robot(ax, meshes, data["wine"][index], offset, HAND_LINKS)
         glass(ax, data["wine_target"], offset)
         panel_title(fig, (i + 0.5) / 3, 1 - inches(fig, 0.74),
                     f"Approach {'A' if i == 0 else 'B' if i == 1 else 'C'}")
@@ -392,7 +440,7 @@ def wine_visual(geometry, meshes, data, offset, path):
         "not simulated grasp successes.",
         0.015,
     )
-    chalk.save(fig, path)
+    save(fig, path)
 
 
 # --------------------------------------------------------------------------- videos
@@ -402,15 +450,20 @@ def video(fig, path, count, draw, poster, preview=False, crf=26):
     """Write an H.264 video of count frames, then the poster PNG from the same render.
 
     crf keeps each file within about 1.5 times the size of the old light video.
+    The encoder writes to a temporary folder outside the repository. The finished file
+    replaces the site video only after FFmpeg succeeds, so a stopped render does not
+    leave a truncated video in the site.
     """
     width, height = (int(round(x * VIDEO_DPI)) for x in fig.get_size_inches())
     assert width % 2 == 0 and height % 2 == 0, (width, height)
     if not preview:
+        scratch = tempfile.TemporaryDirectory(prefix="franka_video_")
+        partial = Path(scratch.name) / path.with_suffix(".mp4").name
         command = [
             "ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
             "-s", f"{width}x{height}", "-r", str(FPS), "-i", "-", "-an", "-c:v", "libx264",
             "-crf", str(crf), "-preset", "slow", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
-            str(path.with_suffix(".mp4")),
+            str(partial),
         ]
         encoder = subprocess.Popen(command, stdin=subprocess.PIPE)
         fig.patch.set_sketch_params(None)
@@ -425,8 +478,10 @@ def video(fig, path, count, draw, poster, preview=False, crf=26):
                 print(f"{path.stem}: {index}/{count}", flush=True)
         encoder.stdin.close()
         assert encoder.wait() == 0, f"ffmpeg failed for {path}"
+        shutil.move(str(partial), str(path.with_suffix(".mp4")))
+        scratch.cleanup()
     draw(poster)
-    chalk.save(fig, path.with_suffix(".png"), tight=False)
+    save(fig, path.with_suffix(".png"), tight=False)
 
 
 def wrist_video(geometry, meshes, data, offset, path, preview=False):
@@ -451,7 +506,7 @@ def wrist_video(geometry, meshes, data, offset, path, preview=False):
         for ax in axes:
             ax.clear()
         clean(axes[0], zoom=1.45)
-        draw_robot(axes[0], meshes, current, offset, point=TARGET)
+        draw_robot(axes[0], meshes, current, offset)
         table(axes[0], geometry, offset)
         close = {
             "link_matrices": {
@@ -461,10 +516,10 @@ def wrist_video(geometry, meshes, data, offset, path, preview=False):
             "R": (r0.T @ np.asarray(current["R"])).tolist(),
         }
         clean(axes[1], ((-0.16, 0.16), (-0.16, 0.16), (-0.04, 0.22)), (25, -60))
-        draw_robot(axes[1], meshes, close, np.zeros(3), HAND_LINKS, TARGET)
+        draw_robot(axes[1], meshes, close, np.zeros(3), HAND_LINKS)
         for j, color in enumerate(AXES):
             tip = np.asarray(close["R"])[:, j] * 0.145
-            axes[1].text(*tip, "xyz"[j], color=color, fontsize=19, path_effects=halo())
+            axes[1].text(*tip, "xyz"[j], color=color, fontsize=22, path_effects=halo())
         angle = np.rad2deg(current["q"][6] - data["rest"]["q"][6])
         subtitle.set_text(f"Joint 7: {angle:+.0f}° from its starting angle")
 
@@ -489,7 +544,7 @@ def workspace_video(geometry, meshes, data, samples, offset, path, preview=False
     edges = [np.arange(-1.08, 1.121, 0.04), np.arange(0, 1.281, 0.04)]
     fig = plt.figure(figsize=(WIDTH, 4.6))
     title(fig, "A thin band through the 3D workspace", 0.985)
-    ax3 = add_3d(fig, [-0.04, inches(fig, 0.95), 0.52, inches(fig, 2.79)])
+    ax3 = add_3d(fig, [-0.075, inches(fig, 0.95), 0.52, inches(fig, 2.79)])
     ax2 = fig.add_axes([0.595, inches(fig, 1.55), 0.39, inches(fig, 1.45)])
     panel_title(fig, 0.25, 1 - inches(fig, 0.84), "Red slab: 6 cm thick")
     panel_title(fig, 0.79, inches(fig, 3.62), "Only this slab,\nviewed from the side", size=15,
@@ -503,16 +558,17 @@ def workspace_video(geometry, meshes, data, samples, offset, path, preview=False
         coordinate = 0.48 * np.sin(2 * np.pi * i / 159)
         ax3.clear()
         clean(ax3, ((-1.1, 1.1), (-1.1, 1.1), (0, 1.25)),
-              (22, -65 + 22 * np.sin(2 * np.pi * i / 159)), zoom=1.3)
+              (22, -65 + 22 * np.sin(2 * np.pi * i / 159)), zoom=1.17)
         ax3.scatter(*p[subset].T, s=1.5, color=CELLS, alpha=0.10, depthshade=False)
         selected = subset[np.abs(p[subset, 1] - coordinate) <= 0.03]
         ax3.scatter(*p[selected].T, s=6, color=CELLS, alpha=0.9, depthshade=False)
         for y in [coordinate - 0.03, coordinate + 0.03]:
             face = [[-1.05, y, 0], [1.05, y, 0], [1.05, y, 1.22], [-1.05, y, 1.22]]
-            ax3.add_collection3d(Poly3DCollection([face], facecolor=mcolors.to_rgba(MARK, 0.15),
-                                                  edgecolor=MARK, linewidths=1.2))
+            ax3.add_collection3d(Poly3DCollection([face], facecolor=mcolors.to_rgba(SLAB, 0.15),
+                                                  edgecolor=SLAB, linewidths=1.2,
+                                                  clip_on=False))
         draw_robot(ax3, meshes, data["rest"], offset)
-        table(ax3, geometry, offset)
+        table(ax3, geometry, offset, clip=False)  # the whole table, as in the old figure
         base_marker(ax3)
         _, good, _ = occupancy_cut(p, valid, 1, coordinate, edges, thickness=0.06)
         ax2.clear()
@@ -525,11 +581,13 @@ def workspace_video(geometry, meshes, data, samples, offset, path, preview=False
             vmax=1,
             aspect="equal",
             interpolation="nearest",
+            zorder=3,  # above the axis lines, so the bottom row of cells stays whole
         )
         ax2.set_xticks([-1.0, -0.5, 0.0, 0.5, 1.0])
         ax2.set_yticks(np.round(np.arange(0, 1.21, 0.2), 1))
         ax2.tick_params(labelsize=13)
-        ax2.axhline(0, color=INK, lw=2)
+        ax2.axhline(0, color=INK, lw=2, zorder=2)
+        ax2.spines["bottom"].set_zorder(2)
         ax2.set_xlabel("Forward / back from base (m)", fontsize=14, labelpad=2)
         ax2.set_ylabel("Height above\ntable (m)", fontsize=14, linespacing=0.95, labelpad=3)
         subtitle.set_text(
@@ -561,11 +619,11 @@ def wine_video(geometry, meshes, data, offset, path, preview=False):
         for ax in axes:
             ax.clear()
         clean(axes[0], eye=(22, -65), zoom=1.45)
-        draw_robot(axes[0], meshes, pose, offset, point=TARGET)
+        draw_robot(axes[0], meshes, pose, offset)
         table(axes[0], geometry, offset)
         glass(axes[0], data["wine_target"], offset)
         clean(axes[1], tuple((x - 0.25, x + 0.25) for x in center), (20, -65), zoom=1.35)
-        draw_robot(axes[1], meshes, pose, offset, HAND_LINKS, TARGET)
+        draw_robot(axes[1], meshes, pose, offset, HAND_LINKS)
         glass(axes[1], data["wine_target"], offset)
 
     video(fig, path, len(indices), frame, poster=30, preview=preview, crf=27)

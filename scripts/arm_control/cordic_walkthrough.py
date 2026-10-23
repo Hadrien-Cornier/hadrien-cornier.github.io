@@ -205,20 +205,8 @@ def build(records, reference):
     return fig, update
 
 
-def set_sketch(base, dpi):
-    """Keep the chalk wobble the same size relative to the frame at any dpi.
-
-    base: the path.sketch value of the chalk style. Its amplitude and length are
-    in pixels and fit savefig.dpi, so scale them to the dpi of this render.
-    """
-    scale, length, randomness = base
-    ratio = dpi / matplotlib.rcParams["savefig.dpi"]
-    matplotlib.rcParams["path.sketch"] = (scale * ratio, length * ratio, randomness)
-
-
-def render_poster(records, reference, path, sketch):
+def render_poster(records, reference, path):
     dpi = 2 * VIDEO_DPI
-    set_sketch(sketch, dpi)
     fig, update = build(records, reference)
     update(FPS * HOLD)
     saved_dpi = matplotlib.rcParams["savefig.dpi"]
@@ -230,8 +218,7 @@ def render_poster(records, reference, path, sketch):
     return path
 
 
-def render_video(records, reference, path, sketch):
-    set_sketch(sketch, VIDEO_DPI)
+def render_video(records, reference, path):
     fig, update = build(records, reference)
     total = FPS * (12 * HOLD + END)
     # Frames inside one step are identical, so draw each step once.
@@ -291,12 +278,11 @@ def main():
     args = parser.parse_args()
     records, reference = load_steps(args.source)
     chalk.use()
-    sketch = tuple(matplotlib.rcParams["path.sketch"])
     poster = args.out / "v4" / "cordic_walkthrough_poster.png"
-    print(render_poster(records, reference, poster, sketch))
+    print(render_poster(records, reference, poster))
     if not args.poster_only:
         video = args.out / "v4" / "cordic_walkthrough.mp4"
-        print(render_video(records, reference, video, sketch))
+        print(render_video(records, reference, video))
 
 if __name__ == "__main__":
     main()
