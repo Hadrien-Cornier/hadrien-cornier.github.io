@@ -109,7 +109,8 @@ export function renderArticle(source, root = ROOT, html = undefined) {
     if (content.trim()) throw new Error('A short article keeps its body in the .html file beside it; leave the Markdown body empty');
     if (typeof html !== 'string' || !html.trim()) throw new Error('A short article needs a non-empty .html body beside its .md file');
     if (/<h1\b/i.test(html)) throw new Error('Use H2 or deeper in articles; title supplies H1');
-    const words = htmlText(html).trim().split(/\s+/).filter(Boolean).length;
+    // Drawings carry long accessible descriptions; reading time counts the prose around them.
+    const words = htmlText(html.replace(/<svg\b[\s\S]*?<\/svg>/gi, ' ')).trim().split(/\s+/).filter(Boolean).length;
     const components = {timeline:false, geometry:false, so101:false, market:false, futures:false};
     return {...data, paper, tags:data.tags ? [...data.tags] : [], date, updated, body:html, headings:[], components, readingMinutes:Math.max(1, Math.ceil(words / 220))};
   }

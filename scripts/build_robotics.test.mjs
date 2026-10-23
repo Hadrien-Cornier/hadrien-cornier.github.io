@@ -374,7 +374,7 @@ test('a short article is an HTML body with Markdown frontmatter and is listed li
     writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
     const short = "---\ntitle: 'Canvas: A paper'\ndescription: One canvas.\ndate: 2026-09-27\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nlayout: short\nsection: 'recent-papers'\ntags: ['robot-memory', 'vla']\npaper:\n  title: 'A Paper'\n  url: 'https://arxiv.org/abs/2610.14406'\n  date: '2026-10-09'\n  code: 'https://github.com/example/code'\n---\n";
     writeFixture(path.join(sourceDir, 'canvas.md'), short);
-    writeFixture(path.join(sourceDir, 'canvas.html'), '<p class="x-intro">One two three $not math$.</p><figure class="x-canvas"><svg viewBox="0 0 1 1"></svg></figure>');
+    writeFixture(path.join(sourceDir, 'canvas.html'), `<p class="x-intro">One two three $not math$.</p><figure class="x-canvas"><svg viewBox="0 0 1 1"><desc>${'word '.repeat(600)}</desc></svg></figure>`);
     writeFixture(path.join(sourceDir, 'plain.md'), '---\ntitle: Plain essay\ndescription: Not a paper.\ndate: 2026-09-25\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n---\n\nBody.');
     fs.mkdirSync(path.join(root, 'assets/robotics/canvas'), {recursive:true});
     fs.writeFileSync(path.join(root, 'assets/robotics/canvas/article.css'), '.x-canvas { color: red; }');
@@ -384,6 +384,7 @@ test('a short article is an HTML body with Markdown frontmatter and is listed li
     assert.match(page, /<article class="short-body" aria-label="Canvas: A paper"><p class="x-intro">One two three \$not math\$\.<\/p><figure class="x-canvas">/, 'the body is used as written, without Markdown or math');
     assert.match(page, /<link rel="stylesheet" href="\/assets\/robotics\/canvas\/article\.css\?v=[0-9a-f]{12}">/);
     assert.doesNotMatch(page, /article\.js/);
+    assert.match(page, /<span>1 min read<\/span>/, 'a drawing\'s accessible description is not reading time');
     assert.doesNotMatch(page, /class="article-toc"/);
     assert.doesNotMatch(fs.readFileSync(path.join(root, 'robotics/plain/index.html'), 'utf8'), /article\.css|paper-source/);
     const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
