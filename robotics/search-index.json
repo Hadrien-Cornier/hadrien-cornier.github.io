@@ -12,6 +12,26 @@
     "url": "/robotics/world-action-models-vs-vlas/"
   },
   {
+    "title": "Imprint: Memory Without Curation - Learning Multi-Stream Latent Memory for Robot Policies",
+    "description": "Keep every stream, compress it as you go, and learn what to remember.",
+    "tags": [
+      "robot-memory",
+      "vla"
+    ],
+    "date": "2026-10-22",
+    "url": "/robotics/imprint/"
+  },
+  {
+    "title": "Learn where to explore from old data.",
+    "description": "Empowerment measured from unlabeled data guides online exploration.",
+    "tags": [
+      "reinforcement-learning",
+      "exploration"
+    ],
+    "date": "2026-10-22",
+    "url": "/robotics/offline-empowerment/"
+  },
+  {
     "title": "Faster-WAM in LeRobot: from 300 cache reads to 10",
     "description": "Faster-WAM cuts a world action model's action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights.",
     "tags": [
@@ -193,6 +213,17 @@
     ],
     "date": "2026-10-11",
     "url": "/robotics/so101-6-where-the-last-millimeter-goes/"
+  },
+  {
+    "title": "Teach a robot hand how to explore.",
+    "description": "Human motion guides its experiments. Every joint stays free.",
+    "tags": [
+      "reinforcement-learning",
+      "exploration",
+      "dexterous-hands"
+    ],
+    "date": "2026-10-08",
+    "url": "/robotics/eigendexplore/"
   },
   {
     "title": "A few predictions about robotics",

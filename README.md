@@ -11,7 +11,7 @@ npm ci
 python3 scripts/build_site.py
 ```
 
-Commit the generated `index.html`, `about.html`, `notes.html`, `robotics/`, `papers/`, `sitemap.xml`, and vendored math assets alongside the source. GitHub Pages serves the static HTML directly, with no runtime dependencies. Shared styles and interactions live in `assets/site.css` and `assets/site.js`. The writing and article layouts use `assets/robotics.css`. Shared navigation and footer markup live in `scripts/templates/`.
+Commit the generated `index.html`, `about.html`, `notes.html`, `robotics/`, `papers/` (redirects), `sitemap.xml`, and vendored math assets alongside the source. GitHub Pages serves the static HTML directly, with no runtime dependencies. Shared styles and interactions live in `assets/site.css` and `assets/site.js`. The writing and article layouts use `assets/robotics.css`. Shared navigation and footer markup live in `scripts/templates/`.
 
 The generator expects the current profile heading structure: four Talroo work areas, earlier roles, education, and skills. Structural changes should also update the generator. Contact links, Talroo dates and role progression are curated in `scripts/build_site.py`; update those alongside the profile when they change.
 
@@ -123,17 +123,38 @@ The company map uses a `robotics-market` fence with a local JSON data asset. Its
 company evidence and source links work without JavaScript; the optional script adds search,
 filters and map-to-entry navigation. Styles and interactions load only on that article.
 
-## Visual paper explanations
+## Short articles
 
-The Papers section uses matching `content/papers/<slug>.json` metadata and
-`content/papers/<slug>.html` bodies. Metadata supplies the title, description, date,
-and Paper, Project, and Code links. The builder supplies the level-one heading.
-These HTML bodies are trusted author content.
+A short article is one authored HTML body, for example a blackboard canvas between two
+short paragraphs. It is an article like any other: it gets a card on the homepage and the
+Robotics list, with its date, tags and thumbnail. Put the frontmatter in
+`content/robotics/<slug>.md`, set `layout: short`, and leave the Markdown body empty. Put
+the trusted HTML body in `content/robotics/<slug>.html`. The builder supplies the level-one
+heading, so the body must not contain one.
 
-`scripts/build_papers.mjs` generates the section, individual explanations, and sitemap
-entries. The full build calls it after the Robotics builder, which also adds the newest
-paper to the homepage. Shared paper styles live in `assets/papers.css`; each explanation
-loads its own `assets/papers-<slug>.css` and module.
+An essay about one paper can name it in its frontmatter. When `paper.date` is set, the
+header shows the paper's date and link under the title:
 
-Check the animation at desktop and phone widths, with touch controls, reduced motion,
-and JavaScript disabled. Keep the core explanation visible without animation.
+```yaml
+paper:
+  title: 'The exact paper title'
+  url: 'https://arxiv.org/abs/2610.14406'
+  date: '2026-10-09'
+  project: 'https://example.org/project/'  # optional
+  code: 'https://github.com/example/code'  # optional
+```
+
+Any article can ship its own `assets/robotics/<slug>/article.css` and module script
+`assets/robotics/<slug>/article.js`. The builder loads them only on that article.
+
+Check the canvas or animation at desktop and phone widths, with touch controls, reduced
+motion, and JavaScript disabled. Keep the core explanation visible without animation.
+
+## Redirects
+
+`content/robotics/redirects.json` keeps old links working. A key is an old article slug, or
+an old site path outside `/robotics/`, such as `/papers/imprint/`. A value is a published
+article or section path, with an optional anchor. The builder writes a static page with a
+meta refresh and a canonical link at the old path. The old Papers section now redirects:
+`/papers/` goes to `/robotics/recent-papers/` and each `/papers/<slug>/` goes to
+`/robotics/<slug>/`.
