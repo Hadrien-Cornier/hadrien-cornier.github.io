@@ -156,6 +156,11 @@ def wrap(text, size, width_in):
     return lines
 
 
+# Board width for the diagrams. chalk.save() crops to the board and adds a 0.16 in margin on each side, so a 6.08 in
+# board gives a 6.4 in (1408 px) image.
+BOARD_W = 6.08
+
+
 class Board:
     """A figure with one axes in points: x to the right, y down, (0, 0) at the top left."""
 
@@ -650,15 +655,20 @@ def fig_nib_error_vs_speed(src):
 # Value charts (redraw). Every value comes from figs.py of the light figures.
 
 
-def bar_rows(ax, rows, xmax, value_pad, label_size=14.5, value_size=14.5, header_size=15.0):
-    """Horizontal bars with the label above each bar. rows: (label, value, color, value text) or (header, None, ...)."""
+def bar_rows(ax, rows, xmax, value_pad, label_size=14.5, value_size=14.5, header_size=16.5):
+    """Horizontal bars with the label above each bar. rows: (label, value, color, value text) or (header, None, ...).
+
+    A group header was bold in figs.py. The hand font has no bold, so a header is yellow and larger than a label.
+    Labels and headers start 6 pt right of the axis line."""
     y = 0.0
     for name, v, col, txt in rows:
         if v is None:
-            ax.text(0.0, y + 0.35, name, ha="left", va="baseline", fontsize=header_size, color=C_INK)
+            ax.annotate(name, (0.0, y + 0.35), xytext=(6, 0), textcoords="offset points", ha="left", va="baseline",
+                        fontsize=header_size, color=chalk.YELLOW)
             y += 0.85
             continue
-        ax.text(xmax * 0.004, y + 0.28, name, ha="left", va="baseline", fontsize=label_size, color=C_INK2)
+        ax.annotate(name, (0.0, y + 0.28), xytext=(6, 0), textcoords="offset points", ha="left", va="baseline",
+                    fontsize=label_size, color=C_INK2)
         ax.barh(y + 0.62, v, color=col, height=0.5)
         ax.text(v + value_pad, y + 0.62, txt, va="center", fontsize=value_size, color=C_INK)
         y += 1.18
@@ -759,7 +769,7 @@ def fig_arm_pan_lever():
         a.add_patch(Circle(p, 12, fc=chalk.BOARD, ec=c, lw=3))
     a.annotate("", xy=(15, 95), xytext=(333, 95), arrowprops=dict(arrowstyle="<->", color=C_ORANGE, lw=2))
     a.text(178, 66, "R: pan axis to pen", color=C_ORANGE, ha="center", fontsize=14)
-    a.plot([15, 15], [-5, 430], color=C_ORANGE, lw=1.6, ls="--")
+    a.plot([15, 15], [-5, 408], color=C_ORANGE, lw=1.6, ls="--")   # armfig.py: to 430; stopped under the words
     a.annotate("", xy=(60, 400), xytext=(-30, 400),
                arrowprops=dict(arrowstyle="->", color=C_ORANGE, lw=2.5, connectionstyle="arc3,rad=-0.4"))
     a.text(15, 418, "shoulder pan:\nturns the whole arm\nabout a vertical axis", color=C_ORANGE, ha="center", va="bottom", fontsize=16)
@@ -798,9 +808,9 @@ def fig_arm_pan_lever():
 
 def fig_system():
     """sysdiagram.py. Same boxes, arrows and words; text sizes for a phone."""
-    B = Board()
-    L, LW = 38.0, 228.0            # main column
-    RX, RW = 292.0, 132.0          # right column
+    B = Board(width_in=BOARD_W)
+    L, LW = 42.0, 210.0            # main column
+    RX, RW = 274.0, 134.0          # right column
     GAP = 26.0
     ref = B.box(L, 12, LW, "Reference drawing", ["a path in tablet millimeters"], C_BLUE)
     ik = B.box(L, ref["bottom"] + GAP, LW, "Inverse kinematics", ["joint path q*(t) for the five joints"], C_BLUE)
@@ -854,9 +864,9 @@ def fig_system():
 
 def fig_head_schematic():
     """headdiagram.py."""
-    B = Board()
-    L, LW = 38.0, 232.0
-    RX, RW = 300.0, 152.0
+    B = Board(width_in=BOARD_W)
+    L, LW = 38.0, 220.0
+    RX, RW = 282.0, 148.0
     p1 = B.box(L, 12, LW, "Planned joint path q*(t)", ["from the drawing, five joints"], C_BLUE)
     feat = B.box(L, p1["bottom"] + 30, LW, "Features of the path",
                  ["for each joint: sin, cos, angle,", "speed, acceleration, saturated speed", "30 numbers + 1 constant"], C_BLUE)
@@ -888,7 +898,7 @@ def fig_head_schematic():
 
 def fig_numbers():
     """provdiagram.py: three columns, one for each label of a number."""
-    B = Board()
+    B = Board(width_in=BOARD_W)
     # The line breaks of provdiagram.py; a line that is too wide for a phone column is wrapped again.
     cols = [("Measured", "real arm", C_BLUE,
              [["The arm draws a", "test drawing."], ["The tablet and the", "encoders log the run."],
@@ -908,8 +918,24 @@ def fig_numbers():
         B.text(x + cw / 2, 31, name, 19, col, ha="center")
         B.text(x + cw / 2, 50, sub, 14, C_INK, ha="center")
     y = 76.0
+    def cell_lines(lines, width):
+        """The provdiagram.py line breaks if every line fits. Else the cell text wrapped again with even line lengths
+        (the narrowest width that keeps the same number of lines), so no word is left alone on a line."""
+        if all(B.width(line, size) <= width for line in lines):
+            return lines
+        text = " ".join(lines)
+        best = B.wrap(text, size, width)
+        w = width
+        while w > 40:
+            w -= 2
+            trial = B.wrap(text, size, w)
+            if len(trial) > len(best):
+                break
+            best = trial
+        return best
+
     for r in range(5):
-        wrapped = [sum((B.wrap(line, size, cw - 2 * pad) for line in c[3][r]), []) for c in cols]
+        wrapped = [cell_lines(c[3][r], cw - 2 * pad) for c in cols]
         n = max(len(w) for w in wrapped)
         h = 2 * pad + n * size * 1.28 + 4
         for x, (name, sub, col, _), lines in zip(xs, cols, wrapped):
@@ -926,20 +952,34 @@ def fig_numbers():
 
 def fig_kalman_intuition():
     """kalman.html: the shape of the update, the RLS head and the EKF, with the same color for each role."""
-    B = Board()
+    B = Board(width_in=BOARD_W)
     X0, X1 = 6.0, B.W - 6.0
     eq_size, body = 21.0, 14.5
     blue, gray, org, grn, pur, ink = C_BLUE, C_INK2, C_ORANGE, C_AQUA, C_PURPLE, C_INK
+    # Subscript words (new, old, encoder, model) are plain text at 0.8 of the equation size, larger than the mathtext
+    # subscripts (0.7), so that they are at least as large as the body text on a phone.
+    sub_scale, sub_drop = 0.8, 0.26
+
+    def sub_kern(word):
+        """Gap (pt) before a subscript word. The hand-font "n" has a wide left side, so "new" starts closer."""
+        return -0.3 if word.startswith("n") else 1.0
 
     def row(segs, y, size=eq_size, center=True):
-        """One equation line of colored segments. A segment is (mathtext, color) or ("frac", num, den)."""
+        """One equation line of colored segments: (mathtext, color, gap), ("sub", mathtext, subscript, color, gap)
+        or ("frac", num, den, gap)."""
         def seg_w(s):
             if s[0] == "frac":
                 return max(sum(B.width(t, size) for t, _ in s[1]), sum(B.width(t, size) for t, _ in s[2])) + 6
+            if s[0] == "sub":
+                return B.width(s[1], size) + sub_kern(s[2]) + B.width(s[2], size * sub_scale)
             return B.width(s[0], size)
 
+        def seg_gap(s):
+            n = {"frac": 3, "sub": 4}.get(s[0], 2)
+            return s[n] if len(s) > n else 0.0
+
         widths = [seg_w(s) for s in segs]
-        gaps = [(s[3] if len(s) > 3 else 0.0) if s[0] == "frac" else (s[2] if len(s) > 2 else 0.0) for s in segs]
+        gaps = [seg_gap(s) for s in segs]
         total = sum(widths) + sum(gaps)
         x = (X0 + X1 - total) / 2 if center else X0 + 14
         placed = []
@@ -957,6 +997,9 @@ def fig_kalman_intuition():
                 for t, c in s[2]:
                     B.text(xx, yb + size * 1.0, t, size, c)
                     xx += B.width(t, size)
+            elif s[0] == "sub":
+                B.text(x, y, s[1], size, s[3])
+                B.text(x + B.width(s[1], size) + sub_kern(s[2]), y + size * sub_drop, s[2], size * sub_scale, s[3])
             else:
                 B.text(x, y, s[0], size, s[1])
             placed.append((x, x + w))
@@ -978,13 +1021,13 @@ def fig_kalman_intuition():
 
     def card1(y):
         yb = y + 34
-        segs = [(r"$\hat{x}_{\mathrm{new}}$", blue, 16), (r"$=$", ink, 16), (r"$\hat{x}_{\mathrm{old}}$", gray, 16),
+        segs = [("sub", r"$\hat{x}$", "new", blue, 16), (r"$=$", ink, 16), ("sub", r"$\hat{x}$", "old", gray, 16),
                 (r"$+$", ink, 16), (r"$K$", org, 22), (r"$(y-\hat{y})$", grn)]
         placed = row(segs, yb)
         for (x0, x1), lab in zip([placed[0], placed[2], placed[4], placed[5]], ["new belief", "old belief", "gain", "surprise"]):
-            brace(B.ax, x0 - 2, x1 + 2, yb + 9, 9, ink)
-            B.text((x0 + x1) / 2, yb + 37, lab, 15, ink, ha="center")
-        y = yb + 50
+            brace(B.ax, x0 - 2, x1 + 2, yb + 12, 9, ink)
+            B.text((x0 + x1) / 2, yb + 40, lab, 15, ink, ha="center")
+        y = yb + 53
         y = B.rich(X0 + 12, y, X1 - X0 - 24, [("new belief", blue), (": my estimate after the reading. ", ink), ("old belief", gray),
                                               (": my estimate before it. ", ink), ("surprise", grn), (": the reading minus what I predicted. ", ink),
                                               ("gain K", org), (": how much I trust the reading. For one number it runs from 0 (ignore it) "
@@ -1008,12 +1051,12 @@ def fig_kalman_intuition():
         y = B.rich(X0 + 12, yb + 30, X1 - X0 - 24, [("Gain.", org), (" Big when the head is unsure (large ", ink), ("P", pur),
                                                      (") and the feature φ is active. Small when it is sure.", ink)], body)
         yb = y + 32
-        row([(r"$W_{\mathrm{new}}$", blue, 8), (r"$=$", ink, 8), (r"$W_{\mathrm{old}}$", gray, 8), (r"$+$", ink, 8),
+        row([("sub", r"$W$", "new", blue, 8), (r"$=$", ink, 8), ("sub", r"$W$", "old", gray, 8), (r"$+$", ink, 8),
              (r"$(y-W\phi)$", grn, 5), (r"$K^{\top}$", org)], yb)
-        y = B.rich(X0 + 12, yb + 12, X1 - X0 - 24, [("Weights", blue), (" move by ", ink), ("gain", org), (" × ", ink), ("surprise", grn),
+        y = B.rich(X0 + 12, yb + 16, X1 - X0 - 24, [("Weights", blue), (" move by ", ink), ("gain", org), (" × ", ink), ("surprise", grn),
                                                      (", where the surprise is the label y minus what the head predicted.", ink)], body)
         yb = y + 40
-        row([(r"$P_{\mathrm{new}}$", pur, 8), (r"$=$", ink, 8), ("frac", [(r"$1$", ink)], [(r"$\lambda$", ink)], 4),
+        row([("sub", r"$P$", "new", pur, 8), (r"$=$", ink, 8), ("frac", [(r"$1$", ink)], [(r"$\lambda$", ink)], 4),
              (r"$($", ink, 1), (r"$P$", pur, 4), (r"$-$", ink, 4), (r"$K$", org, 3), (r"$\phi^{\top}$", ink, 2), (r"$P$", pur, 1),
              (r"$)$", ink)], yb)
         y = B.rich(X0 + 12, yb + 30, X1 - X0 - 24, [("Uncertainty", pur), (" shrinks after every reading. A forgetting factor λ below 1 "
@@ -1024,9 +1067,10 @@ def fig_kalman_intuition():
 
     def card3(y):
         yb = y + 30
-        row([(r"$\hat{d}_{\mathrm{new}}$", blue, 7), (r"$=$", ink, 7), (r"$\hat{d}_{\mathrm{old}}$", gray, 7), (r"$+$", ink, 7),
-             (r"$K$", org, 4), (r"$(q_{\mathrm{encoder}}-\hat{q}{}_{\mathrm{model}})$", grn)], yb, size=19)
-        y = B.rich(X0 + 12, yb + 14, X1 - X0 - 24, [("The state holds each joint's speed and a missing torque d. The ", ink), ("surprise", grn),
+        row([("sub", r"$\hat{d}$", "new", blue, 7), (r"$=$", ink, 7), ("sub", r"$\hat{d}$", "old", gray, 7), (r"$+$", ink, 7),
+             (r"$K$", org, 4), (r"$($", grn, 1), ("sub", r"$q$", "encoder", grn, 4), (r"$-$", grn, 4),
+             ("sub", r"$\hat{q}$", "model", grn, 1), (r"$)$", grn)], yb, size=19)
+        y = B.rich(X0 + 12, yb + 18, X1 - X0 - 24, [("The state holds each joint's speed and a missing torque d. The ", ink), ("surprise", grn),
                                                      (" is the encoder reading minus the model's prediction. If the arm lags more than "
                                                       "the model says, the missing torque estimate grows.", ink)], body)
         return y
