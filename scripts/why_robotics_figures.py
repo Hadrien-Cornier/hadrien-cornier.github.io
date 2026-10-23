@@ -330,7 +330,7 @@ def openvla_architecture():
     arm = crop(source, (923, 256, 1050, 397), 5.52, 0.56, 0.84)
 
     path = OUT / "openvla-architecture-chalk.png"
-    chalk.save(fig, path, tight=False)
+    chalk.save(fig, path, tight=False, photos=False)  # the photo crops are pasted after the save
     paste_crops(path, height, [image, arm])
     return path
 
@@ -446,7 +446,7 @@ def vjepa2_ac():
     label(ax, 5.43, 0.30, "Future\nvideo frame", size=16, color=chalk.DIM, linespacing=0.95)
 
     path = OUT / "vjepa2-ac-chalk.png"
-    chalk.save(fig, path, tight=False)
+    chalk.save(fig, path, tight=False, photos=False)  # the photo crops are pasted after the save
     paste_crops(path, height, [stack, future])
     return path
 

@@ -2,6 +2,8 @@
 # Colors match the RL series boards (assets/robotics/rl/series.css, --bb-*).
 # Use it through chalk.py (chalk.use()), which also registers the Patrick Hand
 # font and applies the chalk grain on save. See README.md.
+# Lines are straight and text sits on a straight baseline, as on the RL boards:
+# no path.sketch and no xkcd mode.
 
 # Board and chalk
 figure.facecolor: 1d2824
@@ -53,7 +55,7 @@ ytick.labelsize: 14
 legend.fontsize: 14
 legend.title_fontsize: 14
 
-# Chalk strokes: thicker lines, a light hand wobble, no top and right frame.
+# Chalk strokes: thicker lines, no top and right frame.
 lines.linewidth: 2.6
 lines.markersize: 7
 patch.linewidth: 1.6
@@ -69,4 +71,8 @@ xtick.major.size: 5
 ytick.major.size: 5
 xtick.minor.width: 1.1
 ytick.minor.width: 1.1
-path.sketch: 1.1, 140, 2
+
+# Vector panels for the long-form canvas (chalk.save(..., panel=True)): the text stays
+# text, so the page draws it in its own hand font on a straight baseline.
+svg.fonttype: none
+svg.hashsalt: chalk

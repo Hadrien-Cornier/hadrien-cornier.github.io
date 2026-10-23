@@ -46,7 +46,7 @@
   --paper: var(--bb-board); --white: var(--bb-board); --ink: var(--bb-chalk);
   --muted: var(--bb-dim); --accent: var(--bb-red); --line: var(--bb-faint);
 }
-/* The hand wobble and chalk grain, defined once per page by the #chalk-grain filter (see README). */
+/* The chalk grain, defined once per page by the #chalk-grain filter (see README). It moves no pixel. */
 .article-body svg.chalk.chalk-filter { filter: url(#chalk-grain); }
 .article-body svg.chalk text { font-family: var(--chalk-hand) !important; letter-spacing: .01em; }
 /* Hand lettering has no true bold; weight becomes color through the yellow and chalk rules. */

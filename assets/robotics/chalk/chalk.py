@@ -10,16 +10,19 @@ Usage from a figure script anywhere in the repo:
     chalk.use()
     fig, ax = plt.subplots()
     ax.plot(x, y, color=chalk.BLUE)
-    chalk.save(fig, "assets/robotics/<article>/<figure>.png")
+    chalk.save(fig, "assets/robotics/<article>/<figure>.png", panel=True)
     chalk.thumbnail("assets/robotics/<article>/<figure>.png",
                     "assets/robotics/thumbnails/<article>.jpg")
 
 Colors match the RL series boards (assets/robotics/rl/series.css, --bb-*).
-The grain in save() is the raster form of the #bb-chalk SVG filter in the RL
-articles: a slow wobble plus a fine grain that thins the chalk. It moves
-pixels by at most about one screen pixel, so data, labels and numbers stay put.
+Lines are straight and text sits on a straight baseline, as on the RL boards.
+The grain in save() is the raster form of the grain in the #bb-chalk filter:
+it thins the chalk in fine specks and moves no pixel.
+save(..., panel=True) also writes the figure as a vector panel (.svg) for the
+long-form canvas (canvas.py). The page then draws its text in the hand font.
 """
 
+import re
 from pathlib import Path
 
 import matplotlib
@@ -90,59 +93,25 @@ def label_box(color=BOARD, pad=0.25):
     return {"boxstyle": f"square,pad={pad}", "facecolor": color, "edgecolor": "none"}
 
 
-def _smooth_noise(rng, height, width, cell):
-    """Smooth noise in [-1, 1]: random values on a coarse grid, resized with bicubic steps."""
-    coarse = rng.uniform(0, 255, (max(2, height // cell + 2), max(2, width // cell + 2))).astype(np.uint8)
-    field = Image.fromarray(coarse, mode="L").resize((width, height), Image.BICUBIC)
-    return np.asarray(field, dtype=np.float32) / 127.5 - 1.0
-
-
 def chalk_grain(rgb, scale=1.0, seed=7):
-    """Apply the chalk look to an RGB array drawn on BOARD.
+    """Thin the chalk in fine specks, as the grain of the #bb-chalk filter on the RL boards does.
 
-    rgb: uint8 array [H, W, 3]. scale: output pixels per CSS pixel at the size
+    rgb: uint8 array [H, W, 3] drawn on BOARD. scale: output pixels per CSS pixel at the size
     the figure shows on a desktop column (about 2 for a 220 dpi, 6.4 in figure).
+    No pixel moves, so lines stay straight and text stays on its baseline.
     """
     rng = np.random.default_rng(seed)
     height, width, _ = rgb.shape
     board = np.array(matplotlib.colors.to_rgb(BOARD), dtype=np.float32) * 255
     image = rgb.astype(np.float32)
-
-    # Only chalk pixels and their close neighbors change; the bare board stays as it is.
-    reach = int(np.ceil(0.9 * scale)) + 1
+    # Only chalk pixels change; the bare board stays as it is.
     ink = np.abs(image - board).max(axis=2) > 2
-    near = ink.copy()
-    for shift in range(1, reach + 1):
-        near[shift:] |= ink[:-shift]
-        near[:-shift] |= ink[shift:]
-    wide = near.copy()
-    for shift in range(1, reach + 1):
-        wide[:, shift:] |= near[:, :-shift]
-        wide[:, :-shift] |= near[:, shift:]
-    ys, xs = np.nonzero(wide)
-
-    # 1. Slow wobble: shift each pixel by a smooth field of at most 0.9 CSS px.
-    amplitude = 0.9 * scale
-    cell = int(90 * scale)
-    dx = _smooth_noise(rng, height, width, cell)[ys, xs] * amplitude
-    dy = _smooth_noise(rng, height, width, cell)[ys, xs] * amplitude
-    sx = np.clip(xs + dx, 0, width - 1)
-    sy = np.clip(ys + dy, 0, height - 1)
-    x0 = np.floor(sx).astype(int)
-    y0 = np.floor(sy).astype(int)
-    x1 = np.minimum(x0 + 1, width - 1)
-    y1 = np.minimum(y0 + 1, height - 1)
-    fx = (sx - x0)[:, None]
-    fy = (sy - y0)[:, None]
-    moved = (image[y0, x0] * (1 - fx) * (1 - fy) + image[y0, x1] * fx * (1 - fy)
-             + image[y1, x0] * (1 - fx) * fy + image[y1, x1] * fx * fy)
-
-    # 2. Fine grain: thin the chalk by up to 22 % in small specks, as the SVG filter does.
+    # Each speck removes up to 22 % of the chalk.
     speck = max(1, int(round(scale)))
     grain = rng.normal(0.5, 0.2, (height // speck + 1, width // speck + 1)).astype(np.float32)
-    keep = np.clip(1.12 - 0.45 * grain[ys // speck, xs // speck], 0.78, 1.0)[:, None]
-    out = image.copy()
-    out[ys, xs] = board + (moved - board) * keep
+    keep = np.clip(1.12 - 0.45 * grain, 0.78, 1.0)
+    keep = np.repeat(np.repeat(keep, speck, axis=0), speck, axis=1)[:height, :width, None]
+    out = np.where(ink[..., None], board + (image - board) * keep, image)
     return np.clip(np.rint(out), 0, 255).astype(np.uint8)
 
 
@@ -171,7 +140,7 @@ def _photo_mask(fig, path, dpi, bbox):
     return alpha > 0
 
 
-def save(fig, path, grain=True, display_width_px=720, tight=True, photos=True):
+def save(fig, path, grain=True, display_width_px=720, tight=True, photos=True, panel=False):
     """Save a figure as a chalk PNG on the board.
 
     display_width_px: the CSS width the figure shows at in the desktop column,
@@ -179,23 +148,22 @@ def save(fig, path, grain=True, display_width_px=720, tight=True, photos=True):
     tight: crop to the drawn content plus a small margin, so no label is cut off.
     photos: keep raster images (imshow, figimage) exactly as they are: no grain,
     and the PNG keeps full color instead of a 256-color palette.
+    panel: also write the figure as a vector panel for a long-form canvas, at the
+    same path with the suffix .svg (see save_panel). The PNG and the panel have the same crop.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    # The board itself is not drawn by hand: a wobbly figure edge would show the canvas.
-    fig.patch.set_sketch_params(None)
     dpi = matplotlib.rcParams["savefig.dpi"]
     has_photos = photos and any(a.get_visible() for a in fig.findobj(matplotlib.image._ImageBase))
-    if has_photos:
-        # One fixed crop for the figure and its photo mask, so their pixels line up.
+    bbox = "tight" if tight else None
+    if (has_photos or panel) and tight:
+        # One fixed crop for the figure, its photo mask and its panel, so they line up.
         fig.canvas.draw()
-        bbox = fig.get_tightbbox(fig.canvas.get_renderer()).padded(0.16) if tight else None
-        fig.savefig(path, dpi=dpi, facecolor=BOARD, edgecolor=BOARD, bbox_inches=bbox)
-        mask = _photo_mask(fig, path, dpi, bbox)
-    else:
-        fig.savefig(path, dpi=dpi, facecolor=BOARD, edgecolor=BOARD,
-                    bbox_inches="tight" if tight else None, pad_inches=0.16)
-        mask = None
+        bbox = fig.get_tightbbox(fig.canvas.get_renderer()).padded(0.16)
+    fig.savefig(path, dpi=dpi, facecolor=BOARD, edgecolor=BOARD, bbox_inches=bbox, pad_inches=0.16)
+    mask = _photo_mask(fig, path, dpi, bbox) if has_photos else None
+    if panel:
+        save_panel(fig, path.with_suffix(".svg"), bbox=bbox)
     plt.close(fig)
     image = Image.open(path).convert("RGBA")
     flat = Image.new("RGBA", image.size, BOARD)
@@ -212,6 +180,137 @@ def save(fig, path, grain=True, display_width_px=720, tight=True, photos=True):
         image = image.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     image.save(path, optimize=True)
     return path
+
+
+def save_panel(fig, path, bbox="tight"):
+    """Write a figure as a vector panel for a long-form canvas board (see canvas.py).
+
+    The text stays text, so the page draws it in its hand font, on a straight baseline,
+    with the same Patrick Hand metrics that matplotlib used to place it. The board is not
+    painted: the panel sits on the board of the canvas, under its grain filter. A photo
+    (imshow, figimage) goes to a PNG file next to the panel, not into it as base64.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Surfaces in the board color become clear; a raised panel (BOARD_2) keeps its color.
+    clear = [ax for ax in fig.axes if matplotlib.colors.same_color(ax.get_facecolor(), BOARD)]
+    for ax in clear:
+        ax.set_facecolor("none")
+    try:
+        with matplotlib.rc_context({"svg.fonttype": "none", "svg.image_inline": False, "svg.hashsalt": path.stem}):
+            fig.savefig(path, format="svg", facecolor="none", edgecolor="none",
+                        bbox_inches=bbox, pad_inches=0.16, metadata={"Date": None})
+    finally:
+        for ax in clear:
+            ax.set_facecolor(BOARD)
+    path.write_text(clean_svg(path.read_text(), prefix=path.stem, base=_site_path(path.parent)))
+    return path
+
+
+def _site_path(folder):
+    """The URL path of a repo folder: everything from 'assets' on."""
+    parts = Path(folder).resolve().parts
+    return "/" + "/".join(parts[parts.index("assets"):]) if "assets" in parts else ""
+
+
+_HAND = re.compile(r"'?(Patrick Hand|DejaVu Sans|Chalk Hand|RL Chalk)'?$")
+_MONO = "ui-monospace, Menlo, Consolas, monospace"
+_GEOMETRY = {"d", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "width", "height",
+             "transform", "viewBox", "points", "style", "dx", "dy"}
+
+
+def _font_family(value):
+    """CSS font-family for a matplotlib family list, or None to inherit the page hand font."""
+    names = [n.strip() for n in value.split(",")]
+    if all(_HAND.match(n) for n in names):
+        return None
+    if any("Mono" in n or "Courier" in n for n in names):
+        return _MONO
+    if any(n.strip("'").startswith("STIX") for n in names):
+        # Math symbols that the hand font lacks: a math font, then the system serif.
+        return "'STIX Two Math', 'STIXGeneral', 'Cambria Math', 'Times New Roman', serif"
+    return None
+
+
+def _style(value):
+    out = []
+    for decl in value.split(";"):
+        if not decl.strip():
+            continue
+        key, _, val = decl.partition(":")
+        key, val = key.strip(), val.strip()
+        if key == "font-family":
+            val = _font_family(val)
+            if val is None:
+                continue
+        out.append(f"{key}: {val}")
+    return "; ".join(out)
+
+
+def _round(value):
+    def short(m):
+        text = f"{float(m.group(0)):.2f}".rstrip("0").rstrip(".")
+        return "0" if text == "-0" else text
+    return re.sub(r"-?\d+\.\d+(?:e-?\d+)?", short, value)
+
+
+def _unwrap_groups(text):
+    """Drop the <g> wrappers that carry no attribute; they only nest the drawing."""
+    out, keep, pos = [], [], 0
+    for m in re.finditer(r"<g(\s[^>]*)?>|</g>", text):
+        out.append(text[pos:m.start()])
+        pos = m.end()
+        if m.group(0) == "</g>":
+            if keep.pop():
+                out.append("</g>")
+        else:
+            keep.append(bool((m.group(1) or "").strip()))
+            if keep[-1]:
+                out.append(m.group(0))
+    out.append(text[pos:])
+    return "".join(out)
+
+
+def clean_svg(text, prefix, base=""):
+    """Make a matplotlib SVG safe to inline in a page beside other panels.
+
+    It removes the page-wide <style> rule, the metadata and the comments, gives every id
+    the prefix (and drops the ids that nothing references), rounds coordinates to 0.01,
+    lets the text inherit the page hand font, and points image files at base.
+    """
+    text = re.sub(r"<\?xml[^>]*\?>|<!DOCTYPE[^>]*>|<metadata>.*?</metadata>|<!--.*?-->", "", text, flags=re.S)
+    # Matplotlib writes *{stroke-linejoin: round; stroke-linecap: butt}; inline in a page it would style every SVG.
+    text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.S)
+    text = text.replace("xlink:href=", "href=").replace(' xmlns:xlink="http://www.w3.org/1999/xlink"', "")
+    used = set(re.findall(r"url\(#([^)]+)\)", text)) | set(re.findall(r'href="#([^"]+)"', text))
+
+    def ident(m):
+        name = m.group(1)
+        return f' id="{prefix}-{name}"' if name in used else ""
+    text = re.sub(r' id="([^"]+)"', ident, text)
+    text = re.sub(r"url\(#([^)]+)\)", lambda m: f"url(#{prefix}-{m.group(1)})", text)
+    text = re.sub(r'href="#([^"]+)"', lambda m: f'href="#{prefix}-{m.group(1)}"', text)
+    if base:
+        text = re.sub(r'href="(?!#|data:|/|https?:)([^"]+)"', lambda m: f'href="{base}/{m.group(1)}"', text)
+
+    def attr(m):
+        name, value = m.group(1), m.group(2)
+        if name == "style":
+            value = _style(value)
+        if name in _GEOMETRY:
+            value = re.sub(r"\s+", " ", _round(value)).strip()
+        return f' {name}="{value}"'
+    text = re.sub(r' ([\w:-]+)="([^"]*)"', attr, text)
+    text = re.sub(r' style=""', "", text)
+    text = re.sub(r"<defs>\s*</defs>", "", text)
+    text = re.sub(r">\s+<", "><", text).strip()
+    text = _unwrap_groups(text)
+    # The panel root: keep the view box, and draw strokes the way matplotlib drew them.
+    text = re.sub(r'<svg [^>]*?(viewBox="[^"]*")[^>]*>',
+                  r'<svg xmlns="http://www.w3.org/2000/svg" \1 stroke-linejoin="round" stroke-linecap="butt">', text, count=1)
+    # The clear figure and axes patches draw nothing.
+    text = re.sub(r'<path d="[^"]*" style="fill: none"/>', "", text)
+    return text + "\n"
 
 
 def thumbnail(source, target, size=(720, 424), pad=18, crop=False):
