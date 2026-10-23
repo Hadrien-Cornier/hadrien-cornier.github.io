@@ -11,7 +11,7 @@ npm ci
 python3 scripts/build_site.py
 ```
 
-Commit the generated `index.html`, `about.html`, `notes.html`, `robotics/`, `papers/` (redirects), `sitemap.xml`, and vendored math assets alongside the source. GitHub Pages serves the static HTML directly, with no runtime dependencies. Shared styles and interactions live in `assets/site.css` and `assets/site.js`. The writing and article layouts use `assets/robotics.css`. Shared navigation and footer markup live in `scripts/templates/`.
+Commit the generated `index.html`, `about.html`, `notes.html`, `robotics/`, `tags/`, `papers/` (redirects), `sitemap.xml`, and vendored math assets alongside the source. GitHub Pages serves the static HTML directly, with no runtime dependencies. Shared styles and interactions live in `assets/site.css` and `assets/site.js`. The writing and article layouts use `assets/robotics.css`. Shared navigation and footer markup live in `scripts/templates/`.
 
 The generator expects the current profile heading structure: four Talroo work areas, earlier roles, education, and skills. Structural changes should also update the generator. Contact links, Talroo dates and role progression are curated in `scripts/build_site.py`; update those alongside the profile when they change.
 
@@ -60,9 +60,18 @@ thumbnail_alt: 'Describe the figure or frame.'
 
 Every published article needs a 720 × 424 thumbnail made from its own figure or video frame. Crop photos; contain and pad diagrams so labels survive. Set `thumbnail` to an existing local file under `/assets/` and supply descriptive `thumbnail_alt`. Both the homepage and section indexes use these fields. The build fails with the article filename when a published thumbnail is missing or invalid. Drafts may omit it; supplied draft thumbnails are validated. For generated outputs in `/assets/robotics/thumbnails/`, record the original source in `content/robotics/thumbnail-sources.json`. The build rejects two published cards with the same original source, even when output filenames differ. Preserve existing homepage source figures when adding explicit metadata. See [the source audit](docs/thumbnail-audit.md).
 
-Add `section: 'recent-papers'` to file an essay under Recent papers. The builder writes the
-shelf's index at `/robotics/recent-papers/`, links it from the Robotics page, and labels the
-essay's cards and header. Section names live in `SECTIONS` in `scripts/build_robotics.mjs`.
+Add `section: 'recent-papers'` to file a write-up of one paper under Recent papers. Leave it
+off for an essay that surveys several papers. The builder writes the shelf's index at
+`/robotics/recent-papers/`, links it from the Robotics page, and labels the article's cards
+and header. Section names live in `SECTIONS` in `scripts/build_robotics.mjs`. Start a paper
+article's title with the paper's method name, for example `'ASPIRE: Can you zero-shot
+robotics with a coding agent?'`.
+
+Tags are 2 to 4 short lowercase words in `tags`. Each tag gets a generated page at
+`/tags/<tag>/` that lists every published article with that tag, newest first, and
+`/tags/` lists all tags. Every tag chip on article pages, the homepage, and the Robotics
+and section lists links to its tag page. Old `/robotics/#tag-<tag>` links still open the
+Robotics list filtered to that tag.
 
 Use level-two and level-three headings for the table of contents. Set `layout: essay`
 for a centered reading column without a contents sidebar. The title supplies the
