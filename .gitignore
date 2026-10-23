@@ -9,3 +9,4 @@ out/resume.synctex.gz
 .DS_Store
 
 node_modules/
+__pycache__/
