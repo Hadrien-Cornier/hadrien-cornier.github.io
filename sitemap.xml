@@ -38,6 +38,11 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/robotics/three-robot-philosophies/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/robotics/world-action-models-vs-vlas/</loc>
     <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
