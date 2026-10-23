@@ -17,8 +17,8 @@ thumbnail_alt: 'Six problems that shape reinforcement learning'
 <style>
 /* On a phone the whole canvas is too small to read, so the overview shows the six names and sketches only. */
 @media (max-width: 640px) {
-  #rc:not(.is-zoomed) .rc-panel text:not(.p0-name) { visibility: hidden; }
-  #rc:not(.is-zoomed) .rc-panel text.p0-name { font-size: 40px; }
+  #rc :is(.rc-stage, .rc-fig):not(.is-zoomed) .rc-panel text:not(.p0-name) { visibility: hidden; }
+  #rc :is(.rc-stage, .rc-fig):not(.is-zoomed) .rc-panel text.p0-name { font-size: 40px; }
 }
 </style>
 <div class="rc" id="rc">
