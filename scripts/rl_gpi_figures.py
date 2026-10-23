@@ -363,12 +363,9 @@ def canvas(history):
 
 VIEWS = '{"walker": [16, 38, 388, 244], "greedy": [436, 38, 388, 244], "rounds": [16, 333, 388, 244], "loop": [436, 333, 388, 244], "lines": [16, 628, 388, 244], "family": [436, 628, 388, 244]}'
 TITLE = "Generalized policy iteration on a blackboard"
-DESC = ("Six panels. 1: the Part 1 cliff grid under a random walker, with values from about −482 to −1072. 2: one greedy step: "
-        "the right side heads for the goal, the left side bumps the top wall forever at −100, and no cell gets worse. "
-        "3: six rounds of evaluate and improve; the start value goes −1072, −100, −100, −100, −15.7, −15.7, −12.25 and the "
-        "route shrinks from 17 to 13 steps along the cliff edge. 4: the book's loop diagram, evaluation from π to V and "
-        "improvement from V to π, ending at π* and v*. 5: the book's two-lines diagram, a zigzag between v = vπ and "
-        "π = greedy(v) that climbs to v*, π*. 6: seven methods and what plays evaluation and improvement in each.")
+DESC = ("Six panels. 1: a random walker's values on the Part 1 cliff grid, −482 to −1072. 2: one greedy step; no cell gets worse. "
+        "3: six rounds of policy iteration; the start value climbs from −1072 to −12.25. 4: the book's loop between evaluation "
+        "and improvement, ending at π* and v*. 5: the book's two-lines diagram. 6: seven methods and what evaluates and improves in each.")
 
 
 def canvas_svg(history):
