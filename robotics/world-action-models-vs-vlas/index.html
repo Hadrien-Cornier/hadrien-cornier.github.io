@@ -36,7 +36,7 @@
 #rc .rc-body table { font-size: 15px; }
 #rc .rc-body td:first-child { white-space: nowrap; color: var(--muted); }
 /* The one-line summary above the panels belongs to the whole-board view only. */
-#rc.is-zoomed .wv-banner { visibility: hidden; }
+#rc :is(.rc-stage, .rc-fig).is-zoomed .wv-banner { visibility: hidden; }
 </style>
 <svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in"/></filter></svg>
 <div class="rc rls-canvas" id="rc">
