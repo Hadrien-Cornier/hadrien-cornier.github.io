@@ -28,15 +28,16 @@ export function readPapers(root = ROOT) {
   const seen = new Set();
   return fs.readdirSync(directory).filter((name) => name.endsWith('.json')).sort().map((name) => {
     const paper = JSON.parse(fs.readFileSync(path.join(directory, name), 'utf8'));
-    for (const key of ['slug', 'title', 'description', 'date', 'paperUrl', 'projectUrl', 'codeUrl']) {
+    for (const key of ['slug', 'title', 'description', 'date', 'paperUrl', 'codeUrl']) {
       if (typeof paper[key] !== 'string' || !paper[key].trim()) throw new Error(`${name}: missing ${key}`);
     }
+    if (paper.projectUrl !== undefined && (typeof paper.projectUrl !== 'string' || !paper.projectUrl.trim())) throw new Error(`${name}: projectUrl must be a non-empty string`);
     if (paper.shortTitle !== undefined && (typeof paper.shortTitle !== 'string' || !paper.shortTitle.trim())) throw new Error(`${name}: shortTitle must be a non-empty string`);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(paper.slug) || name !== `${paper.slug}.json`) throw new Error(`${name}: slug must match the filename`);
     if (seen.has(paper.slug)) throw new Error(`Duplicate paper slug: ${paper.slug}`);
     seen.add(paper.slug);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(paper.date) || Number.isNaN(Date.parse(paper.date)) || new Date(paper.date).toISOString().slice(0, 10) !== paper.date) throw new Error(`${name}: invalid date`);
-    for (const key of ['paperUrl', 'projectUrl', 'codeUrl']) {
+    for (const key of ['paperUrl', 'projectUrl', 'codeUrl'].filter((key) => paper[key] !== undefined)) {
       let url;
       try { url = new URL(paper[key]); } catch { throw new Error(`${name}: invalid ${key}`); }
       if (url.protocol !== 'https:' || url.username || url.password) throw new Error(`${name}: ${key} must use HTTPS`);
@@ -58,7 +59,11 @@ function shell(root, {title, description, pathname, content, slug}) {
   const themeHead = fs.readFileSync(localOrShared(root, 'scripts/templates/theme-head.html'), 'utf8');
   const themeScript = `<script src="/assets/theme.js?v=${version(root, 'assets/theme.js')}" defer></script>`;
   const tokens = {writing_current:'', papers_current:' aria-current="page"', notes_current:'', about_current:'', resume_href:'/out/resume.pdf', site_css:'/assets/site.css'};
-  const assets = slug ? `<link rel="stylesheet" href="/assets/papers-${slug}.css?v=${version(root, `assets/papers-${slug}.css`)}"><script type="module" src="/assets/papers-${slug}.js?v=${version(root, `assets/papers-${slug}.js`)}"></script>` : '';
+  // A paper may ship a stylesheet only; its script is optional.
+  const script = slug && fs.existsSync(localOrShared(root, `assets/papers-${slug}.js`));
+  // A body with equations prerendered by KaTeX needs the same vendored stylesheet as the robotics articles.
+  const math = content.includes('class="katex"') ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : '';
+  const assets = slug ? `${math}<link rel="stylesheet" href="/assets/papers-${slug}.css?v=${version(root, `assets/papers-${slug}.css`)}">${script ?`<script type="module" src="/assets/papers-${slug}.js?v=${version(root, `assets/papers-${slug}.js`)}"></script>` : ''}` : '';
   return `<!doctype html>
 ${MARKER}
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
