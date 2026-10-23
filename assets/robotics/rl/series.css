@@ -65,7 +65,7 @@
 .article-body .rc.rc-inline .rc-nav { display: none; }
 .article-body .rc:not(.rc-inline) .rc-fig { display: none; }
 .article-body .rc-fig { margin: 26px 0 30px; padding: 0; }
-.article-body .rc-fig .rc-fig-cap { display: flex; align-items: center; gap: 10px; min-height: 34px; margin: 0; padding: 5px 10px 3px; font: 400 18px/1.2 var(--bb-hand); color: var(--bb-yellow) !important; }
+.article-body .rc-fig .rc-fig-cap { display: flex; align-items: center; gap: 10px; box-sizing: border-box; min-height: 40px; margin: 0; padding: 5px 10px 3px; cursor: auto; font: 400 18px/1.2 var(--bb-hand); color: var(--bb-yellow) !important; }
 .article-body .rc-fig-title { flex: 1 1 auto; min-width: 0; }
 .article-body .rc-fig .rc-map { flex: 0 0 auto; display: block; width: auto; height: 26px; max-width: 64px; overflow: visible; }
 .article-body .rc-map rect { fill: none; stroke: var(--bb-faint); stroke-width: 1; stroke-dasharray: 2 2; vector-effect: non-scaling-stroke; }
@@ -73,7 +73,8 @@
 .article-body .rc-map rect.is-now { fill: var(--bb-yellow); stroke: none; }
 .article-body .rc-fig .rc-view { position: relative; overflow: hidden; }
 .article-body .rc-fig .rc-view > svg.rc-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; margin: 0; }
-.article-body .rc-fig > .rc-fig-view > svg.rc-svg { pointer-events: none; } /* a snapshot: no hit testing; the docked live board keeps its taps */
+.article-body .rc-fig > .rc-fig-view { pointer-events: none; } /* a snapshot: no hit testing; the docked live board keeps its taps */
+.article-body .rc-fig.is-live:not(.is-docked) { cursor: pointer; } /* a tap opens the live board here */
 .article-body .rc-fig > .rc-stage .rc-reset { display: none; } /* the whole board does not fit a figure */
 .article-body .rc-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media print { .article-body .rc-fig:not(.is-ready) { display: none; } }

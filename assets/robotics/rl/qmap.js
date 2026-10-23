@@ -393,7 +393,7 @@
     // The view is set first, so onView does not reset the frame to the section default.
     [].forEach.call(document.querySelectorAll('[data-qm-frame]'), function (b) {
       b.addEventListener('click', function () {
-        if (root.RC && root.RC.peek) { view = 'table'; root.RC.peek('sec-table'); }
+        if (root.RC && root.RC.peek) { view = 'table'; root.RC.peek('sec-table', b); }
         pinned = -1; go(frameIndex(+b.getAttribute('data-qm-frame')), true);
       });
     });
