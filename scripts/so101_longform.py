@@ -76,6 +76,23 @@ TITLES = {
         "rate.svg": "Sample rates on one log axis",
         "chain.svg": "From the sensor target to the nib",
     },
+    # Part 6 figures belong to the so101-controllers figure script (scripts/so101_controllers_figures.py).
+    "so101-6-where-the-last-millimeter-goes": {
+        "arm-pan-lever.png": "The pan has the longest lever",
+        "goal-chatter.png": "Goal chatter",
+        "kitten-timeline.png": "The kitten, drawing after drawing",
+        "four-drawings.png": "The four test drawings",
+        "system.png": "Where each error part enters",
+        "head-schematic.png": "The correction head",
+        "head-offset.png": "What the head adds",
+        "kalman-intuition.png": "Two online estimators",
+        "controllers-map.png": "All controllers of this part",
+        "error-parts.png": "Ten error parts",
+        "pan-reversal.png": "The pan waits at a reversal",
+        "nib-error-vs-speed.png": "Nib error against speed",
+        "learning-curve.png": "Error against training motions",
+        "numbers.png": "The three labels",
+    },
     "so101-7-learning-between-and-during-strokes": {
         "timing-and-shape.png": "Timing and shape",
         "repeat-budget.png": "Seeing an error, predicting it",
