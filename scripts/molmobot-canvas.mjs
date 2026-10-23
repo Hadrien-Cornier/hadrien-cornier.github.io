@@ -16,8 +16,8 @@ export const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/molmobot
 export const OUTPUT = path.join(ROOT, 'content/papers/molmobot.html');
 export const PANEL = { w: 560, h: 460 };
 
-// Blue for the simulator, yellow for the real world, lavender for the scripted expert, pink for MolmoBot (the paper's own bar color).
-const S = { sim: C.blue, real: C.yellow, expert: C.lavender, ours: C.pink, base: C.muted };
+// Blue for the simulator, gray for the real world and real-data baselines (as in the paper's Fig. 7), lavender for the scripted expert, pink for MolmoBot.
+const S = { sim: C.blue, real: C.muted, expert: C.lavender, ours: C.pink, base: C.muted };
 
 /** "1.7M", "94.2k", "5,704 h" as numbers. */
 export function count(cell) {
@@ -201,7 +201,7 @@ function panelExpert() {
 function panelScale() {
   const r = random(41);
   let out = frame(r, '4 · then 1.7 million of them', C.panel.yellow);
-  out += `<rect x="24" y="50" width="16" height="12" fill="${S.base}" fill-opacity=".55"/>` + text(48, 62, 'DROID, real (same arm)', { size: 19, fill: C.muted });
+  out += `<rect x="24" y="50" width="16" height="12" fill="${S.base}" fill-opacity=".55"/>` + text(48, 62, 'DROID, real (same setup)', { size: 19, fill: C.muted });
   out += `<rect x="292" y="50" width="16" height="12" fill="${S.ours}"/>` + text(316, 62, 'MolmoBot-Data, sim', { size: 19, fill: C.muted });
   const [x, w] = [24, 400];
   SCALE.forEach((row, k) => {
@@ -213,6 +213,7 @@ function panelScale() {
   });
   // DROID is not all the real data the baselines saw.
   out += text(24, 256, 'π0 and π0.5 trained on >10k h of real demos', { size: 19, fill: C.muted });
+  out += text(100, 100, '(2 robots; 1.5M on the Franka)', { size: 19, fill: C.muted });
   out += text(168, 292, '(drawn from 200k+ houses)', { size: 19, fill: C.muted });
   out += text(24, 376, 'made in about 6,500 GPU-hours on 100 A100s', { size: 19 });
   out += text(24, 414, 'for picking, more demos helped;', { font: HAND, size: 21, weight: 700, fill: C.muted });
@@ -243,9 +244,9 @@ function panelPolicy() {
   out += rect(r, 24, 168, 196, 30, { width: 1.8, jitter: 1, fill: C.bg }) + snowflake(40, 183, 8, C.ink) + text(56, 189, 'SigLIP2, frozen', { size: 19 });
   out += line(r, 100, 200, 100, 214, { arrow: true, width: 2, size: 8 });
   out += rect(r, 24, 218, 220, 122, { width: 2.2, jitter: 1.2, fill: C.bg }) + text(134, 240, 'Molmo2-4B', { font: HAND, size: 20, weight: 700, anchor: 'middle' });
-  out += text(134, 262, 'vision-language model', { size: 18, anchor: 'middle', fill: C.muted }) + layers(38, 276, 192, 3, 20, C.panel.blue);
+  out += text(134, 262, 'vision-language model', { size: 19, anchor: 'middle', fill: C.muted }) + layers(38, 276, 192, 3, 20, C.panel.blue);
   out += rect(r, 320, 218, 216, 122, { stroke: S.ours, width: 2.2, jitter: 1.2, fill: C.bg }) + text(428, 240, 'action head', { font: HAND, size: 20, weight: 700, anchor: 'middle', fill: S.ours });
-  out += text(428, 262, 'diffusion transformer', { size: 18, anchor: 'middle', fill: C.muted }) + layers(334, 276, 188, 3, 20, C.panel.red);
+  out += text(428, 262, 'diffusion transformer', { size: 19, anchor: 'middle', fill: C.muted }) + layers(334, 276, 188, 3, 20, C.panel.red);
   for (let k = 0; k < 3; k++) out += line(r, 232, 282 + k * 20, 332, 282 + k * 20, { stroke: S.ours, width: 1.8, arrow: true, size: 8, passes: 1 });
   out += line(r, 470, 136, 470, 214, { stroke: C.green, width: 2, arrow: true, size: 9 });
   // Flow matching: noise goes into the head, a chunk of 16 joint targets comes out, and the robot runs the first 8.
@@ -306,9 +307,9 @@ export const LAYOUTS = {
     overlay(r) {
       let out = tag(r, 'the data · made only in simulation', { x: 40, y: 10, size: 28 });
       out += line(r, 606, 310, 644, 310, { width: 2.6, arrow: true }) + line(r, 606, 1530, 644, 1530, { width: 2.6, arrow: true });
-      out += curve([[930, 548], [800, 574], [600, 586], [560, 610], [480, 678]], { width: 2.6, arrow: true });
+      out += curve([[930, 548], [800, 574], [640, 590], [560, 630], [530, 680]], { width: 2.6, arrow: true });
       out += line(r, 606, 920, 644, 920, { stroke: S.expert, width: 3, arrow: true });
-      out += `<path d="M40,1190 H1210" stroke="${C.muted}" stroke-width="2" stroke-dasharray="10 9"/>`;
+      out += `<path d="M40,1172 H1210" stroke="${C.muted}" stroke-width="2" stroke-dasharray="10 9"/>`;
       out += curve([[930, 1158], [800, 1184], [600, 1196], [560, 1220], [480, 1288]], { width: 2.6, arrow: true });
       out += tag(r, 'the policy, then the real test', { x: 40, y: 1220, size: 28 });
       return out;
@@ -319,11 +320,11 @@ export const LAYOUTS = {
     panels: [[12, 80], [12, 600], [12, 1120], [12, 1770], [12, 2290], [12, 2810]],
     overlay(r) {
       let out = tag(r, 'the data · only simulated', { x: 12, y: 10, size: 28 });
-      for (const y of [540, 1060, 2230, 2750]) out += line(r, 452, y + 6, 452, y + 54, { width: 2.6, arrow: true });
+      for (const y of [540, 1060, 2230, 2750]) out += line(r, 520, y + 6, 520, y + 54, { width: 2.6, arrow: true });
       out += `<path d="M12,1660 H572" stroke="${C.muted}" stroke-width="2" stroke-dasharray="10 9"/>`;
       out += tag(r, 'scale, learn, test for real', { x: 12, y: 1682, size: 28 });
-      out += line(r, 452, 1586, 452, 1764, { stroke: S.expert, width: 3, arrow: true });
-      out += text(434, 1632, '× 1.7M', { font: HAND, size: 26, weight: 700, anchor: 'end', fill: S.expert });
+      out += line(r, 520, 1586, 520, 1764, { stroke: S.expert, width: 3, arrow: true });
+      out += text(502, 1632, '× 1.7M', { font: HAND, size: 26, weight: 700, anchor: 'end', fill: S.expert });
       return out;
     },
   },
@@ -334,7 +335,7 @@ const DESC = [
   'Panel 1, the bet: the usual sim-to-real recipe goes from a simulator through real demonstrations or fine-tuning to the real robot. MolmoBot goes from a simulator at scale straight to the real robot, zero-shot, with no real-robot step. Sim-to-real means training in simulation and running for real; zero-shot here means no real robot data and no fine-tuning. The question: can simulation alone be enough?',
   'Panel 2, randomize everything: three random draws of the same tabletop task differ in lights, textures, colors and camera angle. The paper randomizes looks (lights, textures, colors), the camera (position, angle, field of view), physics (friction, object mass, joint damping), the setup (objects, their poses, the arm start pose) and the moves (noise on the expert actions, so the policy cannot learn an exact replay). Each demonstration takes place in a generated MolmoSpaces house, rendered in MuJoCo. The paper favors variety in objects, poses and viewpoints over photorealism.',
   'Panel 3, a scripted expert: a hand-written planner reads the simulator’s true object poses and a list of grasps checked in simulation, then moves through phases: pregrasp, grasp, lift, preplace, place, postplace, and stow, back to the home pose. If the grasp slips, it goes back and retries, up to 3 times; after that the demonstration is thrown out. The policy gets only images from two cameras, the joint angles and the instruction, and learns to copy the expert.',
-  `Panel 4, the scale: ${SCALE.map((row) => `${row.label}, ${row.droid} in DROID (real, same arm setup) against ${row.ours} in MolmoBot-Data (simulated)`).join('; ')}. The π0 and π0.5 baselines trained on more than 10,000 hours of real demonstrations. The 94.2k environments are drawn from more than 200,000 MolmoSpaces houses. The data took about 6,500 GPU-hours on 100 A100 GPUs. For picking, more demonstrations helped; more houses at a fixed 50,000 demonstrations did not.`,
+  `Panel 4, the scale: ${SCALE.map((row) => `${row.label}, ${row.droid} in DROID (real, same arm setup) against ${row.ours} in MolmoBot-Data (simulated, two robots)`).join('; ')}. About 1.5 million of the demonstrations are on the Franka arm. The π0 and π0.5 baselines trained on more than 10,000 hours of real demonstrations. The 94.2k environments are drawn from more than 200,000 MolmoSpaces houses. The data took about 6,500 GPU-hours on 100 A100 GPUs. For picking, more demonstrations helped; more houses at a fixed 50,000 demonstrations did not.`,
   'Panel 5, the policy: a wrist camera and an external camera, each with the current frame and one from about 0.5 seconds before, go through the frozen SigLIP2 vision encoder into Molmo2-4B, a vision-language model, with the instruction, for example “put the banana in the black bowl”. Each layer of the action head, a diffusion transformer, reads the matching Molmo2 layer, and the joint angles go into the action head. The head turns noise into a chunk of 16 steps of joint targets; the robot runs the first 8, then plans again.',
   `Panel 6, the real test: Franka arm, pick-and-place in 4 real rooms, 30 trials per room and ${TRIALS} per policy. ${RESULT.map((row) => `${row.label} ${pct(row.value)} (${row.wins} of ${TRIALS})`).join(', ')}. The two DROID baselines trained on more than 10,000 hours of real demonstrations; the MolmoBot policies trained only in simulation. With the same π0 architecture, simulated data instead of real data goes from ${pct(RESULT[0].value)} to ${pct(RESULT[2].value)}. MolmoBot-Img sees one frame per camera instead of two.`,
 ].join(' ');
@@ -349,13 +350,13 @@ export function svg(name) {
 
 // ── Prose around the canvas ──────────────────────────────────────────────────────
 
-export const INTRO = String.raw`Say you want a robot arm to put a banana in a black bowl, in a room it's never seen. Can a policy trained only in simulation do that? That's sim-to-real: train in a simulator, run on a physical robot. MolmoBot goes zero-shot, meaning no real robot data and no fine-tuning first. It leans on domain randomization: lighting, textures, camera pose, friction and more change at random across program-generated houses. Scripted experts, planners that read the simulator's true object poses, record 1.7 million demonstrations on two robots, and MolmoBot learns to imitate them. On real tabletop pick-and-place, it succeeds in 79.2% of 120 trials across 4 rooms, against 39.2% for π0.5-DROID, which trained on more than 10,000 hours of real robot demos. A door-only version on a mobile robot did worse, opening a real pull door in 2 of 9 tries.`;
+export const INTRO = String.raw`Say you want a robot arm to put a banana in a black bowl, in a room it's never seen. Can a policy trained only in simulation do that? That's sim-to-real: train in a simulator, run on a physical robot. MolmoBot goes zero-shot, meaning no real robot data and no fine-tuning first. It leans on domain randomization: lighting, textures, camera pose, friction and more change at random across program-generated houses. Scripted experts, planners that read the simulator's true object poses, record 1.7 million demonstrations on two robots, and MolmoBot learns to imitate them. On real tabletop pick-and-place, it succeeds in 79.2% of 120 trials across 4 rooms, against 39.2% for π0.5-DROID, which trained on more than 10,000 hours of real robot demos. On a mobile robot, a door-only version opened a real pull door in 2 of 9 tries, with the robot's emergency stop tripping in 5 of them.`;
 export const MATH_BEFORE = String.raw`MolmoBot learns by behavior cloning, copying the expert's actions. Its action head uses flow matching, which learns to turn random noise into an action chunk a little at a time. The paper takes this from π0; written out as in the released code, training minimizes `;
 // The paper gives no formula. The sign convention follows the released code (molmobot.py): tau = 0 is pure noise and the target velocity is actions minus noise.
 export const EQUATION = String.raw`\mathcal{L}(\theta) = \mathbb{E}_{(o,\ell,q,A)\sim\mathcal{D},\;\tau,\;\epsilon}\Big[\big\|v_\theta(A^\tau, \tau, o, \ell, q) - (A - \epsilon)\big\|^2\Big], \quad A^\tau = \tau A + (1-\tau)\,\epsilon`;
 // Phones get the same loss on three lines, with the sampling written under it.
 export const EQUATION_NARROW = String.raw`\begin{aligned}&\mathcal{L}(\theta) = \mathbb{E}\Big[\big\|v_\theta(A^\tau, \tau, o, \ell, q) - (A - \epsilon)\big\|^2\Big]\\&\text{over } (o,\ell,q,A)\sim\mathcal{D},\ \tau,\ \epsilon\\&A^\tau = \tau A + (1-\tau)\,\epsilon\end{aligned}`;
-export const MATH_AFTER = String.raw` Here $\mathcal{D}$ is the Franka demonstrations (about 1.5 million), mixed by task; $o$ is two frames from each of a wrist camera and an external camera; $\ell$ is the instruction, for example “put the banana in the black bowl”; and $q$ is the joint angles. $A$ is the expert's next 16 actions, each a target position for every joint and the gripper, called an action chunk. A mixing time $\tau$ between 0 and 1 blends it with Gaussian noise $\epsilon$ of the same shape into the noisy chunk $A^\tau$: at $\tau = 0$ it's pure noise, and at $\tau = 1$ it's the expert's chunk. The action head $v_\theta$, a DiT (diffusion transformer) that reads the Molmo2 vision-language model layer by layer, predicts the direction from noise toward the clean chunk. At run time it follows $v_\theta$ in small steps from pure noise to a chunk, runs 8 of the 16 actions, then plans a new chunk. The head is cheap next to the vision-language model, so the authors draw 8 values of $\tau$ for each example and train on all of them at once. Nothing in the loss mentions the real world. Every action the policy learns comes from a scripted expert in simulation; only its visual features, from SigLIP2 and Molmo2, come from pretraining on image and text data.`;
+export const MATH_AFTER = String.raw` Here $\mathcal{D}$ is the Franka demonstrations (about 1.5 million), mixed by task; $o$ is two frames from each of a wrist camera and an external camera; $\ell$ is the instruction, for example “put the banana in the black bowl”; and $q$ is the joint angles. $A$ is the expert's next 16 actions, each a target position for every joint and the gripper, called an action chunk. A mixing time $\tau$ between 0 and 1 blends it with Gaussian noise $\epsilon$ of the same shape into the noisy chunk $A^\tau$: at $\tau = 0$ it's pure noise, and at $\tau = 1$ it's the expert's chunk. The action head $v_\theta$, a DiT (diffusion transformer) that reads the Molmo2 vision-language model layer by layer, predicts the direction from noise toward the clean chunk. At run time it follows $v_\theta$ in small steps from pure noise to a chunk, runs 8 of the 16 actions, then plans a new chunk. The head is cheap next to the vision-language model, so the authors draw 8 values of $\tau$ for each example and train on all of them at once. Nothing in the loss mentions the real world. Every action the policy learns comes from a scripted expert in simulation; only its starting weights for vision and language, from SigLIP2 and Molmo2, come from pretraining on image and text data.`;
 
 const tex = (source, displayMode = false) => katex.renderToString(source, { displayMode, throwOnError: true, output: 'htmlAndMathml' });
 
@@ -374,7 +375,7 @@ export function render() {
 <p class="mb-intro">${prose(INTRO)}</p>
 <figure class="mb-canvas">${svg('wide')}${svg('mid')}${svg('tall')}</figure>
 <p class="mb-math">${prose(MATH_BEFORE)}<span class="mb-eq mb-eq-wide">${tex(EQUATION, true)}</span><span class="mb-eq mb-eq-narrow">${tex(EQUATION_NARROW, true)}</span>${prose(MATH_AFTER)}</p>
-<div class="mb-after"><p class="mb-credit">Deshpande, Guru, Hendrix, Jauhri and 22 coauthors · Ai2, UW, UCLA, TU Darmstadt, Princeton · arXiv v2 · 26 Mar 2026</p><nav class="mb-sources" aria-label="Original sources"><a href="https://arxiv.org/abs/2603.16861v2">Paper ↗</a><a href="https://allenai.github.io/MolmoBot/">Project ↗</a><a href="https://github.com/allenai/MolmoBot">Code ↗</a></nav></div>
+<div class="mb-after"><p class="mb-credit">Deshpande, Guru, Hendrix, Jauhri and 22 coauthors · Ai2, UW, UCLA, TU Darmstadt, Princeton · arXiv v2 · 26 Mar 2026<br>π0.5-DROID: 39.2% is 47 of 120 trials (Fig. 7, Table 10); Table 6 prints 31.3%.</p><nav class="mb-sources" aria-label="Original sources"><a href="https://arxiv.org/abs/2603.16861v2">Paper ↗</a><a href="https://allenai.github.io/MolmoBot/">Project ↗</a><a href="https://github.com/allenai/MolmoBot">Code ↗</a></nav></div>
 `;
 }
 
