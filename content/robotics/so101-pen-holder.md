@@ -186,7 +186,7 @@ I chose the sleeve. It is the smallest print. It needs no tools and no change to
 
 The sleeve is a hollow block with the shape of the end of the fixed finger. You slide it up onto the finger until it stops, and you turn a side thumbscrew onto the finger.
 
-![What holds the sleeve and the pen](/assets/robotics/so101-pen-holder/how-it-holds.png "Left: a view from behind the fixed finger. The sleeve is see-through, so the finger shows inside it. Right: the two pen clamps.")
+![What holds the sleeve and the pen](/assets/robotics/so101-pen-holder/how-it-holds.png "Top: a view from behind the fixed finger. The sleeve is see-through, so the finger shows inside it. Bottom: the two pen clamps.")
 
 It holds in three directions:
 
