@@ -7,7 +7,7 @@
 // which the figure notes cite as "P2": Table 6 (Robosuite), Table 5 (LIBERO-Pro), Table 18 (models,
 // agent time), Sec. 3.7 and Fig. 6(b) (Rubik's Cube). Bar lengths are computed from the values; a 0% bar
 // keeps the 1-unit stub of the old figures so that the row still shows a bar.
-// The page must load chalk.css and the #bb-chalk filter once (see assets/robotics/chalk/README.md).
+// The page must load chalk.css and the #chalk-grain filter once (see assets/robotics/chalk/README.md).
 import { readFileSync, writeFileSync } from 'node:fs';
 import { esc, n } from './chalk.mjs';
 

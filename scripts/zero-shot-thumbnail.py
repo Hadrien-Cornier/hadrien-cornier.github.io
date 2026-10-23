@@ -2,7 +2,7 @@
 
 The card shows the article's chalk loop figure, the inline SVG #fig-aspire that
 scripts/zero-shot-figures.mjs draws. Its hand font, wobble and grain come from the browser
-(chalk.css and the #bb-chalk filter), so the figure is rasterized there first:
+(chalk.css and the #chalk-grain filter), so the figure is rasterized there first:
 
 1. Build the site and open /robotics/can-you-zero-shot-robotics-with-a-coding-agent/ at a
    900 x 1200 viewport, device scale 2, dark color scheme.
