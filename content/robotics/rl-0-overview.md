@@ -139,6 +139,8 @@ Each of these ideas fixes one problem and opens the door to others. Think of the
 7. [Learning from a fixed dataset](/robotics/rl-7-learning-from-fixed-data/): actions the data never tried, and demonstrations that include mistakes.
 8. [Mode averaging](/robotics/rl-8-mode-averaging/): two good answers, one bad average, and what flow policies change.
 
+One loop sits under most of these methods: judge the current policy, then act greedily on that judgment, and repeat. A side article, [generalized policy iteration](/robotics/rl-gpi/), works it through on the Part 1 cliff grid and follows it to AlphaGo Zero.
+
 We start with these questions. Next, we will look at the tools people developed to answer them.
 
 <details>

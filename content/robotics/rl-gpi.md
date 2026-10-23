@@ -1,0 +1,524 @@
+---
+title: 'Generalized policy iteration: judge, improve, repeat'
+description: 'The loop of evaluation and improvement inside most reinforcement learning methods, worked through on the cliff grid and traced from dynamic programming to AlphaGo Zero.'
+date: '2026-10-23'
+draft: false
+layout: essay
+tags: ['reinforcement-learning', 'machine-learning']
+thumbnail: '/assets/robotics/rl/rl-gpi-loop.svg'
+thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose start value climbs from −1072 to −12.25 in six rounds, and the loop between evaluation and improvement that ends at the optimal policy and value'
+---
+
+<link rel="stylesheet" href="/assets/robotics/rl/series.css">
+<svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in"/></filter></svg>
+<div class="rc rls-canvas" id="rc">
+<div class="rc-stage"><div class="rc-bar"><button class="rc-reset" type="button">Whole canvas &#8689;</button><div class="rc-where" aria-live="polite"></div></div><div class="rc-view"><!-- gpi-canvas --><svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 890" data-whole="0 0 840 890" data-views='{"walker": [16, 38, 388, 244], "greedy": [436, 38, 388, 244], "rounds": [16, 333, 388, 244], "loop": [436, 333, 388, 244], "lines": [16, 628, 388, 244], "family": [436, 628, 388, 244]}' role="img" aria-labelledby="gpi-title gpi-desc"><title id="gpi-title">Generalized policy iteration on a blackboard</title><desc id="gpi-desc">Six panels. 1: the Part 1 cliff grid under a random walker, with values near −1000. 2: one greedy step: the right side heads for the goal, the left side bumps the top wall forever at −100, and no cell gets worse. 3: six rounds of evaluate and improve; the start value goes −1072, −100, −100, −100, −15.7, −15.7, −12.25 and the route shrinks from 17 to 13 steps along the cliff edge. 4: the book's loop diagram, evaluation from π to V and improvement from V to π, ending at π* and v*. 5: the book's two-lines diagram, a zigzag between v = vπ and π = greedy(v) that climbs to v*, π*. 6: seven methods and what plays evaluation and improvement in each.</desc>
+<defs>
+<marker id="gpi-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8"/></marker>
+<marker id="gpi-ar" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#ff9f88" class="s-red" stroke-width="1.8"/></marker>
+<marker id="gpi-ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#93d4ff" class="s-blue" stroke-width="1.6"/></marker>
+<marker id="gpi-ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="1.6"/></marker>
+<marker id="gpi-ay" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#ffe17c" class="s-yellow" stroke-width="1.6"/></marker>
+</defs>
+<g font-size="15">
+<g class="rc-panel" data-panel="walker"><rect x="10" y="10" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>
+<text class="rls-panel-title" x="24" y="38" fill="#ffe17c" font-size="16">1. How good is a random walker?</text>
+<rect x="36" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="66" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="96" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="126" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="156" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="186" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="216" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="246" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="276" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.54" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="306" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.54" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="336" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.53" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="366" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.52" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="36" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="66" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="96" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="126" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="156" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="186" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="216" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="246" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="276" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="306" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.54" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="336" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.53" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="366" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.52" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="36" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="66" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.56" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="96" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.56" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="126" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.56" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="156" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.56" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="186" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.56" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="216" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.56" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="246" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.56" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="276" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="306" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.55" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="336" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.54" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="366" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.50" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="36" y="148" width="30" height="30" fill="#ff9f88" fill-opacity="0.56" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="366" y="148" width="30" height="30" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="2"/>
+<text x="381" y="169" fill="#a8e2a0" class="c-green" font-size="17" text-anchor="middle">G</text>
+<rect x="66" y="148" width="300" height="30" fill="none" stroke="#c3c9bd" class="s-dim" stroke-width="1.5" stroke-dasharray="3 4"/>
+<text x="216" y="168" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">cliff: −100, back to S</text>
+<path d="M51 160L51 153" stroke="#f4f1e8" class="s-chalk" stroke-width="1.4" marker-end="url(#gpi-a)"/>
+<path d="M54 163L61 163" stroke="#f4f1e8" class="s-chalk" stroke-width="1.4" marker-end="url(#gpi-a)"/>
+<path d="M51 166L51 173" stroke="#f4f1e8" class="s-chalk" stroke-width="1.4" marker-end="url(#gpi-a)"/>
+<path d="M48 163L41 163" stroke="#f4f1e8" class="s-chalk" stroke-width="1.4" marker-end="url(#gpi-a)"/>
+<text x="32" y="168" fill="#ffe17c" class="c-yellow" font-size="16" text-anchor="end">S</text>
+<text x="216" y="52" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">every move with chance ¼</text>
+<text x="36" y="202" fill="#ff9f88" class="c-red" font-size="16">S: v = -1072</text>
+<text x="396" y="202" fill="#ff9f88" class="c-red" font-size="16" text-anchor="end">above G: v = -482</text>
+<text x="36" y="228" fill="#f4f1e8" class="c-chalk" font-size="15">v(s): the average discounted return from s</text>
+<text x="36" y="250" fill="#c3c9bd" class="c-dim" font-size="14">redder cell = worse value</text>
+</g>
+<g class="rc-panel" data-panel="greedy"><rect x="430" y="10" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>
+<text class="rls-panel-title" x="444" y="38" fill="#ffe17c" font-size="16">2. Act greedily on those numbers</text>
+<rect x="456" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="486" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="516" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="546" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="576" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.22" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="606" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="636" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="666" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.20" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="696" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.19" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="726" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.17" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="756" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.16" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="786" y="58" width="30" height="30" fill="#ff9f88" fill-opacity="0.14" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="456" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="486" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="516" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="546" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="576" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="606" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.22" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="636" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="666" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="696" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.17" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="726" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.16" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="756" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.14" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="786" y="88" width="30" height="30" fill="#ff9f88" fill-opacity="0.11" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="456" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="486" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="516" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="546" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.24" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="576" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="606" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="636" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.22" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="666" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="696" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.19" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="726" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.14" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="756" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.11" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="786" y="118" width="30" height="30" fill="#ff9f88" fill-opacity="0.06" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="456" y="148" width="30" height="30" fill="#ff9f88" fill-opacity="0.39" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="786" y="148" width="30" height="30" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="2"/>
+<text x="801" y="169" fill="#a8e2a0" class="c-green" font-size="17" text-anchor="middle">G</text>
+<rect x="486" y="148" width="300" height="30" fill="none" stroke="#c3c9bd" class="s-dim" stroke-width="1.5" stroke-dasharray="3 4"/>
+<text x="636" y="168" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">cliff: −100, back to S</text>
+<path d="M471 80L471 66" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M508 73L494 73" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M538 73L524 73" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M554 73L568 73" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M584 73L598 73" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M614 73L628 73" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M644 73L658 73" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M674 73L688 73" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M704 73L718 73" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M734 73L748 73" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M764 73L778 73" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M801 66L801 80" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M471 110L471 96" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M501 110L501 96" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M531 110L531 96" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M561 110L561 96" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M591 110L591 96" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M621 110L621 96" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M651 110L651 96" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M681 110L681 96" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M704 103L718 103" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M734 103L748 103" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M764 103L778 103" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M801 96L801 110" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M471 140L471 126" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M501 140L501 126" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M531 140L531 126" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<path d="M561 140L561 126" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M591 140L591 126" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M621 140L621 126" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M651 140L651 126" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M681 140L681 126" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M711 140L711 126" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M734 133L748 133" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M764 133L778 133" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M801 126L801 140" stroke="#f4f1e8" class="s-chalk" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M471 170L471 156" stroke="#ff9f88" class="s-red" stroke-width="1.8" marker-end="url(#gpi-ar)"/>
+<text x="452" y="168" fill="#ffe17c" class="c-yellow" font-size="16" text-anchor="end">S</text>
+<path d="M460 55h22" stroke="#ff9f88" class="s-red" stroke-width="3"/>
+<text x="552" y="52" fill="#ff9f88" class="c-red" font-size="14">← all bump the top wall</text>
+<text x="456" y="202" fill="#ffe17c" class="c-yellow" font-size="16">S: -1072 → -100</text>
+<text x="816" y="202" fill="#a8e2a0" class="c-green" font-size="16" text-anchor="end">no cell got worse</text>
+<text x="456" y="228" fill="#ff9f88" class="c-red" font-size="15">red: stuck, −1 each step forever = −100</text>
+<text x="456" y="250" fill="#c3c9bd" class="c-dim" font-size="14">right side: already heads for G</text>
+</g>
+<g class="rc-panel" data-panel="rounds"><rect x="10" y="305" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>
+<text class="rls-panel-title" x="24" y="333" fill="#ffe17c" font-size="16">3. Repeat until nothing changes</text>
+<rect x="36" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.24" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="66" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.24" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="96" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="126" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="156" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.22" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="186" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="216" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="246" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.20" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="276" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.19" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="306" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.17" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="336" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.16" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="366" y="349" width="30" height="30" fill="#ff9f88" fill-opacity="0.14" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="36" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.24" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="66" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="96" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="126" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.22" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="156" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="186" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="216" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.20" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="246" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.19" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="276" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.17" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="306" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.16" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="336" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.14" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="366" y="379" width="30" height="30" fill="#ff9f88" fill-opacity="0.11" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="36" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="66" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.23" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="96" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.22" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="126" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="156" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.21" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="186" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.20" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="216" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.19" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="246" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.17" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="276" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.16" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="306" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.14" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="336" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.11" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="366" y="409" width="30" height="30" fill="#ff9f88" fill-opacity="0.06" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="36" y="439" width="30" height="30" fill="#ff9f88" fill-opacity="0.24" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
+<rect x="366" y="439" width="30" height="30" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="2"/>
+<text x="381" y="460" fill="#a8e2a0" class="c-green" font-size="17" text-anchor="middle">G</text>
+<rect x="66" y="439" width="300" height="30" fill="none" stroke="#c3c9bd" class="s-dim" stroke-width="1.5" stroke-dasharray="3 4"/>
+<text x="216" y="459" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">cliff: −100, back to S</text>
+<path d="M44 364L58 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M74 364L88 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M104 364L118 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M134 364L148 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M164 364L178 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M194 364L208 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M224 364L238 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M254 364L268 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M284 364L298 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M314 364L328 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M344 364L358 364" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M381 357L381 371" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M44 394L58 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M74 394L88 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M104 394L118 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M134 394L148 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M164 394L178 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M194 394L208 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M224 394L238 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M254 394L268 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M284 394L298 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M314 394L328 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M344 394L358 394" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M381 387L381 401" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M44 424L58 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M74 424L88 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M104 424L118 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M134 424L148 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M164 424L178 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M194 424L208 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M224 424L238 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M254 424L268 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M284 424L298 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M314 424L328 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M344 424L358 424" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M381 417L381 431" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<path d="M51 461L51 447" stroke="#c3c9bd" class="s-dim" stroke-width="1.8" marker-end="url(#gpi-a)"/>
+<text x="32" y="459" fill="#ffe17c" class="c-yellow" font-size="16" text-anchor="end">S</text>
+<path d="M51 454 51 424 81 424 111 424 141 424 141 394 141 364 171 364 201 364 231 364 261 364 291 364 321 364 351 364 381 364 381 394 381 424 381 454" fill="none" stroke="#ffe17c" class="s-yellow" stroke-width="3" stroke-opacity=".9" stroke-dasharray="6 6"/>
+<path d="M51 454 51 424 81 424 111 424 141 424 171 424 201 424 231 424 261 424 291 424 321 424 351 424 381 424 381 454" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="3" stroke-opacity=".9"/>
+<text x="36" y="491" fill="#c3c9bd" class="c-dim" font-size="14">round</text>
+<text x="36" y="513" fill="#c3c9bd" class="c-dim" font-size="14">v(S)</text>
+<text x="90" y="491" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">0</text>
+<text x="90" y="513" fill="#f4f1e8" class="c-chalk" font-size="15" text-anchor="middle">-1072</text>
+<text x="134" y="491" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">1</text>
+<text x="134" y="513" fill="#f4f1e8" class="c-chalk" font-size="15" text-anchor="middle">-100</text>
+<text x="178" y="491" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">2</text>
+<text x="178" y="513" fill="#f4f1e8" class="c-chalk" font-size="15" text-anchor="middle">-100</text>
+<text x="222" y="491" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">3</text>
+<text x="222" y="513" fill="#f4f1e8" class="c-chalk" font-size="15" text-anchor="middle">-100</text>
+<text x="266" y="491" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">4</text>
+<text x="266" y="513" fill="#ffe17c" class="c-yellow" font-size="15" text-anchor="middle">-15.7</text>
+<text x="310" y="491" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">5</text>
+<text x="310" y="513" fill="#f4f1e8" class="c-chalk" font-size="15" text-anchor="middle">-15.7</text>
+<text x="354" y="491" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">6</text>
+<text x="354" y="513" fill="#a8e2a0" class="c-green" font-size="15" text-anchor="middle">-12.25</text>
+<text x="36" y="539" fill="#ffe17c" class="c-yellow" font-size="14">yellow, round 4: 17 steps</text>
+<text x="396" y="539" fill="#a8e2a0" class="c-green" font-size="14" text-anchor="end">green, round 6: 13 steps</text>
+</g>
+<g class="rc-panel" data-panel="loop"><rect x="430" y="305" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>
+<text class="rls-panel-title" x="444" y="333" fill="#ffe17c" font-size="16">4. Two processes (book, p. 86)</text>
+<text x="530" y="437" fill="#f4f1e8" class="c-chalk" font-size="34" text-anchor="middle">π</text>
+<text x="730" y="437" fill="#f4f1e8" class="c-chalk" font-size="34" text-anchor="middle">V</text>
+<path d="M554 411 Q630.0 357 706 411" fill="none" stroke="#93d4ff" class="s-blue" stroke-width="2.4" marker-end="url(#gpi-ab)"/>
+<path d="M706 443 Q630.0 497 554 443" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="2.4" marker-end="url(#gpi-ag)"/>
+<text x="630" y="373" fill="#93d4ff" class="c-blue" font-size="17" text-anchor="middle">evaluation: V → v<tspan baseline-shift="sub" font-size="75%">π</tspan></text>
+<text x="630" y="495" fill="#a8e2a0" class="c-green" font-size="17" text-anchor="middle">improvement: π → greedy(V)</text>
+<circle cx="630.0" cy="511" r="1.8" fill="#c3c9bd" class="c-dim"/>
+<circle cx="630.0" cy="520" r="1.8" fill="#c3c9bd" class="c-dim"/>
+<circle cx="630.0" cy="529" r="1.8" fill="#c3c9bd" class="c-dim"/>
+<text x="530" y="549" fill="#ffe17c" class="c-yellow" font-size="22" text-anchor="middle">π*</text>
+<text x="730" y="549" fill="#ffe17c" class="c-yellow" font-size="22" text-anchor="middle">v*</text>
+<path d="M554 542H706" stroke="#ffe17c" class="s-yellow" stroke-width="1.8" marker-end="url(#gpi-ay)" marker-start="url(#gpi-ay)"/>
+<text x="630" y="433" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">panel 1, then panel 2</text>
+<text x="630" y="571" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">until neither changes</text>
+</g>
+<g class="rc-panel" data-panel="lines"><rect x="10" y="600" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>
+<text class="rls-panel-title" x="24" y="628" fill="#ffe17c" font-size="16">5. Two goals pull apart (book, p. 87)</text>
+<path d="M84 838L210 666" stroke="#93d4ff" class="s-blue" stroke-width="2.4"/>
+<path d="M336 838L210 666" stroke="#a8e2a0" class="s-green" stroke-width="2.4"/>
+<text x="28" y="864" fill="#93d4ff" class="c-blue" font-size="16">v = v<tspan baseline-shift="sub" font-size="75%">π</tspan></text>
+<text x="396" y="864" fill="#a8e2a0" class="c-green" font-size="16" text-anchor="end">π = greedy(v)</text>
+<text x="210" y="656" fill="#ffe17c" class="c-yellow" font-size="18" text-anchor="middle">v*, π*</text>
+<text x="210" y="854" fill="#f4f1e8" class="c-chalk" font-size="14" text-anchor="middle">start: v, π</text>
+<path d="M210.0 832.0 101.6 813.9 300.7 789.8 140.7 760.6 262.9 738.2 174.7 714.2 232.7 697.0 197.4 683.2" fill="none" stroke="#f4f1e8" class="s-chalk" stroke-width="1.6" marker-end="url(#gpi-a)"/>
+<text x="26" y="692" fill="#93d4ff" class="c-blue" font-size="14">evaluate: reach</text>
+<text x="26" y="710" fill="#93d4ff" class="c-blue" font-size="14">the blue line</text>
+<text x="394" y="692" fill="#a8e2a0" class="c-green" font-size="14" text-anchor="end">improve: reach</text>
+<text x="394" y="710" fill="#a8e2a0" class="c-green" font-size="14" text-anchor="end">the green line</text>
+</g>
+<g class="rc-panel" data-panel="family"><rect x="430" y="600" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>
+<text class="rls-panel-title" x="444" y="628" fill="#ffe17c" font-size="16">6. Same loop, different parts</text>
+<text x="568" y="656" fill="#93d4ff" class="c-blue" font-size="16">evaluate</text>
+<text x="700" y="656" fill="#a8e2a0" class="c-green" font-size="16">improve</text>
+<path d="M442 664H818" stroke="#6f7d75" class="s-faint" stroke-width="1"/>
+<text x="444" y="688" fill="#f4f1e8" class="c-chalk" font-size="15">policy iteration</text>
+<text x="568" y="688" fill="#c3c9bd" class="c-dim" font-size="14">solve for v<tspan baseline-shift="sub" font-size="75%">π</tspan></text>
+<text x="700" y="688" fill="#c3c9bd" class="c-dim" font-size="14">greedy, all cells</text>
+<text x="444" y="715" fill="#f4f1e8" class="c-chalk" font-size="15">value iteration</text>
+<text x="568" y="715" fill="#c3c9bd" class="c-dim" font-size="14">one sweep</text>
+<text x="700" y="715" fill="#c3c9bd" class="c-dim" font-size="14">max in the sweep</text>
+<text x="444" y="742" fill="#f4f1e8" class="c-chalk" font-size="15">Monte Carlo</text>
+<text x="568" y="742" fill="#c3c9bd" class="c-dim" font-size="14">average returns</text>
+<text x="700" y="742" fill="#c3c9bd" class="c-dim" font-size="14">greedy per episode</text>
+<text x="444" y="769" fill="#f4f1e8" class="c-chalk" font-size="15">Sarsa</text>
+<text x="568" y="769" fill="#c3c9bd" class="c-dim" font-size="14">one TD step on Q</text>
+<text x="700" y="769" fill="#c3c9bd" class="c-dim" font-size="14">ε-greedy on Q</text>
+<text x="444" y="796" fill="#f4f1e8" class="c-chalk" font-size="15">Q-learning</text>
+<text x="568" y="796" fill="#c3c9bd" class="c-dim" font-size="14">one TD step on Q</text>
+<text x="700" y="796" fill="#c3c9bd" class="c-dim" font-size="14">max in the target</text>
+<text x="444" y="823" fill="#f4f1e8" class="c-chalk" font-size="15">actor-critic</text>
+<text x="568" y="823" fill="#c3c9bd" class="c-dim" font-size="14">critic: TD error</text>
+<text x="700" y="823" fill="#c3c9bd" class="c-dim" font-size="14">actor: gradient step</text>
+<text x="444" y="850" fill="#ffe17c" class="c-yellow" font-size="15">AlphaGo Zero</text>
+<text x="568" y="850" fill="#c3c9bd" class="c-dim" font-size="14">self-play winner z</text>
+<text x="700" y="850" fill="#c3c9bd" class="c-dim" font-size="14">MCTS search</text>
+</g>
+</g>
+</svg><!-- /gpi-canvas --></div></div>
+<div class="rc-body">
+
+Let's go back to the cliff grid from [Part 1 of my RL series](/robotics/rl-1-q-learning/#sec-world): 4 rows by 12 columns, a start S at the bottom left, a flag G at the bottom right and ten cliff cells between them. Every move costs −1, a step into the cliff costs −100 and sends you back to S, and later costs count a little less, with a discount of γ = 0.99. In Part 1, Q-learning found the best route by trial and error. This time, suppose you know the rules of the grid exactly. You know where every move leads and what it costs. Can you just work out the best way to move?
+
+You could try every rule. A rule here picks one move in each of the 37 cells you can stand on, so there are $4^{37} \approx 1.9 \times 10^{22}$ of them. That's far too many. What you want instead is a way to take one rule and make it better. But to know whether a change helps, you need to know what the current rule earns from each cell, and that depends on every move the rule makes after that cell. So the two questions, "how good is this rule?" and "what's a better rule?", depend on each other.
+
+The answer is to alternate between them. The idea is simple, and once you see it, you'll find it inside almost every reinforcement learning method, all the way up to AlphaGo Zero.
+
+This is a side article to my [reinforcement learning series](/robotics/rl-0-overview/). It follows Chapter 4 of [Sutton and Barto's book](http://incompleteideas.net/book/RLbook2020.pdf), and every page number below refers to its second edition.
+
+<div class="rc-mark" id="sec-evaluate" data-panel="walker" data-view="walker" data-title="How good is a random walker?"></div>
+
+## How good is the current rule?
+
+Let's start with the worst reasonable rule: a random walker that picks each of the four moves with chance ¼. A rule for choosing moves is called a **policy**, written $\pi$, and $\pi(a \mid s)$ is the chance it picks move $a$ in cell $s$.
+
+The **return** $G_t$ is what you collect from step $t$ on, with each later reward discounted once more: $G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \cdots$. The **value** of a cell under a policy, $v_\pi(s)$, is the return you get on average when you start in $s$ and follow $\pi$. Computing $v_\pi$ for a given policy is called **policy evaluation**, or the prediction problem (§4.1, p. 74).
+
+The value of a cell depends on the values of the cells you can reach in one move. The book writes this as the Bellman equation for $v_\pi$ (eq. 4.4, p. 74):
+
+$$v_\pi(s) = \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_\pi(s')\big]$$
+
+Here $p(s', r \mid s, a)$ is the chance that move $a$ in cell $s$ lands in cell $s'$ with reward $r$. That's the model of the grid, and here you know it. There's one equation per cell, so for this grid you get 37 linear equations with 37 unknowns.
+
+The first panel shows the answer. The random walker's values are all between about −480 and −1070. From S it's −1072: one move in four from S steps straight into the cliff, and the walker takes a long time to stumble onto the flag.
+
+<details>
+<summary>Two ways to solve for the values</summary>
+
+You can solve the 37 equations directly, which is what the script for this article does. Or you can sweep through the cells and replace each value with the right-hand side, using the current guesses for the next cells (eq. 4.5, p. 74):
+
+$$v_{k+1}(s) = \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_k(s')\big]$$
+
+With $\gamma < 1$, these sweeps converge to $v_\pi$ from any starting guess (p. 74). That second form matters later, because you can stop the sweeps early.
+
+</details>
+
+<div class="rc-mark" id="sec-improve" data-panel="greedy" data-view="greedy" data-title="Act greedily on those numbers"></div>
+
+## Act greedily on those numbers
+
+Now let's use the values to pick better moves. For each move $a$ in cell $s$, ask what you'd get if you made that move once and then went back to following $\pi$. That's the **action value** (eq. 4.6, p. 78):
+
+$$q_\pi(s, a) = \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_\pi(s')\big]$$
+
+Then, in every cell, pick the move with the highest action value. This is the **greedy** policy (eq. 4.9, p. 79):
+
+$$\pi'(s) = \arg\max_a q_\pi(s, a)$$
+
+Changing the policy this way is called **policy improvement**. Panel 2 shows what one greedy step does to the random walker. On the right side of the grid, the arrows head for the flag. On the left side, every cell near the cliff looks so bad that the greedy move is to go up and away from it. The ten cells in the left three columns all get funnelled into the top-left corner, and there the greedy move bumps into the top wall forever. That costs −1 per step, which adds up to $-1/(1-\gamma) = -100$.
+
+So the new policy is silly: it never reaches the flag from S. And yet no cell got worse. S went from −1072 to −100, and every one of the 37 cells improved.
+
+That's not luck. The **policy improvement theorem** (eq. 4.7 and 4.8, p. 78) says that if, in every cell, making the new policy's move once and then following the old policy is at least as good as following the old policy all the way,
+
+$$q_\pi(s, \pi'(s)) \ge v_\pi(s) \quad \text{for every } s,$$
+
+then the new policy is at least as good everywhere: $v_{\pi'}(s) \ge v_\pi(s)$ for every $s$. Why does that hold? If switching to $\pi'$ for one move doesn't hurt, you can make the same switch at the next cell, and the one after that. Each switch can only add value, and switching at every step is just following $\pi'$.
+
+The greedy policy always meets that condition, because the best of the action values is at least their average under $\pi$, and that average is $v_\pi(s)$.
+
+<details>
+<summary>The full proof chain (p. 78)</summary>
+
+Start from the condition and unroll it one step at a time:
+
+$$\begin{aligned}
+v_\pi(s) &\le q_\pi(s, \pi'(s)) \\
+&= \mathbb{E}\big[R_{t+1} + \gamma v_\pi(S_{t+1}) \mid S_t = s, A_t = \pi'(s)\big] \\
+&= \mathbb{E}_{\pi'}\big[R_{t+1} + \gamma v_\pi(S_{t+1}) \mid S_t = s\big] \\
+&\le \mathbb{E}_{\pi'}\big[R_{t+1} + \gamma q_\pi(S_{t+1}, \pi'(S_{t+1})) \mid S_t = s\big] \\
+&= \mathbb{E}_{\pi'}\big[R_{t+1} + \gamma R_{t+2} + \gamma^2 v_\pi(S_{t+2}) \mid S_t = s\big] \\
+&\le \mathbb{E}_{\pi'}\big[R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \gamma^3 v_\pi(S_{t+3}) \mid S_t = s\big] \\
+&\;\;\vdots \\
+&\le \mathbb{E}_{\pi'}\big[R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \gamma^3 R_{t+4} + \cdots \mid S_t = s\big] \\
+&= v_{\pi'}(s)
+\end{aligned}$$
+
+$\mathbb{E}_{\pi'}$ means the average over what happens when you follow $\pi'$. Each $\le$ uses the condition at the next cell. The random walker is a stochastic policy, and the theorem covers that case too (p. 79).
+
+</details>
+
+<div class="rc-mark" id="sec-repeat" data-panel="rounds" data-view="rounds" data-title="Repeat until nothing changes"></div>
+
+## Repeat until nothing changes
+
+The values you hold still belong to the old policy, so they're wrong for the new one. Evaluate again, then improve again. That alternation is **policy iteration** (§4.3, p. 80):
+
+$$\begin{aligned} &\pi_0 \xrightarrow{\;E\;} v_{\pi_0} \xrightarrow{\;I\;} \pi_1 \xrightarrow{\;E\;} v_{\pi_1} \xrightarrow{\;I\;} \pi_2 \\ &\xrightarrow{\;E\;} \cdots \xrightarrow{\;I\;} \pi_* \xrightarrow{\;E\;} v_* \end{aligned}$$
+
+Here E is a full evaluation and I is a greedy improvement. On the cliff grid it takes six rounds, shown in panel 3. Rounds 2 and 3 free the stuck cells a column at a time, but S stays at −100. In round 4, S finally finds a 17-step route that climbs away from the cliff and goes along the top (yellow, −15.71). In round 6 the route drops down to the cliff edge: up once, right eleven times, down onto the flag, 13 steps (green, −12.25). That's the route Q-learning found in Part 1, and −12.25 is the same score its table gave "up" from S.
+
+After round 6, one more greedy step changes nothing, so the loop stops. A policy that is greedy with respect to its own values satisfies the Bellman optimality equation, so it's optimal (pp. 79-80). And since there are finitely many deterministic policies and each round is at least as good as the one before, the loop has to stop (p. 80).
+
+In practice it stops much faster than the count of policies suggests: 6 rounds here, out of $1.9 \times 10^{22}$ possible policies.
+
+<details>
+<summary>Every round on the grid</summary>
+
+<div class="ct">
+
+| Round | Policy | v(S) | Moves changed | Cells improved | From S |
+| --- | --- | --- | --- | --- | --- |
+| 0 | random walker | −1072.24 | | | reaches G by chance |
+| 1 | $\pi_1$ | −100.00 | all 37 | 37 | stuck at the top wall |
+| 2 | $\pi_2$ | −100.00 | 6 | 6 | stuck |
+| 3 | $\pi_3$ | −100.00 | 5 | 5 | stuck |
+| 4 | $\pi_4$ | −15.71 | 5 | 6 | 17 steps |
+| 5 | $\pi_5$ | −15.71 | 2 | 2 | 17 steps |
+| 6 | $\pi_6$ | −12.25 | 2 | 9 | 13 steps, along the edge |
+
+</div>
+
+No cell's value ever goes down from one round to the next. When two moves tie, the policy keeps its current move, so the loop can't flip between equally good moves forever (p. 80, Exercise 4.4). The first greedy step from the random walker breaks ties in the order up, right, down, left. Every other order gives the same six rounds. Evaluation solves the linear equations exactly. To reproduce the numbers and the drawing, run `python3 scripts/rl_gpi_figures.py` in [the site's repository](https://github.com/Hadrien-Cornier/hadrien-cornier.github.io).
+
+</details>
+
+<details>
+<summary>Why a stable policy is optimal</summary>
+
+If the greedy step changes nothing, then $\pi'$ is as good as $\pi$, so $v_{\pi'} = v_\pi$, and the greedy step gives, for every cell,
+
+$$v_{\pi'}(s) = \max_a \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_{\pi'}(s')\big]$$
+
+That's the Bellman optimality equation (eq. 4.1, p. 73). Its only solution is $v_*$, the best value any policy can reach, so $v_{\pi'} = v_*$ and $\pi'$ is optimal (p. 79).
+
+</details>
+
+<div class="rc-mark" id="sec-gpi" data-panel="loop" data-view="loop" data-title="Two processes, any step size"></div>
+
+## Two processes, any step size
+
+Policy iteration finishes each process before starting the other: evaluate all the way, then improve every cell. But you don't have to. **Value iteration** stops evaluation after a single sweep and takes the max right inside it (eq. 4.10, p. 83):
+
+$$v_{k+1}(s) = \max_a \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_k(s')\big]$$
+
+On the cliff grid, starting from all zeros, the greedy move is final from sweep 14 on, and the values stop changing after sweep 15. Asynchronous methods go even finer: they update one cell at a time, in any order, as long as every cell keeps getting updated (§4.5, p. 85).
+
+Sutton and Barto call the general idea **generalized policy iteration**, or GPI: "letting policy-evaluation and policy-improvement processes interact, independent of the granularity and other details of the two processes" (§4.6, p. 86). Panel 4 redraws their diagram. Evaluation pulls the value function V toward $v_\pi$, the true values of the current policy. Improvement pulls the policy toward greedy(V). The loop can only settle at the optimal policy $\pi_*$ and its value $v_*$, because that's the only place where both processes stop changing anything (p. 86).
+
+And here's the claim that makes it worth learning: "Almost all reinforcement learning methods are well described as GPI" (p. 86).
+
+<div class="rc-mark" id="sec-compete" data-panel="lines" data-view="lines" data-title="Two goals pull apart"></div>
+
+## Two goals that pull apart
+
+The book's second diagram (p. 87) draws the two goals as two lines. On one line, the values are right for the policy: $v = v_\pi$. On the other, the policy is greedy for the values: $\pi = \text{greedy}(v)$. Each step of policy iteration jumps all the way onto one line, and because the lines aren't at right angles, that jump moves away from the other line. Still, the zigzag climbs to the point where they meet.
+
+The authors say the two processes "compete and cooperate" (p. 86). You can see both on the cliff grid. Round 1's greedy step made the random walker's values wrong: the top-left corner was worth −929 to the walker and −100 to the new policy. Then evaluation fixed the values, and the policy was no longer greedy for them in 6 cells. Each step undoes the other's work. Even so, S's value never drops, and the loop ends at the optimum.
+
+The book adds that the real geometry is "much more complicated" than two lines (p. 87). So the drawing helps you think about the loop, but it isn't a map of the space.
+
+<div class="rc-mark" id="sec-family" data-panel="family" data-view="family" data-title="Same loop, different parts"></div>
+
+## The same loop inside other methods
+
+When you know the rules of the world, both processes can use them. But most RL methods don't know the rules, so they replace each process with something they can do from experience. Panel 6 lists what plays each role.
+
+- **Monte Carlo control** (§5.3, pp. 97-99) evaluates by averaging the returns of whole episodes. Without a model, the values of cells alone can't tell you which move is best, so it learns action values $Q(s,a)$ and improves by acting greedily on them after each episode.
+- **Sarsa** (§6.4, p. 129) follows "the pattern of generalized policy iteration (GPI), only this time using TD methods for the evaluation or prediction part". Each step nudges $Q(s,a)$ toward one reward plus the next estimate, and the policy is ε-greedy on $Q$, so improvement happens at every step.
+- **Q-learning** (§6.5, p. 131) puts the max inside its update target, $R + \gamma \max_a Q(S', a)$, so it is to Sarsa what value iteration is to policy iteration: the improvement happens inside each evaluation update.
+- **Actor-critic** methods (§13.5, p. 331) keep the two processes in two separate parts. The critic learns state values with TD errors, and the actor is the policy, nudged by a gradient step in the direction the critic favors.
+- **AlphaGo Zero** is where Sutton and Barto end: "AlphaGo Zero implemented a form of policy iteration (Section 4.3), interleaving policy evaluation with policy improvement" (§16.6.2, p. 447).
+
+The AlphaGo Zero paper ([Silver et al., 2017](https://www.nature.com/articles/nature24270)) says the same. A neural network outputs move probabilities $p$ and a value $v$ for a board. A tree search (Monte Carlo tree search, MCTS) guided by that network returns search probabilities $\pi$ that "usually select much stronger moves than the raw move probabilities p of the neural network; MCTS may therefore be viewed as a powerful policy improvement operator". Self-play with search, "using the game winner z as a sample of the value", is "a powerful policy evaluation operator". Then the network is trained toward both, and "these new parameters are used in the next iteration of self-play to make the search even stronger". The paper itself calls this "a policy iteration procedure".
+
+<details>
+<summary>AlphaGo Zero's loss, term by term</summary>
+
+The network $f_\theta$ maps a board $s$ to $(p, v) = f_\theta(s)$. Training minimizes (Silver et al., eq. 1)
+
+$$l = (z - v)^2 - \pi^\top \log p + c\,\lVert\theta\rVert^2$$
+
+- $(z - v)^2$ is evaluation: the value output moves toward $z = \pm 1$, the winner of the self-play game, from the current player's side.
+- $-\pi^\top \log p$ is improvement: the move probabilities move toward the search probabilities $\pi$, where $\pi_a \propto N(s,a)^{1/\tau}$ and $N(s,a)$ counts how often the search visited move $a$.
+- $c\,\lVert\theta\rVert^2$ is weight regularization.
+
+Training started from random play and ran for about 3 days and 4.9 million self-play games, with 1,600 search simulations per move. The result beat AlphaGo Lee 100 games to 0 (Silver et al., pp. 6 and 8 of the author version).
+
+</details>
+
+## What I take from it
+
+Now, when I read about a new RL method, I look for the two processes. What judges the current policy? What turns that judgment into a better policy? And how far does each one go before handing over to the other: a full solve, a single sweep, one TD step, one gradient step, or a whole tree search? Most of the differences between methods in the [series](/robotics/rl-0-overview/) are answers to those three questions.
+
+<details>
+<summary>Sources and what each one supports</summary>
+
+- Sutton, R. S. and Barto, A. G., [*Reinforcement Learning: An Introduction*, second edition](http://incompleteideas.net/book/RLbook2020.pdf), 2018. Policy evaluation, eq. 4.4 and 4.5 (§4.1, p. 74). The action value, eq. 4.6, the policy improvement theorem, eq. 4.7 and 4.8, and its proof (§4.2, p. 78). The greedy policy, eq. 4.9, and stochastic policies (p. 79). Policy iteration and its finite convergence (§4.3, p. 80). Value iteration, eq. 4.10 (§4.4, p. 83). Asynchronous DP (§4.5, p. 85). GPI and its two diagrams (§4.6, pp. 86-87). Monte Carlo control (§5.3, pp. 97-99). Sarsa (§6.4, p. 129). Q-learning (§6.5, p. 131). Actor-critic (§13.5, p. 331). AlphaGo Zero as policy iteration (§16.6.2, p. 447).
+- Silver, D. et al., [Mastering the game of Go without human knowledge](https://www.nature.com/articles/nature24270), *Nature* 550, 354-359, 2017. The quotes come from the [author version](https://discovery.ucl.ac.uk/id/eprint/10045895/1/agz_unformatted_nature.pdf): MCTS as policy improvement and self-play as policy evaluation (p. 3), the loss, eq. 1 (p. 6), and the training numbers (pp. 6 and 8).
+- The cliff grid and its rules come from [Part 1 of the series](/robotics/rl-1-q-learning/#sec-world). The policy iteration numbers come from `scripts/rl_gpi_figures.py`.
+
+</details>
+
+</div>
+</div>
+<script src="/assets/robotics/rl/canvas.js" defer></script>

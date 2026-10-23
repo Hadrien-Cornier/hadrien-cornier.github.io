@@ -1,5 +1,15 @@
 [
   {
+    "title": "Generalized policy iteration: judge, improve, repeat",
+    "description": "The loop of evaluation and improvement inside most reinforcement learning methods, worked through on the cliff grid and traced from dynamic programming to AlphaGo Zero.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-23",
+    "url": "/robotics/rl-gpi/"
+  },
+  {
     "title": "Faster-WAM in LeRobot: from 300 cache reads to 10",
     "description": "Faster-WAM cuts a world action model's action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights.",
     "tags": [
