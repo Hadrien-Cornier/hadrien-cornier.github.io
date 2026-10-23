@@ -1,5 +1,17 @@
 [
   {
+    "title": "MolmoBot: Large-Scale Simulation Enables Zero-Shot Manipulation",
+    "description": "With no real robot data, only simulated demos, MolmoBot doubles the real-world success of a policy trained on 10,000+ hours of real robot data.",
+    "tags": [
+      "sim-to-real",
+      "simulation",
+      "imitation-learning",
+      "vla"
+    ],
+    "date": "2026-10-23",
+    "url": "/robotics/molmobot/"
+  },
+  {
     "title": "Generalized policy iteration: judge, improve, repeat",
     "description": "The loop of evaluation and improvement inside most reinforcement learning methods, worked through on the cliff grid and traced from dynamic programming to AlphaGo Zero.",
     "tags": [

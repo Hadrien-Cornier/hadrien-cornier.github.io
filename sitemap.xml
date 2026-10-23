@@ -38,6 +38,11 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/robotics/molmobot/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/robotics/rl-gpi/</loc>
     <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
