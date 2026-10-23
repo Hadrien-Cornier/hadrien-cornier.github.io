@@ -28,15 +28,16 @@ export function readPapers(root = ROOT) {
   const seen = new Set();
   return fs.readdirSync(directory).filter((name) => name.endsWith('.json')).sort().map((name) => {
     const paper = JSON.parse(fs.readFileSync(path.join(directory, name), 'utf8'));
-    for (const key of ['slug', 'title', 'description', 'date', 'paperUrl', 'projectUrl', 'codeUrl']) {
+    for (const key of ['slug', 'title', 'description', 'date', 'paperUrl', 'codeUrl']) {
       if (typeof paper[key] !== 'string' || !paper[key].trim()) throw new Error(`${name}: missing ${key}`);
     }
+    if (paper.projectUrl !== undefined && (typeof paper.projectUrl !== 'string' || !paper.projectUrl.trim())) throw new Error(`${name}: projectUrl must be a non-empty string`);
     if (paper.shortTitle !== undefined && (typeof paper.shortTitle !== 'string' || !paper.shortTitle.trim())) throw new Error(`${name}: shortTitle must be a non-empty string`);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(paper.slug) || name !== `${paper.slug}.json`) throw new Error(`${name}: slug must match the filename`);
     if (seen.has(paper.slug)) throw new Error(`Duplicate paper slug: ${paper.slug}`);
     seen.add(paper.slug);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(paper.date) || Number.isNaN(Date.parse(paper.date)) || new Date(paper.date).toISOString().slice(0, 10) !== paper.date) throw new Error(`${name}: invalid date`);
-    for (const key of ['paperUrl', 'projectUrl', 'codeUrl']) {
+    for (const key of ['paperUrl', 'projectUrl', 'codeUrl'].filter((key) => paper[key] !== undefined)) {
       let url;
       try { url = new URL(paper[key]); } catch { throw new Error(`${name}: invalid ${key}`); }
       if (url.protocol !== 'https:' || url.username || url.password) throw new Error(`${name}: ${key} must use HTTPS`);

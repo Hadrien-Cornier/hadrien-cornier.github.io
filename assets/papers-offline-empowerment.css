@@ -1,0 +1,24 @@
+/* Offline empowerment: an intro paragraph, one blackboard canvas, then a math paragraph. The wide drawing fits desktops, the tall one phones. */
+.paper-header .paper-takeaway { display: none; }
+.oe-intro { max-width: 760px; margin: 0 0 30px; font-size: 18px; line-height: 1.65; color: var(--ink); }
+.oe-math { max-width: 760px; margin: 30px 0 0; font-size: 18px; line-height: 1.65; color: var(--ink); }
+.oe-math .katex { font-size: 1.05em; }
+.oe-math .katex-display { margin: 16px 0; padding: 6px 2px; overflow-x: auto; overflow-y: hidden; }
+.oe-math .katex-display > .katex, .oe-math .oe-nobr { white-space: nowrap; }
+.oe-canvas { margin: 0; padding: 0; background: #1d1d1b; border: 1px solid var(--line); }
+.oe-canvas svg { display: block; width: 100%; height: auto; }
+.oe-canvas .oe-tall { display: none; }
+.oe-after { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 26px; padding-top: 14px; }
+.oe-credit { margin: 0; font: 10px/1.5 var(--mono); color: var(--muted); }
+.oe-sources { display: flex; gap: 26px; font-size: 12px; }
+.oe-sources a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); }
+@media (max-width: 999px) {
+  .oe-canvas .oe-wide { display: none; }
+  .oe-canvas .oe-tall { display: block; max-width: 640px; margin: 0 auto; }
+}
+@media (max-width: 700px) {
+  .oe-intro { margin-bottom: 24px; font-size: 16px; line-height: 1.6; }
+  .oe-math { margin-top: 24px; font-size: 16px; line-height: 1.6; }
+  .oe-canvas { margin: 0 -1px; }
+  .oe-after { flex-direction: column; align-items: start; }
+}
