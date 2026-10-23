@@ -64,6 +64,13 @@ Add `section: 'recent-papers'` to file an essay under Recent papers. The builder
 shelf's index at `/robotics/recent-papers/`, links it from the Robotics page, and labels the
 essay's cards and header. Section names live in `SECTIONS` in `scripts/build_robotics.mjs`.
 
+A series is named once in `content/robotics/series.json`, keyed by an id with a `title` and a
+one-sentence `description`. Each part sets `series: '<id>'` and `part: <n>` (start at 0 for an
+overview). The homepage and the Robotics page show each series as one block in date order, placed
+at its newest part, with the title, part count, date range and every part in order. On a phone a
+list of more than three parts starts closed. Each part page shows "Part N of M" with previous and
+next links. A new part appears in its block on the next build.
+
 Use level-two and level-three headings for the table of contents. Set `layout: essay`
 for a centered reading column without a contents sidebar. The title supplies the
 level-one heading. Standard Markdown handles links, lists, tables, and code. Use `$q_1$`

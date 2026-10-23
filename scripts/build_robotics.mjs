@@ -24,7 +24,7 @@ export function dateValue(value, field) {
   return result;
 }
 function validateSeriesMetadata(data) {
-  if (data.series !== undefined && (typeof data.series !== 'string' || !data.series.trim())) throw new Error('series must be a non-empty string');
+  if (data.series !== undefined && (typeof data.series !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.series))) throw new Error('series must be a series id from content/robotics/series.json, such as so101-control');
   if (data.part !== undefined && (!Number.isInteger(data.part) || data.part < 0)) throw new Error('part must be a non-negative integer');
   if (data.series && data.part === undefined) throw new Error('part is required when series is set');
   if (data.track !== undefined && !TRACKS[data.track]) throw new Error(`track must be one of: ${Object.keys(TRACKS).join(', ')}`);
@@ -81,6 +81,26 @@ function validateThumbnail(data, root) {
   if (!fs.existsSync(path.join(root, data.thumbnail))) throw new Error(`thumbnail file not found: ${data.thumbnail}`);
   if (typeof data.thumbnail_alt !== 'string' || !data.thumbnail_alt.trim()) throw new Error('thumbnail needs thumbnail_alt text');
 }
+// content/robotics/series.json names each series once: {"<id>": {"title": ..., "subtitle": ..., "description": ...}}.
+// The subtitle is optional. A part joins with `series: '<id>'` and `part: <n>`. The title, subtitle and description show on every page that lists the series.
+function readSeries(sourceDir) {
+  const file = path.join(sourceDir, 'series.json');
+  if (!fs.existsSync(file)) return {};
+  let data;
+  try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (error) { throw new Error(`series.json must be valid JSON: ${error.message}`); }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('series.json must be an object');
+  for (const [id, series] of Object.entries(data)) {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) throw new Error(`series.json: invalid series id ${id}`);
+    if (!series || typeof series !== 'object' || Array.isArray(series)) throw new Error(`series.json: ${id} must be a map with title and description`);
+    const unknown = Object.keys(series).filter((key) => !['title', 'subtitle', 'description'].includes(key));
+    if (unknown.length) throw new Error(`series.json: ${id} has unknown field ${unknown[0]}`);
+    for (const key of ['title', 'description']) {
+      if (typeof series[key] !== 'string' || !series[key].trim()) throw new Error(`series.json: ${id} needs a ${key}`);
+    }
+    if (series.subtitle !== undefined && (typeof series.subtitle !== 'string' || !series.subtitle.trim())) throw new Error(`series.json: ${id} subtitle must be non-empty text`);
+  }
+  return data;
+}
 // A track marks a series part of a different kind (for example the hardware side of a control series).
 // It gives the part its own accent colour and a label wherever the series is listed.
 const TRACKS = {hardware:'Hardware'};
@@ -88,6 +108,12 @@ const trackClass = (article) => article.track ? ` track-${article.track}` : '';
 const trackLabel = (article) => article.track ? ` · ${TRACKS[article.track]}` : '';
 const htmlText = (value) => value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ');
 const displayDate = (value) => new Intl.DateTimeFormat('en', {year:'numeric', month:'long', day:'numeric', timeZone:'UTC'}).format(new Date(value));
+const shortDate = (value) => new Intl.DateTimeFormat('en', {month:'short', day:'numeric', timeZone:'UTC'}).format(new Date(value));
+// The first and last publication dates of a series, for example "October 2–15, 2026".
+export function dateRange(first, last) {
+  if (first === last) return displayDate(first);
+  return new Intl.DateTimeFormat('en', {year:'numeric', month:'long', day:'numeric', timeZone:'UTC'}).formatRange(new Date(first), new Date(last));
+}
 
 export function renderArticle(source, root = ROOT, html = undefined) {
   const {data, content} = matter(source);
@@ -260,7 +286,7 @@ function articleAssets(article, root) {
   const js = `assets/robotics/${article.slug}/article.js`;
   return `${local(css) ? `<link rel="stylesheet" href="/${css}?v=${assetVersion(root, css)}">` : ''}${local(js) ? `<script type="module" src="/${js}?v=${assetVersion(root, js)}"></script>` : ''}`;
 }
-function shell({title, description, pathname, content, article, root = ROOT, interactive = false, search = false}) {
+function shell({title, description, pathname, content, article, root = ROOT, interactive = false, search = false, seriesBlocks = false}) {
   const canonical = `${ORIGIN}${pathname}`;
   const siteCss = `/assets/site.css?v=${assetVersion(root, 'assets/site.css')}`;
   const themeHeadPath = path.join(root, 'scripts/templates/theme-head.html');
@@ -282,7 +308,7 @@ ${GENERATED_MARKER}
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-${themeHead}${themeScript}<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.layout === 'essay' || article?.components.futures ? `<link rel="stylesheet" href="/assets/robotics-futures.css?v=${assetVersion(root, 'assets/robotics-futures.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${article ? articleAssets(article, root) : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${search ? `\n<script src="/assets/robotics-search.js?v=${assetVersion(root, 'assets/robotics-search.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
+${themeHead}${themeScript}<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.layout === 'essay' || article?.components.futures ? `<link rel="stylesheet" href="/assets/robotics-futures.css?v=${assetVersion(root, 'assets/robotics-futures.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${article ? articleAssets(article, root) : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${seriesBlocks ? `\n<script src="/assets/series-blocks.js?v=${assetVersion(root, 'assets/series-blocks.js')}" defer></script>` : ''}${search ? `\n<script src="/assets/robotics-search.js?v=${assetVersion(root, 'assets/robotics-search.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
 </head><body class="${pathname === '/' ? 'home-page' : 'robotics'}${article ? trackClass(article) : ''}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
@@ -295,7 +321,8 @@ function seriesBox(article) {
     : `<li class="series-part${trackClass(part)}"><a href="/robotics/${part.slug}/">${escape(part.title)}</a>${part.track ? `<span class="track-tag">${TRACKS[part.track]}</span>` : ''}</li>`).join('');
   const previous = article.seriesPrevious ? `<a rel="prev" href="/robotics/${article.seriesPrevious.slug}/">← Previous: ${escape(article.seriesPrevious.title)}</a>` : '';
   const next = article.seriesNext ? `<a rel="next" href="/robotics/${article.seriesNext.slug}/">Next: ${escape(article.seriesNext.title)} →</a>` : '';
-  return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${(article.seriesArticles.some((part) => part.part === 0) ? Math.max(...article.seriesArticles.map((part) => part.part)) : article.seriesArticles.length)}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+  const series = article.seriesInfo;
+  return `<nav class="series-box" aria-label="Series"><p class="series-box-name"><a href="/robotics/#series-${series.id}">Series · ${escape(series.title)}</a></p>${series.subtitle ? `<p class="series-box-subtitle">${escape(series.subtitle)}</p>` : ''}<p class="series-box-position">Part ${article.part} of ${series.total}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
 // The paper's own date and link, shown as the first line under the title when paper.date is set.
 function paperSource(paper) {
@@ -313,7 +340,7 @@ function postMeta(article) {
 function shortPage(article, root) {
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
 <header class="robotics-header post-header post-header-short">${eyebrowLink(article)}<h1>${escape(article.title)}</h1>${paperSource(article.paper)}<p class="post-description">${escape(article.description)}</p>${postMeta(article)}${tagLinks(article.tags)}</header>
-<article class="short-body" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article>`});
+${seriesBox(article)}<article class="short-body" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article>`});
 }
 function articlePage(article, root) {
   if (article.layout === 'short') return shortPage(article, root);
@@ -322,17 +349,14 @@ function articlePage(article, root) {
 <header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}">${eyebrowLink(article)}<h1>${escape(article.title)}</h1>${paperSource(article.paper)}<p class="post-description">${escape(article.description)}</p>${postMeta(article)}${tagLinks(article.tags)}</header>
 ${seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
+// Articles arrive newest first. A series takes one place in that order, at the date of its newest part.
 function articleUnits(articles) {
-  const groups = new Map();
-  for (const article of articles) {
-    if (article.series && !groups.has(article.series)) groups.set(article.series, articles.filter((item) => item.series === article.series).sort((a, b) => a.part - b.part));
-  }
   const seen = new Set();
   return articles.flatMap((article) => {
     if (!article.series) return [{article}];
     if (seen.has(article.series)) return [];
     seen.add(article.series);
-    return [{series:article.series, articles:groups.get(article.series)}];
+    return [{series:article.seriesInfo, articles:article.seriesArticles}];
   });
 }
 // Tags on an index entry are display chips; the clickable tag filter sits above the list.
@@ -347,25 +371,35 @@ function articleCard(article) {
   const thumb = article.thumbnail ? `<span class="report-thumb"><img src="${escape(article.thumbnail)}" alt="${escape(article.thumbnail_alt)}" loading="lazy" decoding="async"></span>` : '';
   return `<a class="report-card${trackClass(article)}${thumb ? ' has-thumb' : ''}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span>${thumb}<div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
 }
-function seriesBlock(unit, renderArticle, className = '') {
-  const count = `${unit.articles.length} ${unit.articles.length === 1 ? 'part' : 'parts'}`;
-  return `<section class="series-block${className ? ` ${className}` : ''}"><p class="series-block-eyebrow">Series / ${count}</p><h2>${escape(unit.series)}</h2><div class="series-block-parts">${unit.articles.map(renderArticle).join('')}</div></section>`;
+// One block per series wherever essays are listed: title, part count, date range, then every part in order.
+// On a phone, assets/series-blocks.js closes a long part list behind its summary. Without JavaScript it stays open.
+const SERIES_COLLAPSE_AFTER = 3;
+function seriesBlock(unit, {heading = 'h2', descriptions = false, className = ''} = {}) {
+  const {series, articles} = unit;
+  const count = `${articles.length} ${articles.length === 1 ? 'part' : 'parts'}`;
+  const dates = articles.map((article) => article.date).sort();
+  const first = articles[0];
+  const rows = articles.map((article) => `<li><a class="series-row${trackClass(article)}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="series-row-part">Part ${article.part}${article.track ? `<small>${TRACKS[article.track]}</small>` : ''}</span><span class="series-row-copy"><span class="series-row-title">${escape(article.title)}</span>${descriptions ? `<span class="series-row-description">${escape(article.description)}</span>` : ''}</span><span class="series-row-meta"><time datetime="${article.date}">${shortDate(article.date)}</time><span>${article.readingMinutes} min</span></span></a></li>`).join('');
+  const collapse = articles.length > SERIES_COLLAPSE_AFTER ? ' data-series-collapse' : '';
+  return `<section class="series-block${className ? ` ${className}` : ''}" id="series-${series.id}" aria-labelledby="series-${series.id}-title"><div class="series-block-head"><p class="series-block-eyebrow">Series · ${count} · <time datetime="${dates[0]}">${dateRange(dates[0], dates.at(-1))}</time></p><${heading} id="series-${series.id}-title">${escape(series.title)}</${heading}>${series.subtitle ? `<p class="series-block-subtitle">${escape(series.subtitle)}</p>` : ''}<p class="series-block-description">${escape(series.description)}</p><a class="series-block-start" href="/robotics/${first.slug}/">Start with Part ${first.part} <span aria-hidden="true">→</span></a></div><details class="series-block-parts" open${collapse}><summary><span class="series-show">Show all ${count}</span><span class="series-hide">Hide the parts</span></summary><ol>${rows}</ol></details></section>`;
 }
-function otherEssaysHeading(units) {
-  return units.some((unit) => unit.series) && units.some((unit) => !unit.series) ? '<p class="other-essays-heading">Other essays</p>' : '';
-}
-function attachSeries(articles) {
+function attachSeries(articles, seriesData) {
   const groups = new Map();
   for (const article of articles) {
     if (!article.series) continue;
+    if (!seriesData[article.series]) throw new Error(`${article.slug}.md: series ${article.series} is not in content/robotics/series.json`);
     const group = groups.get(article.series) || [];
     if (group.some((part) => part.part === article.part)) throw new Error(`Duplicate part ${article.part} in series ${article.series}`);
     group.push(article);
     groups.set(article.series, group);
   }
-  for (const group of groups.values()) {
+  for (const [id, group] of groups) {
     group.sort((a, b) => a.part - b.part);
+    // A part 0 is an overview, so "Part 3 of 8" still counts only the numbered parts.
+    const total = group.some((part) => part.part === 0) ? Math.max(...group.map((part) => part.part)) : group.length;
+    const seriesInfo = {id, ...seriesData[id], total};
     group.forEach((article, index) => {
+      article.seriesInfo = seriesInfo;
       article.seriesArticles = group;
       article.seriesPrevious = group[index - 1] || null;
       article.seriesNext = group[index + 1] || null;
@@ -401,9 +435,9 @@ function sectionPage(slug, articles, root) {
 function landingPage(articles, root) {
   const units = articleUnits(articles);
   const content = units.map((unit) => unit.series
-    ? seriesBlock(unit, articleCard)
+    ? seriesBlock(unit, {descriptions:true})
     : articleCard(unit.article)).join('\n');
-  return shell({title:'Robotics', description:'Essays on robot learning, geometry, and control, with experiments and diagrams.', pathname:'/robotics/', root, search:true, content:`
+  return shell({title:'Robotics', description:'Essays on robot learning, geometry, and control, with experiments and diagrams.', pathname:'/robotics/', root, search:true, seriesBlocks:units.some((unit) => unit.series), content:`
 <header class="robotics-header"><p class="eyebrow">Essays &amp; explorations / ${articles.length} ${articles.length === 1 ? 'essay' : 'essays'}</p><h1>Learning robotics.</h1><p class="series-intro">Experiments, diagrams, and questions from learning how robots move, learn, and make decisions.</p></header>
 ${sectionLinks(articles)}${filterBar(articles)}<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
 }
@@ -427,23 +461,23 @@ function homePage(articles, root) {
     control_article_href:hasControlArticle ? '/robotics/how-robot-control-is-changing/' : '/#writing',
     control_article_label:hasControlArticle ? 'How control is changing' : 'Explore the writing',
   });
-  const latest = latestUnit?.series ? articles.find((article) => article.series === latestUnit.series) : latestUnit?.article;
+  const latest = latestUnit?.series ? articles.find((article) => article.series === latestUnit.series.id) : latestUnit?.article;
   const featureImage = latest ? previewImage(latest, root) : '';
   const featureImageLabel = latest?.slug === 'how-robot-control-is-changing' ? 'Illustration: a moved target' : 'Figure from the essay';
   let rowNumber = latestUnit?.series ? 1 : 2;
   const renderRow = (article) => {
     const image = previewImage(article, root);
-    const label = article.series ? `Part ${article.part}${article.track ? `<small>${TRACKS[article.track]}</small>` : ''}` : String(rowNumber++).padStart(2, '0');
+    const label = String(rowNumber++).padStart(2, '0');
     return `<a class="writing-row${image ? ' writing-row-with-image' : ''}${trackClass(article)}" href="/robotics/${article.slug}/"><span class="writing-row-number">${label}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
   };
+  const homeSeries = (unit) => seriesBlock(unit, {heading:'h3', className:'series-block-home'});
   const feature = latestUnit?.series
-    ? seriesBlock(latestUnit, renderRow, 'series-block-home')
+    ? homeSeries(latestUnit)
     : latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest essay</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the essay <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">${featureImageLabel}</span></div>` : ''}</a>`
     : '<p class="writing-empty">The first essay is on its way.</p>';
-  const restSeries = restUnits.filter((unit) => unit.series).map((unit) => seriesBlock(unit, renderRow, 'series-block-home')).join('');
-  const restEssays = restUnits.filter((unit) => !unit.series).map((unit) => renderRow(unit.article)).join('');
-  const rows = `${restSeries}${restEssays ? `${otherEssaysHeading(units)}${restEssays}` : ''}`;
-  return shell({title:'Robotics, learning, and systems', description:'Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them.', pathname:'/', root, interactive:true, content:`
+  // The timeline stays in date order. Each series sits once, at the date of its newest part.
+  const rows = restUnits.map((unit) => unit.series ? homeSeries(unit) : renderRow(unit.article)).join('');
+  return shell({title:'Robotics, learning, and systems', description:'Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them.', pathname:'/', root, interactive:true, seriesBlocks:units.some((unit) => unit.series), content:`
 <section class="home-hero" aria-labelledby="home-title"><div class="home-hero-copy"><p class="eyebrow">Hadrien Cornier / Personal notes</p><h1 id="home-title">Robotics, learning,<br>and the systems<br>behind them.</h1><p class="home-intro">I build data infrastructure and production ML. Here I write about robot learning, the math behind it, and what I learn by building.</p><div class="home-hero-links"><a href="#writing">Explore the writing <span aria-hidden="true">↓</span></a><a href="/about.html">More about me <span aria-hidden="true">↗</span></a></div></div>${controlDemo}</section>
 <section class="home-writing" id="writing" aria-labelledby="writing-title"><div class="home-section-heading"><div><p class="eyebrow">Essays &amp; explorations</p><h2 id="writing-title">Writing</h2></div><p class="home-count">${String(articles.length).padStart(2, '0')} ${articles.length === 1 ? 'essay' : 'essays'}</p></div>${feature}<div class="writing-rows">${rows}</div></section>
 ${homeNotes(root)}
@@ -522,7 +556,7 @@ export function build(root = ROOT) {
     try { return {...renderArticle(source, root, html), slug}; }
     catch (error) { throw new Error(`${slug}.md: ${error.message}`); }
   }).sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
-  attachSeries(articles);
+  attachSeries(articles, readSeries(sourceDir));
   // Render everything first. A malformed article cannot leave a half-built series.
   const pages = articles.map((article) => [path.join(root, 'robotics', article.slug, 'index.html'), articlePage(article, root)]);
   const sectionSlugs = Object.keys(SECTIONS).filter((slug) => articles.some((article) => article.section === slug));

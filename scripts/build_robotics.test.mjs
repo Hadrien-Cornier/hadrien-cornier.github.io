@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { renderArticle, dateValue, build } from './build_robotics.mjs';
+import { renderArticle, dateValue, dateRange, build } from './build_robotics.mjs';
 
 function writeFixture(filename, source) {
   // Give each published fixture its own source image, as real articles require.
@@ -14,6 +14,12 @@ function writeFixture(filename, source) {
     source = source.replaceAll('/assets/fixture-thumbnail.svg', `/assets/${image}`);
   }
   fs.writeFileSync(filename, source);
+}
+
+// Series names live in content/robotics/series.json; a part names its series by id.
+function writeSeries(root, series = {'arm-series': {title:'Arm series', description:'How an arm learns to move.'}}) {
+  fs.mkdirSync(path.join(root, 'content/robotics'), {recursive:true});
+  fs.writeFileSync(path.join(root, 'content/robotics/series.json'), JSON.stringify(series));
 }
 
 function fixtureRoot(prefix) {
@@ -215,33 +221,57 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
     fs.mkdirSync(sourceDir, {recursive:true});
     writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
     const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n${metadata}---\n\n${title} body.`;
-    writeFixture(path.join(sourceDir, 'series-one.md'), report('Series part one', '2026-09-26', 'series: Arm series\npart: 1\n'));
-    writeFixture(path.join(sourceDir, 'series-two.md'), report('Series part two', '2026-09-28', 'series: Arm series\npart: 2\n'));
-    writeFixture(path.join(sourceDir, 'series-draft.md'), report('Unpublished part', '2026-09-29', 'draft: true\nseries: Arm series\npart: 3\n'));
+    writeFixture(path.join(sourceDir, 'series-one.md'), report('Series part one', '2026-09-26', 'series: arm-series\npart: 1\n'));
+    writeFixture(path.join(sourceDir, 'series-two.md'), report('Series part two', '2026-09-28', 'series: arm-series\npart: 2\n'));
+    writeFixture(path.join(sourceDir, 'series-draft.md'), report('Unpublished part', '2026-09-29', 'draft: true\nseries: arm-series\npart: 3\n'));
     writeFixture(path.join(sourceDir, 'standalone.md'), report('Latest standalone', '2026-10-01'));
+    writeSeries(root);
     build(root);
     const first = fs.readFileSync(path.join(root, 'robotics/series-one/index.html'), 'utf8');
     const second = fs.readFileSync(path.join(root, 'robotics/series-two/index.html'), 'utf8');
     const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
     const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    assert.match(first, /<nav class="series-box" aria-label="Series">[\s\S]*Part 1 of 2/);
+    assert.match(first, /<nav class="series-box" aria-label="Series"><p class="series-box-name"><a href="\/robotics\/#series-arm-series">Series · Arm series<\/a><\/p><p class="series-box-position">Part 1 of 2<\/p>/);
     assert.match(first, /aria-current="page">Series part one/);
     assert.match(first, /rel="next" href="\/robotics\/series-two\/"/);
     assert.match(second, /rel="prev" href="\/robotics\/series-one\/"/);
     assert.doesNotMatch(first, /Unpublished part/);
-    const listingBlock = listing.match(/<section class="series-block">[\s\S]*?<\/section>/)?.[0];
+    const listingBlock = listing.match(/<section class="series-block" id="series-arm-series"[\s\S]*?<\/section>/)?.[0];
     assert.ok(listingBlock);
     assert.ok(listingBlock.indexOf('series-one') < listingBlock.indexOf('series-two'));
     assert.ok(listing.indexOf('Latest standalone') < listing.indexOf('Arm series'));
-    const homeBlock = home.match(/<section class="series-block series-block-home">[\s\S]*?<\/section>/)?.[0];
+    const homeBlock = home.match(/<section class="series-block series-block-home" id="series-arm-series"[\s\S]*?<\/section>/)?.[0];
     assert.ok(homeBlock);
     assert.ok(homeBlock.indexOf('series-one') < homeBlock.indexOf('series-two'));
-    assert.match(homeBlock, /Series \/ 2 parts/);
-    assert.match(homeBlock, /writing-row-number">Part 1</);
-    assert.match(listingBlock, /report-part">Part 2</);
+    assert.match(homeBlock, /Series · 2 parts · <time datetime="2026-09-26">September 26\s–\s28, 2026<\/time>/);
+    assert.doesNotMatch(homeBlock, /series-block-subtitle/);
+    assert.match(homeBlock, /<h3 id="series-arm-series-title">Arm series<\/h3><p class="series-block-description">How an arm learns to move\.<\/p>/);
+    assert.match(homeBlock, /series-row-part">Part 1</);
+    assert.match(listingBlock, /series-row-part">Part 2</);
+    assert.match(listingBlock, /series-row-description">Series part two description\.</);
+    assert.doesNotMatch(homeBlock, /series-row-description/);
     assert.doesNotMatch(listing + home, /Unpublished part/);
-    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\n---\nBody.`), /part is required/);
-    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\npart: -1\n---\nBody.`), /non-negative integer/);
+    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: arm-series\n---\nBody.`), /part is required/);
+    assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: arm-series\npart: -1\n---\nBody.`), /non-negative integer/);
+  } finally { fs.rmSync(root, {recursive:true,force:true}); }
+});
+
+test('a series subtitle shows under its title in the series block and on each part page', () => {
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-series-subtitle-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n${metadata}---\n\n${title} body.`;
+    writeFixture(path.join(sourceDir, 'series-one.md'), report('Series part one', '2026-09-26', 'series: arm-series\npart: 1\n'));
+    writeSeries(root, {'arm-series': {title:'Arm series', subtitle:'What I learned & measured', description:'How an arm learns to move.'}});
+    build(root);
+    const part = fs.readFileSync(path.join(root, 'robotics/series-one/index.html'), 'utf8');
+    const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(home, /<h3 id="series-arm-series-title">Arm series<\/h3><p class="series-block-subtitle">What I learned &amp; measured<\/p><p class="series-block-description">/);
+    assert.match(part, /Series · Arm series<\/a><\/p><p class="series-box-subtitle">What I learned &amp; measured<\/p><p class="series-box-position">Part 1 of 1</);
+    writeSeries(root, {'arm-series': {title:'Arm series', subtitle:' ', description:'How an arm learns to move.'}});
+    assert.throws(() => build(root), /subtitle must be non-empty text/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 
@@ -252,8 +282,9 @@ test('a hardware track part gets its own class and label in the series', () => {
     fs.mkdirSync(sourceDir, {recursive:true});
     writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
     const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n${metadata}---\n\n${title} body.`;
-    writeFixture(path.join(sourceDir, 'control-part.md'), report('Control part', '2026-09-26', 'series: Arm series\npart: 1\n'));
-    writeFixture(path.join(sourceDir, 'hardware-part.md'), report('Hardware part', '2026-09-28', 'series: Arm series\npart: 2\ntrack: hardware\n'));
+    writeFixture(path.join(sourceDir, 'control-part.md'), report('Control part', '2026-09-26', 'series: arm-series\npart: 1\n'));
+    writeFixture(path.join(sourceDir, 'hardware-part.md'), report('Hardware part', '2026-09-28', 'series: arm-series\npart: 2\ntrack: hardware\n'));
+    writeSeries(root);
     build(root);
     const control = fs.readFileSync(path.join(root, 'robotics/control-part/index.html'), 'utf8');
     const hardware = fs.readFileSync(path.join(root, 'robotics/hardware-part/index.html'), 'utf8');
@@ -263,10 +294,10 @@ test('a hardware track part gets its own class and label in the series', () => {
     assert.match(control, /<body class="robotics">/);
     assert.match(hardware, /Part 2 of 2 · Hardware/);
     assert.match(control, /<li class="series-part track-hardware"><a href="\/robotics\/hardware-part\/">Hardware part<\/a><span class="track-tag">Hardware<\/span>/);
-    assert.match(listing, /report-card track-hardware has-thumb" href="\/robotics\/hardware-part\/"/);
-    assert.match(listing, /report-part">Part 2 · Hardware</);
-    assert.match(home, /writing-row writing-row-with-image track-hardware" href="\/robotics\/hardware-part\/"/);
-    assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\npart: 1\ntrack: wood\n---\nBody.`), /track must be one of: hardware/);
+    assert.match(listing, /series-row track-hardware" href="\/robotics\/hardware-part\/"/);
+    assert.match(listing, /series-row-part">Part 2<small>Hardware<\/small>/);
+    assert.match(home, /series-row track-hardware" href="\/robotics\/hardware-part\/"/);
+    assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: arm-series\npart: 1\ntrack: wood\n---\nBody.`), /track must be one of: hardware/);
     assert.throws(() => renderArticle(`---\ntitle: T\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\ntrack: hardware\n---\nBody.`), /track requires series/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
@@ -277,10 +308,11 @@ test('published series reject duplicate part numbers', () => {
     const sourceDir = path.join(root, 'content/robotics');
     fs.mkdirSync(sourceDir, {recursive:true});
     writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
-    const report = (title) => `---\ntitle: ${title}\ndescription: Duplicate part.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: Arm series\npart: 1\n---\nBody.`;
+    const report = (title) => `---\ntitle: ${title}\ndescription: Duplicate part.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: arm-series\npart: 1\n---\nBody.`;
     writeFixture(path.join(sourceDir, 'one.md'), report('One'));
     writeFixture(path.join(sourceDir, 'two.md'), report('Two'));
-    assert.throws(() => build(root), /Duplicate part 1 in series Arm series/);
+    writeSeries(root);
+    assert.throws(() => build(root), /Duplicate part 1 in series arm-series/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 
@@ -578,11 +610,79 @@ test('a series can begin with part zero', () => {
     const dir = path.join(root, 'content/robotics');
     fs.mkdirSync(dir, {recursive:true});
     writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
-    for (const part of [2, 0, 1]) writeFixture(path.join(dir, `part-${part}.md`), frontmatter.replace('Test report', `Part ${part}`).replace('---\n\n', `series: RL\npart: ${part}\n---\n\n`) + 'Body.');
+    for (const part of [2, 0, 1]) writeFixture(path.join(dir, `part-${part}.md`), frontmatter.replace('Test report', `Part ${part}`).replace('---\n\n', `series: rl\npart: ${part}\n---\n\n`) + 'Body.');
+    writeSeries(root, {rl:{title:'RL', description:'Problems first.'}});
     build(root);
     const page = fs.readFileSync(path.join(root, 'robotics/part-0/index.html'), 'utf8');
     assert.match(page, /Part 0 of 2/);
     assert.match(page, /rel="next" href="\/robotics\/part-1\//);
     assert.doesNotMatch(page, /rel="prev"/);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});
+
+// Hadrien asked for each series to read as one block on the timeline, in date order with the other essays.
+test('the writing timeline shows each series once, at the date of its newest part', () => {
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-series-timeline-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n${metadata}---\n\n${title} body.`;
+    writeFixture(path.join(sourceDir, 'newest.md'), report('Newest essay', '2026-10-20'));
+    for (const part of [1, 2, 3, 4]) writeFixture(path.join(sourceDir, `arm-${part}.md`), report(`Arm part ${part}`, `2026-10-0${part + 4}`, `series: arm-series\npart: ${part}\n`));
+    writeFixture(path.join(sourceDir, 'middle.md'), report('Middle essay', '2026-10-15'));
+    writeFixture(path.join(sourceDir, 'oldest.md'), report('Oldest essay', '2026-10-01'));
+    writeFixture(path.join(sourceDir, 'short-a.md'), report('Short A', '2026-09-20', 'series: two-parts\npart: 1\n'));
+    writeFixture(path.join(sourceDir, 'short-b.md'), report('Short B', '2026-10-25', 'series: two-parts\npart: 2\n'));
+    writeSeries(root, {'arm-series':{title:'Arm series', description:'How an arm learns to move.'}, 'two-parts':{title:'Two parts', description:'A short pair.'}, 'unused':{title:'Unused', description:'No parts yet.'}});
+    build(root);
+    const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    const listing = fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8');
+    for (const page of [home, listing]) {
+      assert.equal(page.match(/id="series-arm-series"/g)?.length, 1);
+      // Newest part of "Two parts" is the newest article; "Arm series" sits between the middle and oldest essays.
+      const order = ['id="series-two-parts"', 'Newest essay', 'Middle essay', 'id="series-arm-series"', 'Oldest essay'].map((text) => page.indexOf(text));
+      assert.ok(order.every((index, i) => index >= 0 && (i === 0 || index > order[i - 1])), `timeline order: ${order}`);
+      assert.doesNotMatch(page, /Unused|other-essays-heading/);
+      assert.match(page, /Series · 2 parts · <time datetime="2026-09-20">September 20\s–\sOctober 25, 2026<\/time>/);
+      assert.match(page, /<script src="\/assets\/series-blocks\.js\?v=[0-9a-f]{12}" defer><\/script>/);
+    }
+    // Lists longer than three parts close on a phone; short ones always stay open.
+    assert.match(home, /id="series-arm-series"[^]*?<details class="series-block-parts" open data-series-collapse><summary><span class="series-show">Show all 4 parts<\/span>/);
+    assert.match(home, /id="series-two-parts"[^]*?<details class="series-block-parts" open><summary>/);
+    assert.match(home, /<a class="series-block-start" href="\/robotics\/arm-1\/">Start with Part 1/);
+    const part = fs.readFileSync(path.join(root, 'robotics/arm-3/index.html'), 'utf8');
+    assert.match(part, /Series · Arm series<\/a><\/p><p class="series-box-position">Part 3 of 4<\/p>/);
+    assert.match(part, /rel="prev" href="\/robotics\/arm-2\/">← Previous: Arm part 2</);
+    assert.match(part, /rel="next" href="\/robotics\/arm-4\/">Next: Arm part 4 →</);
+    const standalone = fs.readFileSync(path.join(root, 'robotics/middle/index.html'), 'utf8');
+    assert.doesNotMatch(standalone, /series-box|series-blocks\.js/);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});
+
+test('series ids must exist in series.json, and series.json entries need a title and description', () => {
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-series-data-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    writeFixture(path.join(sourceDir, 'part.md'), frontmatter.replace('---\n\n', 'series: missing\npart: 1\n---\n\n') + 'Body.');
+    writeSeries(root, {});
+    assert.throws(() => build(root), /part\.md: series missing is not in content\/robotics\/series\.json/);
+    writeSeries(root, {missing:{title:'Missing'}});
+    assert.throws(() => build(root), /series\.json: missing needs a description/);
+    writeSeries(root, {missing:{title:'Missing', description:'Here.', tagline:'No.'}});
+    assert.throws(() => build(root), /series\.json: missing has unknown field tagline/);
+    writeSeries(root, {'Bad Id':{title:'Bad', description:'Bad.'}});
+    assert.throws(() => build(root), /series\.json: invalid series id Bad Id/);
+    fs.writeFileSync(path.join(sourceDir, 'series.json'), '{');
+    assert.throws(() => build(root), /series\.json must be valid JSON/);
+    assert.throws(() => renderArticle(frontmatter.replace('---\n\n', 'series: Free text title\npart: 1\n---\n\n') + 'Body.'), /series must be a series id/);
+  } finally { fs.rmSync(root, {recursive:true, force:true}); }
+});
+
+test('series date ranges stay short and UTC', () => {
+  assert.equal(dateRange('2026-10-02', '2026-10-02'), 'October 2, 2026');
+  assert.match(dateRange('2026-10-02', '2026-10-15'), /^October 2\s–\s15, 2026$/);
+  assert.match(dateRange('2025-12-30', '2026-01-02'), /^December 30, 2025\s–\sJanuary 2, 2026$/);
 });

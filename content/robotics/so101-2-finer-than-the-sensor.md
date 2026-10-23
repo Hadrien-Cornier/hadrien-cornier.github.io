@@ -3,7 +3,7 @@ title: 'Seeing finer than the sensor'
 description: 'The sensor side of the joint equation: why differences of encoder ticks explode the noise, and how an observer or a Kalman filter can estimate an angle finer than one tick.'
 date: '2026-10-03'
 draft: false
-series: 'From policy to action: the last mile of robotics control'
+series: 'so101-control'
 part: 2
 tags: ['so-101', 'control', 'sensors']
 thumbnail: /assets/robotics/thumbnails/so101-2-finer-than-the-sensor.jpg
