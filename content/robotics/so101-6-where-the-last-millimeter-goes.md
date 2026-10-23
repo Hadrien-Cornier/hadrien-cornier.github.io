@@ -124,7 +124,7 @@ I use two sets of drawings. I choose controllers on the **test drawings** (kitte
 
 ### Time-lapse: the drawings get more precise
 
-The video shows all four test drawings at once, with four controllers in sequence. Each stage redraws the real arm's tablet recording at 8 times speed. The bars on the right keep the error of every stage. All four stages ran the same night, at the same tablet pose. They are ordered by error and not by clock time.
+The video shows all four test drawings at once, with four controllers in sequence. Each stage redraws the real arm's tablet recording at 8 times speed. The bars under the drawings keep the error of every stage. All four stages ran the same night, at the same tablet pose. They are ordered by error and not by clock time.
 
 <figure class="article-figure">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/timelapse-poster.jpg" aria-label="Time-lapse of four drawings, a kitten, a star, a spiral and a square, drawn with four controllers in turn. The pen trace sits further from the gray reference line for the physics base, closer with a learned torque, close with a neural-network correction and closest with the frozen correction head. The bars show the mean error: 2.74, 2.27, 1.15 and 1.03 millimeters.">
