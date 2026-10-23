@@ -2,7 +2,7 @@
  *
  * Numbers come from scripts/imprint-figures.json, which scripts/imprint-figures.py reads out of the
  * paper's tables. Panels 1 to 5 are schematics of the method; panel 6 and the small bar charts plot the
- * paper's numbers. Run `node scripts/imprint-canvas.mjs` to rewrite content/papers/imprint.html, then
+ * paper's numbers. Run `node scripts/imprint-canvas.mjs` to rewrite content/robotics/imprint.html, then
  * build the site.
  */
 import fs from 'node:fs';
@@ -13,7 +13,7 @@ import { C, HAND, esc, n, random, rect, line, curve, text, math, tag, star, snow
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/imprint-figures.json'), 'utf8'));
-export const OUTPUT = path.join(ROOT, 'content/papers/imprint.html');
+export const OUTPUT = path.join(ROOT, 'content/robotics/imprint.html');
 export const PANEL = { w: 560, h: 460 };
 
 // The paper's own colour code: yellow for vision, blue for actions, green for joint states, orange for memory.
@@ -564,7 +564,7 @@ function questions() {
 
 // ── Prose around the canvas ──────────────────────────────────────────────────────
 
-export const INTRO = String.raw`In the Cover Blocks task, red, green and blue blocks sit in a random order. The robot covers them with three lids, then must uncover them in red, green, blue order. Once they're covered, every order looks the same, so how does the policy know which to open first? It has to remember. Most memory methods pick what to keep, but Imprint compresses the video, actions and joint states into a fixed set of 256 memory tokens, updated as the episode runs. With Imprint, π0.5 goes from 25.4% to 72.8% success on RMBench's nine memory tasks, the best among memory methods compared.`;
+export const INTRO = String.raw`I read this paper because I'm interested in memory systems. In the Cover Blocks task, red, green and blue blocks sit in a random order. The robot covers them with three lids, then must uncover them in red, green, blue order. Once they're covered, every order looks the same, so how does the policy know which to open first? It has to remember. Most memory methods pick what to keep, but Imprint compresses the video, actions and joint states into a fixed set of 256 memory tokens, updated as the episode runs. With Imprint, π0.5 goes from 25.4% to 72.8% success on RMBench's nine memory tasks, the best among memory methods compared.`;
 export const MATH_BEFORE = String.raw`Stage 1 needs no policy and no human labels, since the recording itself is the target. The encoder packs the history and task into the memory $m_t$, 256 tokens of width 1024, and a decoder that sees only $m_t$ must rebuild the past by minimizing `;
 // Eq. 4.4 of the paper. The narrow version breaks the same sum over three lines for phones.
 export const EQUATION = String.raw`\mathcal{L}_{\text{mem}} = \frac{1}{K}\sum_{k}\Big[\lambda_v\big\|\hat z^{v}_{k}-z^{v}_{k}\big\|^{2}+\lambda_a\big\|\hat a_{k}-a_{k}\big\|^{2}+\lambda_q\big\|\hat q_{k}-q_{k}\big\|^{2}\Big]+\lambda_\rho\big(\hat\rho_t-\rho_t\big)^{2}`;

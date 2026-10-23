@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import matter from 'gray-matter';
 import {DATA, OUTPUT, PANEL, LAYOUTS, SCATTER, RECIPE, PROBE, CHANCE, TRANSFER, ORDERS, PLOT, plotX, plotY, INTRO, MATH_BEFORE, MATH_AFTER, QA_TITLE, QA_ITEMS, IMPRINT_CODE, render} from './imprint-canvas.mjs';
 
 const mean = (values) => values.reduce((a, b) => a + b, 0) / values.length;
@@ -9,14 +10,22 @@ test('the committed page is the current generator output', () => {
  assert.equal(fs.readFileSync(OUTPUT, 'utf8'), render(), 'run node scripts/imprint-canvas.mjs');
 });
 
-test('the title is the paper\'s exact name and the first line under it gives the paper date and link', () => {
- const meta = JSON.parse(fs.readFileSync(new URL('../content/papers/imprint.json', import.meta.url), 'utf8'));
+test('the title names Imprint and the paper\'s exact name, and the first line under it gives the paper date and link', () => {
+ const {data} = matter(fs.readFileSync(new URL('../content/robotics/imprint.md', import.meta.url), 'utf8'));
  // The exact title and the only version's date (v1, 9 Oct 2026) on the arXiv abstract page of 2610.14406.
- assert.equal(meta.title, 'Memory Without Curation: Learning Multi-Stream Latent Memory for Robot Policies');
- assert.equal(meta.paperTitle, meta.title);
- assert.equal(meta.paperDate, '2026-10-09');
- const page = fs.readFileSync(new URL('../papers/imprint/index.html', import.meta.url), 'utf8');
- assert.match(page, /<h1 id="paper-title">Memory Without Curation: Learning Multi-Stream Latent Memory for Robot Policies<\/h1><p class="paper-source">Posted to arXiv on 9 October 2026 · <a href="https:\/\/arxiv\.org\/abs\/2610\.14406">arXiv 2610\.14406 ↗<\/a><\/p><p class="paper-takeaway">/);
+ assert.equal(data.paper.title, 'Memory Without Curation: Learning Multi-Stream Latent Memory for Robot Policies');
+ assert.equal(data.title, `Imprint: ${data.paper.title.replace(': ', ' - ')}`);
+ assert.doesNotMatch(data.title, /[—–]/, 'no em or en dashes');
+ assert.equal(data.paper.date, '2026-10-09');
+ const page = fs.readFileSync(new URL('../robotics/imprint/index.html', import.meta.url), 'utf8');
+ assert.match(page, /<h1>Imprint: Memory Without Curation - Learning Multi-Stream Latent Memory for Robot Policies<\/h1><p class="paper-source">Posted to arXiv on 9 October 2026 · <a href="https:\/\/arxiv\.org\/abs\/2610\.14406">arXiv 2610\.14406 ↗<\/a><\/p><p class="post-description">/);
+});
+
+test('the intro says why I read it, and the page shares the memory tag with the other memory article', () => {
+ assert.match(INTRO, /^I read this paper because I'm interested in memory systems\. In the Cover Blocks task/);
+ const tags = (name) => matter(fs.readFileSync(new URL(`../content/robotics/${name}.md`, import.meta.url), 'utf8')).data.tags;
+ assert.ok(tags('imprint').includes('robot-memory'));
+ assert.ok(tags('why-cant-robots-remember').includes('robot-memory'));
 });
 
 test('the tables read from the paper agree with their own averages', () => {
