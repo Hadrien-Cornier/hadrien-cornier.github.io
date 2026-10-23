@@ -669,3 +669,5 @@ a.tag-chip:hover { border-color: var(--accent); color: var(--accent); text-decor
 .section-link:hover { border-color: var(--accent); }
 .section-link-name { font-weight: 600; }
 .section-link-count { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .7px; }
+/* Dark mode: thumbnail frames take the card colour, so no light band shows around a dark drawing. */
+:root:not([data-theme="light"]) :is(.writing-feature-image, .writing-row-image, .report-thumb) { background: transparent; }
