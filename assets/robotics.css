@@ -353,6 +353,7 @@
 .series-box { max-width: 1080px; margin: 22px auto 0; padding: 17px 20px; border: 1px solid var(--line); background: var(--white); font-size: 13px; }
 .series-box-name { color: var(--muted); font: 10px/1.5 var(--mono); letter-spacing: .8px; text-transform: uppercase; }
 .series-box-name a { color: var(--accent); }
+.series-box-subtitle { margin-top: 4px; color: var(--muted); font-family: var(--serif); font-size: 15px; font-style: italic; }
 .series-box-position { margin-top: 4px; font-family: var(--serif); font-size: 20px; }
 .series-box ol { display: flex; flex-wrap: wrap; gap: 7px 22px; margin: 13px 0 0; padding: 0; list-style-position: inside; }
 .series-box li { min-width: 0; }
@@ -363,6 +364,7 @@
 .series-block-head { display: grid; gap: 8px; justify-items: start; }
 .series-block-head > :is(h2, h3) { margin: 0; padding: 0; border: 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(26px, 3vw, 34px); font-weight: 400; letter-spacing: -.7px; line-height: 1.18; }
 .series-block-eyebrow { margin: 0; color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .9px; }
+.series-block-subtitle { max-width: 720px; margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(17px, 1.8vw, 20px); font-style: italic; line-height: 1.4; }
 .series-block-description { max-width: 720px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
 .series-block-start { padding: 4px 0; color: var(--accent); font-size: 14px; }
 .series-block-parts { margin-top: 14px; }

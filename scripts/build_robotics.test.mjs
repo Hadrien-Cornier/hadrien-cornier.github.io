@@ -244,6 +244,7 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
     assert.ok(homeBlock);
     assert.ok(homeBlock.indexOf('series-one') < homeBlock.indexOf('series-two'));
     assert.match(homeBlock, /Series · 2 parts · <time datetime="2026-09-26">September 26\s–\s28, 2026<\/time>/);
+    assert.doesNotMatch(homeBlock, /series-block-subtitle/);
     assert.match(homeBlock, /<h3 id="series-arm-series-title">Arm series<\/h3><p class="series-block-description">How an arm learns to move\.<\/p>/);
     assert.match(homeBlock, /series-row-part">Part 1</);
     assert.match(listingBlock, /series-row-part">Part 2</);
@@ -252,6 +253,25 @@ test('series validates metadata, orders parts, and omits draft parts', () => {
     assert.doesNotMatch(listing + home, /Unpublished part/);
     assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: arm-series\n---\nBody.`), /part is required/);
     assert.throws(() => renderArticle(`---\ntitle: Series\ndescription: Test.\ndate: 2026-09-26\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\nseries: arm-series\npart: -1\n---\nBody.`), /non-negative integer/);
+  } finally { fs.rmSync(root, {recursive:true,force:true}); }
+});
+
+test('a series subtitle shows under its title in the series block and on each part page', () => {
+  const root = fixtureRoot(path.join(os.tmpdir(), 'robotics-series-subtitle-'));
+  try {
+    const sourceDir = path.join(root, 'content/robotics');
+    fs.mkdirSync(sourceDir, {recursive:true});
+    writeFixture(path.join(root, 'sitemap.xml'), '<urlset></urlset>');
+    const report = (title, date, metadata = '') => `---\ntitle: ${title}\ndescription: ${title} description.\ndate: ${date}\nthumbnail: /assets/fixture-thumbnail.svg\nthumbnail_alt: A fixture diagram.\n${metadata}---\n\n${title} body.`;
+    writeFixture(path.join(sourceDir, 'series-one.md'), report('Series part one', '2026-09-26', 'series: arm-series\npart: 1\n'));
+    writeSeries(root, {'arm-series': {title:'Arm series', subtitle:'What I learned & measured', description:'How an arm learns to move.'}});
+    build(root);
+    const part = fs.readFileSync(path.join(root, 'robotics/series-one/index.html'), 'utf8');
+    const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(home, /<h3 id="series-arm-series-title">Arm series<\/h3><p class="series-block-subtitle">What I learned &amp; measured<\/p><p class="series-block-description">/);
+    assert.match(part, /Series · Arm series<\/a><\/p><p class="series-box-subtitle">What I learned &amp; measured<\/p><p class="series-box-position">Part 1 of 1</);
+    writeSeries(root, {'arm-series': {title:'Arm series', subtitle:' ', description:'How an arm learns to move.'}});
+    assert.throws(() => build(root), /subtitle must be non-empty text/);
   } finally { fs.rmSync(root, {recursive:true,force:true}); }
 });
 
@@ -651,8 +671,8 @@ test('series ids must exist in series.json, and series.json entries need a title
     assert.throws(() => build(root), /part\.md: series missing is not in content\/robotics\/series\.json/);
     writeSeries(root, {missing:{title:'Missing'}});
     assert.throws(() => build(root), /series\.json: missing needs a description/);
-    writeSeries(root, {missing:{title:'Missing', description:'Here.', subtitle:'No.'}});
-    assert.throws(() => build(root), /series\.json: missing has unknown field subtitle/);
+    writeSeries(root, {missing:{title:'Missing', description:'Here.', tagline:'No.'}});
+    assert.throws(() => build(root), /series\.json: missing has unknown field tagline/);
     writeSeries(root, {'Bad Id':{title:'Bad', description:'Bad.'}});
     assert.throws(() => build(root), /series\.json: invalid series id Bad Id/);
     fs.writeFileSync(path.join(sourceDir, 'series.json'), '{');

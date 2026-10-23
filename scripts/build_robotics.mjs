@@ -81,8 +81,8 @@ function validateThumbnail(data, root) {
   if (!fs.existsSync(path.join(root, data.thumbnail))) throw new Error(`thumbnail file not found: ${data.thumbnail}`);
   if (typeof data.thumbnail_alt !== 'string' || !data.thumbnail_alt.trim()) throw new Error('thumbnail needs thumbnail_alt text');
 }
-// content/robotics/series.json names each series once: {"<id>": {"title": ..., "description": ...}}.
-// A part joins with `series: '<id>'` and `part: <n>`. The title and description show on every page that lists the series.
+// content/robotics/series.json names each series once: {"<id>": {"title": ..., "subtitle": ..., "description": ...}}.
+// The subtitle is optional. A part joins with `series: '<id>'` and `part: <n>`. The title, subtitle and description show on every page that lists the series.
 function readSeries(sourceDir) {
   const file = path.join(sourceDir, 'series.json');
   if (!fs.existsSync(file)) return {};
@@ -92,11 +92,12 @@ function readSeries(sourceDir) {
   for (const [id, series] of Object.entries(data)) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) throw new Error(`series.json: invalid series id ${id}`);
     if (!series || typeof series !== 'object' || Array.isArray(series)) throw new Error(`series.json: ${id} must be a map with title and description`);
-    const unknown = Object.keys(series).filter((key) => !['title', 'description'].includes(key));
+    const unknown = Object.keys(series).filter((key) => !['title', 'subtitle', 'description'].includes(key));
     if (unknown.length) throw new Error(`series.json: ${id} has unknown field ${unknown[0]}`);
     for (const key of ['title', 'description']) {
       if (typeof series[key] !== 'string' || !series[key].trim()) throw new Error(`series.json: ${id} needs a ${key}`);
     }
+    if (series.subtitle !== undefined && (typeof series.subtitle !== 'string' || !series.subtitle.trim())) throw new Error(`series.json: ${id} subtitle must be non-empty text`);
   }
   return data;
 }
@@ -321,7 +322,7 @@ function seriesBox(article) {
   const previous = article.seriesPrevious ? `<a rel="prev" href="/robotics/${article.seriesPrevious.slug}/">← Previous: ${escape(article.seriesPrevious.title)}</a>` : '';
   const next = article.seriesNext ? `<a rel="next" href="/robotics/${article.seriesNext.slug}/">Next: ${escape(article.seriesNext.title)} →</a>` : '';
   const series = article.seriesInfo;
-  return `<nav class="series-box" aria-label="Series"><p class="series-box-name"><a href="/robotics/#series-${series.id}">Series · ${escape(series.title)}</a></p><p class="series-box-position">Part ${article.part} of ${series.total}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
+  return `<nav class="series-box" aria-label="Series"><p class="series-box-name"><a href="/robotics/#series-${series.id}">Series · ${escape(series.title)}</a></p>${series.subtitle ? `<p class="series-box-subtitle">${escape(series.subtitle)}</p>` : ''}<p class="series-box-position">Part ${article.part} of ${series.total}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
 // The paper's own date and link, shown as the first line under the title when paper.date is set.
 function paperSource(paper) {
@@ -380,7 +381,7 @@ function seriesBlock(unit, {heading = 'h2', descriptions = false, className = ''
   const first = articles[0];
   const rows = articles.map((article) => `<li><a class="series-row${trackClass(article)}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="series-row-part">Part ${article.part}${article.track ? `<small>${TRACKS[article.track]}</small>` : ''}</span><span class="series-row-copy"><span class="series-row-title">${escape(article.title)}</span>${descriptions ? `<span class="series-row-description">${escape(article.description)}</span>` : ''}</span><span class="series-row-meta"><time datetime="${article.date}">${shortDate(article.date)}</time><span>${article.readingMinutes} min</span></span></a></li>`).join('');
   const collapse = articles.length > SERIES_COLLAPSE_AFTER ? ' data-series-collapse' : '';
-  return `<section class="series-block${className ? ` ${className}` : ''}" id="series-${series.id}" aria-labelledby="series-${series.id}-title"><div class="series-block-head"><p class="series-block-eyebrow">Series · ${count} · <time datetime="${dates[0]}">${dateRange(dates[0], dates.at(-1))}</time></p><${heading} id="series-${series.id}-title">${escape(series.title)}</${heading}><p class="series-block-description">${escape(series.description)}</p><a class="series-block-start" href="/robotics/${first.slug}/">Start with Part ${first.part} <span aria-hidden="true">→</span></a></div><details class="series-block-parts" open${collapse}><summary><span class="series-show">Show all ${count}</span><span class="series-hide">Hide the parts</span></summary><ol>${rows}</ol></details></section>`;
+  return `<section class="series-block${className ? ` ${className}` : ''}" id="series-${series.id}" aria-labelledby="series-${series.id}-title"><div class="series-block-head"><p class="series-block-eyebrow">Series · ${count} · <time datetime="${dates[0]}">${dateRange(dates[0], dates.at(-1))}</time></p><${heading} id="series-${series.id}-title">${escape(series.title)}</${heading}>${series.subtitle ? `<p class="series-block-subtitle">${escape(series.subtitle)}</p>` : ''}<p class="series-block-description">${escape(series.description)}</p><a class="series-block-start" href="/robotics/${first.slug}/">Start with Part ${first.part} <span aria-hidden="true">→</span></a></div><details class="series-block-parts" open${collapse}><summary><span class="series-show">Show all ${count}</span><span class="series-hide">Hide the parts</span></summary><ol>${rows}</ol></details></section>`;
 }
 function attachSeries(articles, seriesData) {
   const groups = new Map();
