@@ -4,7 +4,7 @@ description: 'Why I am learning reinforcement learning, and the six problems tha
 date: '2026-10-20'
 draft: false
 updated: '2026-10-22'
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 0
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning']

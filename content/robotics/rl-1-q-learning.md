@@ -4,7 +4,7 @@ description: 'One selected branch of RL, the value-based methods from the trial-
 date: '2026-10-20'
 draft: false
 updated: '2026-10-22'
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 1
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning']

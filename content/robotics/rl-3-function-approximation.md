@@ -4,7 +4,7 @@ description: 'When states share a few weights, one update can teach states you n
 date: '2026-10-19'
 updated: '2026-10-22'
 draft: false
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 3
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning']

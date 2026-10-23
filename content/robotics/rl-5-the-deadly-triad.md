@@ -4,7 +4,7 @@ description: 'Function approximation, bootstrapping and off-policy data each mak
 date: '2026-10-19'
 updated: '2026-10-22'
 draft: false
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 5
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning']

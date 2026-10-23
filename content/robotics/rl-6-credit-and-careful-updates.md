@@ -4,7 +4,7 @@ description: 'Four ways a policy-gradient update can go wrong on a robot task: b
 date: '2026-10-21'
 updated: '2026-10-22'
 draft: false
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 6
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning', 'robotics']
