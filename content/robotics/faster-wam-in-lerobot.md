@@ -2,7 +2,7 @@
 title: 'Faster-WAM in LeRobot: from 300 cache reads to 10'
 description: "Faster-WAM cuts a world action model's action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights."
 date: '2026-10-21'
-updated: '2026-10-22'
+updated: '2026-10-23'
 layout: essay
 section: 'recent-papers'
 tags: ['world-action-models', 'lerobot', 'kv-cache', 'flow-matching']
@@ -43,13 +43,19 @@ $$\widehat K_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,K_{h\ell}, \qquad \widehat V_h=\
 
 Here $\ell$ is the video layer, $h$ is one of 24 heads, the $\alpha_{h\ell}$ are 720 learned numbers, and $K_{h\ell}$ and $V_{h\ell}$ are the cached keys and values. The $\alpha$ start at zero, so every $\beta$ starts at $1/30$, and in the paper's Figure 4 (LIBERO) they stay within about 10% of it, read by eye. The authors still call the mix non-uniform, with different heads leaning on different depths.
 
+So how does the action expert use that cache? At every denoising step, the 32 action tokens, one per action in the chunk, attend to the fused cache and to each other in one softmax per head:
+
+$$O_h=\operatorname{softmax}\!\left(\frac{Q_h\,[\widehat K_h;\,K^{a}_h]^{\top}}{\sqrt{D}}\right)[\widehat V_h;\,V^{a}_h]$$
+
+$Q_h$, $K^{a}_h$ and $V^{a}_h$ are the queries, keys and values the action layer computes from the 32 action tokens, $[\,\cdot\,;\cdot\,]$ stacks the video rows on top of the action rows, and $D=128$ is the size of one head. Since it's a single softmax, each action query splits its attention between the scene and the other actions. Only the action rows change from one step to the next, while $\widehat K_h$ and $\widehat V_h$ stay fixed for the whole chunk. Each time an action layer evaluates this, that's one of the cache reads counted at the top. Fast-WAM evaluates it in all 30 action layers at every step, with layer $j$ reading video layer $j$'s own $K_{hj}$ and $V_{hj}$ instead of the fused pair. The paper also puts a mask inside the softmax that hides future frames in training, but at inference the cache only holds the current frame, so there's nothing to hide.
+
 ### World-model-only conditioning
 
 Text and robot state go into the video model only, whose layers already attend to them. The action layer drops its own cross-attention to them and gets them through the fused cache.
 
 ### Retracted 1D RoPE
 
-Rotary position encoding (RoPE) tells attention where tokens are. Each head rotates 64 pairs of query and key numbers by angles that grow with position, and the score sees the angle difference. Video keys rotate by frame time, row and column (22, 21 and 21 pairs), while action queries rotate by action index, so in 42 pairs the score subtracts an action index from a row or a column, which has no geometric meaning. Faster-WAM undoes the video rotation on the fused keys, $\bar k(p)=R^{v}(p)^{\top}\,\widehat k(p)$, and the angle in pair $r$ goes from
+Rotary position encoding (RoPE) tells attention where tokens are. Each head rotates 64 pairs of query and key numbers by angles that grow with position, and the score sees the angle difference. Video keys rotate by frame time, row and column (22, 21 and 21 pairs), while action queries rotate by action index, so in 42 pairs the score subtracts an action index from a row or a column, which has no geometric meaning. Faster-WAM undoes the video rotation on the fused keys, $\bar k(p)=R^{v}(p)^{\top}\,\widehat k(p)$, and the attention above uses these keys, $\bar K_h$, in place of $\widehat K_h$. In pair $r$ the angle goes from
 
 $$\theta_r^{\text{before}}=\omega_r\,p_{b(r)}-\nu_r\,i \qquad\text{to}\qquad \theta_r^{\text{after}}=-\nu_r\,i$$
 
@@ -66,7 +72,7 @@ retracted_1d_rope=True
 world_model_only_conditioning=True
 ```
 
-You can start from a Fast-WAM checkpoint but have to fine-tune it, since the one-layer expert and the fusion weights train jointly with the video model. A maintainer asked for changes on October 22, I pushed changes the same day, and the PR is still open. AI agents generated the code, tests and draft text, independent agents reviewed it, and the PR says so. No code comes from the [authors' repository](https://github.com/TeamFasterwam/FasterWAM), whose original code is under a [noncommercial license](https://github.com/TeamFasterwam/FasterWAM/blob/main/LICENSE).
+You can start from a Fast-WAM checkpoint but have to fine-tune it, since the one-layer expert and the fusion weights train jointly with the video model. A maintainer asked for changes on October 22, I pushed them the same day, and the PR was merged on October 23. AI agents generated the code, tests and draft text, independent agents reviewed it, and the PR says so. No code comes from the [authors' repository](https://github.com/TeamFasterwam/FasterWAM), whose original code is under a [noncommercial license](https://github.com/TeamFasterwam/FasterWAM/blob/main/LICENSE).
 
 ## Speed
 
@@ -98,6 +104,6 @@ My take: the action expert was the expensive part, and it doesn't need to be dee
 ## Limits
 
 - Speed only. No trained Faster-WAM policy, no LIBERO run and no robot.
-- I haven't timed both models compiled, or the PR's latest commit.
+- I haven't timed both models compiled, or the merged code.
 - I haven't tried a fixed $1/30$ average in place of the learned weights.
 - [arXiv 2608.04404](https://arxiv.org/abs/2608.04404) is a different paper with the same Faster-WAM name. A separate post compares WAMs with vision-language-action models.
