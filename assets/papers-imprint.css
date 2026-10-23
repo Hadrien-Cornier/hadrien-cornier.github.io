@@ -1,0 +1,31 @@
+/* Imprint: one intro paragraph, one blackboard canvas, one math paragraph. The canvas has three drawings: wide for desktops, two columns for mid-size screens, tall for phones. */
+.im-intro { max-width: 760px; margin: 0 0 30px; font-size: 18px; line-height: 1.65; color: var(--ink); }
+.im-canvas { margin: 0; padding: 0; background: #1d1d1b; border: 1px solid var(--line); }
+.im-canvas svg { display: block; width: 100%; height: auto; }
+.im-canvas .im-mid, .im-canvas .im-tall { display: none; }
+.im-math { max-width: 760px; margin: 30px 0 0; font-size: 18px; line-height: 1.65; color: var(--ink); }
+.im-math .katex { font-size: 1.05em; }
+.im-math .katex-display { margin: 16px 0; padding: 6px 2px; overflow-x: auto; overflow-y: hidden; }
+.im-math .katex-display > .katex, .im-math .im-nobr { white-space: nowrap; }
+.im-eq { display: block; }
+.im-eq-narrow { display: none; }
+.im-after { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 26px; padding-top: 18px; }
+.im-credit { margin: 0; font: 10px/1.5 var(--mono); color: var(--muted); }
+.im-sources { display: flex; gap: 26px; font-size: 12px; }
+.im-sources a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); }
+@media (max-width: 1199px) {
+  .im-canvas .im-wide { display: none; }
+  .im-canvas .im-mid { display: block; }
+}
+@media (max-width: 999px) {
+  .im-canvas .im-mid { display: none; }
+  .im-canvas .im-tall { display: block; max-width: 584px; margin: 0 auto; }
+}
+@media (max-width: 700px) {
+  .im-intro { margin-bottom: 24px; font-size: 16px; line-height: 1.6; }
+  .im-canvas { margin: 0 -1px; }
+  .im-math { margin-top: 24px; font-size: 16px; line-height: 1.6; }
+  .im-eq-wide { display: none; }
+  .im-eq-narrow { display: block; }
+  .im-after { flex-direction: column; align-items: start; }
+}
