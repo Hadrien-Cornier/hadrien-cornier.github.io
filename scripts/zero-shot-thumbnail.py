@@ -1,7 +1,7 @@
 """Chalk card thumbnail for can-you-zero-shot-robotics-with-a-coding-agent.
 
 The card shows the article's chalk loop figure, the inline SVG #fig-aspire that
-scripts/zero-shot-figures.mjs draws. Its hand font, wobble and grain come from the browser
+scripts/zero-shot-figures.mjs draws. Its hand font and grain come from the browser
 (chalk.css and the #chalk-grain filter), so the figure is rasterized there first:
 
 1. Build the site and open /robotics/can-you-zero-shot-robotics-with-a-coding-agent/ at a
