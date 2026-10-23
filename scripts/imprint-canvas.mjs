@@ -159,8 +159,8 @@ function panelStreams() {
   out += text(LANE_END + 6, 44, 'last frames: only lids', { size: 19, anchor: 'end' }) + line(r, (last + LANE_END) / 2, 50, (last + LANE_END) / 2, FRAMES.y - 8, { width: 1.6, passes: 1 });
   // Imprint keeps the whole box.
   out += rect(r, FRAMES.x - 10, 54, LANE_END - FRAMES.x + 24, 170, { stroke: S.mem, width: 2.6, jitter: 1.6 });
-  out += text(24, 306, 'others keep one of', { font: HAND, size: 22, weight: 700, fill: C.muted });
-  ['last frames', 'keyframes', 'a text summary', 'video alone'].forEach((label, k) => {
+  out += text(24, 306, 'others keep only video', { font: HAND, size: 22, weight: 700, fill: C.muted });
+  ['last frames', 'keyframes, some + text', 'a learned summary'].forEach((label, k) => {
     out += text(24, 340 + k * 29, `· ${label}`, { size: 20, fill: C.muted });
   });
   out += text(400, 324, 'Imprint keeps', { font: HAND, size: 27, weight: 700, anchor: 'middle', fill: S.mem });
@@ -187,14 +187,13 @@ function signals(x, y, count, step) {
 function panelEncode() {
   const r = random(37);
   let out = frame(r, '3 · squeeze it as you go', C.panel.gray);
-  out += text(24, 54, 'chunks of 4 frames, with their actions and joint states', { size: 17, fill: C.muted });
+  out += text(24, 54, 'chunks: 4 frames × 3 cameras, plus actions and joint states', { size: 17, fill: C.muted });
   // History arrives in chunks of four kept frames with their actions and joint states.
   const chunkX = (k) => 24 + k * 88, cw = 76;
   for (let k = 0; k < 4; k++) {
     const x = chunkX(k);
     out += rect(r, x, 66, cw, 54, { stroke: C.grid, width: 1.8, jitter: 1.2 });
-    for (let f = 0; f < 4; f++) out += `<rect x="${x + 6 + f * 17}" y="72" width="13" height="20" fill="${S.video}" fill-opacity=".75"/>`;
-    out += signals(x + 12, 101, 4, 17);
+    for (let f = 0; f < 4; f++) out += `<rect x="${x + 6 + f * 17}" y="72" width="13" height="42" fill="${S.video}" fill-opacity=".75"/>`;
   }
   // The newest frames, before their chunk is complete, skip the state and go to the memory directly.
   out += rect(r, 384, 66, 152, 54, { stroke: S.video, width: 1.8, jitter: 1.2, dash: '5 5' });
@@ -203,29 +202,32 @@ function panelEncode() {
   out += text(460, 140, 'newest', { size: 18, anchor: 'middle', fill: C.muted });
   // A frozen video model first turns each chunk's frames into a few tokens.
   out += rect(r, 24, 140, 352, 30, { stroke: S.video, width: 1.8, jitter: 1, fill: C.bg }) + snowflake(42, 155, 9, C.ink);
-  out += text(58, 161, 'frozen video model: 4 frames → 12 tokens', { size: 16, fill: C.ink });
+  out += text(58, 161, 'frozen video model: frames → 12 tokens', { size: 16, fill: C.ink });
   // A fixed-size recurrent state takes one update per chunk.
   const gy = 196, gs = 44;
   for (let k = 0; k < 4; k++) {
     const cx = chunkX(k) + cw / 2;
+    // Only the frames go through the video model; the chunk's actions and joint states join its tokens at the state.
     out += line(r, cx, 122, cx, 138, { width: 1.8, passes: 1 }) + line(r, cx, 172, cx, gy - 4, { arrow: true, width: 2, size: 9 });
+    out += `<circle cx="${cx + 12}" cy="180" r="3.4" fill="${S.act}"/><circle cx="${cx + 22}" cy="180" r="3.4" fill="${S.state}"/>` + line(r, cx + 14, 186, cx + 4, gy - 4, { width: 1.6, passes: 1 });
     out += stateGrid(r, cx - gs / 2, gy, gs);
     if (k < 3) out += line(r, cx + gs / 2 + 4, gy + gs / 2, chunkX(k + 1) + cw / 2 - gs / 2 - 4, gy + gs / 2, { arrow: true, width: 2.2, size: 9 });
   }
   const lastX = chunkX(3) + cw / 2;
   out += text(lastX + gs / 2 + 12, gy + 18, 'running state', { font: HAND, size: 21, weight: 700 });
-  out += text(lastX + gs / 2 + 12, gy + 42, 'same size', { size: 18, fill: C.muted });
+  out += text(lastX + gs / 2 + 12, gy + 42, 'same size · recurrent', { size: 17, fill: C.muted });
+  out += text(lastX + gs / 2 + 12, gy + 62, '(the default encoder)', { size: 17, fill: C.muted });
   // Learned queries, guided by the task, read the state and the newest frames into the memory.
   const mx = 150, my = 300, cols = 16, rows = 4, size = 12;
   const memRight = mx + cols * (size + 3);
   out += curve([[lastX, gy + gs + 6], [lastX - 12, my - 30], [memRight - 70, my - 8]], { arrow: true, width: 2.2 });
-  out += curve([[520, 148], [530, 240], [memRight - 10, my - 8]], { arrow: true, width: 2.2, stroke: S.video });
+  out += curve([[524, 148], [546, 250], [memRight - 10, my - 8]], { arrow: true, width: 2.2, stroke: S.video });
   out += tokens(r, mx, my, cols, rows, size, S.mem);
   out += rect(r, mx - 6, my - 6, cols * (size + 3) + 9, rows * (size + 3) + 9, { stroke: S.mem, width: 2.2, jitter: 1.4 });
   out += text(mx - 66, my + 36, 'task', { font: HAND, size: 22, weight: 700, anchor: 'middle' }) + line(r, mx - 40, my + 29, mx - 12, my + 29, { arrow: true, width: 2, size: 10 });
   out += text(memRight + 16, my + 22, 'memory', { font: HAND, size: 24, weight: 700, fill: S.mem }) + math(memRight + 108, my + 22, ['m', ['t', 'sub']], { size: 27, fill: S.mem });
   out += text(memRight + 16, my + 48, '256 tokens', { size: 18, fill: C.muted });
-  out += text(280, 420, 'one update per chunk:', { font: HAND, size: 23, weight: 700, anchor: 'middle' });
+  out += text(280, 420, 'the state updates once per chunk;', { font: HAND, size: 23, weight: 700, anchor: 'middle' });
   out += text(280, 448, 'the memory never grows', { font: HAND, size: 23, weight: 700, anchor: 'middle', fill: S.mem });
   return out;
 }
@@ -239,10 +241,10 @@ function panelPretrain() {
   out += `<path d="M228,74 L268,58 L268,108 L228,92 Z" fill="${C.panel.gray}" stroke="${C.ink}" stroke-width="2.2" stroke-linejoin="round"/>`;
   out += text(282, 80, 'decoder', { font: HAND, size: 21, weight: 700 }) + text(282, 102, 'sees only the memory', { size: 17, fill: C.muted });
   // ...must rebuild the recording at random past steps, and say how far along the task is.
-  const t0 = 170, t1 = 536, ty = 148, cols = [250, 350, 450];
+  const t0 = 170, t1 = 420, ty = 148, cols = [222, 296, 370];
   out += line(r, t0, ty, t1, ty, { width: 2, passes: 1 });
   out += text(t0, ty - 10, '0', { size: 18, anchor: 'middle', fill: C.muted }) + text(t1, ty - 10, 'now', { size: 18, anchor: 'end', fill: C.muted });
-  out += text(350, ty - 10, 'random past steps', { size: 17, anchor: 'middle', fill: S.prog });
+  out += text(296, ty - 10, 'random past steps', { size: 17, anchor: 'middle', fill: S.prog });
   const rows = [['image features', S.video, 184], ['action', S.act, 214], ['joint state', S.state, 244], ['progress', S.prog, 282]];
   for (const [label, color, y] of rows) out += text(24, y, label, { size: 19, fill: color, weight: 700 });
   cols.forEach((cx, k) => {
@@ -252,13 +254,13 @@ function panelPretrain() {
     out += curve([[cx - 18, 214], [cx - 4, 202], [cx + 8, 212], [cx + 20, 202]], { stroke: S.act, width: 2.4, arrow: true });
     out += `<path d="M${cx - 16},${246} L${cx - 2},${230} L${cx + 16},${238}" fill="none" stroke="${S.state}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${cx - 2}" cy="230" r="3.6" fill="${S.state}"/>`;
   });
-  const [bx, by, bw] = [t0, 270, t1 - t0], now = 0.62;
+  const [bx, by, bw] = [t0, 270, 366], now = (t1 - t0) / 366;
   out += `<rect x="${bx}" y="${by}" width="${n(bw * now)}" height="14" fill="${S.prog}" fill-opacity=".8"/>` + rect(r, bx, by, bw, 14, { width: 1.8, jitter: 1 });
   out += text(bx - 8, by + 13, '0', { size: 17, anchor: 'end', fill: C.muted }) + text(bx + bw + 6, by + 13, '1', { size: 17, fill: C.muted });
   out += text(24, 318, 'no policy, no labels: the recording is the target', { font: HAND, size: 20, weight: 700, fill: C.muted });
   // Cover Blocks: a linear probe reads the color order out of the memory.
   out += text(24, 350, 'color order read from', { size: 19 }) + math(214, 350, ['m', ['t', 'sub']], { size: 22, fill: S.mem }) + text(244, 350, '· Cover Blocks', { size: 19, fill: C.muted });
-  out += text(24, 372, 'linear probe · full-attention encoder', { size: 17, fill: C.muted });
+  out += text(24, 372, 'linear probe, balanced accuracy · full-attention variant', { size: 17, fill: C.muted });
   const [px, pw, py] = [178, 300, 382];
   out += bars(r, PROBE, { x: px, y: py, w: pw, h: 20, gap: 8, labelX: px - 10, size: 18 });
   const cx = px + (CHANCE / 100) * pw;
@@ -295,7 +297,7 @@ function panelAdapt() {
   out += text(318, 274, 'train encoder + policy', { font: HAND, size: 20, weight: 700, fill: S.prog });
   out += text(318, 298, 'together on the action loss', { font: HAND, size: 20, weight: 700, fill: S.prog });
   // RMBench success for the three training recipes (full-attention encoder), after π0.5 with no memory.
-  out += text(24, 344, 'RMBench success · full-attention encoder', { size: 17, fill: C.muted });
+  out += text(24, 344, 'RMBench success · memory bars: full-attention variant', { size: 17, fill: C.muted });
   out += bars(r, RECIPE, { x: 196, y: 356, w: 280, h: 16, gap: 7, labelX: 186, size: 17 });
   return out;
 }
@@ -320,14 +322,14 @@ function panelResult() {
     const [px, py] = [plotX(p.ms), plotY(p.success)], [dx, dy, anchor] = place[p.name];
     if (p.kind === 'imprint') {
       out += star(px, py, 15, S.mem);
-      out += text(px + dx, py + dy, p.name, { font: HAND, size: 26, weight: 700, fill: S.mem, anchor });
+      out += text(px + dx, py + dy, `${p.name} (recurrent)`, { font: HAND, size: 24, weight: 700, fill: S.mem, anchor });
       out += text(px + dx, py + dy + 24, `${pct(p.success)} · ${p.ms} ms`, { size: 17, fill: S.mem, anchor });
       continue;
     }
     out += `<circle cx="${n(px)}" cy="${n(py)}" r="7" fill="${p.kind === 'base' ? 'none' : C.muted}" stroke="${C.muted}" stroke-width="2.2"/>`;
     out += text(px + dx, py + dy, `${p.name}${p.priorSuccess ? '†' : ''}${p.priorLatency ? '*' : ''}`, { size: 18, anchor, fill: C.ink });
   }
-  out += text(x + w, y + h + 72, '† success from prior work, other backbone', { size: 17, anchor: 'end', fill: C.muted });
+  out += text(x + w, y + h + 72, '† success from prior work, other backbones', { size: 17, anchor: 'end', fill: C.muted });
   out += text(x + w, y + h + 92, '* latency from prior work', { size: 17, anchor: 'end', fill: C.muted });
   // The same jump on a real robot and in a second simulator.
   const [bx, bw, top0] = [190, 250, 388];
@@ -392,11 +394,11 @@ export const LAYOUTS = {
 const TITLE = 'Imprint: a robot memory that keeps every stream and learns what matters';
 const DESC = [
   'Panel 1, the problem: in the RMBench Cover Blocks task, red, green and blue blocks sit in a random order and the robot covers them with three identical lids, then must uncover red first. Two episodes, A and B, that started in different orders end with the same camera view, yet the lid to lift differs, so only the past can tell.',
-  'Panel 2: the history has three streams, camera video, the actions sent and the joint states. Other memory methods keep one of the last frames, keyframes, a text summary, or the video alone; the last frames here show only lids. Imprint keeps all three streams and learns what matters.',
-  'Panel 3: the history arrives in chunks of four frames with their actions and joint states. A frozen video model turns each chunk of four frames into 12 tokens. Each chunk updates a fixed-size running state once (the recurrent encoder; a full-attention variant also exists), and learned queries guided by the task read that state plus the newest frames into the memory m_t, 256 tokens. The memory never grows.',
-  `Panel 4, stage 1: with no policy and no human labels, a decoder that sees only m_t must rebuild image features, actions and joint states at random past steps, and estimate progress t/(T-1) through the demonstration. On Cover Blocks training demonstrations, a linear probe reads the color order from the memory of the full-attention encoder at ${pct(PROBE[1].value)} balanced accuracy after stage 1, against ${pct(PROBE[0].value)} for a memory trained on the action loss alone; chance is ${pct(CHANCE)}.`,
-  `Panel 5, stage 2: the decoder is dropped and the stage 1 encoder is plugged into the vision-language-action model. Every layer of its action expert reads m_t through cross-attention and a FiLM scale and shift, and encoder and policy train together on the action loss. RMBench success with the full-attention encoder: ${RECIPE.map((row) => `${pct(row.value)} for ${row.label}`).join(', ')}.`,
-  `Panel 6, the result on RMBench, success against latency per 50-step action chunk, log scale: ${SCATTER.map((p) => `${p.name} ${pct(p.success)} at ${p.ms} ms`).join(', ')}. Latency is measured on an L40S GPU except for EventVLA, whose latency is reported by its authors for its anchors-only variant; the EventVLA and MemoryVLA success rates come from prior work on other backbones. ${TRANSFER.map((row) => `${row.label}: ${pct(row.base)} without memory, ${pct(row.imprint)} with Imprint`).join('; ')}.`,
+  'Panel 2: the history has three streams, camera video, the actions sent and the joint states. Other memory methods keep only the video: the last frames, keyframes (some with a text summary), or a learned summary; the last frames here show only lids. Imprint keeps all three streams and learns what matters.',
+  'Panel 3: the history arrives in chunks of four frames from each of three cameras, plus the actions and joint states. A frozen video model turns the frames of each chunk into 12 tokens, and the actions and joint states of the chunk join those tokens at the state. Each chunk updates a fixed-size running state once; this recurrent encoder is the default. Learned queries guided by the task read that state plus the newest frames into the memory m_t, 256 tokens. The memory never grows. A full-attention variant instead reads every stored past token into the same 256-token memory.',
+  `Panel 4, stage 1: with no policy and no human labels, a decoder that sees only m_t must rebuild image features, actions and joint states at random past steps, and estimate progress t/(T-1) through the demonstration. On Cover Blocks training demonstrations, a linear probe reads the color order from the memory of the full-attention variant at ${pct(PROBE[1].value)} balanced accuracy after stage 1, against ${pct(PROBE[0].value)} for a memory trained on the action loss alone; chance is ${pct(CHANCE)}.`,
+  `Panel 5, stage 2: the decoder is dropped and the stage 1 encoder is plugged into the vision-language-action model. Every layer of its action expert reads m_t through cross-attention and a FiLM scale and shift, and encoder and policy train together on the action loss. RMBench success, memory bars with the full-attention variant: ${RECIPE.map((row) => `${pct(row.value)} for ${row.label}`).join(', ')}.`,
+  `Panel 6, the result on RMBench, success against latency per 50-step action chunk, log scale: ${SCATTER.map((p) => `${p.name} ${pct(p.success)} at ${p.ms} ms`).join(', ')}. Imprint uses its default recurrent encoder here. Latency is measured on an L40S GPU, except for EventVLA, whose 960 ms is a reported value. The EventVLA and MemoryVLA success rates come from prior work on other backbones, and the EventVLA result is for an anchors-only variant (first frame plus recent frames). HAMLET runs on GR00T N1.6, trained by the Imprint authors. RoboCasa is the overall average over 12 tasks. ${TRANSFER.map((row) => `${row.label}: ${pct(row.base)} without memory, ${pct(row.imprint)} with Imprint`).join('; ')}.`,
 ].join(' ');
 
 export function svg(name) {
@@ -410,11 +412,11 @@ export function svg(name) {
 // ── Prose around the canvas ──────────────────────────────────────────────────────
 
 export const INTRO = String.raw`In the Cover Blocks task, red, green and blue blocks sit in a random order. The robot covers them with three lids, then must uncover them in red, green, blue order. Once they're covered, every order looks the same, so how does the policy know which to open first? It has to remember. Most memory methods pick what to keep, but Imprint compresses the video, actions and joint states into a fixed set of 256 memory tokens, updated as the episode runs. With Imprint, π0.5 goes from 25.4% to 72.8% success on RMBench's nine memory tasks, the best among memory methods compared.`;
-export const MATH_BEFORE = String.raw`Stage 1 needs no policy and no human labels, since the recording itself is the target. The encoder packs the history and instruction into the memory $m_t$, 256 tokens of width 1024, and a decoder that sees only $m_t$ must rebuild the past by minimizing `;
+export const MATH_BEFORE = String.raw`Stage 1 needs no policy and no human labels, since the recording itself is the target. The encoder packs the history and task into the memory $m_t$, 256 tokens of width 1024, and a decoder that sees only $m_t$ must rebuild the past by minimizing `;
 // Eq. 4.4 of the paper. The narrow version breaks the same sum over three lines for phones.
 export const EQUATION = String.raw`\mathcal{L}_{\text{mem}} = \frac{1}{K}\sum_{k}\Big[\lambda_v\big\|\hat z^{v}_{k}-z^{v}_{k}\big\|^{2}+\lambda_a\big\|\hat a_{k}-a_{k}\big\|^{2}+\lambda_q\big\|\hat q_{k}-q_{k}\big\|^{2}\Big]+\lambda_\rho\big(\hat\rho_t-\rho_t\big)^{2}`;
 export const EQUATION_NARROW = String.raw`\begin{aligned}\mathcal{L}_{\text{mem}} = {}&\frac{1}{K}\sum_{k}\Big[\lambda_v\big\|\hat z^{v}_{k}-z^{v}_{k}\big\|^{2}\\&+\lambda_a\big\|\hat a_{k}-a_{k}\big\|^{2}+\lambda_q\big\|\hat q_{k}-q_{k}\big\|^{2}\Big]\\&+\lambda_\rho\big(\hat\rho_t-\rho_t\big)^{2}\end{aligned}`;
-export const MATH_AFTER = String.raw` Here $k$ runs over $K$ random past steps, up to 16. Hats mark the decoder's predictions of the visual features $z^v_k$ (v for visual) from DINOv3, a frozen pretrained image model; the recorded action $a_k$ and joint state $q_k$; and progress $\rho_t = t/(T-1)$ in a $T$-step demonstration. Each squared error is averaged over its entries, then weighted: $\lambda_v=1$ and $\lambda_a=\lambda_q=\lambda_\rho=0.5$. Stage 2 drops the decoder and fine-tunes the encoder and policy $\pi_\theta$ together on $-\log \pi_\theta(\mathbf{a}_t \mid o_t, \ell, m_t)$, for action chunk $\mathbf{a}_t$, observation $o_t$ and instruction $\ell$. In practice, that's π0.5's flow-matching loss.`;
+export const MATH_AFTER = String.raw` Here $k$ runs over $K$ random past steps, up to 16. Hats mark the decoder's predictions of the visual features $z^v_k$ (v for visual) from DINOv3, a frozen pretrained image model; the recorded action $a_k$ and joint state $q_k$; and progress $\rho_t = t/(T-1)$ in a $T$-step demonstration. Each squared error is averaged over its entries, then weighted: $\lambda_v=1$ and $\lambda_a=\lambda_q=\lambda_\rho=0.5$. Stage 2 drops the decoder and fine-tunes the encoder and policy $\pi_\theta$ together on $-\log \pi_\theta(\mathbf{a}_t \mid o_t, \ell, m_t)$, for action chunk $\mathbf{a}_t$, observation $o_t$ and task $\ell$. In practice, that's π0.5's flow-matching loss.`;
 
 const tex = (source, displayMode = false) => katex.renderToString(source, { displayMode, throwOnError: true, output: 'htmlAndMathml' });
 
