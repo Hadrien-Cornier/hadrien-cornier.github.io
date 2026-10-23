@@ -23,6 +23,8 @@
 .im-qa-text p + p { margin-top: 10px; }
 .im-qa-text p.im-qa-src { margin-top: 12px; font: 12px/1.7 var(--mono); color: var(--muted); }
 .im-qa-src a { color: var(--accent); }
+.im-qa-text p.im-qa-note { margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--line); font-size: 15px; line-height: 1.6; color: var(--muted); }
+.im-qa-note a { color: var(--accent); }
 .im-qa-text .katex { white-space: nowrap; }
 .im-after { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 26px; padding-top: 18px; }
 .im-credit { margin: 0; font: 10px/1.5 var(--mono); color: var(--muted); }

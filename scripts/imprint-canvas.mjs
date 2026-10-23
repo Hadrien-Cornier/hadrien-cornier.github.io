@@ -543,6 +543,9 @@ export const QA_ITEMS = [
     answer: String.raw`No stream is resampled to another's rate, and nothing is interpolated. In RMBench, video, joint states and actions share one step index, and the memory keeps every second step of all three. Four kept steps, eight simulator steps, make a video chunk, and up to three leftover frames go in as DINOv3 tokens with their actions and joint states. Only actions that already ran go in: in training, each kept frame gets the previous kept step's action. Each training example uses one of eight stored, time-sampled frame lists, while evaluation keeps exactly every second step. The memory is written and read once per policy call, after each 50-action chunk runs.
 ||
 The paper's only rate is the real robot's: each 30-action chunk runs at a nominal 30 Hz, about a second of motion. It doesn't give the simulator's rate, any camera frame rate, or whether the real robot keeps every second step, and the simulation-only public code can't fill that in.`,
+    // Found by reading the released code and checked on CPU replays; the paper describes chunks of frames 4c to 4c+3.
+    note: String.raw`Code observation, not stated in the paper: the released video encoder is causal, so chunk 0 holds kept frame 0 alone and each later chunk $c$ holds kept frames $4c-3$ to $4c$, while the rest of the code reads chunk $c$ as $4c$ to $4c+3$. That leaves the three kept frames just before the recent window out of both visual streams, in training and evaluation alike.`,
+    noteLink: ['Proposed fix, off by default', 'https://github.com/amazon-far/imprint/pull/11'],
     paper: 'App. A.1.1, observations, consolidated and recent visual history, Eq. A.1 · App. A.1.2, recurrent bottleneck · App. B.5.1 and B.5.3',
     code: [['config:22-27', `${CONFIG}#L22-L27`], ['validate_store.py:39-40', 'scripts/reproduce/validate_store.py#L39-L40'], ['pretrain_bottleneck.py:653-657', 'src/mme_vla_suite/scripts/pretrain_bottleneck.py#L653-L657'], ['variant_actions.py:27-29', 'src/mme_vla_suite/shared/variant_actions.py#L27-L29'], ['cosmo_buffer.py:144-151', 'src/mme_vla_suite/shared/cosmo_buffer.py#L144-L151']],
   },
@@ -557,7 +560,7 @@ The paper's only rate is the real robot's: each 30-action chunk runs at a nomina
 function questions() {
   const items = QA_ITEMS.map((item, k) => {
     const links = item.code.map(([label, target]) => `<a href="${esc(IMPRINT_CODE + target)}">${esc(label)}</a>`).join(' · ');
-    return `<section class="im-qa-item" aria-labelledby="im-q${k + 1}-h"><figure class="im-qa-fig">${qaSvg(k)}</figure><div class="im-qa-text"><h3 id="im-q${k + 1}-h">${prose(item.question)}</h3>${item.answer.split(/\n\|\|\n/).map((part) => `<p>${prose(part)}</p>`).join('')}<p class="im-qa-src">Paper: ${esc(item.paper)}<br>Code: ${links}</p></div></section>`;
+    return `<section class="im-qa-item" aria-labelledby="im-q${k + 1}-h"><figure class="im-qa-fig">${qaSvg(k)}</figure><div class="im-qa-text"><h3 id="im-q${k + 1}-h">${prose(item.question)}</h3>${item.answer.split(/\n\|\|\n/).map((part) => `<p>${prose(part)}</p>`).join('')}${item.note ? `<p class="im-qa-note">${prose(item.note)} <a href="${esc(item.noteLink[1])}">${esc(item.noteLink[0])}</a>.</p>` : ''}<p class="im-qa-src">Paper: ${esc(item.paper)}<br>Code: ${links}</p></div></section>`;
   }).join('');
   return `<details class="im-qa"><summary><span>${esc(QA_TITLE)}</span><span class="im-qa-mark" aria-hidden="true">+</span></summary><div class="im-qa-body">${items}</div></details>`;
 }
