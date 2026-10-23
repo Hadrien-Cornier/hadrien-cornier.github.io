@@ -24,7 +24,7 @@
   },
   {
     "title": "Learning from a fixed dataset: missing actions and bad demonstrations",
-    "description": "Two ways a robot dataset can mislead a learner: questions about actions nobody tried, and demonstrations that include mistakes. What BCQ, CQL, IQL, AWR, TD3+BC and advantage conditioning need to help.",
+    "description": "A fixed robot dataset can mislead a learner in two different ways: a hole, where it asks about actions nobody tried, and mistakes, where it copies bad demonstrations. Stay close to the data for the first, and weight actions by the reward for the second.",
     "tags": [
       "reinforcement-learning",
       "machine-learning",
@@ -46,7 +46,7 @@
   },
   {
     "title": "Reinforcement learning: the problems behind the methods",
-    "description": "From playing Breaking Bellman to the problems behind reinforcement learning: delayed credit, exploration, scale and learning from guesses.",
+    "description": "Why I am learning reinforcement learning, and the six problems that drive its algorithms: delayed reward, exploration, waiting, scale, reusing data and feedback.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"
@@ -55,8 +55,8 @@
     "url": "/robotics/rl-0-overview/"
   },
   {
-    "title": "RL methods: a family tree and a Q table",
-    "description": "Connect each reinforcement learning method to its problem, then read a Q table and follow one recorded cliff-grid run.",
+    "title": "Foundations of value-based RL: a family tree and a Q table",
+    "description": "One selected branch of RL, the value-based methods from the trial-and-error idea to DQN, where each later method fixes a problem an earlier one handles badly. Then Q-learning, which nudges one score toward the reward plus its best guess about the next cell.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"
@@ -78,7 +78,7 @@
   },
   {
     "title": "Bootstrapping: learn before the reward arrives",
-    "description": "How Monte Carlo, TD and n-step returns move credit backward, with a worked eight-state corridor.",
+    "description": "Why waiting for the final reward is slow, and how borrowing the next state's estimate lets you learn during the walk, with one worked update.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"
@@ -88,7 +88,7 @@
   },
   {
     "title": "Function approximation: share a value, share an error",
-    "description": "A worked feature update explains generalization, aliasing, semi-gradients and moving targets.",
+    "description": "When states share a few weights, one update can teach states you never visited, and it can also blur two states together and move the target you're chasing.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"
@@ -98,7 +98,7 @@
   },
   {
     "title": "On-policy and off-policy: whose future are we learning?",
-    "description": "One row, three targets: exploration costs, coverage and what importance weighting corrects.",
+    "description": "A value target has to assume what you do next: on-policy learning assumes the moves you actually make, and off-policy learning assumes a different policy's moves.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"
@@ -108,7 +108,7 @@
   },
   {
     "title": "The deadly triad: how a guess can train itself upward",
-    "description": "An exact two-state feedback loop, three scoped pair guarantees and DQN stabilizers.",
+    "description": "Function approximation, bootstrapping and off-policy data each make RL practical. Off-policy value learners such as deep Q-networks (DQN) and soft actor-critic (SAC) use all three, even though together they can let a prediction feed its own target with nothing to pull it back down.",
     "tags": [
       "reinforcement-learning",
       "machine-learning"

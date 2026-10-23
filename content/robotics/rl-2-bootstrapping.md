@@ -1,209 +1,114 @@
 ---
 title: 'Bootstrapping: learn before the reward arrives'
-description: 'How Monte Carlo, TD and n-step returns move credit backward, with a worked eight-state corridor.'
+description: 'Why waiting for the final reward is slow, and how borrowing the next state''s estimate lets you learn during the walk, with one worked update.'
 date: '2026-10-19'
+updated: '2026-10-22'
 draft: false
 series: 'Reinforcement learning'
 part: 2
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning']
 thumbnail: '/assets/robotics/rl/rl-2-bootstrapping-whole.svg'
-thumbnail_alt: 'Zero rewards before the final reward'
+thumbnail_alt: 'One bootstrapped update: the next room estimate 0.8 moves this room from 0.2 to 0.46'
 ---
 
 <link rel="stylesheet" href="/assets/robotics/rl/series.css">
+<svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in"/></filter></svg>
 <div class="rc rls-canvas" id="rc">
-<div class="rc-stage"><div class="rc-bar"><button class="rc-reset" type="button">Whole canvas &#8689;</button><div class="rc-where" aria-live="polite"></div></div><div class="rc-view"><svg class="rc-svg" viewBox="0 0 680 954" data-whole="0 0 680 954" data-views='{"late":[24,46,300,220],"mc":[364,46,300,220],"td":[24,356,300,240],"corridor":[364,356,300,250],"nstep":[24,666,300,230],"horizon":[364,666,300,230]}' role="img" aria-label="Whole mechanism map: Bootstrapping: learn before the reward arrives"><g class="rc-panel" data-panel="late"><rect x="12" y="12" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="36">1. A late reward</text><svg x="24" y="46" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-labelledby="canvas-2-0-b2-late-title"><title id="canvas-2-0-b2-late-title">Zero rewards before the final reward</title><defs><marker id="canvas-2-0-b2-late-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#656b62"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="27">Eight states, one final reward</text><path d="M32 74H266" stroke="#656b62" stroke-width="2" marker-end="url(#canvas-2-0-b2-late-arr)"/><g fill="#d7e5ee" stroke="#242622"><rect x="15" y="52" width="28" height="42"/><rect x="46" y="52" width="28" height="42"/><rect x="77" y="52" width="28" height="42"/><rect x="108" y="52" width="28" height="42"/><rect x="139" y="52" width="28" height="42"/><rect x="170" y="52" width="28" height="42"/><rect x="201" y="52" width="28" height="42"/><rect x="232" y="52" width="28" height="42"/></g><text x="23" y="79">1</text><text x="54" y="79">2</text><text x="85" y="79">3</text><text x="116" y="79">4</text><text x="147" y="79">5</text><text x="178" y="79">6</text><text x="209" y="79">7</text><text x="240" y="79">8</text><text x="16" y="126">First seven moves: reward 0</text><text x="16" y="154" fill="#b44c2c">Last move → end: reward 1</text><path d="M246 168H32" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-2-0-b2-late-arr)"/><text x="16" y="202">Credit must reach earlier states</text></g></svg></g><g class="rc-panel" data-panel="mc"><rect x="352" y="12" width="324" height="266" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="36">2. Wait for the return</text><svg x="364" y="46" height="220" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-labelledby="canvas-2-1-b2-mc-title"><title id="canvas-2-1-b2-mc-title">Monte Carlo waits then updates earlier states</title><defs><marker id="canvas-2-1-b2-mc-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#b44c2c"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="28">During walk: estimates wait</text><path d="M32 65H265" stroke="#656b62" stroke-width="2"/><circle cx="40" cy="65" r="20" fill="#fff" stroke="#242622"/><circle cx="135" cy="65" r="20" fill="#fff" stroke="#242622"/><circle cx="260" cy="65" r="20" fill="#e7c5b8" stroke="#242622"/><text x="35" y="71">0</text><text x="130" y="71">0</text><text x="251" y="71">+1</text><text x="16" y="110">Episode ends: return is known</text><path d="M260 93V145H42" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-2-1-b2-mc-arr)"/><text x="16" y="179">All eight targets = 1</text><text x="16" y="205">All eight estimates: 0 → 1</text></g></svg></g><g class="rc-panel" data-panel="td"><rect x="12" y="322" width="324" height="286" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="346">3. Borrow the next estimate</text><svg x="24" y="356" height="240" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 240" role="img" aria-labelledby="canvas-2-2-b2-td-title"><title id="canvas-2-2-b2-td-title">A next-state estimate supplies the TD target</title><defs><marker id="canvas-2-2-b2-td-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#b44c2c"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="55" cy="61" r="32" fill="#d7e5ee" stroke="#242622"/><circle cx="244" cy="61" r="32" fill="#d7e5ee" stroke="#242622"/><text x="39" y="67">0.2</text><text x="228" y="67">0.8</text><path d="M91 61H207" stroke="#656b62" stroke-width="2" marker-end="url(#canvas-2-2-b2-td-arr)"/><text x="109" y="45">reward 0</text><path d="M244 98V125H55V153" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-2-2-b2-td-arr)"/><text x="83" y="117">discount × 0.9</text><text x="16" y="180">Target: 0 + 0.9 × 0.8 = 0.72</text><text x="16" y="215">Halfway update: 0.2 → 0.46</text></g></svg></g><g class="rc-panel" data-panel="corridor"><rect x="352" y="322" width="324" height="296" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="346">4. Credit travels backward</text><svg x="364" y="356" height="250" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 250" role="img" aria-labelledby="canvas-2-3-b2-cor-title"><title id="canvas-2-3-b2-cor-title">One-step credit moves one state per forward walk</title><defs><marker id="canvas-2-3-b2-cor-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#b44c2c"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="27">State</text><text y="27"><tspan x="100">1</tspan><tspan x="123">2</tspan><tspan x="146">3</tspan><tspan x="169">4</tspan><tspan x="192">5</tspan><tspan x="215">6</tspan><tspan x="238">7</tspan><tspan x="261">8</tspan></text><text x="16" y="66">Walk 1</text><text y="66"><tspan x="100">0</tspan><tspan x="123">0</tspan><tspan x="146">0</tspan><tspan x="169">0</tspan><tspan x="192">0</tspan><tspan x="215">0</tspan><tspan x="238">0</tspan><tspan x="261" fill="#b44c2c">1</tspan></text><text x="16" y="105">Walk 2</text><text y="105"><tspan x="100">0</tspan><tspan x="123">0</tspan><tspan x="146">0</tspan><tspan x="169">0</tspan><tspan x="192">0</tspan><tspan x="215">0</tspan><tspan x="238" fill="#b44c2c">1</tspan><tspan x="261" fill="#b44c2c">1</tspan></text><text x="16" y="144">Walk 3</text><text y="144"><tspan x="100">0</tspan><tspan x="123">0</tspan><tspan x="146">0</tspan><tspan x="169">0</tspan><tspan x="192">0</tspan><tspan x="215" fill="#b44c2c">1</tspan><tspan x="238" fill="#b44c2c">1</tspan><tspan x="261" fill="#b44c2c">1</tspan></text><path d="M250 158L112 193" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-2-3-b2-cor-arr)"/><text x="16" y="224">Walk 8: all eight values are 1</text></g></svg></g><g class="rc-panel" data-panel="nstep"><rect x="12" y="632" width="324" height="276" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="656">5. Look several steps ahead</text><svg x="24" y="666" height="230" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 230" role="img" aria-labelledby="canvas-2-4-b2-n-title"><title id="canvas-2-4-b2-n-title">Three real rewards followed by one guessed tail</title><defs><marker id="canvas-2-4-b2-n-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#656b62"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="28">Three steps before the guess</text><path d="M28 70H270" stroke="#656b62" stroke-width="2" marker-end="url(#canvas-2-4-b2-n-arr)"/><circle cx="28" cy="70" r="8" fill="#242622"/><circle cx="108" cy="70" r="8" fill="#242622"/><circle cx="188" cy="70" r="8" fill="#242622"/><circle cx="270" cy="70" r="8" fill="#b44c2c"/><text x="42" y="57">0</text><text x="122" y="57">0</text><text x="202" y="57">1</text><text x="16" y="113">Rewards: 0 + 0 + 1</text><text x="16" y="142">Then: discounted endpoint value</text><path d="M270 84V165H30" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#canvas-2-4-b2-n-arr)"/><text x="16" y="203">One target crosses three steps</text></g></svg></g><g class="rc-panel" data-panel="horizon"><rect x="352" y="632" width="324" height="276" rx="4" fill="#fbfbf8" stroke="#b6baaf"/><text class="rls-panel-title" x="364" y="656">6. Choose the horizon</text><svg x="364" y="666" height="230" xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 230" role="img" aria-labelledby="canvas-2-5-b2-h-title"><title id="canvas-2-5-b2-h-title">Increasing the backup replaces guesses with observed rewards</title><defs><marker id="canvas-2-5-b2-h-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#656b62"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="25">Blue: observed · rust: guessed</text><rect x="20" y="48" width="35" height="25" fill="#d7e5ee"/><rect x="55" y="48" width="220" height="25" fill="#e7c5b8"/><text x="20" y="96">One step: short wait, long guess</text><rect x="20" y="117" width="180" height="25" fill="#d7e5ee"/><rect x="200" y="117" width="75" height="25" fill="#e7c5b8"/><text x="20" y="165">More steps: more observations</text><path d="M30 190H265" stroke="#656b62" stroke-width="2" marker-end="url(#canvas-2-5-b2-h-arr)"/><text x="22" y="218">Longer horizon → longer wait</text></g></svg></g></svg></div></div>
+<div class="rc-stage"><div class="rc-bar"><button class="rc-reset" type="button">Whole canvas &#8689;</button><div class="rc-where" aria-live="polite"></div></div><div class="rc-view"><svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 920" data-whole="0 0 520 920" data-views='{"late": [10, 10, 500, 365], "update": [10, 385, 500, 365], "cost": [10, 590, 500, 320], "cost_p": [10, 385, 500, 525]}' role="img" aria-labelledby="b2-title b2-desc"><title id="b2-title">Bootstrapping on a blackboard: a late reward, one borrowed update and what borrowing costs</title><desc id="b2-desc">Panel 1: eight rooms in a row pay 0 per step and +1 on leaving room 8. Waiting for the end (Monte Carlo) credits every room with 1 after one walk. Borrowing the next estimate (TD) learns during the walk: after walk 1 only room 8 is 1, after walk 2 rooms 7 and 8, after walk 3 rooms 6 to 8, after walk 8 all rooms. Panel 2: this room has estimate 0.2, the next room 0.8, reward 0. Target = 0 + 0.9 times 0.8 = 0.72. New value = 0.2 + 0.5 times (0.72 minus 0.2) = 0.46. Below it, the cost: if the borrowed 0.8 is 0.2 too high, this room comes out 0.09 too high, and the room before it 0.04 too high when it borrows next, because each update passes back 0.5 times 0.9 = 0.45 of the error.</desc><defs><marker id="b2-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#242622" stroke-width="1.6"/></marker><marker id="b2-ah-dim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#656b62" stroke-width="1.6"/></marker><marker id="b2-ah-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#2b6a8e" stroke-width="1.6"/></marker><marker id="b2-ah-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#b44c2c" stroke-width="1.6"/></marker></defs><g fill="#242622" font-family="Arial,sans-serif"><g class="rc-panel" data-panel="late"><rect x="10" y="10" width="500" height="365" rx="4" fill="none" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="38">1. The reward comes at the end</text><text x="20" y="84" font-size="15" fill="#656b62">rooms</text><circle cx="104" cy="78" r="16" fill="none" stroke="#242622" stroke-width="2"/><text x="104" y="84" font-size="17" text-anchor="middle">1</text><circle cx="154" cy="78" r="16" fill="none" stroke="#242622" stroke-width="2"/><text x="154" y="84" font-size="17" text-anchor="middle">2</text><circle cx="204" cy="78" r="16" fill="none" stroke="#242622" stroke-width="2"/><text x="204" y="84" font-size="17" text-anchor="middle">3</text><circle cx="254" cy="78" r="16" fill="none" stroke="#242622" stroke-width="2"/><text x="254" y="84" font-size="17" text-anchor="middle">4</text><circle cx="304" cy="78" r="16" fill="none" stroke="#242622" stroke-width="2"/><text x="304" y="84" font-size="17" text-anchor="middle">5</text><circle cx="354" cy="78" r="16" fill="none" stroke="#242622" stroke-width="2"/><text x="354" y="84" font-size="17" text-anchor="middle">6</text><circle cx="404" cy="78" r="16" fill="none" stroke="#242622" stroke-width="2"/><text x="404" y="84" font-size="17" text-anchor="middle">7</text><circle cx="454" cy="78" r="16" fill="none" stroke="#242622" stroke-width="2"/><text x="454" y="84" font-size="17" text-anchor="middle">8</text><path d="M123,78 L131,78" fill="none" stroke="#656b62" stroke-width="1.6" marker-end="url(#b2-ah-dim)"/><text x="127" y="62" font-size="14" text-anchor="middle" fill="#656b62">0</text><path d="M173,78 L181,78" fill="none" stroke="#656b62" stroke-width="1.6" marker-end="url(#b2-ah-dim)"/><text x="177" y="62" font-size="14" text-anchor="middle" fill="#656b62">0</text><path d="M223,78 L231,78" fill="none" stroke="#656b62" stroke-width="1.6" marker-end="url(#b2-ah-dim)"/><text x="227" y="62" font-size="14" text-anchor="middle" fill="#656b62">0</text><path d="M273,78 L281,78" fill="none" stroke="#656b62" stroke-width="1.6" marker-end="url(#b2-ah-dim)"/><text x="277" y="62" font-size="14" text-anchor="middle" fill="#656b62">0</text><path d="M323,78 L331,78" fill="none" stroke="#656b62" stroke-width="1.6" marker-end="url(#b2-ah-dim)"/><text x="327" y="62" font-size="14" text-anchor="middle" fill="#656b62">0</text><path d="M373,78 L381,78" fill="none" stroke="#656b62" stroke-width="1.6" marker-end="url(#b2-ah-dim)"/><text x="377" y="62" font-size="14" text-anchor="middle" fill="#656b62">0</text><path d="M423,78 L431,78" fill="none" stroke="#656b62" stroke-width="1.6" marker-end="url(#b2-ah-dim)"/><text x="427" y="62" font-size="14" text-anchor="middle" fill="#656b62">0</text><path d="M472,78 L496,78" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#b2-ah)"/><text x="487" y="60" font-size="20" text-anchor="middle" class="c-yellow">+1</text><text x="20" y="130" font-size="17">Wait for the end (Monte Carlo)</text><text x="20" y="161" font-size="14" fill="#656b62">walk 1</text><text x="104" y="161" font-size="19" text-anchor="middle" fill="#5f7f4f">1</text><text x="154" y="161" font-size="19" text-anchor="middle" fill="#5f7f4f">1</text><text x="204" y="161" font-size="19" text-anchor="middle" fill="#5f7f4f">1</text><text x="254" y="161" font-size="19" text-anchor="middle" fill="#5f7f4f">1</text><text x="304" y="161" font-size="19" text-anchor="middle" fill="#5f7f4f">1</text><text x="354" y="161" font-size="19" text-anchor="middle" fill="#5f7f4f">1</text><text x="404" y="161" font-size="19" text-anchor="middle" fill="#5f7f4f">1</text><text x="454" y="161" font-size="19" text-anchor="middle" fill="#5f7f4f">1</text><text x="92" y="186" font-size="14" fill="#656b62">every room is credited, but only after the walk is over</text><text x="20" y="226" font-size="17">Borrow the next estimate (TD)</text><text x="20" y="254" font-size="14" fill="#656b62">walk 1</text><text x="104" y="254" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="154" y="254" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="204" y="254" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="254" y="254" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="304" y="254" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="354" y="254" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="404" y="254" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="454" y="254" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="20" y="280" font-size="14" fill="#656b62">walk 2</text><text x="104" y="280" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="154" y="280" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="204" y="280" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="254" y="280" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="304" y="280" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="354" y="280" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="404" y="280" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="454" y="280" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="20" y="306" font-size="14" fill="#656b62">walk 3</text><text x="104" y="306" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="154" y="306" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="204" y="306" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="254" y="306" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="304" y="306" font-size="19" text-anchor="middle" fill="#656b62">0</text><text x="354" y="306" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="404" y="306" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="454" y="306" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="20" y="352" font-size="14" fill="#656b62">walk 8</text><text x="104" y="352" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="154" y="352" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="204" y="352" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="254" y="352" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="304" y="352" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="354" y="352" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="404" y="352" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="454" y="352" font-size="19" text-anchor="middle" fill="#2b6a8e">1</text><text x="279" y="329" font-size="16" text-anchor="middle" fill="#656b62">&#8942;</text><path d="M463,252 C477,264 435,260 417,266" fill="none" stroke="#2b6a8e" stroke-width="1.6" marker-end="url(#b2-ah-blue)"/><path d="M413,278 C427,290 385,286 367,292" fill="none" stroke="#2b6a8e" stroke-width="1.6" marker-end="url(#b2-ah-blue)"/><text x="92" y="369" font-size="14" fill="#656b62">learns during each walk, but credit moves back one room per walk</text></g><g class="rc-panel" data-panel="update"><rect x="10" y="385" width="500" height="525" rx="4" fill="none" stroke="#b6baaf"/><text class="rls-panel-title" x="24" y="413">2. One borrowed update</text><circle cx="130" cy="505" r="42" fill="none" stroke="#242622" stroke-width="2.2"/><circle cx="380" cy="505" r="42" fill="none" stroke="#242622" stroke-width="2.2"/><text x="130" y="497" font-size="17" text-anchor="middle">V(s)</text><text x="130" y="525" font-size="24" text-anchor="middle" fill="#b44c2c">0.2</text><text x="380" y="497" font-size="17" text-anchor="middle">V(s&#8242;)</text><text x="380" y="525" font-size="24" text-anchor="middle" fill="#2b6a8e">0.8</text><path d="M176,517 L332,517" fill="none" stroke="#242622" stroke-width="2" marker-end="url(#b2-ah)"/><text x="255" y="542" font-size="15" text-anchor="middle" fill="#656b62">move, reward r = 0</text><text x="130" y="569" font-size="15" text-anchor="middle" fill="#656b62">this room</text><text x="380" y="569" font-size="15" text-anchor="middle" fill="#656b62">next room</text><path d="M372,460 C340,413 170,413 140,459" fill="none" stroke="#2b6a8e" stroke-width="2.2" marker-end="url(#b2-ah-blue)"/><text x="255" y="419" font-size="16" text-anchor="middle" fill="#2b6a8e">borrow its estimate</text><text x="30" y="608" font-size="21">target = r + &#947; &#183; <tspan fill="#2b6a8e">V(s&#8242;)</tspan></text><text x="96" y="638" font-size="21">= 0 + 0.9 &#215; <tspan fill="#2b6a8e">0.8</tspan> =</text><text x="236" y="638" font-size="21" class="c-yellow">0.72</text><text x="30" y="682" font-size="21">new <tspan fill="#b44c2c">V(s)</tspan> = V(s) + &#945; &#183; (target &#8722; V(s))</text><text x="96" y="712" font-size="21">= <tspan fill="#b44c2c">0.2</tspan> + 0.5 &#215; (<tspan class="c-yellow">0.72</tspan> &#8722; <tspan fill="#b44c2c">0.2</tspan>) =</text><text x="333" y="712" font-size="23" fill="#b44c2c">0.46</text><path d="M321,703 C321,688 381,686 385,700 C389,716 327,722 319,708" fill="none" class="s-yellow" stroke-width="2"/><text x="30" y="740" font-size="14" fill="#656b62">&#947; = 0.9 is the discount, &#945; = 0.5 is the step size</text><path d="M30,754 L490,754" fill="none" stroke="#b6baaf" stroke-width="1.2" stroke-dasharray="4 6"/><text x="30" y="786" font-size="17">What it costs: say the borrowed 0.8 is 0.2 too high</text><circle cx="110" cy="830" r="28" fill="none" stroke="#242622" stroke-width="2"/><circle cx="250" cy="830" r="28" fill="none" stroke="#242622" stroke-width="2"/><circle cx="390" cy="830" r="28" fill="none" stroke="#242622" stroke-width="2"/><text x="110" y="836" font-size="16" text-anchor="middle" fill="#b44c2c">+0.04</text><text x="250" y="836" font-size="16" text-anchor="middle" fill="#b44c2c">+0.09</text><text x="390" y="836" font-size="16" text-anchor="middle" fill="#b44c2c">+0.2</text><path d="M360,830 L284,830" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#b2-ah-red)"/><path d="M220,830 L144,830" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#b2-ah-red)"/><text x="320" y="816" font-size="14" text-anchor="middle" fill="#656b62">&#215; 0.45</text><text x="180" y="816" font-size="14" text-anchor="middle" fill="#656b62">&#215; 0.45</text><text x="110" y="873" font-size="14" text-anchor="middle" fill="#656b62">room before</text><text x="250" y="873" font-size="14" text-anchor="middle" fill="#656b62">this room</text><text x="390" y="873" font-size="14" text-anchor="middle" fill="#656b62">next room</text><text x="30" y="898" font-size="14" fill="#656b62">each update passes back &#945; &#183; &#947; = 0.5 &#215; 0.9 = 0.45 of the error</text></g></g></svg></div></div>
 <div class="rc-body">
 
-The first seven moves give you no reward, and the eighth gives you one. How can the first move learn about that last reward before another walk begins? We can wait for the completed return or borrow an estimate of the next state's value. That borrowing is called bootstrapping. Let's compare these approaches in an eight-state corridor and follow how far each update carries credit. This makes the timing in [Sutton and Barto, Chapters 5–7](http://incompleteideas.net/book/RLbook2020.pdf) explicit.
+Bootstrapping means updating a guess from another guess. Imagine you walk down a corridor of eight rooms. Every step pays 0, and only leaving the last room pays 1. So how does the first room learn that it's on a good path, when the only reward shows up seven steps later?
 
-**Part 2.** [Previously: the Q table](/robotics/rl-1-q-learning/).
+**Part 2.** Previously: [the Q table](/robotics/rl-1-q-learning/).
 
-**Reading goal:** compare one completed-return pass with eight forward TD walks and three walks of three-step TD in the same eight-state corridor. We'll keep the update order explicit throughout.
+<div class="rc-mark" id="sec-late" data-panel="late" data-view="late" data-title="The reward comes at the end"></div>
 
-<nav class="rc-route" aria-label="Reading route"><a href="#sec-late" data-go="sec-late">A late reward</a><a href="#sec-mc" data-go="sec-mc">Wait for the return</a><a href="#sec-td" data-go="sec-td">Borrow the next estimate</a><a href="#sec-corridor" data-go="sec-corridor">Credit travels backward</a><a href="#sec-nstep" data-go="sec-nstep">Look several steps ahead</a><a href="#sec-horizon" data-go="sec-horizon">Choose the horizon</a></nav>
+## The reward comes at the end
 
-<div class="rc-mark" id="sec-late" data-panel="late" data-view="late" data-title="A late reward"></div>
+The simplest answer is to wait. You finish the walk, add up the rewards that came after each room, and move each room's estimate toward that total. That's Monte Carlo prediction. With no discount, every room's total is 1, so with a step size of 1 a single walk sets all eight rooms to 1 (the top row of the drawing).
 
-## A late reward
+The catch is the waiting. If an episode lasts a million steps, nothing gets updated for a million steps, and a task that never ends never hands you a total at all. Some policies never finish at all, as in the windy gridworld of [Sutton and Barto, Example 6.5](http://incompleteideas.net/book/RLbook2020.pdf).
 
-Suppose you walk through eight states and receive 1 only when you leave the last one. Every earlier move earns zero, but each still leads toward that reward. We want the value of a state to account for the whole future after it, rather than just the next reward.
+So let's learn during the walk instead. When you leave a room you don't know the final total yet, but you do have a current estimate for the next room. Take the reward you just got, add that estimate, and use the sum as your target. That borrowing is bootstrapping, and its one-step version is called TD(0), for temporal difference.
 
-Let $t$ be the current step, $S_t$ its state, $A_t$ the action taken there, and $R_{t+1}$ the reward after that action. The episode ends at step $T$. The discount $\gamma$, between 0 and 1 inclusive, reduces the weight of delayed rewards, and $k$ counts steps ahead. The summation sign $\sum$ adds the terms indexed by $k$, while $\gamma^k$ discounts the reward at index $k$. Adding these discounted rewards gives us the **return** $G_t$:
+<h3 id="sec-corridor">Credit moves back one room per walk</h3>
 
-$$G_t=\sum_{k=0}^{T-t-1}\gamma^k R_{t+k+1}.$$
+In the corridor, start every estimate at 0 and update each room right after you leave it, walking forward, with step size and discount both 1. On walk 1 only room 8 sees the reward. On walk 2, room 7 reads the now-correct value of room 8, and so on, so room 1 has to wait for walk 8 (the lower rows). Every update happens immediately, but credit still travels slowly. That slowness comes from the forward order, and replaying the walk backward would carry the reward across in one pass.
 
-A fixed policy $\pi$ chooses the actions. Its true value $v_\pi(s)$ at state $s$ is the expected return. Here $\mathbb E_\pi$ means averaging over futures that follow that policy, and the vertical bar means conditioning on the starting state:
+<div class="rc-mark" id="sec-update" data-panel="update" data-view="update" data-title="One borrowed update"></div>
 
-$$v_\pi(s)=\mathbb E_\pi[G_t\mid S_t=s].$$
+## One borrowed update
 
-With no discounting, every nonterminal state in this deterministic corridor is worth 1. Those eight values connect the last reward to the earlier choices. [Sutton and Barto, Chapter 3](http://incompleteideas.net/book/RLbook2020.pdf).
+Here's one update with real numbers. You're in a room whose estimate is 0.2. You move on, the reward is 0, and the next room's estimate is 0.8. With a discount of 0.9, the target is $0 + 0.9 \times 0.8 = 0.72$. With a step size of 0.5 you move halfway from 0.2 toward 0.72, which gives 0.46.
 
-<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-labelledby="b2-late-title"><title id="b2-late-title">Zero rewards before the final reward</title><defs><marker id="b2-late-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#656b62"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="27">Eight states, one final reward</text><path d="M32 74H266" stroke="#656b62" stroke-width="2" marker-end="url(#b2-late-arr)"/><g fill="#d7e5ee" stroke="#242622"><rect x="15" y="52" width="28" height="42"/><rect x="46" y="52" width="28" height="42"/><rect x="77" y="52" width="28" height="42"/><rect x="108" y="52" width="28" height="42"/><rect x="139" y="52" width="28" height="42"/><rect x="170" y="52" width="28" height="42"/><rect x="201" y="52" width="28" height="42"/><rect x="232" y="52" width="28" height="42"/></g><text x="23" y="79">1</text><text x="54" y="79">2</text><text x="85" y="79">3</text><text x="116" y="79">4</text><text x="147" y="79">5</text><text x="178" y="79">6</text><text x="209" y="79">7</text><text x="240" y="79">8</text><text x="16" y="126">First seven moves: reward 0</text><text x="16" y="154" fill="#b44c2c">Last move → end: reward 1</text><path d="M246 168H32" stroke="#b44c2c" stroke-width="2" marker-end="url(#b2-late-arr)"/><text x="16" y="202">Credit must reach earlier states</text></g></svg><figcaption>Path view. Fixed: eight forward transitions and their rewards. Learning changes the values. Read the credit arrow backward from the final reward.</figcaption></figure>
+$$V(s) \leftarrow V(s) + \alpha\,\big[\,r + \gamma V(s') - V(s)\,\big]$$
 
-<div class="rc-mark" id="sec-mc" data-panel="mc" data-view="mc" data-title="Wait for the return"></div>
+The reward was zero. All of the new information came from the next room's estimate.
 
-## Wait for the return
+<div class="rc-mark" id="sec-cost" data-panel="update" data-view="cost" data-title="What borrowing costs"></div>
 
-The first seven rewards are zero, so none on its own explains why the first state is valuable. We can finish the walk and add up the rewards that followed each state. This is episodic **Monte Carlo prediction**. Let $V(s)$ be our current estimate of $v_\pi(s)$, and let $\alpha$ be a step size greater than zero and at most 1. The arrow $\leftarrow$ means we replace the estimate, and the brackets contain the error: the target minus the current estimate. For each state we visited, we move its estimate toward its completed return:
+## What borrowing costs
 
-$$V(S_t)\leftarrow V(S_t)+\alpha[G_t-V(S_t)].$$
+Borrowing is only as good as the estimate you borrow. Say the next room's 0.8 is really 0.2 too high. Then this room comes out 0.09 too high after its update, and the room before it picks up about 0.04 the next time it borrows. The error travels back along the same path as the credit. You stop waiting, and in exchange you trust a guess.
 
-Averaging sampled returns estimates the expected return. With a fixed policy, finite-variance returns, sufficient visits and suitable shrinking step sizes, the estimate settles toward that expectation. The target uses observed rewards throughout. [Sutton and Barto, Section 5.1](http://incompleteideas.net/book/RLbook2020.pdf).
+There's a middle ground. An **n-step** target adds up n real rewards and only then borrows an estimate. In the same corridor, a three-step target credits all eight rooms in three walks instead of eight, and once n reaches the end of the episode it's just the Monte Carlo total again. Longer targets lean more on real rewards, which can be noisy, and less on the guess, which can be wrong.
 
-```text
-Follow the fixed policy until the episode ends.
-Walk backward through the saved transitions.
-Accumulate the discounted return.
-Move each visited state's estimate toward its return.
-```
+When many states share one set of estimates, a wrong borrowed value can spread even further. [Part 3: function approximation](/robotics/rl-3-function-approximation/) picks up there.
 
-In our corridor, let's start every estimate at zero and set both the step size and the discount to 1. After one completed walk, every state's target is 1, so every estimate becomes 1. Waiting works particularly well here because nothing is random: each return is exact.
+<details>
+<summary>The exact targets, their conditions and sources</summary>
 
-The cost is having to wait. If an episode lasts a million steps, we can't make the first completed-return update until it ends. In a continuing task, there's no terminal event to give us this particular target.
+Let $t$ be the current step, $S_t$ its state and $R_{t+1}$ the reward after the action taken there. The episode ends at step $T$, $\gamma$ is the discount between 0 and 1, and $k$ counts steps ahead. The **return** adds the discounted rewards, and a fixed policy's value is the expected return ([Sutton and Barto, Chapter 3](http://incompleteideas.net/book/RLbook2020.pdf)):
 
-The same problem shows up when a policy might never finish. In the windy gridworld of [Sutton and Barto, Example 6.5](http://incompleteideas.net/book/RLbook2020.pdf), some policies never reach the goal, so Monte Carlo methods can't easily be used, while Sarsa learns during the episode that those policies are poor. Stopping the walk at a time limit does give us a number, but it's a truncated return: it leaves out whatever would have come next. [Time limits](#sec-time-limits) below look at what that does to the targets.
+$$G_t=\sum_{k=0}^{T-t-1}\gamma^k R_{t+k+1},\qquad v_\pi(s)=\mathbb E_\pi[G_t\mid S_t=s].$$
 
-<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 220" role="img" aria-labelledby="b2-mc-title"><title id="b2-mc-title">Monte Carlo waits then updates earlier states</title><defs><marker id="b2-mc-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#b44c2c"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="28">During walk: estimates wait</text><path d="M32 65H265" stroke="#656b62" stroke-width="2"/><circle cx="40" cy="65" r="20" fill="#fff" stroke="#242622"/><circle cx="135" cy="65" r="20" fill="#fff" stroke="#242622"/><circle cx="260" cy="65" r="20" fill="#e7c5b8" stroke="#242622"/><text x="35" y="71">0</text><text x="130" y="71">0</text><text x="251" y="71">+1</text><text x="16" y="110">Episode ends: return is known</text><path d="M260 93V145H42" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#b2-mc-arr)"/><text x="16" y="179">All eight targets = 1</text><text x="16" y="205">All eight estimates: 0 → 1</text></g></svg><figcaption>Timeline view. Fixed: the completed path. Values change after the end. Compare the waiting estimates above with the backward return calculation below.</figcaption></figure>
+With no discount, every nonterminal room in the deterministic corridor is worth 1.
 
-<div class="rc-mark" id="sec-td" data-panel="td" data-view="td" data-title="Borrow the next estimate"></div>
+**Monte Carlo.** Move each visited state toward its completed return, with step size $0<\alpha\le1$. With a fixed policy, finite-variance returns, enough visits and suitably shrinking step sizes, the estimate settles toward the expected return ([Section 5.1](http://incompleteideas.net/book/RLbook2020.pdf)).
 
-## Borrow the next estimate
+$$V(S_t)\leftarrow V(S_t)+\alpha[G_t-V(S_t)]$$
 
-What if the walk is still running? The return splits into the next reward and the return after it:
-
-$$G_t=R_{t+1}+\gamma G_{t+1}.$$
-
-**TD(0)**, one-step temporal-difference prediction, replaces the remaining return with our current estimate of the next state's value. In the equation above, $G_{t+1}$ is the return from that next state. We'll call the resulting target $Y_t$ and its difference from the current estimate $\delta_t$. This gives us the one-step backup used by TD(0):
+**TD(0).** Split the return as $G_t=R_{t+1}+\gamma G_{t+1}$ and replace $G_{t+1}$ by the current estimate of the next state. The terminal state's value is 0. For a finite discounted task, or an episodic task with bounded expected episode length, suitable on-policy visits and step sizes give convergence in the tabular case ([Sections 6.1 and 6.2](http://incompleteideas.net/book/RLbook2020.pdf)).
 
 $$\begin{aligned}
 Y_t&=R_{t+1}+\gamma V(S_{t+1}),\\
-\delta_t&=Y_t-V(S_t),\\
-V(S_t)&\leftarrow V(S_t)+\alpha\delta_t.
+V(S_t)&\leftarrow V(S_t)+\alpha\,[Y_t-V(S_t)].
 \end{aligned}$$
 
-Set the terminal state's value to zero. The Bellman equation connects a state's expected return to its successor's expected return, and TD learns that relationship from sampled transitions. For a finite discounted continuing task, or a proper episodic task with bounded expected episode lengths, suitable on-policy visits and step sizes give convergence in the tabular case. [Sutton and Barto, Sections 6.1–6.2](http://incompleteideas.net/book/RLbook2020.pdf).
+<span id="sec-nstep" style="scroll-margin-top:var(--rc-top)"></span>**n-step TD.** Let $h=\min(n,T-t)$ be the number of real rewards available before the episode ends. The target uses those rewards and borrows only at the endpoint, unless the endpoint is terminal ([Section 7.1](http://incompleteideas.net/book/RLbook2020.pdf)):
 
-```text
-Take one action from the fixed policy.
-Observe its reward and next state.
-Target = reward + discounted next-state estimate.
-Move the current estimate toward that target.
-```
+$$Y_t^{(n)}=\sum_{k=0}^{h-1}\gamma^kR_{t+k+1}+\begin{cases}\gamma^hV(S_{t+h}),&t+h<T,\\0,&t+h=T.\end{cases}$$
 
-Suppose the reward is 0, the discount is 0.9, and the next state's estimate is 0.8. With a current estimate of 0.2 and a step size of 0.5, the target is 0.72 and the error is 0.52, so the new estimate is 0.46. The reward stayed zero. The new information came from the successor's value.
+**Corridor counts.** Zero initial values, $\alpha=\gamma=1$, online updates in forward order. Monte Carlo credits all eight rooms after walk 1. Forward TD(0) credits the last $m$ rooms after walk $m$, so room 1 needs 8 walks. Three-step TD with the usual delayed updates and a terminal flush credits rooms 6 to 8 on walk 1, rooms 3 to 5 on walk 2 and rooms 1 and 2 on walk 3. These counts come from the update order and settings. They don't rank the methods in general, and backward replay would credit the whole corridor in one pass.
 
-<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 240" role="img" aria-labelledby="b2-td-title"><title id="b2-td-title">A next-state estimate supplies the TD target</title><defs><marker id="b2-td-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#b44c2c"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><circle cx="55" cy="61" r="32" fill="#d7e5ee" stroke="#242622"/><circle cx="244" cy="61" r="32" fill="#d7e5ee" stroke="#242622"/><text x="39" y="67">0.2</text><text x="228" y="67">0.8</text><path d="M91 61H207" stroke="#656b62" stroke-width="2" marker-end="url(#b2-td-arr)"/><text x="109" y="45">reward 0</text><path d="M244 98V125H55V153" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#b2-td-arr)"/><text x="83" y="117">discount × 0.9</text><text x="16" y="180">Target: 0 + 0.9 × 0.8 = 0.72</text><text x="16" y="215">Halfway update: 0.2 → 0.46</text></g></svg><figcaption>Transition view. Fixed: reward 0 and the successor estimate for this update. The current value changes. Follow the lower arrow to see where its target comes from.</figcaption></figure>
+<span id="sec-horizon" style="scroll-margin-top:var(--rc-top)"></span>**Choosing the horizon.** Let $\varepsilon(s)=V(s)-v_\pi(s)$ be the estimation error. Before termination, the borrowed tail adds $\gamma^n\varepsilon(S_{t+n})$ to the target's error. The discount shrinks a given endpoint error as $n$ grows, but the endpoint itself changes with $n$, so this doesn't guarantee that bias or variance always rises or falls with the horizon. Noisy rewards, correlated transitions and the accuracy of different endpoint estimates all matter ([Chapters 6 and 7](http://incompleteideas.net/book/RLbook2020.pdf)).
 
-<div class="rc-mark" id="sec-corridor" data-panel="corridor" data-view="corridor" data-title="Credit travels backward"></div>
+| Method | Target | Fails when | Source |
+| --- | --- | --- | --- |
+| Monte Carlo | Full return | Episodes are long or never end | [Ch. 5](http://incompleteideas.net/book/RLbook2020.pdf) |
+| TD(0) | One reward + estimate | Credit moves slowly; the estimate is wrong | [Ch. 6](http://incompleteideas.net/book/RLbook2020.pdf) |
+| n-step TD | n rewards + estimate | Targets wait longer or get noisier | [Ch. 7](http://incompleteideas.net/book/RLbook2020.pdf) |
 
-## Credit travels backward
+</details>
 
-Starting updates immediately doesn't mean new credit moves quickly. Let's return to the eight-state corridor, with zero initial estimates and $\alpha=\gamma=1$. We update online in forward order, once per visit, immediately after each transition.
+<details id="sec-gae" style="scroll-margin-top:var(--rc-top)">
+<summary>Give actions credit: Generalized Advantage Estimation (GAE)</summary>
 
-On the first walk, the first seven targets are zero. Only the last state sees reward 1. On the second walk, state 7 reads the now-correct value at state 8. State 6 already updated before that happened, so it waits another walk.
-
-| After a complete walk | States with value 1 under forward TD(0) |
-| --- | --- |
-| 1 | 8 |
-| 2 | 7, 8 |
-| 3 | 6, 7, 8 |
-| 8 | 1 through 8 |
-
-We can write the same pattern as a formula without introducing another learning rule.
-
-Let $m$ count completed walks and $i$ identify a corridor state, from 1 to 8. Then $V_m(i)$ is that state's estimate after walk $m$, with $m=0$ meaning before learning begins. The cases below give the last $m$ states a value of 1 and all the others a value of 0:
-
-$$V_m(i)=\begin{cases}1,&i>8-m,\\0,&i\leq8-m,\end{cases}\qquad 0\leq m\leq8.$$
-
-On each forward pass, we read the next state's value before updating that next state. So credit moves backward by one state per walk. Monte Carlo credits all eight states after walk 1, while TD(0) needs eight walks to credit the first state.
-
-These counts depend on the update order we chose. If we replayed the transitions backward, the reward would propagate across the whole chain in one pass. The corridor shows how information moves through these updates, but it doesn't tell us which method is faster in general.
-
-<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 250" role="img" aria-labelledby="b2-cor-title"><title id="b2-cor-title">One-step credit moves one state per forward walk</title><defs><marker id="b2-cor-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#b44c2c"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="27">State</text><text y="27"><tspan x="100">1</tspan><tspan x="123">2</tspan><tspan x="146">3</tspan><tspan x="169">4</tspan><tspan x="192">5</tspan><tspan x="215">6</tspan><tspan x="238">7</tspan><tspan x="261">8</tspan></text><text x="16" y="66">Walk 1</text><text y="66"><tspan x="100">0</tspan><tspan x="123">0</tspan><tspan x="146">0</tspan><tspan x="169">0</tspan><tspan x="192">0</tspan><tspan x="215">0</tspan><tspan x="238">0</tspan><tspan x="261" fill="#b44c2c">1</tspan></text><text x="16" y="105">Walk 2</text><text y="105"><tspan x="100">0</tspan><tspan x="123">0</tspan><tspan x="146">0</tspan><tspan x="169">0</tspan><tspan x="192">0</tspan><tspan x="215">0</tspan><tspan x="238" fill="#b44c2c">1</tspan><tspan x="261" fill="#b44c2c">1</tspan></text><text x="16" y="144">Walk 3</text><text y="144"><tspan x="100">0</tspan><tspan x="123">0</tspan><tspan x="146">0</tspan><tspan x="169">0</tspan><tspan x="192">0</tspan><tspan x="215" fill="#b44c2c">1</tspan><tspan x="238" fill="#b44c2c">1</tspan><tspan x="261" fill="#b44c2c">1</tspan></text><path d="M250 158L112 193" stroke="#b44c2c" stroke-width="2" marker-end="url(#b2-cor-arr)"/><text x="16" y="224">Walk 8: all eight values are 1</text></g></svg><figcaption>Value-table view. Fixed: zero initialization, forward online updates and unit step size and discount. Red values spread backward. Compare rows after complete walks.</figcaption></figure>
-
-<div class="rc-mark" id="sec-nstep" data-panel="nstep" data-view="nstep" data-title="Look several steps ahead"></div>
-
-## Look several steps ahead
-
-With forward one-step updates, credit moves back just one state per walk in our corridor. An **n-step return** follows several transitions before borrowing an estimate. Let $n$ be the number of real rewards we want to use and $h=\min(n,T-t)$ the number available before the episode ends, where $\min$ picks the smaller count. Call the resulting target $Y_t^{(n)}$, with the superscript indicating the backup length, and its endpoint state $S_{t+h}$:
-
-$$\begin{aligned}
-Y_t^{(n)}&=\sum_{k=0}^{h-1}\gamma^kR_{t+k+1}\\
-&\quad+\begin{cases}
-\gamma^hV(S_{t+h}),&t+h<T,\\
-0,&t+h=T.
-\end{cases}
-\end{aligned}$$
-
-Each time we expand the return recursion, we get more observed rewards before the part we still have to guess. If we reach the terminal state, there's no future left to guess. [Sutton and Barto, Section 7.1](http://incompleteideas.net/book/RLbook2020.pdf).
-
-```text
-Save transitions until n rewards are available.
-Sum those rewards with their discounts.
-Add the endpoint estimate if the episode continues.
-Update the starting state; flush short returns at the end.
-```
-
-With three-step updates in the same corridor, the last three states receive credit on walk 1. The next three receive it on walk 2, and the first two on walk 3. This uses the usual delayed online n-step updates, followed by the terminal flush.
-
-You wait longer for each target, but it can carry a newly observed outcome across more states. When the target reaches the end, it becomes the completed Monte Carlo return.
-
-<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 230" role="img" aria-labelledby="b2-n-title"><title id="b2-n-title">Three real rewards followed by one guessed tail</title><defs><marker id="b2-n-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#656b62"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="28">Three steps before the guess</text><path d="M28 70H270" stroke="#656b62" stroke-width="2" marker-end="url(#b2-n-arr)"/><circle cx="28" cy="70" r="8" fill="#242622"/><circle cx="108" cy="70" r="8" fill="#242622"/><circle cx="188" cy="70" r="8" fill="#242622"/><circle cx="270" cy="70" r="8" fill="#b44c2c"/><text x="42" y="57">0</text><text x="122" y="57">0</text><text x="202" y="57">1</text><text x="16" y="113">Rewards: 0 + 0 + 1</text><text x="16" y="142">Then: discounted endpoint value</text><path d="M270 84V165H30" fill="none" stroke="#b44c2c" stroke-width="2" marker-end="url(#b2-n-arr)"/><text x="16" y="203">One target crosses three steps</text></g></svg><figcaption>Backup view. Fixed: three observed rewards. The endpoint estimate supplies the remaining tail; the starting value changes. At an episode ending, omit that tail.</figcaption></figure>
-
-<div class="rc-mark" id="sec-horizon" data-panel="horizon" data-view="horizon" data-title="Choose the horizon"></div>
-
-## Choose the horizon
-
-A longer target uses more actual experience and less of the current guess. In a task with randomness, it also includes more random rewards and transitions. For any state $s$, let $\varepsilon(s)=V(s)-v_\pi(s)$ be the estimation error: approximate value minus true policy value. $S_{t+n}$ is the endpoint after $n$ real transitions. Before termination, the guessed tail's contribution to target error is
-
-$$\gamma^n\varepsilon(S_{t+n}).$$
-
-The discount shrinks a given endpoint error as the horizon grows. But the endpoint itself changes with $n$, so this expression doesn't tell us that target bias or variance will always rise or fall with the horizon. Noisy rewards, correlated transitions and the accuracy of different endpoint estimates all matter. [Sutton and Barto, Chapters 6–7](http://incompleteideas.net/book/RLbook2020.pdf).
-
-| Method | Learns | Target | Fails when | Adjustment | Source |
-| --- | --- | --- | --- | --- | --- |
-| Monte Carlo | Policy value | Full return | Episodes are too long | Bootstrap sooner | [Ch. 5](http://incompleteideas.net/book/RLbook2020.pdf) |
-| TD(0) | Policy value | One reward + guess | Credit moves slowly | Extend backup | [Ch. 6](http://incompleteideas.net/book/RLbook2020.pdf) |
-| n-step TD | Policy value | Several rewards + guess | Targets wait or fluctuate | Tune horizon | [Ch. 7](http://incompleteideas.net/book/RLbook2020.pdf) |
-
-**In this corridor:** Monte Carlo waits for 8 rewards and credits all states after walk 1. TD(0) starts after 1 reward but needs 8 forward walks to credit state 1. Three-step TD waits for up to 3 rewards and needs 3 walks. These counts hold for zero initialization and unit discount and step size. They don't establish a performance ranking in stochastic tasks.
-
-**Bootstrapping buys:**
-
-- **Early updates.** Learn before an episode finishes.
-- **Continuing prediction.** Use discounted targets without waiting for an ending.
-- **Shared successors.** Reuse what other visits taught the next state's estimate.
-
-**Costs and assumptions:**
-
-- **Wrong targets.** An inaccurate successor can mislead its predecessors.
-- **State quality.** Tabular prediction assumes states contain the information needed to predict transitions.
-- **Coupled values.** Shared parameters can move the target during learning; off-policy data adds another stability concern.
-
-<figure class="rls-figure"><svg xmlns="http://www.w3.org/2000/svg" width="300" viewBox="0 0 300 230" role="img" aria-labelledby="b2-h-title"><title id="b2-h-title">Increasing the backup replaces guesses with observed rewards</title><defs><marker id="b2-h-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="#656b62"/></marker></defs><g font-family="Arial,sans-serif" font-size="18" fill="#242622"><text x="16" y="25">Blue: observed · rust: guessed</text><rect x="20" y="48" width="35" height="25" fill="#d7e5ee"/><rect x="55" y="48" width="220" height="25" fill="#e7c5b8"/><text x="20" y="96">One step: short wait, long guess</text><rect x="20" y="117" width="180" height="25" fill="#d7e5ee"/><rect x="200" y="117" width="75" height="25" fill="#e7c5b8"/><text x="20" y="165">More steps: more observations</text><path d="M30 190H265" stroke="#656b62" stroke-width="2" marker-end="url(#b2-h-arr)"/><text x="22" y="218">Longer horizon → longer wait</text></g></svg><figcaption>Target-composition view. For one future episode, a later backup endpoint replaces more of the guessed tail with observed rewards.</figcaption></figure>
-
-<h3 id="sec-gae">Give actions credit</h3>
-
-So far, we've estimated values under a fixed policy. Suppose we now want to improve that policy. A good outcome alone doesn't tell us whether an action helped: perhaps the starting state was already promising. The **advantage** compares an action's expected return with the policy's usual return from that state:
+So far we estimated values under a fixed policy. To improve the policy, a good outcome alone doesn't tell you whether an action helped, because the starting state may already have been promising. The **advantage** compares an action's expected return with the policy's usual return from that state:
 
 $$A_\pi(s,a)=Q_\pi(s,a)-V_\pi(s).$$
 
-Here $Q_\pi$ means taking $a$ first and then following $\pi$. For $V_\pi$, we also average over the first action chosen by the policy. Both are true policy values. **Generalized Advantage Estimation (GAE)** uses experience and an approximate state value $V$ to estimate this action credit.
-
-Collect a rollout with a fixed policy, then keep both the data and $V$ fixed while calculating advantages. Take one segment ending at $S_H$, with $H$ transitions, and let $\ell$ count steps ahead. Using the same reward convention as before, the one-step TD error and finite GAE estimate are
+Here $Q_\pi$ means taking $a$ first and then following $\pi$, and $V_\pi$ also averages over the first action. **Generalized Advantage Estimation (GAE)** estimates this credit from experience and an approximate state value $V$. Collect a rollout with a fixed policy, keep the data and $V$ fixed, and take one segment ending at $S_H$, with $\ell$ counting steps ahead:
 
 $$\begin{aligned}
 \delta_t&=R_{t+1}+\gamma V(S_{t+1})-V(S_t),\\
 \hat A_t&=\sum_{\ell=0}^{H-t-1}(\gamma\lambda)^\ell\delta_{t+\ell}.
 \end{aligned}$$
 
-The parameter $\lambda$, between 0 and 1, controls how much later errors contribute. To connect this sum to the returns we've already used, take one return length and add its TD errors with powers of $\gamma$. The intermediate value estimates cancel, leaving a return estimate minus the starting value. GAE can also be written as a geometrically weighted mixture of these estimates across different return lengths, with the remaining weight on the longest available return. [Schulman et al., Section 3, equations 14–16](https://arxiv.org/html/1506.02438v6#S3).
+The parameter $\lambda$, between 0 and 1, sets how much later errors count. Adding the TD errors of one return length makes the intermediate values cancel, leaving that return minus the starting value, and GAE is a geometrically weighted mix of those return lengths ([Schulman et al., Section 3, equations 14 to 16](https://arxiv.org/html/1506.02438v6#S3)). It brings the same horizon tradeoff to action credit, and changing $\lambda$ doesn't guarantee a particular change in variance.
 
-This brings the same horizon tradeoff to action credit. Shorter returns depend more on a guessed tail that may be biased, while longer returns include more observed rewards and transitions that can add noise. GAE mixes return lengths rather than picking just one. Its bias and variance still depend on how accurate the values are and on the task, so changing $\lambda$ doesn't guarantee a particular change in variance.
-
-Let's take a small example with three transitions ending at a terminal state. Set $\gamma=1$, with rewards $(R_1,R_2,R_3)=(0,0,4)$ and frozen values $(V(S_0),V(S_1),V(S_2),V(S_3))=(2,2,1,0)$. This gives errors of $(0,-1,3)$. With $\lambda=0.5$, each later error gets half the weight of the previous one when we calculate credit for action $A_0$:
+A small example: three transitions ending at a terminal state, $\gamma=1$, rewards $(0,0,4)$ and frozen values $(V(S_0),V(S_1),V(S_2),V(S_3))=(2,2,1,0)$. The errors are $(0,-1,3)$. With $\lambda=0.5$, the credit for $A_0$ is
 
 | TD error | Weight | Credit |
 | --- | ---: | ---: |
@@ -212,13 +117,9 @@ Let's take a small example with three transitions ending at a terminal state. Se
 | $\delta_2=3$ | 0.25 | 0.75 |
 | **Total** | | **0.25** |
 
-At $\lambda=0$, only $\delta_0$ remains, so we get 0. At $\lambda=1$, the sum is $4-2=2$, the completed return minus the starting value. A value of $\lambda=0.95$ works the same way: it's a decay factor, not a 95% full-return / 5% one-step mixture. Each successive TD error gets another factor of $\gamma\lambda$.
+At $\lambda=0$ only $\delta_0$ remains, so the credit is 0. At $\lambda=1$ the sum is $4-2=2$, the completed return minus the starting value. A value like $\lambda=0.95$ is a decay factor, not a 95% and 5% mixture.
 
-The same sum has a short backward recurrence:
-
-$$\hat A_H=0,\qquad \hat A_t=\delta_t+\gamma\lambda\hat A_{t+1}.$$
-
-To apply this recurrence to a batch, split it at every episode reset. For each segment, use the last actual observation as $S_H$. Set $V(S_H)=0$ only at a true terminal state. A time limit that truncates an ongoing task, or a rollout cutoff, keeps its bootstrap value; the trace still stops at the boundary. This matches the boundary handling in [Spinning Up's `finish_path`](https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/ppo.py).
+The same sum has a backward recurrence, $\hat A_H=0$ and $\hat A_t=\delta_t+\gamma\lambda\hat A_{t+1}$. To apply it to a batch, split at every episode reset and use the last actual observation as $S_H$. Set $V(S_H)=0$ only at a true terminal state. A time limit that cuts an ongoing task, or a rollout cutoff, keeps its bootstrap value, and the trace still stops at the boundary, as in [Spinning Up's `finish_path`](https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/ppo.py).
 
 ```text
 # One segment, with frozen values and no episode reset inside it.
@@ -230,21 +131,16 @@ for t = H-1 down to 0:
     advantage[t] = delta + gamma * lambda * advantage[t+1]
 ```
 
-Here `v[t]` stores the frozen $V(S_t)$. At $\lambda=1$, cancellation gives
+</details>
 
-$$\hat A_t=\sum_{\ell=0}^{H-t-1}\gamma^\ell R_{t+\ell+1}+\gamma^{H-t}V(S_H)-V(S_t).$$
+<details id="sec-time-limits" style="scroll-margin-top:var(--rc-top)">
+<summary>When the clock ends the episode</summary>
 
-Only a true terminal endpoint removes that tail. A truncated return still includes it.
+That rule assumes you know whether an ending is real. Training runs usually stop every episode after a fixed number of steps, and that cutoff can mean two different things. [Pardo et al. (2018)](https://arxiv.org/abs/1712.00378) separate them.
 
-<h3 id="sec-time-limits">When the clock ends the episode</h3>
+**The time limit is part of the task.** Say the robot really has 14 moves to reach a goal. Then a state's value depends on how many moves are left, and if the state doesn't include the remaining time, two different situations look identical and the learner averages targets that disagree. Their fix is to put the remaining time in the input. In their Last Moment example, the agent can stay for reward 0 or jump into a trap that pays +1 once and then −1 on every step until the end. The best plan is to stay and jump on the very last step. An agent that can't see the clock can't tell when the last step is, and the paper notes that even Monte Carlo methods, which don't bootstrap, can't learn the right plan without the time input.
 
-That rule assumes we know whether an ending is real. Training runs usually stop every episode after a fixed number of steps, and that cutoff can mean two different things. [Pardo et al. (2018)](https://arxiv.org/abs/1712.00378) separate them.
-
-**The time limit is part of the task.** Say the robot really has 14 moves to reach a goal. Then the value of a state depends on how many moves are left: the same square is worth a lot with 10 moves left and nothing with 1 move left if the goal is 3 moves away. If the state doesn't include the remaining time, those two situations look identical, and the learner averages targets that disagree. Their fix is to put the remaining time in the input.
-
-Their Last Moment example shows how much this matters. At each step the agent can stay, for reward 0, or jump into a trap that gives +1 once and then −1 on every step until the episode ends. The best plan is to stay and jump on the very last step, collecting +1 with no penalty. An agent that can't see the clock can't tell when the last step is. With more than two steps in the episode, its best fixed choice is to never jump, and the paper notes that even Monte Carlo methods, which don't bootstrap, can't learn the right plan without the time input.
-
-**The time limit is only for training.** If the task would really go on, the cutoff isn't an end. Treating it as terminal teaches the learner that a state near the cutoff is worth less, even though nothing about that state changed. Their fix is **partial-episode bootstrapping**: at the cutoff, use $R+\gamma V(S')$ instead of $R$, which is the truncation rule from the GAE section.
+**The time limit is only for training.** If the task would really go on, the cutoff isn't an end. Treating it as terminal teaches the learner that states near the cutoff have less future ahead, so their values come out wrong even though nothing about them changed. Their fix is **partial-episode bootstrapping**: at the cutoff, use $R+\gamma V(S')$ instead of $R$.
 
 <div class="ct ct-words">
 
@@ -255,12 +151,23 @@ Their Last Moment example shows how much this matters. At each step the agent ca
 
 </div>
 
-So the right handling depends on the objective. Bootstrapping through a limit that's really part of the task is also a mistake: it assumes a future that the task doesn't have.
+My game [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) has a pass-or-fail goal grid where this seems to happen: 14 moves, reward 1 at the goal and 0 otherwise, no discount. PPO with a learned value and GAE solved 13.3% of the tasks, and its value estimate at the start was about 1.44, above the largest possible return of 1. Scoring actions with real completed returns instead solved 95%, and with no baseline at all, 100% (3 seeds, simulation). The game's own reading is that the value bootstraps through the time limit and can't see the clock. Those are two different problems. The start value above 1 fits bootstrapping past a real ending, since no return in this task can exceed 1. Failing on the timed task also fits a missing clock, as in the Last Moment example, but the log has no run with the remaining time in the input, so that part is unconfirmed.
 
-My game [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) has a pass-or-fail goal grid where this seems to happen: 14 moves, reward 1 at the goal and 0 otherwise, no discount. PPO with a learned value and GAE solved 13.3% of the tasks, and its value estimate at the start was about 1.44, above the largest possible return of 1. Scoring actions with real completed returns instead solved 95%, and with no baseline at all, 100% (3 seeds, simulation). The game's own reading is that the value bootstraps through the time limit and can't see the clock. Those are two different problems, and they need different fixes. The start value above 1 fits bootstrapping past a real ending: with rewards of only 0 and 1 and a true end at move 14, no return can be larger than 1, and adding $V(S')$ at the limit adds a future the task doesn't have. Failing on the timed task also fits a missing clock, as in the Last Moment example. But the log has no run with the remaining time in the input, so that part is unconfirmed.
-
-The next question is how to store values when almost every state is new. [Part 3: function approximation](/robotics/rl-3-function-approximation/) replaces separate table entries with shared weights.
+</details>
 
 </div>
 </div>
+<script>
+/* Open a closed drawer when a link targets it or something inside it. */
+(function () {
+  function openTarget() {
+    var id = decodeURIComponent(location.hash.slice(1)), t = id && document.getElementById(id);
+    if (!t) return;
+    var wasClosed = false;
+    for (var d = t.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) { if (!d.open) wasClosed = true; d.open = true; }
+    if (wasClosed) requestAnimationFrame(function () { t.scrollIntoView({ block: 'start' }); });
+  }
+  openTarget(); window.addEventListener('hashchange', openTarget);
+})();
+</script>
 <script src="/assets/robotics/rl/canvas.js" defer></script>
