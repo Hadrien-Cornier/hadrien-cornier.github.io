@@ -75,7 +75,7 @@ def clean_axis(ax, grid=None):
         ax.set_axisbelow(True)
 
 
-def add_arrow(ax, start, end, color=INK, lw=1.5, mutation_scale=12, connectionstyle="arc3"):
+def add_arrow(ax, start, end, color=INK, lw=1.9, mutation_scale=16, connectionstyle="arc3"):
     arrow = FancyArrowPatch(
         start, end, arrowstyle="-|>", mutation_scale=mutation_scale,
         linewidth=lw, color=color, connectionstyle=connectionstyle,
@@ -84,8 +84,8 @@ def add_arrow(ax, start, end, color=INK, lw=1.5, mutation_scale=12, connectionst
     return arrow
 
 
-def draw_box(ax, xy, width, height, text, edge=INK, face="white", fontsize=11,
-             linewidth=1.4, textcolor=INK, radius=0.08, zorder=2):
+def draw_box(ax, xy, width, height, text, edge=INK, face=BOARD, fontsize=15,
+             linewidth=1.8, textcolor=INK, radius=0.08, zorder=2):
     patch = Rectangle(
         xy, width, height, facecolor=face, edgecolor=edge, linewidth=linewidth,
         joinstyle="round", zorder=zorder,
