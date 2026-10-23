@@ -22,6 +22,7 @@ function template(root, name, values) {
     return values[key];
   }).trim();
 }
+const isDay = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 export function readPapers(root = ROOT) {
   const directory = path.join(root, 'content/papers');
   if (!fs.existsSync(directory)) return [];
@@ -36,7 +37,8 @@ export function readPapers(root = ROOT) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(paper.slug) || name !== `${paper.slug}.json`) throw new Error(`${name}: slug must match the filename`);
     if (seen.has(paper.slug)) throw new Error(`Duplicate paper slug: ${paper.slug}`);
     seen.add(paper.slug);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(paper.date) || Number.isNaN(Date.parse(paper.date)) || new Date(paper.date).toISOString().slice(0, 10) !== paper.date) throw new Error(`${name}: invalid date`);
+    if (!isDay(paper.date)) throw new Error(`${name}: invalid date`);
+    if (paper.paperDate !== undefined && !isDay(paper.paperDate)) throw new Error(`${name}: invalid paperDate`);
     for (const key of ['paperUrl', 'projectUrl', 'codeUrl'].filter((key) => paper[key] !== undefined)) {
       let url;
       try { url = new URL(paper[key]); } catch { throw new Error(`${name}: invalid ${key}`); }
@@ -44,6 +46,13 @@ export function readPapers(root = ROOT) {
     }
     return paper;
   }).sort((a, b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
+}
+/** The paper's own date and link, shown as the first line under the title when paperDate is set. */
+function source(paper) {
+  if (!paper.paperDate) return '';
+  const day = new Date(`${paper.paperDate}T00:00:00Z`).toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric', timeZone:'UTC'});
+  const arxiv = /^https:\/\/arxiv\.org\/abs\/([^/?#]+)$/.exec(paper.paperUrl);
+  return `<p class="paper-source">${arxiv ? 'Posted to arXiv' : 'Published'} on ${escape(day)} · <a href="${escape(paper.paperUrl)}">${escape(arxiv ? `arXiv ${arxiv[1]}` : 'Read the paper')} ↗</a></p>`;
 }
 function entry(paper, home = false) {
   const heading = home ? 'h3' : 'h2';
@@ -84,7 +93,7 @@ export function build(root = ROOT) {
     if (!body.trim() || /<h1\b/i.test(body)) throw new Error(`${paper.slug}: supply a body without a level-one heading`);
     return [path.join(root, 'papers', paper.slug, 'index.html'), shell(root, {
       title:paper.title, description:paper.description, pathname:`/papers/${paper.slug}/`, slug:paper.slug,
-      content:`<article class="paper-explainer" aria-labelledby="paper-title"><header class="paper-header"><a class="eyebrow" href="/papers/">Papers / Visual explanation</a><h1 id="paper-title">${escape(paper.title)}</h1><p class="paper-takeaway">${escape(paper.description)}</p></header>${body}</article>`,
+      content:`<article class="paper-explainer" aria-labelledby="paper-title"><header class="paper-header"><a class="eyebrow" href="/papers/">Papers / Visual explanation</a><h1 id="paper-title">${escape(paper.title)}</h1>${source(paper)}<p class="paper-takeaway">${escape(paper.description)}</p></header>${body}</article>`,
     })];
   });
   pages.push([path.join(root, 'papers/index.html'), shell(root, {
