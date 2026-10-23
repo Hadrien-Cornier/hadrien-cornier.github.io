@@ -27,6 +27,9 @@
     }
     for (const block of blocks) {
       block.hidden = ![...block.querySelectorAll('[data-entry]')].some((entry) => !entry.hidden);
+      // A match inside a closed part list must be visible.
+      const parts = block.querySelector('details');
+      if (parts && (activeTag || words.length) && !block.hidden) parts.open = true;
     }
     status.textContent = shown === 0 ? 'No essays match your search.'
       : shown === entries.length ? `Showing all ${shown} essays.`

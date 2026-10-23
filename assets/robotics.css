@@ -362,27 +362,41 @@
 /* Series navigation keeps related essays together without competing with the report header. */
 .series-box { max-width: 1080px; margin: 22px auto 0; padding: 17px 20px; border: 1px solid var(--line); background: var(--white); font-size: 13px; }
 .series-box-name { color: var(--muted); font: 10px/1.5 var(--mono); letter-spacing: .8px; text-transform: uppercase; }
+.series-box-name a { color: var(--accent); }
+.series-box-subtitle { margin-top: 4px; color: var(--muted); font-family: var(--serif); font-size: 15px; font-style: italic; }
 .series-box-position { margin-top: 4px; font-family: var(--serif); font-size: 20px; }
 .series-box ol { display: flex; flex-wrap: wrap; gap: 7px 22px; margin: 13px 0 0; padding: 0; list-style-position: inside; }
 .series-box li { min-width: 0; }
 .series-box li[aria-current="page"] { color: var(--accent); font-weight: 600; }
 .series-box-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line); color: var(--accent); font-size: 12px; }
-.series-block { min-width: 0; margin: 25px 0 0; padding-top: 7px; border-top: 1px solid var(--line); }
-.series-block > h2 { margin: 0; padding: 15px 0 2px; border: 0; font-family: var(--serif); font-size: 24px; font-weight: 400; letter-spacing: -.3px; }
-.series-block-parts { min-width: 0; }
-.series-block .report-card { padding: 25px 0; }
-.series-block-home { margin: 0 0 8px; padding: 26px 32px 4px; border: 1px solid var(--line); background: var(--white); }
-.series-block-home > h2 { padding: 8px 0 6px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(26px, 3vw, 34px); letter-spacing: -.7px; line-height: 1.18; }
-.series-block-home .writing-row:last-child { border-bottom: 0; }
-.series-block-home .writing-row-number { color: var(--accent); }
-.series-block-eyebrow, .other-essays-heading { margin: 0; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .9px; }
-.series-block-eyebrow { color: var(--accent); }
-.other-essays-heading { margin-top: 46px; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+/* A series block: one place in the essay list for a whole series. Its head names the series, its part count and dates; its parts follow in order. */
+.series-block { min-width: 0; margin: 28px 0; padding: 26px 30px 10px; border: 1px solid var(--line); border-top: 3px solid var(--accent); background: var(--white); }
+.series-block-head { display: grid; gap: 8px; justify-items: start; }
+.series-block-head > :is(h2, h3) { margin: 0; padding: 0; border: 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(26px, 3vw, 34px); font-weight: 400; letter-spacing: -.7px; line-height: 1.18; }
+.series-block-eyebrow { margin: 0; color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .9px; }
+.series-block-subtitle { max-width: 720px; margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(17px, 1.8vw, 20px); font-style: italic; line-height: 1.4; }
+.series-block-description { max-width: 720px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.series-block-start { padding: 4px 0; color: var(--accent); font-size: 14px; }
+.series-block-parts { margin-top: 14px; }
+.series-block-parts > summary { display: none; }
+.series-block-parts ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.series-block-parts li + li { border-top: 1px solid var(--line); }
+.series-row { display: grid; grid-template-columns: 68px minmax(0, 1fr) auto; gap: 18px; align-items: baseline; padding: 13px 0; color: inherit; }
+.series-row:hover { text-decoration: none; }
+.series-row:hover .series-row-title { color: var(--accent); }
+.series-row-part { color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .4px; }
+.series-row-part small { display: block; margin-top: 3px; font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
+.series-row-copy { display: grid; gap: 4px; min-width: 0; }
+.series-row-title { font-family: Georgia, 'Times New Roman', serif; font-size: 19px; line-height: 1.3; transition: color .15s; }
+.series-row-description { color: var(--muted); font-size: 14px; line-height: 1.55; }
+.series-row-meta { display: grid; grid-template-columns: 6ch 7ch; gap: 12px; justify-items: end; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; white-space: nowrap; }
 .report-part { display: block; margin-bottom: 6px; color: var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; letter-spacing: .7px; font-size: 10px; }
 /* Hardware track: a series part about the physical build. Steel blue in place of the rust accent, a left rule in lists. */
 .track-hardware { --accent: #2b6a8e; }
 .track-hardware .article-body a:not(.figure-link) { text-decoration-color: #2b6a8e66; }
-.writing-row.track-hardware, .series-block .report-card.track-hardware { box-shadow: inset 3px 0 0 var(--accent); padding-left: 14px; }
+.writing-row.track-hardware, .series-row.track-hardware { box-shadow: inset 3px 0 0 var(--accent); padding-left: 14px; }
+/* Inside a series block the rule sits in the block padding, so the part columns stay aligned. */
+.series-row.track-hardware { margin-left: -14px; }
 .writing-row.track-hardware .writing-row-number { color: var(--accent); }
 .writing-row-number small { display: block; margin-top: 3px; font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
 .series-box .series-part.track-hardware, .series-box .series-part.track-hardware a { color: #2b6a8e; }
@@ -520,9 +534,17 @@
   .series-box { padding: 15px; }
   .series-box ol { display: grid; gap: 8px; }
   .series-box-links { display: grid; }
-  .series-block > h2 { font-size: 22px; }
-  .series-block-home { padding: 18px 16px 2px; }
-  .series-block .report-card { padding: 22px 0; }
+  .series-block { margin: 22px 0; padding: 18px 16px 4px; }
+  .series-block-head > :is(h2, h3) { font-size: 25px; letter-spacing: -.4px; }
+  .series-block-parts > summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; margin-top: 2px; border-top: 1px solid var(--line); color: var(--accent); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .4px; cursor: pointer; list-style: none; }
+  .series-block-parts > summary::-webkit-details-marker { display: none; }
+  .series-block-parts > summary::after { content: '+'; font-size: 16px; }
+  .series-block-parts[open] > summary::after { content: '−'; }
+  .series-block-parts[open] .series-show, .series-block-parts:not([open]) .series-hide { display: none; }
+  .series-row { grid-template-columns: 52px minmax(0, 1fr); gap: 4px 12px; padding: 12px 0; }
+  .series-row-meta { display: flex; grid-column: 2; font-size: 10px; }
+  .series-row-title { font-size: 17px; }
+  .series-row-description { font-size: 13px; }
   .article-body .so101-widget { margin: 26px 0 32px; padding: 15px 13px; font-size: 13px; }
   .so101-slider { grid-template-columns: minmax(0, 1fr) minmax(85px, 1fr); gap: 4px 9px; }
   .so101-slider-label { grid-column: 1; }
@@ -654,7 +676,7 @@ a.tag-chip:hover { border-color: var(--accent); color: var(--accent); text-decor
 .tag-filter[aria-pressed="true"] .tag-count { color: var(--white); }
 .tag-count { color: var(--muted); font-size: 9px; }
 .filter-status { margin-top: 15px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; }
-.report-card[hidden], .series-block[hidden], .writing-row[hidden] { display: none; }
+.report-card[hidden], .series-block[hidden], .writing-row[hidden], .series-block-parts li:has(> .series-row[hidden]) { display: none; }
 @media (max-width: 600px) {
   .article-filter { margin: 20px 0 2px; padding: 16px 15px 15px; }
   .tag-row { margin-top: 12px; }

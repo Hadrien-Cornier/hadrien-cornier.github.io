@@ -3,7 +3,7 @@ title: 'Teaching my drawing arm to keep learning'
 description: 'After part 6: direct motor drive, learning between drawings, feedback during a stroke, and a twin tested across days. The repeat floor is not a claim of one-millimeter control.'
 date: '2026-10-15'
 draft: false
-series: 'From policy to action: the last mile of robotics control'
+series: 'so101-control'
 part: 7
 tags: ['so-101', 'machine-learning', 'control']
 thumbnail: /assets/robotics/thumbnails/so101-7-learning-between-and-during-strokes.jpg

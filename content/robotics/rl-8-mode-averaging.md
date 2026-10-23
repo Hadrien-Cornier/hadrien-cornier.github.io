@@ -4,7 +4,7 @@ description: 'Why copying demonstrations that go left and right around a box can
 date: '2026-10-21'
 updated: '2026-10-22'
 draft: false
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 8
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning', 'robotics']
