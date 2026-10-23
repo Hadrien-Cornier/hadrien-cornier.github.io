@@ -57,6 +57,7 @@ I_COLOR = chalk.RED  # old orange #DD862E
 D_COLOR = chalk.LAVENDER  # old purple #8459A2
 # Patrick Hand has a tall line box: linespacing 0.9 gives about 1.2 em per line.
 LINE = 0.9
+MATH_FONT = "dejavusans"
 
 
 # ---------------------------------------------------------------------------
@@ -263,7 +264,10 @@ def pid_terms(out):
         ax.set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2])
         ax.set_title(title, color=color, fontsize=17.5, loc="center", pad=8)
         ax.text(now + 0.06, 1.10, "now", color=NEUTRAL, fontsize=14)
-    axes[0].set_ylabel("Error e(t) (rad)")
+    # Patrick Hand draws "t" like "+". The math here (e(t), the integral limit, dt)
+    # sits next to real "+" signs, so it uses the DejaVu Sans math font, which is
+    # the fallback font of the chalk style.
+    axes[0].set_ylabel(r"Error $\mathrm{e(t)}$ (rad)", math_fontfamily=MATH_FONT)
 
     axes[0].annotate(
         "",
@@ -322,6 +326,7 @@ def pid_terms(out):
         va="center",
         fontsize=21,
         color=INK,
+        math_fontfamily=MATH_FONT,
     )
     fig.text(
         0.1 / width,

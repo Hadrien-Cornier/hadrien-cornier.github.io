@@ -114,7 +114,10 @@ def mechanism(out):
 
     # Left column: axial shaft and diametrically magnetized disk in an oblique view.
     cx = 190
-    ax.plot([cx, cx], [150, 470], ls=(0, (4, 5)), color=MUTED, lw=1.2, zorder=0)
+    # Dashed shaft axis from the shaft top down behind the chip pins, with gaps
+    # only where the two magnet text lines sit on it.
+    for top, bottom in [(150, 335), (402, 492)]:
+        ax.plot([cx, cx], [top, bottom], ls=(0, (4, 5)), color=MUTED, lw=1.3, zorder=0)
     ax.add_patch(Rectangle((cx - 13, 145), 26, 103, fc=SHAFT, ec=MUTED, lw=1.5))
     text(ax, 300, 168, "shaft", 15, MUTED)
     ax.plot([272, cx + 17], [176, 196], color=MUTED, lw=1)
@@ -133,9 +136,8 @@ def mechanism(out):
     yy = 240 + 48 * np.sin(t)
     ax.plot(xx[:-3], yy[:-3], color=GOLD, lw=2.4)
     arrow(ax, (xx[-5], yy[-5]), (xx[-1], yy[-1]), GOLD)
-    halo = chalk.label_box(pad=0.1)
-    text(ax, cx, 352, "Magnet turns with shaft", 17, WHITE, bbox=halo)
-    text(ax, cx, 388, "N and S lie across its diameter", 14, MUTED, bbox=halo)
+    text(ax, cx, 352, "Magnet turns with shaft", 17, WHITE)
+    text(ax, cx, 388, "N and S lie across its diameter", 14, MUTED)
     # Board and stationary 8-pin chip.
     ax.add_patch(
         FancyBboxPatch(
@@ -233,26 +235,20 @@ def ambiguity(out):
         a.plot([sign * x, sign * x], [0, y], ls=":", color=col, lw=2.2)
         a.scatter([sign * x], [y], s=60, color=col, zorder=5)
         a.text(sign * x, y + 0.25, label, ha="center", color=col, fontsize=20)
+        # Centered a little inside the projection line so that the label sits
+        # inside the circle and touches neither the circle nor the X axis.
         a.text(
-            sign * x,
-            -0.15,
+            sign * 0.76,
+            -0.19,
             f"{sign * x:+.3f}",
             ha="center",
             color=col,
             fontsize=14.5,
-            bbox=chalk.label_box(pad=0.06),
         )
     a.add_patch(Arc((0, 0), 0.68, 0.68, theta1=0, theta2=30, color=TEAL, lw=1.6))
     a.add_patch(Arc((0, 0), 0.95, 0.95, theta1=0, theta2=150, color=PURPLE, lw=1.4, alpha=0.8))
-    a.text(
-        -0.1,
-        -1.2,
-        "Unit circle: A = 1",
-        color=MUTED,
-        ha="center",
-        fontsize=14,
-        bbox=chalk.label_box(pad=0.06),
-    )
+    # Just below the end of the Y axis, so that it needs no board patch.
+    a.text(-0.1, -1.29, "Unit circle: A = 1", color=MUTED, ha="center", fontsize=14)
     box(ax, 640, 205, 330, 96, "30°\nX = +0.866    Y = +0.5", TEAL, 17)
     box(ax, 640, 330, 330, 96, "150°\nX = −0.866    Y = +0.5", PURPLE, 17)
     text(ax, 640, 428, "Y alone leaves two choices.", 16.5, GOLD)

@@ -97,6 +97,21 @@ def angle_arc(ax, center, start, stop, radius, label, color=NAVY, label_radius=N
     ax.text(*position, label, color=color, ha="center", va="center", fontsize=fontsize)
 
 
+def label_position(endpoint, offset):
+    """Label point for a unit arrow, as in the original: 1.13 times the tip plus an offset.
+
+    An arrow along an axis would put its label on the gray axis arrowhead at the
+    chalk text size, so that label moves to the side of the axis instead.
+    """
+    along_x = abs(endpoint[1]) < 1e-8
+    along_y = abs(endpoint[0]) < 1e-8
+    if along_x:
+        return np.array([endpoint[0] * 1.12, 0.2])
+    if along_y:
+        return np.array([-0.18, endpoint[1] * 1.22])
+    return endpoint * 1.13 + offset
+
+
 def rotation_columns(out):
     width, height = 6.4, 12.0
     fig = plt.figure(figsize=(width, height))
@@ -150,7 +165,7 @@ def rotation_columns(out):
                 dashed(ax, endpoint, [endpoint[0], 0], color=color, lw=1.5)
                 dashed(ax, endpoint, [0, endpoint[1]], color=color, lw=1.5)
         ax.text(
-            *(first * 1.13 + np.array([0.03, -0.02])),
+            *label_position(first, np.array([0.03, -0.02])),
             "x′",
             color=RED,
             fontsize=19,
@@ -158,7 +173,7 @@ def rotation_columns(out):
             va="center",
         )
         ax.text(
-            *(second * 1.13 + np.array([-0.04, 0.02])),
+            *label_position(second, np.array([-0.04, 0.02])),
             "y′",
             color=GREEN,
             fontsize=19,
