@@ -4,7 +4,7 @@ description: 'Why waiting for the final reward is slow, and how borrowing the ne
 date: '2026-10-19'
 updated: '2026-10-22'
 draft: false
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 2
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning']

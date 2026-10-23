@@ -4,7 +4,7 @@ description: 'A value target has to assume what you do next: on-policy learning 
 date: '2026-10-19'
 updated: '2026-10-22'
 draft: false
-series: 'Reinforcement learning'
+series: 'reinforcement-learning'
 part: 4
 layout: essay
 tags: ['reinforcement-learning', 'machine-learning']
