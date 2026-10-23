@@ -38,6 +38,11 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/robotics/molmobot/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/robotics/world-action-models-vs-vlas/</loc>
     <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
@@ -248,6 +253,11 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/tags/imitation-learning/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/tags/industry/</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
@@ -308,8 +318,13 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/tags/sim-to-real/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/tags/simulation/</loc>
-    <lastmod>2026-10-15</lastmod>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>

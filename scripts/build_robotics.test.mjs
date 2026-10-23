@@ -390,6 +390,8 @@ test('a short article is an HTML body with Markdown frontmatter and is listed li
     const home = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
     assert.match(home, /href="\/robotics\/canvas\/"/);
     assert.doesNotMatch(home, /href="\/papers\//);
+    assert.match(home, /<p class="eyebrow">Latest paper<\/p><h3>Canvas: A paper<\/h3>/, 'a newest paper is not called an essay');
+    assert.match(home, /Read the article <span/, 'the link opens the article, not the paper PDF');
     assert.match(fs.readFileSync(path.join(root, 'robotics/index.html'), 'utf8'), /<article class="report-card has-thumb" data-url="\/robotics\/canvas\/" data-entry data-tags="robot-memory vla"><span class="report-date"><span class="report-part">Recent papers<\/span><time datetime="2026-09-27">/);
     assert.match(fs.readFileSync(path.join(root, 'robotics/recent-papers/index.html'), 'utf8'), /href="\/robotics\/canvas\/"/);
     assert.ok(JSON.parse(fs.readFileSync(path.join(root, 'robotics/search-index.json'), 'utf8')).some((entry) => entry.url === '/robotics/canvas/'));

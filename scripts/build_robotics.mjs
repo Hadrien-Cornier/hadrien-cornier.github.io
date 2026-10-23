@@ -452,7 +452,8 @@ function homePage(articles, root) {
   });
   const latest = latestUnit?.series ? articles.find((article) => article.series === latestUnit.series) : latestUnit?.article;
   const featureImage = latest ? previewImage(latest, root) : '';
-  const featureImageLabel = latest?.slug === 'how-robot-control-is-changing' ? 'Illustration: a moved target' : 'Figure from the essay';
+  const featureKind = latest?.paper ? 'paper' : 'essay';
+  const featureImageLabel = latest?.slug === 'how-robot-control-is-changing' ? 'Illustration: a moved target' : `Figure from the ${featureKind}`;
   let rowNumber = latestUnit?.series ? 1 : 2;
   const renderRow = (article) => {
     const image = previewImage(article, root);
@@ -461,7 +462,7 @@ function homePage(articles, root) {
   };
   const feature = latestUnit?.series
     ? seriesBlock(latestUnit, renderRow, 'series-block-home')
-    : latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest essay</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the essay <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">${featureImageLabel}</span></div>` : ''}</a>`
+    : latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest ${featureKind}</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the ${latest.paper ? 'article' : 'essay'} <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">${featureImageLabel}</span></div>` : ''}</a>`
     : '<p class="writing-empty">The first essay is on its way.</p>';
   const restSeries = restUnits.filter((unit) => unit.series).map((unit) => seriesBlock(unit, renderRow, 'series-block-home')).join('');
   const restEssays = restUnits.filter((unit) => !unit.series).map((unit) => renderRow(unit.article)).join('');
