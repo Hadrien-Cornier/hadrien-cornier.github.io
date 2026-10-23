@@ -12,7 +12,7 @@ sends you back to the start, a move into the outer wall leaves you in place, and
 
 Policy iteration starts from the random policy (each move with probability 1/4). Evaluation
 solves the linear Bellman equations exactly. Improvement takes the greedy move, and keeps the
-current move when it is still among the best (Sutton and Barto, p. 80 and Exercise 4.4).
+current move when it is still among the best (Sutton and Barto, Section 4.3 and Exercise 4.4).
 Moves within 1e-9 of the best count as ties. The first greedy step breaks ties in the order
 up, right, down, left; every other order gives the same run.
 """
@@ -288,9 +288,9 @@ def canvas(history):
     out.append(text(gx + 360, ty + 48, "green, round 6: 13 steps", "green", 14, "end"))
     out.append("</g>")
 
-    # 4. The loop diagram (Sutton and Barto, p. 86).
+    # 4. The loop diagram (Sutton and Barto, Section 4.6).
     x, y = 430, 305
-    out += panel("loop", x, y, "4. Two processes (book, p. 86)")
+    out += panel("loop", x, y, "4. Two processes (book, Ch. 4)")
     px, vx, cy = x + 100, x + 300, y + 122
     out.append(text(px, cy + 10, "π", "chalk", 34, "middle"))
     out.append(text(vx, cy + 10, "V", "chalk", 34, "middle"))
@@ -307,9 +307,9 @@ def canvas(history):
     out.append(text(mid, y + 266, "until neither changes", "dim", 14, "middle"))
     out.append("</g>")
 
-    # 5. The two-lines diagram (Sutton and Barto, p. 87).
+    # 5. The two-lines diagram (Sutton and Barto, Section 4.6).
     x, y = 10, 600
-    out += panel("lines", x, y, "5. Two goals pull apart (book, p. 87)")
+    out += panel("lines", x, y, "5. Two goals pull apart (book, Ch. 4)")
     top = (x + 200, y + 84)
     left_end, right_end = (x + 74, y + 238), (x + 326, y + 238)
 

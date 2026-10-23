@@ -150,6 +150,15 @@ Any article can ship its own `assets/robotics/<slug>/article.css` and module scr
 Check the canvas or animation at desktop and phone widths, with touch controls, reduced
 motion, and JavaScript disabled. Keep the core explanation visible without animation.
 
+## Book-based articles
+
+An article built on a book, such as the generalized policy iteration article on Sutton and
+Barto's *Reinforcement Learning: An Introduction*, cites the book once, in a Sources section
+at the end. That citation gives the authors, title, edition and the chapters the article uses.
+Do not put page numbers in the text, the drawers or the canvas labels. A redrawn figure can
+name its chapter, for example "(book, Ch. 4)". Other articles cite a book by chapter or
+section, not by page.
+
 ## Redirects
 
 `content/robotics/redirects.json` keeps old links working. A key is an old article slug, or

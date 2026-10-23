@@ -275,7 +275,7 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 <text x="396" y="547" fill="#a8e2a0" class="c-green" font-size="14" text-anchor="end">green, round 6: 13 steps</text>
 </g>
 <g class="rc-panel" data-panel="loop"><rect x="430" y="305" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>
-<text class="rls-panel-title" x="444" y="333" fill="#ffe17c" font-size="16">4. Two processes (book, p. 86)</text>
+<text class="rls-panel-title" x="444" y="333" fill="#ffe17c" font-size="16">4. Two processes (book, Ch. 4)</text>
 <text x="530" y="437" fill="#f4f1e8" class="c-chalk" font-size="34" text-anchor="middle">π</text>
 <text x="730" y="437" fill="#f4f1e8" class="c-chalk" font-size="34" text-anchor="middle">V</text>
 <path d="M554 411 Q630.0 357 706 411" fill="none" stroke="#93d4ff" class="s-blue" stroke-width="2.4" marker-end="url(#gpi-ab)"/>
@@ -291,7 +291,7 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 <text x="630" y="571" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">until neither changes</text>
 </g>
 <g class="rc-panel" data-panel="lines"><rect x="10" y="600" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>
-<text class="rls-panel-title" x="24" y="628" fill="#ffe17c" font-size="16">5. Two goals pull apart (book, p. 87)</text>
+<text class="rls-panel-title" x="24" y="628" fill="#ffe17c" font-size="16">5. Two goals pull apart (book, Ch. 4)</text>
 <path d="M84 838L210 684" stroke="#93d4ff" class="s-blue" stroke-width="2.4"/>
 <path d="M336 838L210 684" stroke="#a8e2a0" class="s-green" stroke-width="2.4"/>
 <text x="28" y="858" fill="#93d4ff" class="c-blue" font-size="16">v = v<tspan baseline-shift="sub" font-size="75%">π</tspan></text>
@@ -346,13 +346,13 @@ Take [Part 1's](/robotics/rl-1-q-learning/#sec-world) 4 by 12 cliff grid: start 
 
 Trying all $4^{37} \approx 1.9 \times 10^{22}$ rules, one move in each of 37 cells, is hopeless. To improve a rule you must score it first, and each new rule needs a new score.
 
-This side article to my [reinforcement learning series](/robotics/rl-0-overview/) follows Chapter 4 of [Sutton and Barto](http://incompleteideas.net/book/RLbook2020.pdf) (page numbers refer to its second edition).
+This side article to my [reinforcement learning series](/robotics/rl-0-overview/) follows Chapter 4 of Sutton and Barto's textbook, cited at the end.
 
 <div class="rc-mark" id="sec-evaluate" data-panel="walker" data-view="walker" data-title="How good is a random walker?"></div>
 
 ## How good is the current rule?
 
-Start with a random walker that picks each move with chance ¼. Such a rule is a **policy** $\pi$, with $\pi(a \mid s)$ the chance it picks move $a$ in cell $s$. The **value** $v_\pi(s)$ is the total discounted reward you collect on average from $s$ under $\pi$. Computing it is **policy evaluation** (§4.1, p. 74), and each value depends on the cells one move can reach (eq. 4.4, p. 74):
+Start with a random walker that picks each move with chance ¼. Such a rule is a **policy** $\pi$, with $\pi(a \mid s)$ the chance it picks move $a$ in cell $s$. The **value** $v_\pi(s)$ is the total discounted reward you collect on average from $s$ under $\pi$. Computing it is **policy evaluation**, and each value depends on the cells one move can reach:
 
 $$v_\pi(s) = \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_\pi(s')\big]$$
 
@@ -363,11 +363,11 @@ The **model** $p(s', r \mid s, a)$ is the chance that move $a$ in $s$ lands in $
 <details>
 <summary>Solving for the values</summary>
 
-My script (linked under "Every round") solves the equations directly. Written out, a sweep is (eq. 4.5, p. 74):
+My script (linked under "Every round") solves the equations directly. Written out, a sweep is:
 
 $$\begin{aligned} v_{k+1}(s) &= \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a) \\ &\qquad \big[r + \gamma\, v_k(s')\big] \end{aligned}$$
 
-For $\gamma < 1$, repeated sweeps converge to $v_\pi$ in the limit, from any start with the flag at 0 (pp. 74-75).
+For $\gamma < 1$, repeated sweeps converge to $v_\pi$ in the limit, from any start with the flag at 0.
 
 </details>
 
@@ -375,11 +375,11 @@ For $\gamma < 1$, repeated sweeps converge to $v_\pi$ in the limit, from any sta
 
 ## Act greedily on those numbers
 
-The **action value** is what you get from making move $a$ once, then following $\pi$ (eq. 4.6, p. 78):
+The **action value** is what you get from making move $a$ once, then following $\pi$:
 
 $$q_\pi(s, a) = \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_\pi(s')\big]$$
 
-The **greedy** policy takes the best move in each cell (eq. 4.9, p. 79):
+The **greedy** policy takes the best move in each cell:
 
 $$\pi'(s) = \arg\max_a q_\pi(s, a)$$
 
@@ -387,14 +387,14 @@ Here $\pi'(s)$ is a single move, and switching to it is **policy improvement**. 
 
 <div class="rc-slot" data-for="sec-improve"></div>
 
-By the **policy improvement theorem** (eq. 4.7 and 4.8, p. 78), if taking the new move once and then following $\pi$ is never worse than following $\pi$ from the start,
+By the **policy improvement theorem**, if taking the new move once and then following $\pi$ is never worse than following $\pi$ from the start,
 
 $$q_\pi(s, \pi'(s)) \ge v_\pi(s) \quad \text{for every } s,$$
 
 then $v_{\pi'}(s) \ge v_\pi(s)$ everywhere. So use the new move again at the next step, and the next. After $k$ steps, all that's left of the old policy is its value $k$ steps ahead, discounted by $\gamma^k$, which shrinks to zero. Greedy always meets the condition: $v_\pi(s) = \sum_a \pi(a \mid s)\, q_\pi(s, a)$ is an average of action values, and the max is at least the average.
 
 <details>
-<summary>The proof chain (p. 78)</summary>
+<summary>The proof chain</summary>
 
 Unroll the condition step by step:
 
@@ -410,7 +410,7 @@ v_\pi(s) &\le q_\pi(s, \pi'(s)) \\
 &= v_{\pi'}(s)
 \end{aligned}$$
 
-Here $\mathbb{E}_{\pi'}$ averages over following $\pi'$, and each $\le$ uses the condition at the next cell. The theorem also covers stochastic policies like the random walker (p. 79).
+Here $\mathbb{E}_{\pi'}$ averages over following $\pi'$, and each $\le$ uses the condition at the next cell. The theorem also covers stochastic policies like the random walker.
 
 </details>
 
@@ -418,7 +418,7 @@ Here $\mathbb{E}_{\pi'}$ averages over following $\pi'$, and each $\le$ uses the
 
 ## Repeat until nothing changes
 
-The values now belong to the old policy, so you evaluate again and improve again. That's **policy iteration** (§4.3, p. 80), with E a full evaluation and I a greedy improvement:
+The values now belong to the old policy, so you evaluate again and improve again. That's **policy iteration**, with E a full evaluation and I a greedy improvement:
 
 $$\begin{aligned} &\pi_0 \xrightarrow{\;E\;} v_{\pi_0} \xrightarrow{\;I\;} \pi_1 \xrightarrow{\;E\;} v_{\pi_1} \xrightarrow{\;I\;} \pi_2 \\ &\xrightarrow{\;E\;} \cdots \xrightarrow{\;I\;} \pi_* \xrightarrow{\;E\;} v_* \end{aligned}$$
 
@@ -426,7 +426,7 @@ It takes six rounds of one evaluation and one greedy step each (panel 3); panel 
 
 <div class="rc-slot" data-for="sec-repeat"></div>
 
-After round 6 a greedy step changes nothing, so the loop stops. No change means every value already equals its best action value: $v_\pi(s) = \max_a q_\pi(s, a)$ in every cell. That's the **Bellman optimality equation** (eq. 4.1, p. 73), and in a finite problem its only solution is $v_*$, the best value any policy can reach. So the final policy is optimal (pp. 64 and 79). It must stop, too: with the tie rule in the drawer, each change makes some cell strictly better, so no policy comes back, and only finitely many policies pick one move per cell.
+After round 6 a greedy step changes nothing, so the loop stops. No change means every value already equals its best action value: $v_\pi(s) = \max_a q_\pi(s, a)$ in every cell. That's the **Bellman optimality equation**, and in a finite problem its only solution is $v_*$, the best value any policy can reach. So the final policy is optimal. It must stop, too: with the tie rule in the drawer, each change makes some cell strictly better, so no policy comes back, and only finitely many policies pick one move per cell.
 
 <details>
 <summary>Every round</summary>
@@ -452,9 +452,9 @@ Round 1 breaks ties in the order up, right, down, left; all 24 orders give the s
 <details>
 <summary>Why it stops, written out</summary>
 
-When two moves tie, the policy keeps its current move (the fix that Exercise 4.4 asks for, p. 82), so a round only switches to strictly better moves. Then some cell gets strictly better (p. 78), so no policy can come back. With finitely many **deterministic** policies, the ones that pick one move per cell, the loop must stop (p. 80).
+When two moves tie, the policy keeps its current move (the fix that the book's Exercise 4.4 asks for), so a round only switches to strictly better moves. Then some cell gets strictly better, so no policy can come back. With finitely many **deterministic** policies, the ones that pick one move per cell, the loop must stop.
 
-At the stop $\pi' = \pi$, and written out with the model, its values satisfy (eq. 4.1, p. 73)
+At the stop $\pi' = \pi$, and written out with the model, its values satisfy
 
 $$v_{\pi'}(s) = \max_a \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_{\pi'}(s')\big]$$
 
@@ -464,13 +464,13 @@ $$v_{\pi'}(s) = \max_a \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_{\pi
 
 ## Two processes, any amount of work
 
-Policy iteration runs evaluation to the end before each greedy step. It doesn't have to. **Value iteration** stops evaluation after one sweep and does the greedy step inside it: a max over moves replaces the average over $\pi$'s moves (eq. 4.10, p. 83):
+Policy iteration runs evaluation to the end before each greedy step. It doesn't have to. **Value iteration** stops evaluation after one sweep and does the greedy step inside it: a max over moves replaces the average over $\pi$'s moves:
 
 $$v_{k+1}(s) = \max_a \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_k(s')\big]$$
 
-On the cliff grid, from all zeros, it reaches $v_*$ exactly at sweep 14, though in general it only converges in the limit (p. 83).
+On the cliff grid, from all zeros, it reaches $v_*$ exactly at sweep 14, though in general it only converges in the limit.
 
-The general idea is **generalized policy iteration** (GPI): "letting policy-evaluation and policy-improvement processes interact, independent of the granularity and other details of the two processes" (§4.6, p. 86). In panel 4, evaluation pulls V, the current value estimate, toward $v_\pi$, and improvement pulls $\pi$ toward greedy(V). If both stop changing, V is the policy's true value and the policy is fully greedy for it, the stop condition from above, so you're at an optimal $\pi_*$ and $v_*$ (p. 86). And "Almost all reinforcement learning methods are well described as GPI" (p. 86).
+The book calls the general idea **generalized policy iteration** (GPI): "letting policy-evaluation and policy-improvement processes interact, independent of the granularity and other details of the two processes". In panel 4, evaluation pulls V, the current value estimate, toward $v_\pi$, and improvement pulls $\pi$ toward greedy(V). If both stop changing, V is the policy's true value and the policy is fully greedy for it, the stop condition from above, so you're at an optimal $\pi_*$ and $v_*$. In the book's words, "Almost all reinforcement learning methods are well described as GPI".
 
 <div class="rc-slot" data-for="sec-gpi"></div>
 
@@ -478,7 +478,7 @@ The general idea is **generalized policy iteration** (GPI): "letting policy-eval
 
 ## Two goals that pull apart
 
-In panel 5, the book's sketch (p. 87), each point pairs a value table $v$ with a policy $\pi$. The blue line is $v = v_\pi$, where the values fit the policy, and the green line is $\pi = \text{greedy}(v)$. Each jump onto one line usually knocks you off the other: new values can favor new moves, and a new policy makes old values wrong. Yet the zigzag climbs to where they meet, the optimum, for the reasons in section 3. The two processes "can be viewed as both competing and cooperating" (p. 86).
+In panel 5, a redraw of the book's sketch, each point pairs a value table $v$ with a policy $\pi$. The blue line is $v = v_\pi$, where the values fit the policy, and the green line is $\pi = \text{greedy}(v)$. Each jump onto one line usually knocks you off the other: new values can favor new moves, and a new policy makes old values wrong. Yet the zigzag climbs to where they meet, the optimum, for the reasons in section 3. The book says the two processes "can be viewed as both competing and cooperating".
 
 <div class="rc-mark" id="sec-family" data-panel="family" data-view="family" data-title="Same loop, different parts"></div>
 
@@ -486,18 +486,18 @@ In panel 5, the book's sketch (p. 87), each point pairs a value table $v$ with a
 
 Without the model, most methods run both processes on experience (panel 6).
 
-- **Monte Carlo control** (§5.2-5.3, pp. 96-99) evaluates by averaging what whole episodes earn. Without a model, $v$ can't pick a move (p. 96), so it learns action values $Q(s,a)$ and acts greedily on them after each episode. In the book's version, Monte Carlo with exploring starts (ES), episodes start from a random cell and move, so every move gets tried (pp. 98-99).
-- **Sarsa** (§6.4, p. 129) nudges $Q(s,a)$ toward one reward plus the next estimate, a temporal-difference (TD) update, and acts ε-greedy (mostly greedy, sometimes random). That's "the pattern of generalized policy iteration (GPI), only this time using TD methods for the evaluation or prediction part".
-- **Q-learning** (§6.5, p. 131) puts the max inside its TD target, $R + \gamma \max_a Q(S', a)$, so improvement happens inside every evaluation update (Figure 8.6, p. 172).
-- **Actor-critic** (§13.5, p. 331): the actor is a policy updated by gradient steps. The critic evaluates the actor's policy with TD and the actor improves it (p. 346), though the book never names this GPI outright (see Sources).
-- **AlphaGo Zero**, the book says, "implemented a form of policy iteration (Section 4.3), interleaving policy evaluation with policy improvement" (§16.6.2, p. 447).
+- **Monte Carlo control** evaluates by averaging what whole episodes earn. Without a model, $v$ can't pick a move, so it learns action values $Q(s,a)$ and acts greedily on them after each episode. In the book's version, Monte Carlo with exploring starts (ES), episodes start from a random cell and move, so every move gets tried.
+- **Sarsa** nudges $Q(s,a)$ toward one reward plus the next estimate, a temporal-difference (TD) update, and acts ε-greedy (mostly greedy, sometimes random). The book calls that "the pattern of generalized policy iteration (GPI), only this time using TD methods for the evaluation or prediction part".
+- **Q-learning** puts the max inside its TD target, $R + \gamma \max_a Q(S', a)$, so improvement happens inside every evaluation update.
+- **Actor-critic**: the actor is a policy updated by gradient steps. The critic evaluates the actor's policy with TD and the actor improves it, though the book never names this GPI outright (see the notes under Sources).
+- **AlphaGo Zero**, the book says, "implemented a form of policy iteration (Section 4.3), interleaving policy evaluation with policy improvement".
 
 [Silver et al. (2017)](https://www.nature.com/articles/nature24270) agree. A network outputs move probabilities $p$ and a value $v$ (the paper's symbols). Monte Carlo tree search (MCTS) guided by it returns search probabilities $\pi$ that usually select much stronger moves than $p$: "MCTS may therefore be viewed as a powerful policy improvement operator". Self-play with search "may be viewed as a powerful policy evaluation operator". Training moves $v$ toward the game winner $z$ (evaluation) and $p$ toward $\pi$ (improvement), and the paper uses these operators "repeatedly in a policy iteration procedure".
 
 <details>
 <summary>AlphaGo Zero's loss</summary>
 
-The network $f_\theta$ maps a board $s$ to $(p, v) = f_\theta(s)$. Training adjusts $\theta$ to minimize (eq. 1, p. 6)
+The network $f_\theta$ maps a board $s$ to $(p, v) = f_\theta(s)$. Training adjusts $\theta$ to minimize
 
 $$l = (z - v)^2 - \pi^\top \log p + c\,\lVert\theta\rVert^2$$
 
@@ -511,12 +511,17 @@ $$l = (z - v)^2 - \pi^\top \log p + c\,\lVert\theta\rVert^2$$
 
 Now, in any new method, I look for the two processes. What judges the policy? What turns that judgment into a better policy? And how far does each go before handing over? Most methods in the [series](/robotics/rl-0-overview/) differ in those three answers.
 
-<details>
-<summary>Sources</summary>
+## Sources
 
-- Sutton and Barto, [*Reinforcement Learning: An Introduction*](http://incompleteideas.net/book/RLbook2020.pdf), 2nd ed., 2018. Q-learning's GPI label comes from Chapter 6 (pp. 119 and 138), not §6.5. No page says that actor-critic is a form of GPI: p. 138 calls it "a third way in which TD methods can be extended to control", but p. 460 lists them as separate ways to learn a policy.
-- Silver et al., [Mastering the game of Go without human knowledge](https://www.nature.com/articles/nature24270), *Nature*, 2017. Pages refer to the [author version](https://discovery.ucl.ac.uk/id/eprint/10045895/1/agz_unformatted_nature.pdf), and the quotes are on p. 3.
-- Haarnoja et al., [Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://arxiv.org/abs/1801.01290), ICML 2018. More direct than the book: "Actor-critic algorithms are typically derived starting from policy iteration" (p. 2 of the arXiv version).
+- Richard S. Sutton and Andrew G. Barto, [*Reinforcement Learning: An Introduction*](http://incompleteideas.net/book/RLbook2020.pdf), 2nd edition, MIT Press, 2018. Chapters used: 4 (policy evaluation, policy improvement, policy iteration, value iteration, GPI and the two diagrams in panels 4 and 5), 3 (the Bellman optimality equation), 5 (Monte Carlo control), 6 (Sarsa and Q-learning), 8 (the Q-learning update), 13 and 14 (actor-critic), 16 (AlphaGo Zero) and 17 (GPI beside actor-critic).
+- David Silver et al., [Mastering the game of Go without human knowledge](https://www.nature.com/articles/nature24270), *Nature*, 2017 ([author version](https://discovery.ucl.ac.uk/id/eprint/10045895/1/agz_unformatted_nature.pdf)).
+- Tuomas Haarnoja et al., [Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://arxiv.org/abs/1801.01290), ICML 2018.
+
+<details>
+<summary>Notes on the sources</summary>
+
+- The book gives Q-learning its GPI label in the introduction and summary of Chapter 6, not in the Q-learning section.
+- The book never calls actor-critic a form of GPI. The Chapter 6 summary calls it "a third way in which TD methods can be extended to control", and Chapter 17 lists GPI and actor-critic as separate ways to learn a policy. Haarnoja et al. are more direct: "Actor-critic algorithms are typically derived starting from policy iteration".
 
 </details>
 

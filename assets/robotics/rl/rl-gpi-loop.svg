@@ -112,7 +112,7 @@
 <text x="396" y="547" fill="#a8e2a0" class="c-green" font-size="14" text-anchor="end">green, round 6: 13 steps</text>
 </g>
 <g class="rc-panel" data-panel="loop"><rect x="430" y="305" width="400" height="280" rx="6" fill="none" stroke="#6f7d75" stroke-width="1.5" stroke-dasharray="2 5"/>
-<text class="rls-panel-title" x="444" y="333" fill="#ffe17c" font-size="16">4. Two processes (book, p. 86)</text>
+<text class="rls-panel-title" x="444" y="333" fill="#ffe17c" font-size="16">4. Two processes (book, Ch. 4)</text>
 <text x="530" y="437" fill="#f4f1e8" class="c-chalk" font-size="34" text-anchor="middle">π</text>
 <text x="730" y="437" fill="#f4f1e8" class="c-chalk" font-size="34" text-anchor="middle">V</text>
 <path d="M554 411 Q630.0 357 706 411" fill="none" stroke="#93d4ff" class="s-blue" stroke-width="2.4" marker-end="url(#gpi-ab)"/>
