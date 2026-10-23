@@ -520,7 +520,7 @@ def fig_kitten_timeline(src):
     sub = "The same kitten, drawn four ways by the real arm. Gray: the reference line. Colour: where the pen really went."
     fig.suptitle("\n".join(wrap(sub, 14, 6.2)), x=0.01, ha="left", fontsize=14, color=C_INK2)
     fig.tight_layout(rect=(0, 0, 1, 0.94), h_pad=2.2, w_pad=0.8)
-    chalk.save(fig, OUT / "kitten-timeline.png")
+    chalk.save(fig, OUT / "kitten-timeline.png", panel=True)
 
 
 def fig_four_drawings(src):
@@ -532,7 +532,7 @@ def fig_four_drawings(src):
             draw_panel(axes[i, j], src, d, col, f"{DRAWING_NAMES[f]}:\n{what}", title_size=13.5, rms_size=14, lw=1.1,
                        rms_below=True)
     fig.tight_layout(h_pad=2.4, w_pad=0.3)
-    chalk.save(fig, OUT / "four-drawings.png")
+    chalk.save(fig, OUT / "four-drawings.png", panel=True)
 
 
 def fig_goal_chatter(src):
@@ -563,7 +563,7 @@ def fig_goal_chatter(src):
     ax[1].set_ylim(ax[0].get_ylim())
     ax[0].set_title("Lift joint, strongest 2.5 s of one drawing", loc="left")
     fig.tight_layout()
-    chalk.save(fig, OUT / "goal-chatter.png")
+    chalk.save(fig, OUT / "goal-chatter.png", panel=True)
 
 
 def fig_head_offset(src):
@@ -590,7 +590,7 @@ def fig_head_offset(src):
         a.yaxis.set_major_locator(MultipleLocator(step))
     ax[0].set_title("Offset that the frozen head adds to the\npan goal (kitten, Measured)", loc="left")
     fig.tight_layout(h_pad=0.8)
-    chalk.save(fig, OUT / "head-offset.png")
+    chalk.save(fig, OUT / "head-offset.png", panel=True)
 
 
 def fig_pan_reversal(src):
@@ -615,7 +615,7 @@ def fig_pan_reversal(src):
         ax.xaxis.set_major_locator(MultipleLocator(0.25))
     axes[0].legend(loc="upper left")
     fig.tight_layout(h_pad=1.6)
-    chalk.save(fig, OUT / "pan-reversal.png")
+    chalk.save(fig, OUT / "pan-reversal.png", panel=True)
 
 
 def fig_nib_error_vs_speed(src):
@@ -648,7 +648,7 @@ def fig_nib_error_vs_speed(src):
     axes[1].tick_params(labelleft=True)
     fig.supylabel("tablet position minus encoder position (mm)", fontsize=15, color=C_INK)
     fig.tight_layout(h_pad=1.6)
-    chalk.save(fig, OUT / "nib-error-vs-speed.png")
+    chalk.save(fig, OUT / "nib-error-vs-speed.png", panel=True)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -695,7 +695,7 @@ def fig_controllers_map():
     ax.set_xlabel("nib error, RMS (mm). Lower is better.")
     ax.set_title("Nib error of each controller", loc="left")
     fig.tight_layout()
-    chalk.save(fig, OUT / "controllers-map.png")
+    chalk.save(fig, OUT / "controllers-map.png", panel=True)
 
 
 def fig_error_parts():
@@ -717,7 +717,7 @@ def fig_error_parts():
     ax.set_xlabel("share of the mean square error\n(Offline fit on Measured logs)")
     ax.set_title(f"Where the 2.74 mm goes:\nthe pan axis ({PAN_COLOR_WORD}) owns 61 %", loc="left")
     fig.tight_layout()
-    chalk.save(fig, OUT / "error-parts.png")
+    chalk.save(fig, OUT / "error-parts.png", panel=True)
 
 
 def fig_learning_curve():
@@ -741,7 +741,7 @@ def fig_learning_curve():
     ax.set_title("More distinct motions keep helping\nthe kernel model (all Offline)", loc="left")
     ax.legend(loc="lower left")
     fig.tight_layout()
-    chalk.save(fig, OUT / "learning-curve.png")
+    chalk.save(fig, OUT / "learning-curve.png", panel=True)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -803,7 +803,7 @@ def fig_arm_pan_lever():
     b.text(-38, 98, "top view: the tick angle is drawn 100 times too big", fontsize=14, color=C_INK2, va="top")
     b.text(0, -26, "pan axis", fontsize=14, color=C_INK2, ha="center", va="top")
     fig.tight_layout()
-    chalk.save(fig, OUT / "arm-pan-lever.png")
+    chalk.save(fig, OUT / "arm-pan-lever.png", panel=True)
 
 
 def fig_system():
@@ -859,7 +859,7 @@ def fig_system():
         B.ax.add_patch(FancyBboxPatch((L - 8, y), 14, 14, boxstyle="round,pad=0,rounding_size=3", fc=to_rgba(col, 0.10), ec=col, lw=2))
         B.text(L + 14, y + 11.5, label, 14, C_INK2)
         y += 22
-    chalk.save(B.finish(y + 6), OUT / "system.png")
+    chalk.save(B.finish(y + 6), OUT / "system.png", panel=True)
 
 
 def fig_head_schematic():
@@ -893,7 +893,7 @@ def fig_head_schematic():
     y = rls["bottom"] + 22
     y = B.lines(RX - 6, y, B.wrap("The online head does this while the arm draws.", 15, B.W - RX), 15, C_ORANGE)
     y = B.lines(RX - 6, y + 12, B.wrap("The frozen head stops this step. It needs only the path.", 15, B.W - RX), 15, C_INK)
-    chalk.save(B.finish(max(to["bottom"], y) + 10), OUT / "head-schematic.png")
+    chalk.save(B.finish(max(to["bottom"], y) + 10), OUT / "head-schematic.png", panel=True)
 
 
 def fig_numbers():
@@ -947,7 +947,7 @@ def fig_numbers():
         y += h + 22
     y = B.lines(B.W / 2, y + 2, ["Every number in this part carries one of these three labels.",
                                  "Only the left column ranks controllers."], 14.5, C_INK2, ha="center")
-    chalk.save(B.finish(y + 6), OUT / "numbers.png")
+    chalk.save(B.finish(y + 6), OUT / "numbers.png", panel=True)
 
 
 def fig_kalman_intuition():
@@ -1076,7 +1076,7 @@ def fig_kalman_intuition():
         return y
 
     y = card(y, "3. The physics controller's extended Kalman filter (EKF): the same shape again", card3)
-    chalk.save(B.finish(y + 6), OUT / "kalman-intuition.png")
+    chalk.save(B.finish(y + 6), OUT / "kalman-intuition.png", panel=True)
 
 
 # ----------------------------------------------------------------------------------------------------------------
