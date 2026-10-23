@@ -409,6 +409,157 @@ export function svg(name) {
     `<rect width="${layout.width}" height="${layout.height}" fill="${C.bg}"/>${panels}${layout.overlay(r)}</svg>`;
 }
 
+// ── Drawer: three reader questions, each with a small board ─────────────────────────
+
+export const QA = { w: 560, h: 300 };
+// Code citations point at the commit read for these answers, so the line numbers stay valid.
+export const IMPRINT_CODE = 'https://github.com/amazon-far/imprint/blob/e89a16e1ec18619331f811936f30ee45317b4f9c/';
+const CONFIG = 'src/mme_vla_suite/models/config/robomme/cosmo-wan-gated-delta-rmbench-all9-dinov3-memft.yaml';
+
+function board(r, title, fill) {
+  return rect(r, 0, 0, QA.w, QA.h, { fill, width: 2.4 }) + tag(r, title, { size: 23 });
+}
+
+/** An 8 × 8 patch grid, one camera's pooled DINOv3 features. */
+function patchGrid(x, y, color, opacity = 0.8) {
+  let out = '';
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) out += `<rect x="${x + j * 7.5}" y="${y + i * 7.5}" width="6" height="6" fill="${color}" fill-opacity="${n(opacity * (0.55 + 0.45 * (((i * 3 + j * 5) % 7) / 6)))}"/>`;
+  return out;
+}
+
+function decoderShape(x, y) {
+  return `<path d="M${x},${y + 8} L${x + 36},${y - 6} L${x + 36},${y + 38} L${x},${y + 24} Z" fill="${C.panel.gray}" stroke="${C.ink}" stroke-width="2.2" stroke-linejoin="round"/>`;
+}
+
+function boardFeatures() {
+  const r = random(71);
+  let out = board(r, 'Q1 · features, not pixels', C.panel.red);
+  // Target: a past frame through frozen DINOv3, pooled to 64 patches of 768 numbers per camera.
+  out += scene(r, 24, 50, 120, 70, ORDERS.A, 2, { scale: 0.5 });
+  out += text(84, 142, 'past frame', { size: 18, anchor: 'middle', fill: C.muted });
+  out += line(r, 150, 86, 180, 86, { arrow: true, width: 2.2, size: 10 });
+  out += rect(r, 186, 64, 112, 44, { fill: C.bg, width: 2.2 }) + snowflake(206, 86, 8, C.ink) + text(258, 94, 'DINOv3', { font: HAND, size: 21, weight: 700, anchor: 'middle' });
+  out += text(242, 130, 'frozen', { size: 18, anchor: 'middle', fill: C.muted });
+  out += line(r, 304, 86, 334, 86, { arrow: true, width: 2.2, size: 10 });
+  out += patchGrid(340, 56, S.video);
+  out += text(414, 76, 'target', { font: HAND, size: 22, weight: 700, fill: S.video });
+  out += text(414, 100, '64 × 768', { size: 18 }) + text(414, 122, '× 3 cameras', { size: 18, fill: C.muted });
+  // Prediction: the decoder sees only the memory.
+  out += tokens(r, 24, 184, 8, 3, 9, S.mem) + math(126, 212, ['m', ['t', 'sub']], { size: 24, fill: S.mem });
+  out += line(r, 158, 202, 188, 202, { arrow: true, width: 2.2, size: 10 }) + decoderShape(194, 188);
+  out += text(212, 252, 'decoder', { size: 17, anchor: 'middle', fill: C.muted });
+  out += line(r, 238, 202, 334, 202, { arrow: true, width: 2.2, size: 10 });
+  out += patchGrid(340, 172, S.mem, 0.9);
+  out += text(414, 200, 'prediction', { font: HAND, size: 22, weight: 700, fill: S.mem });
+  // Compared patch by patch.
+  out += `<path d="M370,120 V168" stroke="${C.ink}" stroke-width="2" stroke-dasharray="4 4"/>` + text(380, 150, 'compare', { size: 16, fill: C.muted });
+  out += text(24, 284, 'LayerNorm each patch, then mean squared error', { font: HAND, size: 20, weight: 700 });
+  return out;
+}
+
+function boardRates() {
+  const r = random(73);
+  let out = board(r, 'Q2 · one clock, every second step', C.panel.green);
+  const xs = (s) => 156 + s * 24;
+  for (const [label, color, y] of [['frames', S.video, 87], ['joint states', S.state, 121], ['actions', S.act, 151]]) out += text(20, y, label, { font: HAND, size: 19, weight: 700, fill: color });
+  // One frame, one joint state and one action per simulator step; the memory keeps every second step of all three.
+  for (let s = 0; s < 16; s++) {
+    const o = s % 2 ? 0.2 : 1;
+    out += `<rect x="${xs(s) - 7}" y="72" width="14" height="18" fill="${S.video}" fill-opacity="${o}"/>`;
+    out += `<circle cx="${xs(s)}" cy="116" r="4.5" fill="${S.state}" fill-opacity="${o}"/><circle cx="${xs(s)}" cy="146" r="4.5" fill="${S.act}" fill-opacity="${o}"/>`;
+  }
+  // Four kept steps make one chunk, eight simulator steps long.
+  for (const c of [0, 1]) {
+    const [xa, xb] = [xs(8 * c) - 10, xs(8 * c + 6) + 10];
+    out += `<path d="M${xa},66 V58 H${xb} V66" fill="none" stroke="${C.ink}" stroke-width="2"/>`;
+  }
+  out += text(xs(3), 50, '4 kept = 8 steps', { size: 16, anchor: 'middle' });
+  out += text(xs(11), 50, '12 video tokens + 4 pairs', { size: 16, anchor: 'middle' });
+  // The action stored with a kept step is the one already executed at the kept step before.
+  out += curve([[xs(2), 154], [xs(3), 166], [xs(4) - 2, 155]], { stroke: S.act, width: 2.2, arrow: true });
+  out += line(r, xs(0) - 10, 178, xs(15) + 14, 178, { width: 1.8, arrow: true, size: 9, passes: 1 });
+  out += text(xs(0), 198, '0', { size: 16, anchor: 'middle', fill: C.muted }) + text(xs(15) + 14, 198, 'simulator steps', { size: 16, anchor: 'end', fill: C.muted });
+  out += text(24, 228, 'bright: kept · faint: dropped', { size: 17, fill: C.muted });
+  out += text(24, 252, 'blue arrow: the stored action already ran', { size: 17, fill: C.muted });
+  out += text(24, 284, 'not stated in the paper: rates in Hz, real-robot timing', { font: HAND, size: 19, weight: 700, fill: C.red });
+  return out;
+}
+
+function boardStates() {
+  const r = random(79);
+  let out = board(r, 'Q3 · joint states: in, and rebuilt', C.panel.blue);
+  const wave = (x0, x1, y, amp) => Array.from({ length: 25 }, (_, k) => [x0 + (k * (x1 - x0)) / 24, y + amp * Math.sin(k * 0.45 + 0.6)]);
+  // In: the joint-state stream is one of the memory's inputs.
+  out += text(24, 62, 'joint states', { font: HAND, size: 20, weight: 700, fill: S.state });
+  out += curve(wave(24, 150, 100, 12), { stroke: S.state, width: 2.6 });
+  out += line(r, 158, 100, 188, 100, { arrow: true, width: 2.2, size: 10 }) + text(173, 86, 'in', { size: 17, anchor: 'middle', fill: C.muted });
+  out += tokens(r, 196, 82, 8, 3, 9, S.mem) + math(298, 108, ['m', ['t', 'sub']], { size: 24, fill: S.mem });
+  out += line(r, 328, 100, 354, 100, { arrow: true, width: 2.2, size: 10 }) + decoderShape(360, 86);
+  out += text(352, 146, 'decoder', { size: 17, anchor: 'end', fill: C.muted });
+  // Out: it rebuilds the recorded joint state at random past steps, never after now.
+  const [t0, t1, ty] = [60, 430, 216];
+  const recorded = wave(t0, t1, 188, 10), at = (x) => recorded.reduce((best, p) => (Math.abs(p[0] - x) < Math.abs(best[0] - x) ? p : best));
+  out += curve(recorded, { stroke: S.state, width: 2.2, opacity: 0.35 });
+  out += line(r, t0, ty, t1, ty, { width: 2, passes: 1 }) + `<path d="M${t1},${ty} H530" stroke="${C.muted}" stroke-width="2" stroke-dasharray="4 6"/>`;
+  for (const x of [121, 213, 336]) {
+    const [px, py] = at(x);
+    out += `<circle cx="${n(px)}" cy="${ty}" r="5" fill="${S.prog}"/><circle cx="${n(px)}" cy="${n(py)}" r="7" fill="none" stroke="${S.state}" stroke-width="2.6"/>`;
+  }
+  out += curve([[398, 130], [406, 168], [364, 188]], { arrow: true, width: 2.2 });
+  out += text(t0, 238, '0', { size: 16, anchor: 'middle', fill: C.muted }) + text(t1, 238, 'now', { size: 16, anchor: 'middle', fill: C.muted });
+  out += text(484, 206, 'future', { size: 16, anchor: 'middle', fill: C.muted }) + line(r, 456, 200, 512, 200, { stroke: C.red, width: 2.2, passes: 1 });
+  out += text(484, 180, 'not forecast', { size: 16, anchor: 'middle', fill: C.red });
+  out += text(24, 266, 'rebuilt at up to 16 random past steps', { size: 18 });
+  out += text(24, 290, 'mean squared error, weight 0.5', { size: 18, fill: C.muted });
+  return out;
+}
+
+export const BOARDS = [boardFeatures, boardRates, boardStates];
+
+const QA_DESC = [
+  'Q1: a past camera frame goes through the frozen DINOv3 image model, which gives 64 patch features of 768 numbers per camera, three cameras per step. That grid is the target. The decoder sees only the memory m_t and predicts the same grid. Both are LayerNormed patch by patch, then compared with a mean squared error. Pixels are never rebuilt.',
+  'Q2: frames, joint states and actions share one simulator step index. The memory keeps every second step of all three streams together and drops the rest. Four kept steps, eight simulator steps, make one chunk: 12 video tokens plus 4 action and joint-state pairs. The action stored with a kept step is the one executed at the kept step before. The paper does not state the rates in Hz or the real-robot timing.',
+  'Q3: the joint-state stream goes into the memory m_t. The decoder rebuilds the recorded joint state from m_t at up to 16 random past steps, all at or before now, with a mean squared error of weight 0.5. Nothing after now is forecast.',
+];
+
+function qaSvg(k) {
+  const id = `im-q${k + 1}`;
+  return `<svg viewBox="0 0 ${QA.w + 16} ${QA.h + 44}" role="img" aria-labelledby="${id}-title ${id}-desc" xmlns="http://www.w3.org/2000/svg">` +
+    `<title id="${id}-title">${esc(`Question ${k + 1} board`)}</title><desc id="${id}-desc">${esc(QA_DESC[k])}</desc>` +
+    `<rect width="${QA.w + 16}" height="${QA.h + 44}" fill="${C.bg}"/><g transform="translate(8 34)">${BOARDS[k]()}</g></svg>`;
+}
+
+// Answers checked against the paper and the code; each item lists where to look.
+export const QA_TITLE = String.raw`What gets rebuilt, and at what rate?`;
+export const QA_ITEMS = [
+  {
+    question: String.raw`Is the visual target pixels, or a frame embedding?`,
+    answer: String.raw`Not pixels. The target $z^v_k$ is a frame embedding: the patch features of DINOv3, a frozen pretrained image model. Each camera's frame comes out as 64 patches of 768 numbers, so with three cameras that's a 192 × 768 grid per step. Each patch vector, predicted and target, goes through a LayerNorm first, and the loss is the mean squared error, with weight $\lambda_v = 1$. The frozen video model's tokens feed the memory too, but the decoder never rebuilds them.`,
+    paper: 'Sec. 4.2.1, Eq. 4.4 · App. A.1.1, recent visual history · App. A.1.3, Eqs. A.5 and A.6',
+    code: [['pretrain_loss.py:79-87', 'src/mme_vla_suite/training/pretrain_loss.py#L79-L87'], ['config:20', `${CONFIG}#L20`], ['config:62-63', `${CONFIG}#L62-L63`]],
+  },
+  {
+    question: String.raw`How do streams at different rates line up?`,
+    answer: String.raw`No resampling. In RMBench, video, actions and joint states share one step index, and the memory keeps every second step of all three together, so a chunk of four kept steps covers eight simulator steps. Each kept frame gets the action executed one kept step earlier, never the policy's predicted chunks. The paper doesn't say the simulator rates in Hz, the real robot's camera rate, or how its streams line up. The public code is simulation-only, so it can't answer the real-robot part either.`,
+    paper: 'App. A.1.1, observations and Eq. A.1 · App. A.1.2, recurrent bottleneck · App. B.5.3',
+    code: [['build_wan_store.py:110-115', 'src/mme_vla_suite/dataset_builder/build_wan_store.py#L110-L115'], ['variant_actions.py:27-29', 'src/mme_vla_suite/shared/variant_actions.py#L27-L29'], ['cosmo_buffer.py:144-151', 'src/mme_vla_suite/shared/cosmo_buffer.py#L144-L151'], ['config:26-27', `${CONFIG}#L26-L27`]],
+  },
+  {
+    question: String.raw`Do they rebuild joint states, predict them, or neither?`,
+    answer: String.raw`Yes, it rebuilds them. Joint states, which the paper calls proprioception, are one of the streams the encoder reads, and at up to 16 random past steps the decoder has to rebuild the joint state $q_k$ from $m_t$ alone, with weight $\lambda_q = 0.5$. Every sampled step is at or before now, so it's rebuilding the past rather than forecasting. Stage 2 drops the decoder, so from then on nothing rebuilds them.`,
+    paper: 'Sec. 4.1 · App. A.1.3, Eqs. A.5 and A.6',
+    code: [['cosmo_decoder.py:147-160', 'src/mme_vla_suite/models/representation/cosmo_decoder.py#L147-L160'], ['pretrain_loss.py:89-90', 'src/mme_vla_suite/training/pretrain_loss.py#L89-L90'], ['config:65-66', `${CONFIG}#L65-L66`]],
+  },
+];
+
+function questions() {
+  const items = QA_ITEMS.map((item, k) => {
+    const links = item.code.map(([label, target]) => `<a href="${esc(IMPRINT_CODE + target)}">${esc(label)}</a>`).join(' · ');
+    return `<section class="im-qa-item" aria-labelledby="im-q${k + 1}-h"><figure class="im-qa-fig">${qaSvg(k)}</figure><div class="im-qa-text"><h3 id="im-q${k + 1}-h">${prose(item.question)}</h3><p>${prose(item.answer)}</p><p class="im-qa-src">Paper: ${esc(item.paper)}<br>Code: ${links}</p></div></section>`;
+  }).join('');
+  return `<details class="im-qa"><summary><span>${esc(QA_TITLE)}</span><span class="im-qa-mark" aria-hidden="true">+</span></summary><div class="im-qa-body">${items}</div></details>`;
+}
+
 // ── Prose around the canvas ──────────────────────────────────────────────────────
 
 export const INTRO = String.raw`In the Cover Blocks task, red, green and blue blocks sit in a random order. The robot covers them with three lids, then must uncover them in red, green, blue order. Once they're covered, every order looks the same, so how does the policy know which to open first? It has to remember. Most memory methods pick what to keep, but Imprint compresses the video, actions and joint states into a fixed set of 256 memory tokens, updated as the episode runs. With Imprint, π0.5 goes from 25.4% to 72.8% success on RMBench's nine memory tasks, the best among memory methods compared.`;
@@ -435,6 +586,7 @@ export function render() {
 <p class="im-intro">${esc(INTRO)}</p>
 <figure class="im-canvas">${svg('wide')}${svg('mid')}${svg('tall')}</figure>
 <p class="im-math">${prose(MATH_BEFORE)}<span class="im-eq im-eq-wide">${tex(EQUATION, true)}</span><span class="im-eq im-eq-narrow">${tex(EQUATION_NARROW, true)}</span>${prose(MATH_AFTER)}</p>
+${questions()}
 <div class="im-after"><p class="im-credit">Wu, Shah, Huang, Sontakke, Bharadhwaj, Bajcsy, Simchowitz, Shi · Amazon FAR, CMU, UT Austin, JHU · arXiv · 9 Oct 2026</p><nav class="im-sources" aria-label="Original sources"><a href="https://arxiv.org/abs/2610.14406">Paper ↗</a><a href="https://yilin-wu98.github.io/imprint_website/">Project ↗</a><a href="https://github.com/amazon-far/imprint">Code ↗</a></nav></div>
 `;
 }

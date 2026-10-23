@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {DATA, OUTPUT, PANEL, LAYOUTS, SCATTER, RECIPE, PROBE, CHANCE, TRANSFER, ORDERS, PLOT, plotX, plotY, INTRO, MATH_BEFORE, MATH_AFTER, render} from './imprint-canvas.mjs';
+import {DATA, OUTPUT, PANEL, LAYOUTS, SCATTER, RECIPE, PROBE, CHANCE, TRANSFER, ORDERS, PLOT, plotX, plotY, INTRO, MATH_BEFORE, MATH_AFTER, QA_TITLE, QA_ITEMS, IMPRINT_CODE, render} from './imprint-canvas.mjs';
 
 const mean = (values) => values.reduce((a, b) => a + b, 0) / values.length;
 
@@ -77,4 +77,19 @@ test('the prose renders its math and keeps to the house style', () => {
  for (const value of [INTRO, MATH_BEFORE, MATH_AFTER, html]) assert.doesNotMatch(value, /—/, 'no em dashes');
  for (const symbol of ['m_t', 'K', '\\lambda', '\\rho_t', 'z^v_k', 'a_k', 'q_k']) assert.ok(`${MATH_BEFORE} ${MATH_AFTER}`.includes(symbol), `defines ${symbol}`);
  assert.ok(html.includes('25.4%') || INTRO.includes('25.4'), 'the intro quotes the base success');
+});
+
+test('the questions drawer starts closed and cites the paper and pinned code for every answer', () => {
+ const html = render();
+ assert.match(html, /<details class="im-qa"><summary>/, 'the drawer has no open attribute');
+ assert.equal(QA_ITEMS.length, 3);
+ assert.match(IMPRINT_CODE, /\/blob\/[0-9a-f]{40}\/$/, 'code links pin one commit');
+ for (const item of QA_ITEMS) {
+  assert.match(item.paper, /(Sec|App)\. /);
+  for (const [label, target] of item.code) assert.match(`${label} ${target}`, /:\d+(-\d+)? .+#L\d+(-L\d+)?$/, label);
+ }
+ // The paper is silent on rates in Hz and on real-robot timing; the answer must say so instead of guessing.
+ assert.match(QA_ITEMS[1].answer, /doesn't say|not stated/);
+ assert.match(html, /not stated in the paper/);
+ for (const value of [QA_TITLE, ...QA_ITEMS.flatMap((item) => [item.question, item.answer])]) assert.doesNotMatch(value, /[—–]/, 'no em or en dashes');
 });

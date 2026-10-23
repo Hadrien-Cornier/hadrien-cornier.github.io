@@ -9,6 +9,20 @@
 .im-math .katex-display > .katex, .im-math .im-nobr { white-space: nowrap; }
 .im-eq { display: block; }
 .im-eq-narrow { display: none; }
+.im-qa { margin: 34px 0 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.im-qa > summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 52px; padding: 12px 0; cursor: pointer; list-style: none; font-size: 19px; font-weight: 600; color: var(--ink); }
+.im-qa > summary::-webkit-details-marker { display: none; }
+.im-qa-mark { font: 22px/1 var(--mono); color: var(--accent); transition: transform .2s; }
+.im-qa[open] .im-qa-mark { transform: rotate(45deg); }
+.im-qa-body { display: grid; gap: 34px; padding: 10px 0 30px; }
+.im-qa-item { display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); gap: 30px; align-items: start; }
+.im-qa-fig { margin: 0; background: #1d1d1b; border: 1px solid var(--line); }
+.im-qa-fig svg { display: block; width: 100%; height: auto; }
+.im-qa-text h3 { margin: 0 0 10px; font-size: 19px; line-height: 1.35; color: var(--ink); }
+.im-qa-text p { margin: 0; font-size: 17px; line-height: 1.62; color: var(--ink); }
+.im-qa-text p.im-qa-src { margin-top: 12px; font: 12px/1.7 var(--mono); color: var(--muted); }
+.im-qa-src a { color: var(--accent); }
+.im-qa-text .katex { white-space: nowrap; }
 .im-after { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 26px; padding-top: 18px; }
 .im-credit { margin: 0; font: 10px/1.5 var(--mono); color: var(--muted); }
 .im-sources { display: flex; gap: 26px; font-size: 12px; }
@@ -21,7 +35,12 @@
   .im-canvas .im-mid { display: none; }
   .im-canvas .im-tall { display: block; max-width: 584px; margin: 0 auto; }
 }
+@media (max-width: 860px) {
+  .im-qa-item { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+}
 @media (max-width: 700px) {
+  .im-qa > summary { font-size: 17px; }
+  .im-qa-text p { font-size: 16px; line-height: 1.6; }
   .im-intro { margin-bottom: 24px; font-size: 16px; line-height: 1.6; }
   .im-canvas { margin: 0 -1px; }
   .im-math { margin-top: 24px; font-size: 16px; line-height: 1.6; }
