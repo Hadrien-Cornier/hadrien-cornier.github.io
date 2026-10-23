@@ -2,6 +2,7 @@
 title: 'Faster-WAM in LeRobot: from 300 cache reads to 10'
 description: "Faster-WAM cuts a world action model's action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights."
 date: '2026-10-21'
+updated: '2026-10-23'
 layout: essay
 section: 'recent-papers'
 tags: ['world-action-models', 'lerobot', 'kv-cache', 'flow-matching']
@@ -9,82 +10,100 @@ thumbnail: '/assets/robotics/faster-wam-in-lerobot/thumbnail.png'
 thumbnail_alt: 'The race widget: Fast-WAM is at denoising step 5 of 10 with 131 of 300 cache reads, while Faster-WAM is done at 169.5 ms after 10 reads of one fused cache.'
 ---
 
-A world action model is a video model with an action model attached. In [Fast-WAM](https://arxiv.org/abs/2603.16666), the 30-layer Wan2.2 video model runs once per action chunk and caches every layer's keys and values. Then a 30-layer action expert denoises a 32 x 7 action chunk over 10 steps, each layer reading its matching video layer's cache. That's 300 cache reads per chunk.
+A world action model, or WAM, is usually a robot policy built on a video model. [Fast-WAM](https://arxiv.org/abs/2603.16666) (March 2026) is fast compared to the WAMs that generate future frames before they act. It learns to predict video in training, but when the robot acts it runs the 30-layer Wan2.2 video model once on the current frame and caches every layer's keys and values. Then a 30-layer action expert denoises the next chunk of 32 actions in 10 steps, and at every step action layer $j$ reads only video layer $j$'s cache. [Faster-WAM](https://arxiv.org/abs/2608.02365v2) (August 2026) asks if that expert needs to be deep. Its answer is no: one action layer that reads a mix of all 30 caches stays competitive.
 
-[Faster-WAM](https://arxiv.org/abs/2608.02365v2) keeps one action layer. Lite KV-Fusion learns, per attention head, a softmax-weighted mix of all 30 cached layers (720 weights), builds the fused cache once, and the single layer reads it at each step. So 300 reads become 10. The paper reports 98.3% on LIBERO against 97.6%, 90.5% on RoboTwin 2.0 against 91.8%, and 52 ms per chunk against 196 ms in its LIBERO setup on a 24 GiB GPU. Fast-WAM doesn't fit on that GPU as one pipeline, so the authors timed it part by part.
-
-My take: the action expert was the expensive part, and Faster-WAM shows it can be one layer. The next speedup has to come from the encoders and the video prefill, because that's where the time goes now.
-
-Watch out for [arXiv 2608.04404](https://arxiv.org/abs/2608.04404): a different method with the same name.
+$$\begin{aligned}\text{Fast-WAM:}\quad & 30 \times 10 = 300 \text{ cache reads}\\ \text{Faster-WAM:}\quad & 1 \times 10 = 10 \text{ cache reads}\end{aligned}$$
 
 <figure class="wide-explainer" style="width:max(100%, min(1120px, 100vw - 48px)); margin:32px 0 36px calc((100% - max(100%, min(1120px, 100vw - 48px))) / 2);">
-<iframe src="/assets/robotics/faster-wam-in-lerobot/explainer.html" title="Interactive explainer: from 300 cache reads to 10, Fast-WAM versus Faster-WAM" loading="lazy" style="display:block;width:100%;height:1400px;border:0;"></iframe>
-<figcaption>Interactive explainer. Use the play and step buttons in each widget. <a href="/assets/robotics/faster-wam-in-lerobot/explainer.html">Open it on its own page.</a></figcaption>
+<iframe src="/assets/robotics/faster-wam-in-lerobot/explainer.html" title="Animated race: one action chunk through Fast-WAM and Faster-WAM on one clock" loading="lazy" style="display:block;width:100%;height:1000px;border:0;"></iframe>
+<figcaption>The race starts when you scroll to it, or when you press Play. <a href="/assets/robotics/faster-wam-in-lerobot/explainer.html">Open it on its own page.</a></figcaption>
 </figure>
 
-## Follow one observation
+## Three changes
 
-“Pick up the black bowl between the plate and the ramekin and place it on the plate.” Start with that [LIBERO demonstration](https://huggingface.co/datasets/yuanty/LIBERO-fastwam/tree/ee018b997c430bb12b5bf3c892d744798c5a2f91). The input is two camera views, the instruction and the robot state. The label is 32 recorded actions, each with seven control values. The 30 video layers are successive transformations of image tokens, not 30 frames; their depth comes from the pretrained Wan backbone.
+The paper's ablation (Figure 3) cuts Fast-WAM to one action layer that reads only the last video layer, then adds three changes one at a time. LIBERO is a simulated tabletop benchmark, and LIBERO-Plus perturbs the same scenes.
 
-The two experts have different jobs. The video model starts from video pretraining; the action expert maps its features to robot controls. During joint training it learns to denoise future video latents, while the action expert learns to denoise demonstrated actions. Both use a velocity-prediction loss, and action loss also trains the video backbone through attention. At inference, only the observed-frame cache is needed. The example below follows those connections through an actual LeRobot run. ([Paper, training details](https://arxiv.org/html/2608.02365v2#A3))
+| | LIBERO | LIBERO-Plus |
+| --- | ---: | ---: |
+| Fast-WAM, 30 action layers | 97.6% | 51.5% |
+| One action layer, last video layer only | 97.7% | 60.3% |
+| + Lite KV-Fusion | 98.0% | 68.7% |
+| + world-model-only conditioning | 97.8% | 77.6% |
+| + retracted 1D RoPE, which is Faster-WAM | 98.3% | 78.3% |
 
-<figure class="wide-explainer" style="width:max(100%, min(1120px, 100vw - 48px)); margin:32px 0 36px calc((100% - max(100%, min(1120px, 100vw - 48px))) / 2);">
-<iframe id="wam-worked-example" src="/assets/robotics/faster-wam-in-lerobot/example.html" title="Worked LIBERO example: input, layers, cached attention, training loss and inference" loading="lazy" style="display:block;width:100%;height:1200px;border:1px solid var(--line);border-radius:12px;"></iframe>
-<figcaption>Images and labels: LIBERO simulation data, CC BY 4.0. Attention, losses and inference: a dry run with random weights and reduced widths, including both encoders. These outputs explain the mechanics; they don't demonstrate a trained policy. This is separate from the A100 timing setup below. <a href="/assets/robotics/faster-wam-in-lerobot/example.html">Open the example on its own page.</a></figcaption>
-</figure>
+The paper copies Fast-WAM's rates from earlier papers, and only the last row is a three-run mean. On RoboTwin 2.0 it reports 91.8% for Fast-WAM and 90.5% for Faster-WAM.
 
-<script>
-(() => {
-  const frame = document.getElementById('wam-worked-example');
-  window.addEventListener('message', event => {
-    if (event.origin !== location.origin || event.source !== frame.contentWindow || event.data?.kind !== 'wam-embed-height') return;
-    const height = Number(event.data.height);
-    if (Number.isFinite(height) && height > 200 && height < 4000) frame.style.height = `${Math.ceil(height) + 4}px`;
-  });
-})();
-</script>
+### Lite KV-Fusion
 
-## How I added it to LeRobot
+Faster-WAM mixes all 30 caches into one, once per chunk, with a learned weight per layer and head:
 
-I opened [issue #5048](https://github.com/huggingface/lerobot/issues/5048) and [PR #5049](https://github.com/huggingface/lerobot/pull/5049), which is ready for review and not merged. It adds four opt-in flags to `FastWAMConfig`:
+$$\beta_{h\ell}=\frac{e^{\alpha_{h\ell}}}{\sum_{\ell'=1}^{30} e^{\alpha_{h\ell'}}}$$
+
+$$\widehat K_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,K_{h\ell}, \qquad \widehat V_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,V_{h\ell}$$
+
+Here $\ell$ is the video layer, $h$ is one of 24 heads, the $\alpha_{h\ell}$ are 720 learned numbers, and $K_{h\ell}$ and $V_{h\ell}$ are the cached keys and values. The $\alpha$ start at zero, so every $\beta$ starts at $1/30$, and in the paper's Figure 4 (LIBERO) they stay within about 10% of it, read by eye. The authors still call the mix non-uniform, with different heads leaning on different depths.
+
+So how does the action expert use that cache? At every denoising step, the 32 action tokens, one per action in the chunk, attend to the fused cache and to each other in one softmax per head:
+
+$$O_h=\operatorname{softmax}\!\left(\frac{Q_h\,[\widehat K_h;\,K^{a}_h]^{\top}}{\sqrt{D}}\right)[\widehat V_h;\,V^{a}_h]$$
+
+$Q_h$, $K^{a}_h$ and $V^{a}_h$ are the queries, keys and values the action layer computes from the 32 action tokens, $[\,\cdot\,;\cdot\,]$ stacks the video rows on top of the action rows, and $D=128$ is the size of one head. Since it's a single softmax, each action query splits its attention between the scene and the other actions. Only the action rows change from one step to the next, while $\widehat K_h$ and $\widehat V_h$ stay fixed for the whole chunk. Each time an action layer evaluates this, that's one of the cache reads counted at the top. Fast-WAM evaluates it in all 30 action layers at every step, with layer $j$ reading video layer $j$'s own $K_{hj}$ and $V_{hj}$ instead of the fused pair. The paper also puts a mask inside the softmax that hides future frames in training, but at inference the cache only holds the current frame, so there's nothing to hide.
+
+### World-model-only conditioning
+
+Text and robot state go into the video model only, whose layers already attend to them. The action layer drops its own cross-attention to them and gets them through the fused cache.
+
+### Retracted 1D RoPE
+
+Rotary position encoding (RoPE) tells attention where tokens are. Each head rotates 64 pairs of query and key numbers by angles that grow with position, and the score sees the angle difference. Video keys rotate by frame time, row and column (22, 21 and 21 pairs), while action queries rotate by action index, so in 42 pairs the score subtracts an action index from a row or a column, which has no geometric meaning. Faster-WAM undoes the video rotation on the fused keys, $\bar k(p)=R^{v}(p)^{\top}\,\widehat k(p)$, and the attention above uses these keys, $\bar K_h$, in place of $\widehat K_h$. In pair $r$ the angle goes from
+
+$$\theta_r^{\text{before}}=\omega_r\,p_{b(r)}-\nu_r\,i \qquad\text{to}\qquad \theta_r^{\text{after}}=-\nu_r\,i$$
+
+Here $i$ is the action index, $p=(t,y,x)$ is the video token's frame time, row and column, $b(r)$ picks one of the three, and $\omega_r$ and $\nu_r=10000^{-2r/128}$ are the video and action rates. The frame sits at time 0. For action 5 and a patch in row 3, counting from 0, the first row pair ($r=22$, $\omega=1$, $\nu\approx0.042$) goes from $3-0.21=2.79$ to $-0.21$, now the same for every patch. One undo after the fusion is exact, because all 30 layers rotate a token by the same angle (the paper's Proposition 2.2).
+
+## In LeRobot
+
+I opened [issue #5048](https://github.com/huggingface/lerobot/issues/5048) and [PR #5049](https://github.com/huggingface/lerobot/pull/5049), which adds four flags to `FastWAMConfig`, all off by default:
 
 ```python
-action_expert_layers=1, lite_kv_fusion=True, retracted_1d_rope=True, world_model_only_conditioning=True
+action_expert_layers=1
+lite_kv_fusion=True
+retracted_1d_rope=True
+world_model_only_conditioning=True
 ```
 
-All default to off, so Fast-WAM's behavior and checkpoint layout don't change. The last two are side changes:
+You can start from a Fast-WAM checkpoint but have to fine-tune it, since the one-layer expert and the fusion weights train jointly with the video model. A maintainer asked for changes on October 22, I pushed them the same day, and the PR was merged on October 23. AI agents generated the code, tests and draft text, independent agents reviewed it, and the PR says so. No code comes from the [authors' repository](https://github.com/TeamFasterwam/FasterWAM), whose original code is under a [noncommercial license](https://github.com/TeamFasterwam/FasterWAM/blob/main/LICENSE).
 
-- **Retracted 1D RoPE** moves the position encoding of the fused keys onto the action queries' time axis.
-- **World-model-only conditioning** sends text and robot state into the video model only, so the action expert drops its text cross-attention.
+## Speed
 
-You can't flip these flags on a trained Fast-WAM checkpoint. The one-layer expert and the fusion weights have to be trained jointly.
+| ms per chunk | Fast-WAM | Faster-WAM |
+| --- | ---: | ---: |
+| Paper, LIBERO setup, 24 GiB GPU | 196.0 | 52.0 |
+| Mine, A100, float32 | 802.2 | 319.5 |
+| Mine, A100, bfloat16 | 938.0 | 175.6 |
 
-It's written from the paper's equations and existing LeRobot code, with no code copied, translated or adapted from the authors' repository. AI agents generated the code, tests and draft text, and independent agents reviewed it and checked the results. The PR discloses this. 59 tests pass, 2 CUDA cases skip on CPU, and CI is green.
+My runs use random video and action weights with the real image encoder (VAE) and text encoder, so they measure speed only: about 2.5x in float32 and 5.3x in bfloat16, end to end.
 
-## Speed on an A100 with random weights
+bfloat16 gains more for two measured reasons. The encoders and the video prefill, the one video pass that fills the cache, run about twice as fast as in float32, while Fast-WAM's eager denoiser gets slower, from 493 to 797 ms, with 29,020 GPU kernel launches per chunk against Faster-WAM's 770. So the 5.3x is mostly an eager-execution ratio on this host, not a ratio of arithmetic. My Fast-WAM loop is also about 5x slower than the paper's (797 against about 150 ms, both eager bfloat16), which is most of why my 5.3x is bigger than the paper's 3.8x.
 
-The video and action weights are random, so this measures speed only. The real pretrained VAE and text encoders still run on every chunk.
+My take: the action expert was the expensive part, and it doesn't need to be deep. In bfloat16 the denoising loop fell from 797.3 to 23.7 ms, so the text encoder (about 42 ms) and the video prefill (about 88 ms) now each take longer than the whole loop. The next speedup has to come from there, or from compiling the pipeline.
 
-| Precision | Fast-WAM (ms/chunk) | Faster-WAM (ms/chunk) | Speedup (95% interval) |
-| --- | ---: | ---: | --- |
-| float32 | 802.2 | 319.5 | 2.51x (2.50 to 2.52) |
-| bfloat16 | 938.0 | 175.6 | 5.34x (5.33 to 5.36) |
+<details>
+<summary>How I timed it</summary>
 
-Setup: A100-SXM4-80GB on Hugging Face Jobs, PyTorch 2.11.0, CUDA 13.0, batch 1, image 224 x 448, text length 128, 10 denoising steps, eager mode with TF32 and compilation off. Each precision has 100 balanced, shuffled pairs, and the intervals come from 10,000 paired bootstrap resamples. The timer covers tokenization, encoders, transfers and returning the action to the CPU.
+- A100-SXM4-80GB on Hugging Face Jobs, one host with 12 vCPUs, PyTorch 2.11.0, CUDA 13.0, LeRobot commit `50dffcf`.
+- Batch 1, image 224 x 448, 10 denoising steps, eager mode with TF32 and compilation off.
+- 100 shuffled pairs per precision, timed from tokenization until the actions are back on the CPU. The 95% bootstrap intervals on the speedup are 2.50 to 2.52x and 5.33 to 5.36x.
+- Sessions moved more than that. The speedups went from 2.66x to 2.51x in float32 and from 5.10x to 5.34x in bfloat16, and Fast-WAM's bfloat16 mean ranged from 802.2 to 938.0 ms. The table shows one session.
+- The phase times and the race clock come from a separate 20-chunk run with CUDA events. The kernel counts come from a profiler run, which also counted 8,140 dtype conversions per chunk in Fast-WAM's bfloat16 denoiser, against 640 in float32. These records aren't public.
+- Evidence for the eager-overhead reading: in another session, replaying Fast-WAM's unchanged bfloat16 denoiser through a CUDA graph, with bit-identical outputs, cut its whole chunk from 868.2 to 283.5 ms. The graph removes dispatch and temporary-allocation costs together.
+- The paper's milliseconds aren't comparable to mine. It used a different GPU, added up Fast-WAM's parts timed separately, and left out tokenization and transfers.
 
-A separate 20-chunk bfloat16 run timed each phase. The action denoising loop went from 797.3 ms to 23.7 ms, about 34x. The VAE (12.9 to 12.6 ms), text encoder (43.0 to 41.9 ms) and video prefill (89.7 to 87.6 ms) stayed put. The text encoder and the video prefill now each take longer than the whole denoising loop.
-
-Why does bfloat16 gain more? Kernel launches. In eager mode Fast-WAM's bf16 denoiser launches 29,020 GPU kernels per chunk, against 770 for Faster-WAM. In a separate session, replaying that same Fast-WAM denoiser through a CUDA graph, with bit-identical outputs, cut Fast-WAM from 868.2 to 283.5 ms. So the 5.34x is mostly a dispatch ratio. Matched compiled or CUDA-graph timings of both models weren't measured.
+</details>
 
 ## Limits
 
-- **Speed, not quality.** No trained Faster-WAM policy, no LIBERO evaluation, no robot run.
-- **Ratios moved between sessions.** float32 went 2.66x to 2.51x, bfloat16 5.10x to 5.34x, and the default bf16 mean ranged from 802.2 to 938.0 ms across repeats. The intervals only cover one session.
-- **Eager PyTorch on one host.** Compiled speedups are untested, and host speed affects eager timings.
-- **Not comparable to the paper.** Its 52 ms uses a different GPU and excludes tokenization and transfers.
-- **The explainer simplifies.** Attention numbers, action curves and cache tiles are illustrative. Layer, token and read counts and the noise schedule match the code.
-- **An ablation I haven't run.** In the paper's Figure 4, all 720 fusion weights sit between 0.030 and 0.037 (read off the figure by eye), close to a uniform 1/30 = 0.033. A fixed plain average would be worth testing.
-
-## License of the authors' code
-
-The authors' repository, [TeamFasterwam/FasterWAM](https://github.com/TeamFasterwam/FasterWAM), licenses its original contributions under the [PolyForm Noncommercial License 1.0.0](https://github.com/TeamFasterwam/FasterWAM/blob/main/LICENSE), so you can't use that code in a product. Inherited Fast-WAM parts keep their original licenses. My implementation doesn't copy it, and if merged it goes under LeRobot's Apache 2.0 license.
+- Speed only. No trained Faster-WAM policy, no LIBERO run and no robot.
+- I haven't timed both models compiled, or the merged code.
+- I haven't tried a fixed $1/30$ average in place of the learned weights.
+- [arXiv 2608.04404](https://arxiv.org/abs/2608.04404) is a different paper with the same Faster-WAM name. A separate post compares WAMs with vision-language-action models.
