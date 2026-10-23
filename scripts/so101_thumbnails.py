@@ -3,11 +3,12 @@
 
 Run after the figures:
     python3 scripts/so101_figures.py && python3 scripts/so101_part7_figures.py
+    python3 scripts/so101_controllers_figures.py
     python3 scripts/so101_thumbnails.py
 
 The sources match content/robotics/thumbnail-sources.json. Parts 1 and 2 draw their
 figure again in a wide layout, because the article versions are tall for phones.
-Part 6 uses a so101-controllers figure and part 8 a camera frame; they are not made here.
+Part 8 uses a camera frame; it is not made here.
 """
 
 import sys
@@ -24,6 +25,7 @@ THUMBS = ROOT / "assets/robotics/thumbnails"
 CARDS = {
     "so101-3-choosing-the-goal": SERIES / "map-errors.png",
     "so101-4-learning-what-physics-misses": SERIES / "hindsight-label.png",
+    "so101-6-where-the-last-millimeter-goes": ROOT / "assets/robotics/so101-controllers/arm-pan-lever.png",
     "so101-7-learning-between-and-during-strokes": ROOT / "assets/robotics/so101-after-part6/timing-and-shape.png",
 }
 
