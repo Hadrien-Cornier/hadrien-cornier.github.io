@@ -34,9 +34,12 @@ test('every plotted number is a table value or a quoted latency', () => {
  ]);
  for (const [name, quote] of Object.entries(DATA.latency.quotes)) assert.ok(quote.includes(String(ms[name])), name);
  assert.deepEqual(DATA.latency.reported, ['eventvla']);
- assert.ok(SCATTER.find((p) => p.name === 'EventVLA').reported);
- assert.deepEqual(RECIPE.map((row) => row.value), DATA.recipe.rows.Average.slice(0, 3));
- assert.deepEqual(PROBE.map((row) => row.value), [DATA.probe.rows.E2E[0], DATA.probe.rows.Frozen[0]]);
+ // Only EventVLA's latency is reported rather than measured; its success and MemoryVLA's come from prior work (Table 10 †).
+ assert.deepEqual(SCATTER.filter((p) => p.priorLatency).map((p) => p.name), ['EventVLA']);
+ assert.deepEqual(SCATTER.filter((p) => p.priorSuccess).map((p) => p.name), ['MemoryVLA', 'EventVLA']);
+ assert.deepEqual(RECIPE.map((row) => row.value), [rm['\\pi_{0.5} (no memory)'][9], ...DATA.recipe.rows.Average.slice(0, 3)]);
+ // Balanced accuracy, the measure that matches a 1/6 chance line.
+ assert.deepEqual(PROBE.map((row) => row.value), [DATA.probe.rows.E2E[1], DATA.probe.rows.Frozen[1]]);
  assert.ok(Math.abs(CHANCE - 100 / 6) < 1e-12);
  assert.deepEqual(TRANSFER.map((row) => [row.base, row.imprint]), [[25.6, 75.6], [52.2, 66.7]]);
 });
@@ -48,7 +51,7 @@ test('the result panel shows what the paper claims: best success at the lowest m
   const [x, y] = [plotX(p.ms), plotY(p.success)];
   assert.ok(x > PLOT.x && x < PLOT.x + PLOT.w && y > PLOT.y && y < PLOT.y + PLOT.h, `${p.name} inside the plot`);
  }
- assert.ok(RECIPE[0].value < RECIPE[1].value && RECIPE[1].value < RECIPE[2].value, 'both stages add success');
+ for (let k = 1; k < RECIPE.length; k++) assert.ok(RECIPE[k - 1].value < RECIPE[k].value, `${RECIPE[k].label} adds success`);
  assert.ok(PROBE[0].value < CHANCE + 5 && PROBE[1].value > 80, 'stage 1 alone puts the color order in memory');
 });
 
@@ -58,7 +61,7 @@ test('the two Cover Blocks pasts end in the same view but need different first l
  assert.notEqual(ORDERS.A.indexOf('R'), ORDERS.B.indexOf('R'));
 });
 
-test('both layouts keep every panel inside the drawing and use unique ids', () => {
+test('every layout keeps every panel inside the drawing and use unique ids', () => {
  for (const layout of Object.values(LAYOUTS)) {
   assert.equal(layout.panels.length, 6);
   for (const [x, y] of layout.panels) assert.ok(x >= 0 && y >= 30 && x + PANEL.w <= layout.width && y + PANEL.h <= layout.height - 10);
