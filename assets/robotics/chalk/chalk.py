@@ -23,6 +23,7 @@ pixels by at most about one screen pixel, so data, labels and numbers stay put.
 from pathlib import Path
 
 import matplotlib
+import matplotlib.image
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import font_manager
@@ -145,20 +146,56 @@ def chalk_grain(rgb, scale=1.0, seed=7):
     return np.clip(np.rint(out), 0, 255).astype(np.uint8)
 
 
-def save(fig, path, grain=True, display_width_px=720, tight=True):
+def _photo_mask(fig, path, dpi, bbox):
+    """Pixels of the raster images (imshow, figimage) in the saved figure, as a bool array.
+
+    Draws only the images, on a transparent canvas with the same crop as the real save.
+    """
+    images = [a for a in fig.findobj(matplotlib.image._ImageBase) if a.get_visible()]
+    if not images:
+        return None
+    # Hide every artist that neither is an image nor holds one (axes, annotation boxes).
+    hidden = [a for a in fig.findobj()
+              if a.get_visible() and a is not fig
+              and not any(isinstance(c, matplotlib.image._ImageBase) for c in a.findobj())]
+    for artist in hidden:
+        artist.set_visible(False)
+    probe = path.with_suffix(".photos.png")
+    try:
+        fig.savefig(probe, dpi=dpi, transparent=True, bbox_inches=bbox)
+        alpha = np.asarray(Image.open(probe).convert("RGBA"))[..., 3]
+    finally:
+        probe.unlink(missing_ok=True)
+        for artist in hidden:
+            artist.set_visible(True)
+    return alpha > 0
+
+
+def save(fig, path, grain=True, display_width_px=720, tight=True, photos=True):
     """Save a figure as a chalk PNG on the board.
 
     display_width_px: the CSS width the figure shows at in the desktop column,
     used to size the grain. Keep the default for figures that fill the column.
     tight: crop to the drawn content plus a small margin, so no label is cut off.
+    photos: keep raster images (imshow, figimage) exactly as they are: no grain,
+    and the PNG keeps full color instead of a 256-color palette.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     # The board itself is not drawn by hand: a wobbly figure edge would show the canvas.
     fig.patch.set_sketch_params(None)
     dpi = matplotlib.rcParams["savefig.dpi"]
-    fig.savefig(path, dpi=dpi, facecolor=BOARD, edgecolor=BOARD,
-                bbox_inches="tight" if tight else None, pad_inches=0.16)
+    has_photos = photos and any(a.get_visible() for a in fig.findobj(matplotlib.image._ImageBase))
+    if has_photos:
+        # One fixed crop for the figure and its photo mask, so their pixels line up.
+        fig.canvas.draw()
+        bbox = fig.get_tightbbox(fig.canvas.get_renderer()).padded(0.16) if tight else None
+        fig.savefig(path, dpi=dpi, facecolor=BOARD, edgecolor=BOARD, bbox_inches=bbox)
+        mask = _photo_mask(fig, path, dpi, bbox)
+    else:
+        fig.savefig(path, dpi=dpi, facecolor=BOARD, edgecolor=BOARD,
+                    bbox_inches="tight" if tight else None, pad_inches=0.16)
+        mask = None
     plt.close(fig)
     image = Image.open(path).convert("RGBA")
     flat = Image.new("RGBA", image.size, BOARD)
@@ -166,9 +203,13 @@ def save(fig, path, grain=True, display_width_px=720, tight=True):
     image = flat.convert("RGB")
     if grain:
         scale = image.width / float(display_width_px)
-        image = Image.fromarray(chalk_grain(np.asarray(image), scale=scale))
-    # A 256-color palette keeps the chalk look and makes the file about three times smaller.
-    image = image.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+        chalked = chalk_grain(np.asarray(image), scale=scale)
+        if mask is not None and mask.shape == chalked.shape[:2]:
+            chalked[mask] = np.asarray(image)[mask]
+        image = Image.fromarray(chalked)
+    if mask is None or not mask.any():
+        # A 256-color palette keeps the chalk look and makes the file about three times smaller.
+        image = image.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     image.save(path, optimize=True)
     return path
 

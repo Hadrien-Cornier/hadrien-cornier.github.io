@@ -96,8 +96,14 @@
 .article-body svg.chalk .c-green { fill: var(--bb-green); } .article-body svg.chalk .s-green { stroke: var(--bb-green); }
 .article-body svg.chalk .c-yellow { fill: var(--bb-yellow); } .article-body svg.chalk .s-yellow { stroke: var(--bb-yellow); }
 .article-body svg.chalk .c-lavender { fill: var(--bb-lavender); } .article-body svg.chalk .s-lavender { stroke: var(--bb-lavender); }
+.article-body svg.chalk .c-slate { fill: var(--bb-slate); } .article-body svg.chalk .s-slate { stroke: var(--bb-slate); }
 .article-body svg.chalk .c-board { fill: var(--bb-board); } .article-body svg.chalk .s-board { stroke: var(--bb-board); }
 .article-body svg.chalk .c-board-2 { fill: var(--bb-board-2); }
+/* Washes: faint colored chalk for bands, regions and box fills. Same values as the tint map above. */
+.article-body svg.chalk .c-tint-red { fill: rgba(255, 159, 136, .17); }
+.article-body svg.chalk .c-tint-blue { fill: rgba(147, 212, 255, .16); }
+.article-body svg.chalk .c-tint-green { fill: rgba(168, 226, 160, .15); }
+.article-body svg.chalk .c-tint-yellow { fill: rgba(255, 225, 124, .16); }
 .article-body svg.chalk .c-none { fill: none; }
 .article-body svg.chalk .chalk-title { fill: var(--bb-yellow); }
 

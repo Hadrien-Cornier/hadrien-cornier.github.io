@@ -47,6 +47,7 @@ Each color has one meaning, as in the RL series. Keep the same color for the sam
 
 2. Draw with the color names, for example `ax.plot(t, q, color=chalk.BLUE)`.
 3. Save with `chalk.save(fig, "assets/robotics/<article>/<name>.png")`. It saves at 220 dpi, crops to the content, applies the chalk grain, and writes a 256-color PNG.
+   If the figure holds a photo or a video frame (`imshow`, `figimage`), `save()` keeps those pixels exactly as they are: no grain on them, and the PNG keeps full color. You do not need to paste the photo back after the save. To grain the images too, pass `photos=False`.
 4. If the figure is an article thumbnail, run `chalk.thumbnail(png, "assets/robotics/thumbnails/<article>.jpg")`. It contains and pads the figure on the board at 720 × 424. Use `crop=True` for a photo or a video frame.
 
 Run figure scripts with a Python that has `matplotlib` 3.8 or later, `numpy`, and `Pillow`.
@@ -70,14 +71,15 @@ The article column is about 358 px wide on a 390 px phone. A figure scales down 
    ```
 
 2. Add `class="chalk"` to the `<svg>`. Keep `role="img"` and the title.
-3. Color new shapes with the classes `c-chalk`, `c-dim`, `c-red`, `c-blue`, `c-green`, `c-yellow`, `c-pink`, `c-lavender`, `c-board` for fill, and `s-*` for stroke. Use `chalk-title` for a title.
+3. Color new shapes with the classes `c-chalk`, `c-dim`, `c-faint`, `c-red`, `c-blue`, `c-green`, `c-yellow`, `c-pink`, `c-lavender`, `c-slate`, `c-board`, `c-board-2` for fill, and `s-*` for stroke. Use `chalk-title` for a title.
+   For a faint colored band or box fill, use `c-tint-red`, `c-tint-blue`, `c-tint-green` or `c-tint-yellow`.
 4. An older drawing in the site light palette (`#242622`, `#656b62`, `#2b6a8e`, `#b44c2c`, white paper, and the pale tints) needs no color change. The attribute rules in `chalk.css` map that palette to chalk.
 5. Use 15 user units or more for text in a 480-unit-wide drawing, so the text is about 11 px on a phone.
 
-For the hand wobble and grain of the RL boards, add `chalk-filter` to the class list and put this filter once on the page. It is the RL `#bb-chalk` filter with the board color drawn under the chalk, so the page color does not show through the grain in the light theme:
+For the hand wobble and grain of the RL boards, add `chalk-filter` to the class list and put this filter once on the page. It is the RL `#bb-chalk` filter with 2 changes. The board color is drawn under the chalk, so the page color does not show through the grain in the light theme. The grain mask is softer (it removes 16 % of the chalk at most, not 26 %), so thin strokes such as an underscore do not break:
 
 ```html
-<svg class="chalk-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="chalk-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in" result="chalk"/><feFlood flood-color="#1d2824" result="board"/><feComposite in="chalk" in2="board" operator="over"/></filter></svg>
+<svg class="chalk-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="chalk-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.32 1.16" result="mask"/><feComposite in="drawn" in2="mask" operator="in" result="chalk"/><feFlood flood-color="#1d2824" result="board"/><feComposite in="chalk" in2="board" operator="over"/></filter></svg>
 ```
 
 The board stays dark in both site themes, as the RL boards do.
