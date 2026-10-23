@@ -20,6 +20,7 @@
 .im-qa-fig svg { display: block; width: 100%; height: auto; }
 .im-qa-text h3 { margin: 0 0 10px; font-size: 19px; line-height: 1.35; color: var(--ink); }
 .im-qa-text p { margin: 0; font-size: 17px; line-height: 1.62; color: var(--ink); }
+.im-qa-text p + p { margin-top: 10px; }
 .im-qa-text p.im-qa-src { margin-top: 12px; font: 12px/1.7 var(--mono); color: var(--muted); }
 .im-qa-src a { color: var(--accent); }
 .im-qa-text .katex { white-space: nowrap; }

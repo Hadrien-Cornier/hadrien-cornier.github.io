@@ -439,7 +439,7 @@ function boardFeatures() {
   out += text(84, 142, 'past frame', { size: 18, anchor: 'middle', fill: C.muted });
   out += line(r, 150, 86, 180, 86, { arrow: true, width: 2.2, size: 10 });
   out += rect(r, 186, 64, 112, 44, { fill: C.bg, width: 2.2 }) + snowflake(206, 86, 8, C.ink) + text(258, 94, 'DINOv3', { font: HAND, size: 21, weight: 700, anchor: 'middle' });
-  out += text(242, 130, 'frozen', { size: 18, anchor: 'middle', fill: C.muted });
+  out += text(242, 130, 'frozen ViT-B/16', { size: 17, anchor: 'middle', fill: C.muted });
   out += line(r, 304, 86, 334, 86, { arrow: true, width: 2.2, size: 10 });
   out += patchGrid(340, 56, S.video);
   out += text(414, 76, 'target', { font: HAND, size: 22, weight: 700, fill: S.video });
@@ -459,7 +459,7 @@ function boardFeatures() {
 
 function boardRates() {
   const r = random(73);
-  let out = board(r, 'Q2 · one clock, every second step', C.panel.green);
+  let out = board(r, 'Q2 · one clock for all three', C.panel.green);
   const xs = (s) => 156 + s * 24;
   for (const [label, color, y] of [['frames', S.video, 87], ['joint states', S.state, 121], ['actions', S.act, 151]]) out += text(20, y, label, { font: HAND, size: 19, weight: 700, fill: color });
   // One frame, one joint state and one action per simulator step; the memory keeps every second step of all three.
@@ -474,14 +474,14 @@ function boardRates() {
     out += `<path d="M${xa},66 V58 H${xb} V66" fill="none" stroke="${C.ink}" stroke-width="2"/>`;
   }
   out += text(xs(3), 50, '4 kept = 8 steps', { size: 16, anchor: 'middle' });
-  out += text(xs(11), 50, '12 video tokens + 4 pairs', { size: 16, anchor: 'middle' });
-  // The action stored with a kept step is the one already executed at the kept step before.
+  out += text(xs(11), 50, 'recurrent: 12 tokens + 4 pairs', { size: 16, anchor: 'middle' });
+  // In training, the action stored with a kept step is the one executed at the kept step before (Eq. A.1).
   out += curve([[xs(2), 154], [xs(3), 166], [xs(4) - 2, 155]], { stroke: S.act, width: 2.2, arrow: true });
   out += line(r, xs(0) - 10, 178, xs(15) + 14, 178, { width: 1.8, arrow: true, size: 9, passes: 1 });
   out += text(xs(0), 198, '0', { size: 16, anchor: 'middle', fill: C.muted }) + text(xs(15) + 14, 198, 'simulator steps', { size: 16, anchor: 'end', fill: C.muted });
   out += text(24, 228, 'bright: kept · faint: dropped', { size: 17, fill: C.muted });
-  out += text(24, 252, 'blue arrow: the stored action already ran', { size: 17, fill: C.muted });
-  out += text(24, 284, 'not stated in the paper: rates in Hz, real-robot timing', { font: HAND, size: 19, weight: 700, fill: C.red });
+  out += text(24, 252, 'blue arrow: in training, the action from the kept step before', { size: 16, fill: C.muted });
+  out += text(24, 284, 'not stated in the paper: simulator Hz, camera fps', { font: HAND, size: 19, weight: 700, fill: C.red });
   return out;
 }
 
@@ -508,18 +508,18 @@ function boardStates() {
   out += curve([[398, 130], [406, 168], [364, 188]], { arrow: true, width: 2.2 });
   out += text(t0, 238, '0', { size: 16, anchor: 'middle', fill: C.muted }) + text(t1, 238, 'now', { size: 16, anchor: 'middle', fill: C.muted });
   out += text(484, 206, 'future', { size: 16, anchor: 'middle', fill: C.muted }) + line(r, 456, 200, 512, 200, { stroke: C.red, width: 2.2, passes: 1 });
-  out += text(484, 180, 'not forecast', { size: 16, anchor: 'middle', fill: C.red });
+  out += text(492, 160, 'the decoder', { size: 15, anchor: 'middle', fill: C.muted }) + text(492, 180, 'never forecasts', { size: 16, anchor: 'middle', fill: C.red });
   out += text(24, 266, 'rebuilt at up to 16 random past steps', { size: 18 });
-  out += text(24, 290, 'mean squared error, weight 0.5', { size: 18, fill: C.muted });
+  out += text(24, 290, 'raw joint vector · mean squared error, weight 0.5', { size: 18, fill: C.muted });
   return out;
 }
 
 export const BOARDS = [boardFeatures, boardRates, boardStates];
 
 const QA_DESC = [
-  'Q1: a past camera frame goes through the frozen DINOv3 image model, which gives 64 patch features of 768 numbers per camera, three cameras per step. That grid is the target. The decoder sees only the memory m_t and predicts the same grid. Both are LayerNormed patch by patch, then compared with a mean squared error. Pixels are never rebuilt.',
-  'Q2: frames, joint states and actions share one simulator step index. The memory keeps every second step of all three streams together and drops the rest. Four kept steps, eight simulator steps, make one chunk: 12 video tokens plus 4 action and joint-state pairs. The action stored with a kept step is the one executed at the kept step before. The paper does not state the rates in Hz or the real-robot timing.',
-  'Q3: the joint-state stream goes into the memory m_t. The decoder rebuilds the recorded joint state from m_t at up to 16 random past steps, all at or before now, with a mean squared error of weight 0.5. Nothing after now is forecast.',
+  'Q1: a past camera frame goes through the frozen DINOv3 ViT-B/16 image model. Its 16 by 16 patch grid is averaged to 8 by 8, which gives 64 patch features of 768 numbers per camera, three cameras per step. That grid is the target. The decoder sees the history only through the memory m_t and predicts the same grid. Both get a parameter-free LayerNorm patch by patch, then a mean squared error. Pixels are never rebuilt.',
+  'Q2: frames, joint states and actions share one simulator step index. The memory keeps every second step of all three streams together and drops the rest; in training, each example uses one of eight stored frame lists instead. Four kept steps, eight simulator steps, make one chunk: in the recurrent encoder, 12 video tokens plus 4 action and joint-state pairs. In training, the action stored with a kept step is the one executed at the kept step before. The paper does not state the simulator rate in Hz or any camera frame rate.',
+  'Q3: the joint-state stream goes into the memory m_t. The decoder rebuilds the raw recorded joint state from m_t at up to 16 random past steps, all at or before now, with a mean squared error of weight 0.5. The decoder forecasts nothing after now.',
 ];
 
 function qaSvg(k) {
@@ -534,28 +534,30 @@ export const QA_TITLE = String.raw`What gets rebuilt, and at what rate?`;
 export const QA_ITEMS = [
   {
     question: String.raw`Is the visual target pixels, or a frame embedding?`,
-    answer: String.raw`Not pixels. The target $z^v_k$ is a frame embedding: the patch features of DINOv3, a frozen pretrained image model. Each camera's frame comes out as 64 patches of 768 numbers, so with three cameras that's a 192 × 768 grid per step. Each patch vector, predicted and target, goes through a LayerNorm first, and the loss is the mean squared error, with weight $\lambda_v = 1$. The frozen video model's tokens feed the memory too, but the decoder never rebuilds them.`,
+    answer: String.raw`Not pixels. The target $z^v_k$ is a frame embedding from DINOv3 ViT-B/16, a frozen pretrained image model. Imprint averages each camera's 16 × 16 patch grid to 8 × 8, giving 64 patches of 768 numbers, so 192 × 768 per step across three cameras. Each predicted and target patch vector gets a LayerNorm with no learned scale or shift, then mean squared error with weight $\lambda_v = 1$. The memory also reads these features for its newest frames, up to three not yet in a video chunk. Older frames reach it only as compressed video tokens, so the decoder has to rebuild their DINOv3 features from $m_t$. It never rebuilds the tokens themselves.`,
     paper: 'Sec. 4.2.1, Eq. 4.4 · App. A.1.1, recent visual history · App. A.1.3, Eqs. A.5 and A.6',
-    code: [['pretrain_loss.py:79-87', 'src/mme_vla_suite/training/pretrain_loss.py#L79-L87'], ['config:20', `${CONFIG}#L20`], ['config:62-63', `${CONFIG}#L62-L63`]],
+    code: [['pretrain_loss.py:79-87', 'src/mme_vla_suite/training/pretrain_loss.py#L79-L87'], ['build_dinov3_store.py:92-95', 'src/mme_vla_suite/dataset_builder/build_dinov3_store.py#L92-L95'], ['visual_streams.py:51-85', 'src/mme_vla_suite/shared/visual_streams.py#L51-L85'], ['train_stage1.sh:53-56', 'scripts/reproduce/train_stage1.sh#L53-L56'], ['config:20', `${CONFIG}#L20`], ['config:62-63', `${CONFIG}#L62-L63`]],
   },
   {
     question: String.raw`How do streams at different rates line up?`,
-    answer: String.raw`No resampling. In RMBench, video, actions and joint states share one step index, and the memory keeps every second step of all three together, so a chunk of four kept steps covers eight simulator steps. Each kept frame gets the action executed one kept step earlier, never the policy's predicted chunks. The paper doesn't say the simulator rates in Hz, the real robot's camera rate, or how its streams line up. The public code is simulation-only, so it can't answer the real-robot part either.`,
-    paper: 'App. A.1.1, observations and Eq. A.1 · App. A.1.2, recurrent bottleneck · App. B.5.3',
-    code: [['build_wan_store.py:110-115', 'src/mme_vla_suite/dataset_builder/build_wan_store.py#L110-L115'], ['variant_actions.py:27-29', 'src/mme_vla_suite/shared/variant_actions.py#L27-L29'], ['cosmo_buffer.py:144-151', 'src/mme_vla_suite/shared/cosmo_buffer.py#L144-L151'], ['config:26-27', `${CONFIG}#L26-L27`]],
+    answer: String.raw`No stream is resampled to another's rate, and nothing is interpolated. In RMBench, video, joint states and actions share one step index, and the memory keeps every second step of all three. Four kept steps, eight simulator steps, make a video chunk, and up to three leftover frames go in as DINOv3 tokens with their actions and joint states. Only actions that already ran go in: in training, each kept frame gets the previous kept step's action. Each training example uses one of eight stored, time-sampled frame lists, while evaluation keeps exactly every second step. The memory is written and read once per policy call, after each 50-action chunk runs.
+||
+The paper's only rate is the real robot's: each 30-action chunk runs at a nominal 30 Hz, about a second of motion. It doesn't give the simulator's rate, any camera frame rate, or whether the real robot keeps every second step, and the simulation-only public code can't fill that in.`,
+    paper: 'App. A.1.1, observations, consolidated and recent visual history, Eq. A.1 · App. A.1.2, recurrent bottleneck · App. B.5.1 and B.5.3',
+    code: [['config:22-27', `${CONFIG}#L22-L27`], ['validate_store.py:39-40', 'scripts/reproduce/validate_store.py#L39-L40'], ['pretrain_bottleneck.py:653-657', 'src/mme_vla_suite/scripts/pretrain_bottleneck.py#L653-L657'], ['variant_actions.py:27-29', 'src/mme_vla_suite/shared/variant_actions.py#L27-L29'], ['cosmo_buffer.py:144-151', 'src/mme_vla_suite/shared/cosmo_buffer.py#L144-L151']],
   },
   {
     question: String.raw`Do they rebuild joint states, predict them, or neither?`,
-    answer: String.raw`Yes, it rebuilds them. Joint states, which the paper calls proprioception, are one of the streams the encoder reads, and at up to 16 random past steps the decoder has to rebuild the joint state $q_k$ from $m_t$ alone, with weight $\lambda_q = 0.5$. Every sampled step is at or before now, so it's rebuilding the past rather than forecasting. Stage 2 drops the decoder, so from then on nothing rebuilds them.`,
-    paper: 'Sec. 4.1 · App. A.1.3, Eqs. A.5 and A.6',
-    code: [['cosmo_decoder.py:147-160', 'src/mme_vla_suite/models/representation/cosmo_decoder.py#L147-L160'], ['pretrain_loss.py:89-90', 'src/mme_vla_suite/training/pretrain_loss.py#L89-L90'], ['config:65-66', `${CONFIG}#L65-L66`]],
+    answer: String.raw`Yes, it rebuilds them. In RMBench, joint states (the paper's proprioception) are an input stream and a Stage 1 target. The target is the raw joint vector, 14 values (arm joints and grippers) zero-padded to 16, unnormalized, and the loss averages the squared error over all 16, with weight $\lambda_q = 0.5$. The decoder sees only $m_t$ and a learned query naming which step to rebuild. Training picks up to 16 random kept steps, all at or before now, so the decoder rebuilds the past and forecasts nothing. Forecasting is the policy's job: RMBench actions are absolute joint positions, so each action chunk forecasts joint targets. Stage 2 drops the decoder.`,
+    paper: 'Sec. 4.1 · App. A.1.1, robot signals · App. A.1.3, Eqs. A.5 and A.6',
+    code: [['cosmo_decoder.py:155-162', 'src/mme_vla_suite/models/representation/cosmo_decoder.py#L155-L162'], ['cosmo_decoder.py:225-228', 'src/mme_vla_suite/models/representation/cosmo_decoder.py#L225-L228'], ['pretrain_bottleneck.py:726-727', 'src/mme_vla_suite/scripts/pretrain_bottleneck.py#L726-L727'], ['pretrain_bottleneck.py:39', 'src/mme_vla_suite/scripts/pretrain_bottleneck.py#L39'], ['pretrain_bottleneck.py:773', 'src/mme_vla_suite/scripts/pretrain_bottleneck.py#L773'], ['pretrain_loss.py:89-90', 'src/mme_vla_suite/training/pretrain_loss.py#L89-L90'], ['train_stage1.sh:53-56', 'scripts/reproduce/train_stage1.sh#L53-L56'], ['config:24', `${CONFIG}#L24`]],
   },
 ];
 
 function questions() {
   const items = QA_ITEMS.map((item, k) => {
     const links = item.code.map(([label, target]) => `<a href="${esc(IMPRINT_CODE + target)}">${esc(label)}</a>`).join(' · ');
-    return `<section class="im-qa-item" aria-labelledby="im-q${k + 1}-h"><figure class="im-qa-fig">${qaSvg(k)}</figure><div class="im-qa-text"><h3 id="im-q${k + 1}-h">${prose(item.question)}</h3><p>${prose(item.answer)}</p><p class="im-qa-src">Paper: ${esc(item.paper)}<br>Code: ${links}</p></div></section>`;
+    return `<section class="im-qa-item" aria-labelledby="im-q${k + 1}-h"><figure class="im-qa-fig">${qaSvg(k)}</figure><div class="im-qa-text"><h3 id="im-q${k + 1}-h">${prose(item.question)}</h3>${item.answer.split(/\n\|\|\n/).map((part) => `<p>${prose(part)}</p>`).join('')}<p class="im-qa-src">Paper: ${esc(item.paper)}<br>Code: ${links}</p></div></section>`;
   }).join('');
   return `<details class="im-qa"><summary><span>${esc(QA_TITLE)}</span><span class="im-qa-mark" aria-hidden="true">+</span></summary><div class="im-qa-body">${items}</div></details>`;
 }

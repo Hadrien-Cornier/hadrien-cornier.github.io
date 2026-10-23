@@ -89,7 +89,7 @@ test('the questions drawer starts closed and cites the paper and pinned code for
   for (const [label, target] of item.code) assert.match(`${label} ${target}`, /:\d+(-\d+)? .+#L\d+(-L\d+)?$/, label);
  }
  // The paper is silent on rates in Hz and on real-robot timing; the answer must say so instead of guessing.
- assert.match(QA_ITEMS[1].answer, /doesn't say|not stated/);
+ assert.match(QA_ITEMS[1].answer, /doesn't (say|give)|not stated/);
  assert.match(html, /not stated in the paper/);
  for (const value of [QA_TITLE, ...QA_ITEMS.flatMap((item) => [item.question, item.answer])]) assert.doesNotMatch(value, /[—–]/, 'no em or en dashes');
 });
