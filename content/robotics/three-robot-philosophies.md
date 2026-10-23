@@ -679,7 +679,7 @@ What hurts is misalignment. On one task in the [What Matters](https://arxiv.org/
 
 There's one tension these papers can't resolve. Most of them mix a few hours of human data into robot training, and Pi found that a small amount helps only on top of varied robot pretraining. Figure's bet runs at a different scale: Helix 2.5 is pretrained on human video alone, from scratch, and it worked. Generalist also pretrains with no robot data, on human-held grippers. Nobody has run Figure's recipe on a robot without a human shape, so at that scale the body question is still open.
 
-The other limit is sample size. Most of these comparisons run 10 to 50 trials per condition. With 10 trials, a 50% success rate is uncertain by about 31 points either way at 95% confidence. Even with 20 to 40 trials per body, a test can miss a gap of 30 to 40 points between two bodies. I'm writing up the paper-by-paper evidence in a companion article.
+The other limit is sample size. Most of these comparisons run 10 to 50 trials per condition. With 10 trials, a 50% success rate is uncertain by about 31 points either way at 95% confidence. Even with 20 to 40 trials per body, a test can miss a gap of 30 to 40 points between two bodies. The paper-by-paper evidence, from about 30 papers, is in a companion article: [Do you need a human body to use human data?](/robotics/do-you-need-a-human-body-for-human-data/)
 
 <div class="rc-mark" id="sec-wheels" data-panel="wheels" data-view="wheels" data-title="Legs, wheels and the flat with no stairs"></div>
 
