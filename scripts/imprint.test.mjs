@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import matter from 'gray-matter';
-import {DATA, OUTPUT, PANEL, LAYOUTS, SCATTER, RECIPE, PROBE, CHANCE, TRANSFER, ORDERS, PLOT, plotX, plotY, INTRO, MATH_BEFORE, MATH_AFTER, QA_TITLE, QA_ITEMS, IMPRINT_CODE, render} from './imprint-canvas.mjs';
+import {DATA, OUTPUT, PANEL, LAYOUTS, SCATTER, RECIPE, PROBE, CHANCE, TRANSFER, ORDERS, PLOT, plotX, plotY, INTRO, INTRO_LINKS, MATH_BEFORE, MATH_AFTER, QA_TITLE, QA_ITEMS, IMPRINT_CODE, render} from './imprint-canvas.mjs';
 
 const mean = (values) => values.reduce((a, b) => a + b, 0) / values.length;
 
@@ -21,8 +21,9 @@ test('the title names Imprint and the paper\'s exact name, and the first line un
  assert.match(page, /<h1>Imprint: Memory Without Curation - Learning Multi-Stream Latent Memory for Robot Policies<\/h1><p class="paper-source">Posted to arXiv on 9 October 2026 · <a href="https:\/\/arxiv\.org\/abs\/2610\.14406">arXiv 2610\.14406 ↗<\/a><\/p><p class="post-description">/);
 });
 
-test('the intro says why I read it, and the page shares the memory tag with the other memory article', () => {
- assert.match(INTRO, /^I read this paper because I'm interested in memory systems\. In the Cover Blocks task/);
+test('the intro says why I read it, links the upstream bug fixes, and the page shares the memory tag with the other memory article', () => {
+ assert.match(INTRO, /^I read this paper because I'm interested in memory systems, and we're porting Imprint to LeRobot\. .* In the Cover Blocks task/);
+ for (const [label, href] of INTRO_LINKS) assert.ok(render().includes(`<a href="${href}">${label}</a>`), `the intro links ${href}`);
  const tags = (name) => matter(fs.readFileSync(new URL(`../content/robotics/${name}.md`, import.meta.url), 'utf8')).data.tags;
  assert.ok(tags('imprint').includes('robot-memory'));
  assert.ok(tags('why-cant-robots-remember').includes('robot-memory'));
