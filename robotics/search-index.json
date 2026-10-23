@@ -1,5 +1,17 @@
 [
   {
+    "title": "Do you need a human body to use human data?",
+    "description": "Figure AI says a humanoid can learn from human video because it is shaped like us. About 30 papers with measured results say human video also trains grippers and wheeled robots, that mismatch breaks transfer, and that the body decides what a robot can reach. A companion to Three robot bets, with a pinned blackboard.",
+    "tags": [
+      "robotics",
+      "robot-learning",
+      "humanoids",
+      "cross-embodiment"
+    ],
+    "date": "2026-10-23",
+    "url": "/robotics/do-you-need-a-human-body-for-human-data/"
+  },
+  {
     "title": "World action models vs VLAs: predict the video, or just the moves",
     "description": "Both look at a camera image, read an instruction and output robot moves. A VLA starts from an image-and-text model and learns the moves. A WAM starts from a video model and also learns the frames that come next. Eight drawings on what that changes.",
     "tags": [
