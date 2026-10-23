@@ -3,7 +3,7 @@ title: "How do I get the XYZ position of my robot's tool tip?"
 description: 'I get $10,000 worth of measurements from a $40 drawing tablet. Now I want the height of the pen too.'
 date: '2026-10-15'
 updated: '2026-10-17'
-series: 'From policy to action: the last mile of robotics control'
+series: 'so101-control'
 part: 8
 tags: ['so-101', 'measurement', 'sensors']
 thumbnail: /assets/robotics/thumbnails/so101-8-measuring-the-tool-in-3d.jpg

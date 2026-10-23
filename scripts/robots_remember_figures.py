@@ -1,6 +1,6 @@
 """Figures for content/robotics/why-cant-robots-remember.md in the shared chalk style.
 
-- The MemER Object Search bar chart as a PNG (the article thumbnail source) and its card thumbnail.
+- The MemER Object Search bar chart as a 720 x 424 PNG article thumbnail.
 - The four inline SVG figures fig-day, fig-memer, fig-mem and fig-mme. The script replaces each
   <svg> element in the article, found by its aria-labelledby ids, and leaves the rest of the file as it is.
 
@@ -11,8 +11,8 @@ Data:
 - fig-day and fig-mem are schematics; their labels are copied from the old inline SVGs.
 
 Run from the repository root:
-    python3 scripts/robots_remember_figures.py          # PNG, thumbnail and inline SVGs
-    python3 scripts/robots_remember_figures.py png      # PNG and thumbnail only
+    python3 scripts/robots_remember_figures.py          # PNG thumbnail and inline SVGs
+    python3 scripts/robots_remember_figures.py png      # PNG thumbnail only
     python3 scripts/robots_remember_figures.py svg      # inline SVGs only
 """
 
@@ -33,7 +33,6 @@ import chalk  # noqa: E402
 
 ARTICLE = ROOT / "content/robotics/why-cant-robots-remember.md"
 PNG = ROOT / "assets/robotics/why-cant-robots-remember/memer-object-search.png"
-THUMB = ROOT / "assets/robotics/thumbnails/why-cant-robots-remember.jpg"
 
 # MemER Table 1, Object Search: objects retrieved out of 60. "kind" keeps the old color meaning:
 # base = gray baseline, memer = the highlighted result, human = the lighter upper-bound bar.
@@ -112,7 +111,7 @@ BAR_CLASS = {"base": "c-dim", "memer": "c-red", "human": "c-faint"}
 # ---------- PNG: MemER bar chart ----------
 
 def memer_png():
-    """Redraw the MemER Object Search chart with matplotlib and make the card thumbnail."""
+    """Redraw the MemER Object Search chart as the site card thumbnail."""
     chalk.use()
     fig, ax = plt.subplots(figsize=(6.4, 3.7))
     fig.subplots_adjust(left=0.36, right=0.97, top=0.84, bottom=0.17)
@@ -131,8 +130,9 @@ def memer_png():
              fontsize=matplotlib.rcParams["axes.titlesize"])
     fig.text(0.035, 0.07, MEMER_NOTE, ha="left", va="center", color=chalk.DIM)
     chalk.save(fig, PNG)
-    chalk.thumbnail(PNG, THUMB)
-    print(f"wrote {PNG.relative_to(ROOT)} and {THUMB.relative_to(ROOT)}")
+    # thumbnail() loads the source before saving, so the same path is safe here.
+    chalk.thumbnail(PNG, PNG)
+    print(f"wrote {PNG.relative_to(ROOT)}")
 
 
 # ---------- inline SVG helpers ----------
