@@ -107,29 +107,41 @@ def chalk_grain(rgb, scale=1.0, seed=7):
     board = np.array(matplotlib.colors.to_rgb(BOARD), dtype=np.float32) * 255
     image = rgb.astype(np.float32)
 
+    # Only chalk pixels and their close neighbors change; the bare board stays as it is.
+    reach = int(np.ceil(0.9 * scale)) + 1
+    ink = np.abs(image - board).max(axis=2) > 2
+    near = ink.copy()
+    for shift in range(1, reach + 1):
+        near[shift:] |= ink[:-shift]
+        near[:-shift] |= ink[shift:]
+    wide = near.copy()
+    for shift in range(1, reach + 1):
+        wide[:, shift:] |= near[:, :-shift]
+        wide[:, :-shift] |= near[:, shift:]
+    ys, xs = np.nonzero(wide)
+
     # 1. Slow wobble: shift each pixel by a smooth field of at most 0.9 CSS px.
     amplitude = 0.9 * scale
     cell = int(90 * scale)
-    dx = _smooth_noise(rng, height, width, cell) * amplitude
-    dy = _smooth_noise(rng, height, width, cell) * amplitude
-    yy, xx = np.mgrid[0:height, 0:width].astype(np.float32)
-    sx = np.clip(xx + dx, 0, width - 1)
-    sy = np.clip(yy + dy, 0, height - 1)
+    dx = _smooth_noise(rng, height, width, cell)[ys, xs] * amplitude
+    dy = _smooth_noise(rng, height, width, cell)[ys, xs] * amplitude
+    sx = np.clip(xs + dx, 0, width - 1)
+    sy = np.clip(ys + dy, 0, height - 1)
     x0 = np.floor(sx).astype(int)
     y0 = np.floor(sy).astype(int)
     x1 = np.minimum(x0 + 1, width - 1)
     y1 = np.minimum(y0 + 1, height - 1)
-    fx = (sx - x0)[..., None]
-    fy = (sy - y0)[..., None]
+    fx = (sx - x0)[:, None]
+    fy = (sy - y0)[:, None]
     moved = (image[y0, x0] * (1 - fx) * (1 - fy) + image[y0, x1] * fx * (1 - fy)
              + image[y1, x0] * (1 - fx) * fy + image[y1, x1] * fx * fy)
 
     # 2. Fine grain: thin the chalk by up to 22 % in small specks, as the SVG filter does.
     speck = max(1, int(round(scale)))
     grain = rng.normal(0.5, 0.2, (height // speck + 1, width // speck + 1)).astype(np.float32)
-    grain = np.repeat(np.repeat(grain, speck, axis=0), speck, axis=1)[:height, :width]
-    keep = np.clip(1.12 - 0.45 * grain, 0.78, 1.0)[..., None]
-    out = board + (moved - board) * keep
+    keep = np.clip(1.12 - 0.45 * grain[ys // speck, xs // speck], 0.78, 1.0)[:, None]
+    out = image.copy()
+    out[ys, xs] = board + (moved - board) * keep
     return np.clip(np.rint(out), 0, 255).astype(np.uint8)
 
 
