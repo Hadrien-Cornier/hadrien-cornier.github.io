@@ -304,7 +304,7 @@ def draw_walker(x, y, h, f):
     out.append(text(ex + size * 3.18, ey + 15, "a", "dim", 11, "middle"))
     out.append(text(ex + size * 7.02, ey + 15, "s′, r", "dim", 11, "middle"))
     out += under(ex + size * 0.96, ey, "value function", "blue", anchor="start", drop=26)
-    out += under(ex + size * 9.90, ey, "model: where a lands", "dim", drop=26)
+    out += under(ex + size * 9.90, ey, "model: next cell, reward", "dim", drop=26)
     out += under(ex + size * 16.33, ey, "next cell's value", "blue", anchor="end", drop=26)
     out.append(text(x + 120, ey + 54, "r: reward", "dim", 13, "middle"))
     out.append(text(x + 270, ey + 54, "γ = 0.99: discount", "dim", 13, "middle"))
@@ -354,7 +354,7 @@ def draw_theorem(x, y, h, f):
     out.append(line(x0, ly, x1, ly, "chalk", 1.6))
     for t in range(-1175, -985, 25):
         out.append(line(at(t), ly - 4, at(t), ly + 4, "faint", 1.2))
-    for name, color, label in (("R", "red", "→ cliff"), ("D", "dim", "↓ ← walls"), ("U", "green", "↑ up")):
+    for name, color, label in (("R", "red", "→ cliff"), ("D", "dim", "↓ ← walls (2 moves)"), ("U", "green", "↑ up")):
         px = at(q[name])
         out.append(f'<circle cx="{px:.1f}" cy="{ly}" r="5" {fill(color)}/>')
         out.append(text(px, ly - 14, num(q[name]), color, 15, "middle"))
@@ -366,11 +366,12 @@ def draw_theorem(x, y, h, f):
     out.append(text(ax, ly + 48, f"average = {V_PI}(S) = {num(v0)}", "blue", 15, "middle"))
     out.append(text(x + 200, ly + 80, "max ≥ average", "yellow", 19, "middle"))
     ey = y + 266
-    out.append(eq(x + 128, ey, [(Q_PI + "(s, ", "blue"), ("π′(s)", "green"), (") ≥ " + V_PI + "(s)", "blue")], 20))
+    every = '<tspan font-size="70%"> in every cell</tspan>'
+    out.append(eq(x + 92, ey, [(Q_PI + "(s, ", "blue"), ("π′(s)", "green"), (") ≥ " + V_PI + "(s)", "blue"), (every, "dim")], 20))
     out.append(text(x + 200, ey + 21, "one greedy move, then π: never worse", "dim", 12, "middle"))
     out.append(text(x + 116, ey + 48, "⇓", "yellow", 20, "middle"))
     out.append(text(x + 132, ey + 47, "policy improvement theorem", "yellow", 14))
-    out.append(text(x + 200, ey + 80, f"v{sub('π′')}(s) ≥ {V_PI}(s)", "blue", 20, "middle"))
+    out.append(eq(x + 116, ey + 80, [(f"v{sub('π′')}(s) ≥ {V_PI}(s)", "blue"), (every, "dim")], 20))
     out.append(text(x + 200, ey + 101, "greedy moves every time: never worse", "dim", 12, "middle"))
     sy = ey + 140
     out.append(text(x + 14, sy, "at S:", "dim", 15))
@@ -388,15 +389,15 @@ def draw_rounds(x, y, h, f):
     history = f["history"]
     final_moves = history[-1][0]
     out = panel("rounds", x, y, h, "4. Repeat until nothing changes")
-    cy, step = y + 64, 56
+    cy, step = y + 64, 49
     items = [("π" + sub("0"), "green"), (V_PI + sub("0"), "blue"), ("π" + sub("1"), "green"), (V_PI + sub("1"), "blue"),
-             ("⋯", "dim"), ("π*", "green"), ("v*", "blue")]
+             ("π" + sub("2"), "green"), ("⋯", "dim"), ("π*", "green"), ("v*", "blue")]
     for k, (body, color) in enumerate(items):
-        out.append(text(x + 30 + k * step, cy, body, color, 20, "middle"))
+        out.append(text(x + 26 + k * step, cy, body, color, 19, "middle"))
         if k < len(items) - 1:
-            ax = x + 30 + k * step
-            col, letter = ("blue", "E") if color == "green" else ("green", "I")
-            out.append(f'<path d="M{ax + 16} {cy - 6}H{ax + step - 16}" {stroke(col)} stroke-width="1.6" marker-end="url(#gpi-a{col[0]})"/>')
+            ax = x + 26 + k * step
+            col, letter = ("blue", "E") if k % 2 == 0 else ("green", "I")
+            out.append(f'<path d="M{ax + 14} {cy - 6}H{ax + step - 14}" {stroke(col)} stroke-width="1.6" marker-end="url(#gpi-a{col[0]})"/>')
             out.append(text(ax + step / 2, cy - 14, letter, col, 13, "middle"))
     out.append(text(x + 120, cy + 26, f"{tint('E', 'blue')}: evaluate (panel 1)", "dim", 13, "middle"))
     out.append(text(x + 290, cy + 26, f"{tint('I', 'green')}: improve (panel 2)", "dim", 13, "middle"))
@@ -509,6 +510,8 @@ def draw_gpi(x, y, h, f):
     out.append(text(c1, ty + 21, "values fit π", "blue", 12, "middle"))
     out.append(text(c2, ty, "π = greedy(v)", "green", 17, "middle"))
     out.append(text(c2, ty + 21, "π acts best on v", "green", 12, "middle"))
+    out.append(text(x + 14, ty - 2, "full steps, as in", "dim", 12))
+    out.append(text(x + 14, ty + 14, "policy iteration", "dim", 12))
     out.append(line(x + 12, ty + 30, x + 388, ty + 30, "faint", 1))
     rows = [("after evaluate", "chalk", (True, False)), ("after improve", "chalk", (False, True)), ("at π*, v*", "yellow", (True, True))]
     for k, (name, color, marks) in enumerate(rows):
@@ -516,7 +519,7 @@ def draw_gpi(x, y, h, f):
         out.append(text(x + 14, ry, name, color, 15))
         for col, ok in zip((c1, c2), marks):
             out.append(check(col, ry - 4) if ok else cross(col, ry - 4))
-    out.append(text(x + 200, ty + 136, "each step breaks the other's condition, until the optimum", "dim", 13, "middle"))
+    out.append(text(x + 200, ty + 136, "each step usually undoes the other, until the optimum", "dim", 13, "middle"))
     out.append("</g>")
     return out
 

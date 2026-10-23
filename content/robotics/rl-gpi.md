@@ -89,7 +89,7 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 <path d="M56.24 330L56.24 341" stroke="#93d4ff" class="s-blue" stroke-width="1" stroke-opacity=".75"/>
 <text x="38.24" y="353" fill="#93d4ff" class="c-blue" font-size="12">value function</text>
 <path d="M226.1 330L226.1 341" stroke="#c3c9bd" class="s-dim" stroke-width="1" stroke-opacity=".75"/>
-<text x="226.1" y="353" fill="#c3c9bd" class="c-dim" font-size="12" text-anchor="middle">model: where a lands</text>
+<text x="226.1" y="353" fill="#c3c9bd" class="c-dim" font-size="12" text-anchor="middle">model: next cell, reward</text>
 <path d="M348.27 330L348.27 341" stroke="#93d4ff" class="s-blue" stroke-width="1" stroke-opacity=".75"/>
 <text x="366.27" y="353" fill="#93d4ff" class="c-blue" font-size="12" text-anchor="end">next cell's value</text>
 <text x="130" y="378" fill="#c3c9bd" class="c-dim" font-size="13" text-anchor="middle">r: reward</text>
@@ -210,7 +210,7 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 <text x="76.8662" y="541" fill="#ff9f88" class="c-red" font-size="14" text-anchor="middle">→ cliff</text>
 <circle cx="249.1" cy="575" r="5" fill="#c3c9bd" class="c-dim"/>
 <text x="249.126" y="561" fill="#c3c9bd" class="c-dim" font-size="15" text-anchor="middle">−1063</text>
-<text x="249.126" y="541" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">↓ ← walls</text>
+<text x="249.126" y="541" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">↓ ← walls (2 moves)</text>
 <circle cx="353.7" cy="575" r="5" fill="#a8e2a0" class="c-green"/>
 <text x="353.719" y="561" fill="#a8e2a0" class="c-green" font-size="15" text-anchor="middle">−1002</text>
 <text x="353.719" y="541" fill="#a8e2a0" class="c-green" font-size="14" text-anchor="middle">↑ up</text>
@@ -219,11 +219,11 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 <path d="M232.209 565L232.209 605" stroke="#93d4ff" class="s-blue" stroke-width="2.2"/>
 <text x="232.209" y="623" fill="#93d4ff" class="c-blue" font-size="15" text-anchor="middle">average = v<tspan baseline-shift="-20%" font-size="72%">π</tspan>(S) = −1072</text>
 <text x="210" y="655" fill="#ffe17c" class="c-yellow" font-size="19" text-anchor="middle">max ≥ average</text>
-<text x="138" y="701" fill="#f4f1e8" class="c-chalk" font-size="20"><tspan fill="#93d4ff" class="c-blue">q<tspan baseline-shift="-20%" font-size="72%">π</tspan>(s, </tspan><tspan fill="#a8e2a0" class="c-green">π′(s)</tspan><tspan fill="#93d4ff" class="c-blue">) ≥ v<tspan baseline-shift="-20%" font-size="72%">π</tspan>(s)</tspan></text>
+<text x="102" y="701" fill="#f4f1e8" class="c-chalk" font-size="20"><tspan fill="#93d4ff" class="c-blue">q<tspan baseline-shift="-20%" font-size="72%">π</tspan>(s, </tspan><tspan fill="#a8e2a0" class="c-green">π′(s)</tspan><tspan fill="#93d4ff" class="c-blue">) ≥ v<tspan baseline-shift="-20%" font-size="72%">π</tspan>(s)</tspan><tspan fill="#c3c9bd" class="c-dim"><tspan font-size="70%"> in every cell</tspan></tspan></text>
 <text x="210" y="722" fill="#c3c9bd" class="c-dim" font-size="12" text-anchor="middle">one greedy move, then π: never worse</text>
 <text x="126" y="749" fill="#ffe17c" class="c-yellow" font-size="20" text-anchor="middle">⇓</text>
 <text x="142" y="748" fill="#ffe17c" class="c-yellow" font-size="14">policy improvement theorem</text>
-<text x="210" y="781" fill="#93d4ff" class="c-blue" font-size="20" text-anchor="middle">v<tspan baseline-shift="-20%" font-size="72%">π′</tspan>(s) ≥ v<tspan baseline-shift="-20%" font-size="72%">π</tspan>(s)</text>
+<text x="126" y="781" fill="#f4f1e8" class="c-chalk" font-size="20"><tspan fill="#93d4ff" class="c-blue">v<tspan baseline-shift="-20%" font-size="72%">π′</tspan>(s) ≥ v<tspan baseline-shift="-20%" font-size="72%">π</tspan>(s)</tspan><tspan fill="#c3c9bd" class="c-dim"><tspan font-size="70%"> in every cell</tspan></tspan></text>
 <text x="210" y="802" fill="#c3c9bd" class="c-dim" font-size="12" text-anchor="middle">greedy moves every time: never worse</text>
 <text x="24" y="841" fill="#c3c9bd" class="c-dim" font-size="15">at S:</text>
 <text x="120" y="841" fill="#f4f1e8" class="c-chalk" font-size="18" text-anchor="middle">−1072</text>
@@ -237,25 +237,28 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 </g>
 <g class="rc-panel" data-panel="rounds"><rect x="430" y="435" width="400" height="480" rx="6" fill="none" stroke="#b6baaf"/>
 <text class="rls-panel-title" x="444" y="463" fill="#ffe17c" font-size="16">4. Repeat until nothing changes</text>
-<text x="460" y="499" fill="#a8e2a0" class="c-green" font-size="20" text-anchor="middle">π<tspan baseline-shift="-20%" font-size="72%">0</tspan></text>
-<path d="M476 493H500" stroke="#93d4ff" class="s-blue" stroke-width="1.6" marker-end="url(#gpi-ab)"/>
-<text x="488" y="485" fill="#93d4ff" class="c-blue" font-size="13" text-anchor="middle">E</text>
-<text x="516" y="499" fill="#93d4ff" class="c-blue" font-size="20" text-anchor="middle">v<tspan baseline-shift="-20%" font-size="72%">π</tspan><tspan baseline-shift="-20%" font-size="72%">0</tspan></text>
-<path d="M532 493H556" stroke="#a8e2a0" class="s-green" stroke-width="1.6" marker-end="url(#gpi-ag)"/>
-<text x="544" y="485" fill="#a8e2a0" class="c-green" font-size="13" text-anchor="middle">I</text>
-<text x="572" y="499" fill="#a8e2a0" class="c-green" font-size="20" text-anchor="middle">π<tspan baseline-shift="-20%" font-size="72%">1</tspan></text>
-<path d="M588 493H612" stroke="#93d4ff" class="s-blue" stroke-width="1.6" marker-end="url(#gpi-ab)"/>
-<text x="600" y="485" fill="#93d4ff" class="c-blue" font-size="13" text-anchor="middle">E</text>
-<text x="628" y="499" fill="#93d4ff" class="c-blue" font-size="20" text-anchor="middle">v<tspan baseline-shift="-20%" font-size="72%">π</tspan><tspan baseline-shift="-20%" font-size="72%">1</tspan></text>
-<path d="M644 493H668" stroke="#a8e2a0" class="s-green" stroke-width="1.6" marker-end="url(#gpi-ag)"/>
-<text x="656" y="485" fill="#a8e2a0" class="c-green" font-size="13" text-anchor="middle">I</text>
-<text x="684" y="499" fill="#c3c9bd" class="c-dim" font-size="20" text-anchor="middle">⋯</text>
-<path d="M700 493H724" stroke="#a8e2a0" class="s-green" stroke-width="1.6" marker-end="url(#gpi-ag)"/>
-<text x="712" y="485" fill="#a8e2a0" class="c-green" font-size="13" text-anchor="middle">I</text>
-<text x="740" y="499" fill="#a8e2a0" class="c-green" font-size="20" text-anchor="middle">π*</text>
-<path d="M756 493H780" stroke="#93d4ff" class="s-blue" stroke-width="1.6" marker-end="url(#gpi-ab)"/>
-<text x="768" y="485" fill="#93d4ff" class="c-blue" font-size="13" text-anchor="middle">E</text>
-<text x="796" y="499" fill="#93d4ff" class="c-blue" font-size="20" text-anchor="middle">v*</text>
+<text x="456" y="499" fill="#a8e2a0" class="c-green" font-size="19" text-anchor="middle">π<tspan baseline-shift="-20%" font-size="72%">0</tspan></text>
+<path d="M470 493H491" stroke="#93d4ff" class="s-blue" stroke-width="1.6" marker-end="url(#gpi-ab)"/>
+<text x="480.5" y="485" fill="#93d4ff" class="c-blue" font-size="13" text-anchor="middle">E</text>
+<text x="505" y="499" fill="#93d4ff" class="c-blue" font-size="19" text-anchor="middle">v<tspan baseline-shift="-20%" font-size="72%">π</tspan><tspan baseline-shift="-20%" font-size="72%">0</tspan></text>
+<path d="M519 493H540" stroke="#a8e2a0" class="s-green" stroke-width="1.6" marker-end="url(#gpi-ag)"/>
+<text x="529.5" y="485" fill="#a8e2a0" class="c-green" font-size="13" text-anchor="middle">I</text>
+<text x="554" y="499" fill="#a8e2a0" class="c-green" font-size="19" text-anchor="middle">π<tspan baseline-shift="-20%" font-size="72%">1</tspan></text>
+<path d="M568 493H589" stroke="#93d4ff" class="s-blue" stroke-width="1.6" marker-end="url(#gpi-ab)"/>
+<text x="578.5" y="485" fill="#93d4ff" class="c-blue" font-size="13" text-anchor="middle">E</text>
+<text x="603" y="499" fill="#93d4ff" class="c-blue" font-size="19" text-anchor="middle">v<tspan baseline-shift="-20%" font-size="72%">π</tspan><tspan baseline-shift="-20%" font-size="72%">1</tspan></text>
+<path d="M617 493H638" stroke="#a8e2a0" class="s-green" stroke-width="1.6" marker-end="url(#gpi-ag)"/>
+<text x="627.5" y="485" fill="#a8e2a0" class="c-green" font-size="13" text-anchor="middle">I</text>
+<text x="652" y="499" fill="#a8e2a0" class="c-green" font-size="19" text-anchor="middle">π<tspan baseline-shift="-20%" font-size="72%">2</tspan></text>
+<path d="M666 493H687" stroke="#93d4ff" class="s-blue" stroke-width="1.6" marker-end="url(#gpi-ab)"/>
+<text x="676.5" y="485" fill="#93d4ff" class="c-blue" font-size="13" text-anchor="middle">E</text>
+<text x="701" y="499" fill="#c3c9bd" class="c-dim" font-size="19" text-anchor="middle">⋯</text>
+<path d="M715 493H736" stroke="#a8e2a0" class="s-green" stroke-width="1.6" marker-end="url(#gpi-ag)"/>
+<text x="725.5" y="485" fill="#a8e2a0" class="c-green" font-size="13" text-anchor="middle">I</text>
+<text x="750" y="499" fill="#a8e2a0" class="c-green" font-size="19" text-anchor="middle">π*</text>
+<path d="M764 493H785" stroke="#93d4ff" class="s-blue" stroke-width="1.6" marker-end="url(#gpi-ab)"/>
+<text x="774.5" y="485" fill="#93d4ff" class="c-blue" font-size="13" text-anchor="middle">E</text>
+<text x="799" y="499" fill="#93d4ff" class="c-blue" font-size="19" text-anchor="middle">v*</text>
 <text x="550" y="525" fill="#c3c9bd" class="c-dim" font-size="13" text-anchor="middle"><tspan fill="#93d4ff" class="c-blue">E</tspan>: evaluate (panel 1)</text>
 <text x="720" y="525" fill="#c3c9bd" class="c-dim" font-size="13" text-anchor="middle"><tspan fill="#a8e2a0" class="c-green">I</tspan>: improve (panel 2)</text>
 <rect x="456" y="547" width="30" height="30" fill="#ff9f88" fill-opacity="0.24" stroke="#6f7d75" class="c-red s-faint" stroke-width="1"/>
@@ -465,6 +468,8 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 <text x="626" y="1223" fill="#93d4ff" class="c-blue" font-size="12" text-anchor="middle">values fit π</text>
 <text x="752" y="1202" fill="#a8e2a0" class="c-green" font-size="17" text-anchor="middle">π = greedy(v)</text>
 <text x="752" y="1223" fill="#a8e2a0" class="c-green" font-size="12" text-anchor="middle">π acts best on v</text>
+<text x="444" y="1200" fill="#c3c9bd" class="c-dim" font-size="12">full steps, as in</text>
+<text x="444" y="1216" fill="#c3c9bd" class="c-dim" font-size="12">policy iteration</text>
 <path d="M442 1232L818 1232" stroke="#6f7d75" class="s-faint" stroke-width="1"/>
 <text x="444" y="1258" fill="#f4f1e8" class="c-chalk" font-size="15">after evaluate</text>
 <path d="M618 1250l6 7l11 -14" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="2.6"/>
@@ -475,7 +480,7 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 <text x="444" y="1314" fill="#ffe17c" class="c-yellow" font-size="15">at π*, v*</text>
 <path d="M618 1306l6 7l11 -14" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="2.6"/>
 <path d="M744 1306l6 7l11 -14" fill="none" stroke="#a8e2a0" class="s-green" stroke-width="2.6"/>
-<text x="630" y="1338" fill="#c3c9bd" class="c-dim" font-size="13" text-anchor="middle">each step breaks the other's condition, until the optimum</text>
+<text x="630" y="1338" fill="#c3c9bd" class="c-dim" font-size="13" text-anchor="middle">each step usually undoes the other, until the optimum</text>
 </g>
 <g class="rc-panel" data-panel="family"><rect x="220" y="1365" width="400" height="400" rx="6" fill="none" stroke="#b6baaf"/>
 <text class="rls-panel-title" x="234" y="1393" fill="#ffe17c" font-size="16">7. Same loop, different parts</text>
@@ -525,7 +530,7 @@ Trying all $4^{37} \approx 1.9 \times 10^{22}$ rules, one move in each of the 37
 
 ## How good is a random walker?
 
-Start with a walker that picks moves at random. A rule like that is a **policy** $\pi$, and a cell's **value** is the discounted reward you collect from there on average. Scoring a policy is called **policy evaluation**, and since you know the rules, it comes down to a linear system.
+Start with a walker that picks moves at random. A rule like that is a **policy** $\pi$, and a cell's **value** is the discounted sum of rewards you collect from there, on average. Scoring a policy is called **policy evaluation**, and since you know the rules, it comes down to a linear system.
 
 <div class="rc-slot" data-for="sec-evaluate"></div>
 
@@ -558,7 +563,7 @@ Was that luck? No, and you can see why from S alone.
 
 <div class="rc-slot" data-for="sec-theorem"></div>
 
-The step from the first inequality to the second is the **policy improvement theorem**, and it takes one more idea: use the greedy move again at the next cell, and the next. After $k$ steps, all that's left of the old policy is its value $k$ steps ahead, times $\gamma^k$, which shrinks to zero.
+The ⇓ step on the board, from $q_\pi(s, \pi'(s)) \ge v_\pi(s)$ to $v_{\pi'}(s) \ge v_\pi(s)$ in every cell, is the **policy improvement theorem**, and it takes one more idea: use the greedy move again at the next cell, and the next. After $k$ steps, all that's left of the old policy is its value $k$ steps ahead, times $\gamma^k$, which shrinks to zero.
 
 <details>
 <summary>The proof chain</summary>
@@ -608,7 +613,7 @@ Out of $1.9 \times 10^{22}$ policies, it scored six, plus the walker. It also ha
 
 </div>
 
-Round 1 breaks ties in the order up, right, down, left, and all 24 orders give the same numbers. After that, when two moves tie, the policy keeps its current move (the fix the book's Exercise 4.4 asks for). [Code](https://github.com/Hadrien-Cornier/hadrien-cornier.github.io): `python3 scripts/rl_gpi_figures.py`.
+Round 1 breaks ties in the order up, right, down, left, and all 24 orders give the same numbers. After that, when two moves tie, the policy keeps its current move (one fix for the bug in the book's Exercise 4.4). [Code](https://github.com/Hadrien-Cornier/hadrien-cornier.github.io): `python3 scripts/rl_gpi_figures.py`.
 
 </details>
 
@@ -636,7 +641,7 @@ The two processes "can be viewed as both competing and cooperating". Once evalua
 
 ## The same loop inside other methods
 
-Without a model, methods estimate values from experience instead. Monte Carlo averages the returns of whole episodes, and temporal-difference (TD) methods move an estimate toward one reward plus the next estimate.
+Without a model, methods estimate values from experience instead. Monte Carlo averages the returns of whole episodes, and temporal-difference (TD) methods move an estimate toward one reward plus the discounted next estimate.
 
 <div class="rc-slot" data-for="sec-family"></div>
 
@@ -648,7 +653,7 @@ In any new method, I now look for the two processes: what judges the policy, wha
 
 ## Sources
 
-- Richard S. Sutton and Andrew G. Barto, [*Reinforcement Learning: An Introduction*](http://incompleteideas.net/book/RLbook2020.pdf), 2nd edition, MIT Press, 2018. Chapters used: 4 (policy evaluation, policy improvement, policy iteration, value iteration and GPI, with the GPI loop in panel 6 drawn after the book's GPI diagrams), 3 (the Bellman optimality equation), 5 (Monte Carlo control), 6 (Sarsa and Q-learning), 8 (the Q-learning update), 13 and 14 (actor-critic), 16 (AlphaGo Zero) and 17 (GPI beside actor-critic).
+- Richard S. Sutton and Andrew G. Barto, [*Reinforcement Learning: An Introduction*](http://incompleteideas.net/book/RLbook2020.pdf), 2nd edition, MIT Press, 2018. Chapters used: 4 (policy evaluation, policy improvement, policy iteration, value iteration and GPI, with the GPI loop in panel 6 drawn after the book's GPI diagrams), 3 (the Bellman optimality equation), 5 (Monte Carlo control), 6 (Sarsa and Q-learning), 13 and 14 (actor-critic), 16 (AlphaGo Zero) and 17 (GPI beside actor-critic).
 - David Silver et al., [Mastering the game of Go without human knowledge](https://www.nature.com/articles/nature24270), *Nature*, 2017 ([author version](https://discovery.ucl.ac.uk/id/eprint/10045895/1/agz_unformatted_nature.pdf)).
 - Tuomas Haarnoja et al., [Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://arxiv.org/abs/1801.01290), ICML 2018.
 
