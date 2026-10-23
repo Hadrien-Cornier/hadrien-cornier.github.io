@@ -147,6 +147,8 @@ So the cause depends on the model. The authors of ContextVLA read their result a
 
 Each row comes from a different paper, with its own benchmark, robot, trial count and baselines. RoboMME's numbers for MemER, SAM2Act+ and MemoryVLA are the RoboMME authors' own re-implementations.
 
+For one latent-vector design up close, see my [Imprint explainer](/papers/imprint/) (Wu et al., 2026). Instead of picking what to keep, it compresses video, actions and joint states into 256 memory tokens trained to rebuild the past, and it takes π0.5 from 25.4 to 72.8 percent success on RMBench's nine memory tasks.
+
 ## Drawing the problem
 
 Take the hall again. The policy reads a short window directly. Everything older has to go through one of the routes below, and each route fails in its own way.
