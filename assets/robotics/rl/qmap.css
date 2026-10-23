@@ -1,8 +1,8 @@
 /* The Q table drawn on the cliff grid (rl-1). Replay controls live in the canvas bar. */
 /* The credit drawing shows two fixed updates (19 and 24), so it has no replay bar. */
 #rc .qm-toolbar { display: none; }
-#rc:is([data-active-panel="map"], [data-active-panel="update"]) .qm-toolbar { display: flex; flex: 1 1 auto; min-width: 0; align-items: center; gap: 6px; }
-#rc:is([data-active-panel="map"], [data-active-panel="update"]) .rc-bar > .rc-where { display: none; }
+#rc :is(.rc-stage, .rc-fig):is([data-active-panel="map"], [data-active-panel="update"]) .qm-toolbar { display: flex; flex: 1 1 auto; min-width: 0; align-items: center; gap: 6px; }
+#rc :is(.rc-stage, .rc-fig):is([data-active-panel="map"], [data-active-panel="update"]) .rc-bar > .rc-where { display: none; }
 #rc .qm-toolbar button { flex: 0 0 auto; min-width: 38px; min-height: 34px; padding: 4px 8px; font: 600 14px/1 Arial, sans-serif; cursor: pointer; border: 1px solid var(--line); border-radius: 3px; }
 #rc .qm-toolbar button[disabled] { opacity: .4; cursor: default; }
 #rc .qm-toolbar input[type="range"] { flex: 1 1 auto; min-width: 60px; margin: 0; accent-color: var(--bb-yellow); background: transparent !important; border: 0 !important; }
@@ -18,7 +18,7 @@
 .article-body .qm-jump { display: flex; flex-wrap: wrap; gap: 8px; }
 .article-body .qm-jump button { font: 600 14px/1.2 Arial, sans-serif; padding: 9px 12px; min-height: 40px; border: 1px solid var(--line); border-radius: 3px; cursor: pointer; }
 .article-body .qm-jump button:hover, .article-body .qm-jump button:focus-visible { border-color: var(--accent); }
-@media (max-width: 520px) { #rc:is([data-active-panel="map"], [data-active-panel="update"]) .rc-bar > .rc-reset { display: none; } #rc .qm-readout { min-width: 0; font-size: 14px; } }
+@media (max-width: 520px) { #rc :is(.rc-stage, .rc-fig):is([data-active-panel="map"], [data-active-panel="update"]) .rc-bar > .rc-reset { display: none; } #rc .qm-readout { min-width: 0; font-size: 14px; } }
 /* Phones see the 12-column map at about 0.43 CSS px per unit, so its small labels grow to about 10 px,
    the long key line gives way to a short one, and the close-up waits for "Two readouts". */
 #rc .qm-narrow-only { display: none; }
@@ -26,4 +26,4 @@
 #rc.qm-narrow .qm-wide-only { display: none; }
 #rc.qm-narrow :is([data-qm-t="lab"], [data-qm-t="key"], [data-qm="status"]) { font-size: 24px; }
 #rc.qm-narrow [data-qm-t="s"] { font-size: 17px; }
-#rc.qm-narrow:is([data-active-view="world"], [data-active-view="table"]) [data-qm="cell"] { visibility: hidden; }
+#rc.qm-narrow :is(.rc-stage, .rc-fig):is([data-active-view="world"], [data-active-view="table"]) [data-qm="cell"] { visibility: hidden; }
