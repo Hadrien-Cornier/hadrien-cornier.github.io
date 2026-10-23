@@ -44,8 +44,7 @@
           cell.className = 'rb-cell';
           cell.setAttribute('role', 'listitem');
           cell.setAttribute('aria-label', 'S' + i + ': ' + v.toFixed(3));
-          cell.style.background = 'rgba(61,111,158,' + (v * 0.85).toFixed(3) + ')';
-          if (v > 0.55) cell.classList.add('rb-dark');
+          cell.style.background = 'rgba(147,212,255,' + (v * 0.55).toFixed(3) + ')';
           var s = document.createElement('span'); s.textContent = 'S' + i;
           var b = document.createElement('b'); b.textContent = fmt(v);
           cell.append(s, b);
