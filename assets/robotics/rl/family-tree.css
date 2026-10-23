@@ -11,12 +11,43 @@
 #rc .ft-hint{font:13px/1.35 Arial,sans-serif;margin:0;padding:6px 9px;flex:none}
 #rc .ft-viewport{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;touch-action:pan-x pan-y;position:relative}
 #rc .ft-viewport svg.ft-graph{display:block;max-width:none;max-height:none;margin:0 auto;padding:0}
+/* Phones and small tablets: family-tree.js swaps the wide tree for an indented list of the same nodes, full width, scrolled downward. */
+#rc .ft-viewport svg.ft-list,#rc .ft-more{display:none}
+#rc .ft-viewer[data-layout="list"] svg.ft-list{display:block}
+#rc .ft-viewer[data-layout="list"] svg.ft-graph:not(.ft-list){display:none}
+#rc .ft-viewer[data-layout="list"] .ft-viewport{overflow-x:hidden;overscroll-behavior:auto;scrollbar-gutter:stable}
+#rc .ft-viewer[data-layout="list"] .ft-more{display:block;position:sticky;bottom:0;margin:0;padding:12px 0 5px;text-align:center;font:13px/1 Arial,sans-serif;color:var(--bb-dim);background:linear-gradient(to bottom,transparent,var(--bb-board) 65%);pointer-events:none}
+#rc .ft-viewer[data-layout="list"][data-end="1"] .ft-more{visibility:hidden}
+#rc .ft-list .ft-edge-link,#rc .ft-list .ft-edge-link text{text-decoration:none}
+#rc .ft-toolbar[data-layout="list"] button{display:none}
+#rc .ft-toolbar[data-layout="list"] .ft-zoom-readout{margin-left:4px;font-size:13px}
 #rc .ft-graph .ft-edge-link{cursor:pointer}
 #rc .ft-graph .ft-edge-link:hover .ft-edge-label,#rc .ft-graph .ft-edge-link:focus .ft-edge-label{stroke:#b44c2c;stroke-width:2}
 #rc .ft-graph .ft-edge-link:focus{outline:none}
+/* The scope caption sits under the drawing as HTML text, so it stays readable at every zoom. */
+#rc .ft-viewer .ft-caption{flex:none;margin:0;padding:7px 12px 9px;font:400 16px/1.35 var(--bb-hand);color:var(--bb-dim)!important;border-top:1px dashed var(--bb-faint)}
+#rc .ft-viewer .ft-cap-lead{color:var(--bb-yellow)}
+@media (max-width:699px){#rc .ft-viewer .ft-caption{font-size:13.5px;line-height:1.28;padding:4px 10px 6px}}
 #rc .ft-detail{margin:20px 0;padding:14px 0;border-top:1px solid #d3d6cb;scroll-margin-top:var(--rc-top)}
 #rc .ft-detail summary{font-size:17px;line-height:1.4;cursor:pointer;font-weight:600;color:#242622}
 #rc .ft-detail p{font-size:16px;line-height:1.65;margin:14px 0}
 #rc .ft-detail figure{margin:14px 0 0}
 #rc .ft-detail .ft-failure{display:block;width:100%;max-width:440px;height:auto;box-sizing:border-box;background:#f5f4ed;border:1px solid #d3d6cb;border-radius:3px;margin:0}
 #rc .ft-detail figcaption{font:13px/1.45 Arial,sans-serif;color:#656b62;margin:8px 0}
+/* Method cards (popups) and the scope note, in the series blackboard style. */
+#rc .ft-graph .ft-node-btn{cursor:pointer}
+#rc .ft-graph .ft-node-btn:focus{outline:none}
+#rc .ft-graph .ft-node-btn:hover>rect,#rc .ft-graph .ft-node-btn:focus-visible>rect{stroke:var(--bb-yellow)!important;stroke-width:4}
+.ft-pop{position:fixed;z-index:60;box-sizing:border-box;width:min(430px,calc(100vw - 16px));max-height:min(72vh,600px);overflow:auto;overscroll-behavior:contain;padding:14px 16px 12px;background-color:var(--bb-board);background-image:var(--bb-texture);color:var(--bb-chalk);border:1.5px solid var(--bb-dim);border-radius:6px;box-shadow:0 12px 32px rgba(0,0,0,.55);font:15px/1.55 Arial,Helvetica,sans-serif}
+.ft-pop[hidden]{display:none}
+.ft-pop-close{position:absolute;top:6px;right:8px;width:36px;height:36px;padding:0;font:400 24px/1 Arial,sans-serif;color:var(--bb-chalk)!important;background:transparent!important;border:1px solid var(--bb-faint)!important;border-radius:4px;cursor:pointer}
+.ft-pop-close:hover,.ft-pop-close:focus-visible{border-color:var(--bb-yellow)!important}
+.ft-pop h4,#ft-methods .ft-method h4{margin:0 40px 4px 0;font:400 25px/1.2 var(--bb-hand);color:var(--bb-yellow)}
+.ft-pop p,#ft-methods .ft-method p{margin:8px 0;font-size:15px;line-height:1.55}
+.ft-pop .ft-m-when,#ft-methods .ft-m-when{color:var(--bb-dim);font-size:14px}
+.ft-pop .ft-m-label,#ft-methods .ft-m-label{font-weight:700;color:var(--bb-chalk)}
+.ft-pop blockquote,#ft-methods .ft-method blockquote{margin:10px 0 4px;padding:8px 12px;border-left:3px solid var(--bb-blue)!important;background:rgba(147,212,255,.07)!important;font:400 18px/1.4 var(--bb-hand);color:var(--bb-chalk)!important}
+.ft-pop .ft-m-cite,#ft-methods .ft-m-cite{margin-top:4px;font-size:13.5px;color:var(--bb-dim)}
+.ft-pop a{color:var(--accent)}
+#ft-methods .ft-method{padding:12px 0;border-top:1px solid var(--line)}
+@media (max-width:699px){.ft-pop{left:8px!important;right:8px;top:auto!important;bottom:8px;width:auto;max-height:66vh}}

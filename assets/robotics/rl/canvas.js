@@ -10,8 +10,9 @@
   function init(rc) {
     var stage = rc.querySelector('.rc-stage'), svg = stage.querySelector('svg.rc-svg'), body = rc.querySelector('.rc-body');
     var views = JSON.parse(svg.getAttribute('data-views')), whole = svg.getAttribute('data-whole').split(' ').map(Number);
+    var narrowAt = +svg.getAttribute('data-narrow') || 0; /* optional: below this stage width (a phone), prefer the _n views */
     var marks = [].slice.call(rc.querySelectorAll('.rc-mark')), where = stage.querySelector('.rc-where'), reset = stage.querySelector('.rc-reset');
-    var cam = null, target = null, raf = 0, idx = -1, hold = false, holdAt = -1, tick = 0;
+    var cam = null, target = null, raf = 0, idx = -1, hold = false, holdAt = -1, peekY = null, tick = 0;
     function label(i) { var n = marks[i].getAttribute('data-num'); if (n === null) n = String(i + 1); return (n ? n + '. ' : '') + marks[i].getAttribute('data-title'); }
     var nav = document.createElement('div'); nav.className = 'rc-nav';
     var prev = document.createElement('button'), next = document.createElement('button'), sel = document.createElement('select');
@@ -36,19 +37,20 @@
     }
     function apply(i, instant) {
       idx = i; sel.value = String(i); var s = size(), panel = null, v = whole, whereLabel = 'Whole canvas';
-      if (i >= 0) { var m = marks[i]; panel = m.getAttribute('data-panel'); var vn = m.getAttribute('data-view'); v = (s[0] / s[1] < 1 && views[vn + '_p']) || views[vn] || views[panel]; whereLabel = label(i); }
+      if (i >= 0) { var m = marks[i]; panel = m.getAttribute('data-panel'); var vn = m.getAttribute('data-view'); v = (s[0] < narrowAt && views[vn + '_n']) || (s[0] / s[1] < 1 && views[vn + '_p']) || views[vn] || views[panel]; whereLabel = label(i); }
       [].forEach.call(svg.querySelectorAll('.rc-panel'), function (g) { g.classList.toggle('is-active', g.getAttribute('data-panel') === panel); });
       rc.classList.toggle('is-zoomed', panel !== null);
       rc.setAttribute('data-active-panel', panel || 'whole'); rc.setAttribute('data-active-index', String(i)); rc.setAttribute('data-active-view', i >= 0 ? marks[i].getAttribute('data-view') : 'whole');
       where.textContent = whereLabel; goCam(fit(v, s[0], s[1]), instant);
     }
-    function topEdge() { var d = window.matchMedia('(min-width: 1000px)').matches; return d ? window.innerHeight * 0.36 : stage.getBoundingClientRect().bottom + nav.offsetHeight + 110; }
+    function topEdge() { var d = window.matchMedia('(min-width: 1000px)').matches; return d ? window.innerHeight * 0.36 : stage.getBoundingClientRect().bottom + nav.offsetHeight + 48; }
     function current() { var lim = topEdge(), k = -1; for (var i = 0; i < marks.length; i++) { if (marks[i].getBoundingClientRect().top <= lim) k = i; } return k; }
     function onScroll() {
       if (tick) return; tick = requestAnimationFrame(function () {
         tick = 0; var k = current();
-        if (hold && k === holdAt) return; /* Whole canvas stays until the text reaches another section */
-        if (k !== idx) { hold = false; apply(k); }
+        /* Whole canvas stays until the text reaches another section; a peek also ends once the reader scrolls on */
+        if (hold && k === holdAt && (peekY === null || Math.abs(window.pageYOffset - peekY) < 60)) return;
+        if (k !== idx) { hold = false; peekY = null; apply(k); }
       });
     }
     function setTop() {
@@ -57,11 +59,13 @@
       rc.style.setProperty('--rc-top', (d ? nav.offsetHeight + 12 : stage.offsetHeight + nav.offsetHeight + 12) + 'px');
     }
     function go(i) {
-      hold = false; apply(i, false);
+      hold = false; peekY = null; apply(i, false);
       if (i >= 0) marks[i].scrollIntoView({ behavior: reduce.matches ? 'auto' : 'smooth', block: 'start' });
       else window.scrollTo({ top: rc.getBoundingClientRect().top + window.pageYOffset - 8, behavior: reduce.matches ? 'auto' : 'smooth' });
     }
-    reset.addEventListener('click', function () { hold = true; holdAt = current(); apply(-1); });
+    /* Show another section's view without scrolling the text; it holds until the reader scrolls about 60 px or reaches another section. */
+    function peek(id) { var i = marks.findIndex(function (m) { return m.id === id; }); if (i < 0) return; hold = true; holdAt = current(); peekY = window.pageYOffset; apply(i); }
+    reset.addEventListener('click', function () { hold = true; holdAt = current(); peekY = null; apply(-1); });
     sel.addEventListener('change', function () { go(parseInt(sel.value, 10)); });
     prev.addEventListener('click', function () { go(Math.max(-1, (hold ? holdAt : idx) - 1)); });
     next.addEventListener('click', function () { go(Math.min(marks.length - 1, (hold ? holdAt : idx) + 1)); });
@@ -74,7 +78,7 @@
       if (idx >= 0 && !hold) marks[idx].scrollIntoView({ behavior: 'auto', block: 'start' });
     });
     setTop(); apply(current(), true);
-    window.RC = { state: function () { return { index: idx, panel: rc.getAttribute('data-active-panel'), view: rc.getAttribute('data-active-view'), viewBox: rc.getAttribute('data-viewbox') }; }, go: go };
+    window.RC = { state: function () { return { index: idx, panel: rc.getAttribute('data-active-panel'), view: rc.getAttribute('data-active-view'), viewBox: rc.getAttribute('data-viewbox') }; }, go: go, peek: peek };
   }
   function boot() { [].forEach.call(document.querySelectorAll('.rc'), init); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
