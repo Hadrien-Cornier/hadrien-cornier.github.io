@@ -18,6 +18,7 @@ up, right, down, left; every other order gives the same run.
 """
 
 import base64
+import json
 import re
 import sys
 from pathlib import Path
@@ -145,7 +146,6 @@ def report(history):
 CHALK = {"chalk": "#f4f1e8", "dim": "#c3c9bd", "faint": "#6f7d75", "red": "#ff9f88", "blue": "#93d4ff",
          "green": "#a8e2a0", "yellow": "#ffe17c", "pink": "#ff93b8"}
 CELL = 30
-SUB = '<tspan baseline-shift="sub" font-size="75%">π</tspan>'
 
 
 def num(x, fmt=".0f"):
@@ -164,6 +164,52 @@ def stroke(color):
 def text(x, y, body, color="chalk", size=15, anchor="start", extra=""):
     a = "" if anchor == "start" else f' text-anchor="{anchor}"'
     return f'<text x="{x:g}" y="{y:g}" {fill(color)} font-size="{size}"{a}{extra}>{body}</text>'
+
+
+def sub(body):
+    return f'<tspan baseline-shift="-20%" font-size="72%">{body}</tspan>'
+
+
+def sup(body):
+    return f'<tspan baseline-shift="38%" font-size="72%">{body}</tspan>'
+
+
+def tint(body, color):
+    return f'<tspan {fill(color)}>{body}</tspan>'
+
+
+# Symbols. Values are blue and policies green on every panel, the colors of evaluation and improvement.
+V_PI, Q_PI = "v" + sub("π"), "q" + sub("π")
+
+
+def eq(x, y, pieces, size=19):
+    """An equation as one line of text, each piece in its own color. The panels place labels under the pieces
+    at x + size * (offset in em), with the offsets measured in the chalk font."""
+    body = "".join(f'<tspan {fill(color)}>{markup}</tspan>' for markup, color in pieces)
+    return text(x, y, body, "chalk", size)
+
+
+def line(x1, y1, x2, y2, color="dim", width=1.2, extra=""):
+    return f'<path d="M{x1:g} {y1:g}L{x2:g} {y2:g}" {stroke(color)} stroke-width="{width}"{extra}/>'
+
+
+def under(x, y, label, color, size=12, anchor="middle", drop=22, start=6):
+    """A short chalk tick under an equation term at (x, y), and the term's name under it."""
+    lx = x if anchor == "middle" else x + 18 if anchor == "end" else x - 18
+    return [line(x, y + start, x, y + drop - 9, color, 1, ' stroke-opacity=".75"'), text(lx, y + drop + 3, label, color, size, anchor)]
+
+
+def big_sum(x, y, below, color="chalk", size=24):
+    """A summation sign with its index under it."""
+    return [text(x, y + 3, "Σ", color, size, "middle"), text(x, y + 17, below, "dim", 11, "middle")]
+
+
+def check(x, y, color="green"):
+    return f'<path d="M{x - 8:g} {y - 4:g}l6 7l11 -14" fill="none" {stroke(color)} stroke-width="2.6"/>'
+
+
+def cross(x, y, color="red"):
+    return f'<path d="M{x - 6:g} {y - 9:g}l12 12M{x + 6:g} {y - 9:g}l-12 12" fill="none" {stroke(color)} stroke-width="2.6"/>'
 
 
 def badness(v):
@@ -220,129 +266,270 @@ def route_path(x0, y0, moves, color, dash="", shift=0):
     return f'<path d="M{pts}" fill="none" {stroke(color)} stroke-width="3" stroke-opacity=".9"{d}/>'
 
 
-def panel(name, x, y, title):
-    return [f'<g class="rc-panel" data-panel="{name}"><rect x="{x}" y="{y}" width="400" height="280" rx="6" fill="none" stroke="#b6baaf"/>',
+def panel(name, x, y, h, title):
+    return [f'<g class="rc-panel" data-panel="{name}"><rect x="{x}" y="{y}" width="400" height="{h}" rx="6" fill="none" stroke="#b6baaf"/>',
             f'<text class="rls-panel-title" x="{x + 14}" y="{y + 28}" fill="#ffe17c" font-size="16">{title}</text>']
 
 
-def canvas(history):
+def facts(history):
+    """The numbers the panels draw, all from the policy iteration run."""
     rnd_v = history[0][1]
-    m1, v1 = history[1]
-    final_moves, final_v = history[-1]
-    detour_moves = next(m for m, v in history[1:] if route(m) and len(route(m)) == 18)
-    stuck = {s for s in STATES if abs(v1[INDEX[s]] + 100) < 1e-6}
-    out = ['<defs>',
-           f'<marker id="gpi-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" {stroke("chalk")} stroke-width="1.8"/></marker>',
-           f'<marker id="gpi-ar" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" {stroke("red")} stroke-width="1.8"/></marker>',
-           f'<marker id="gpi-ab" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" {stroke("blue")} stroke-width="1.6"/></marker>',
-           f'<marker id="gpi-ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" {stroke("green")} stroke-width="1.6"/></marker>',
-           f'<marker id="gpi-ay" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" {stroke("yellow")} stroke-width="1.6"/></marker>',
-           '</defs>', '<g font-size="15">']
+    s = INDEX[START]
+    return {
+        "history": history,
+        "random_v": rnd_v,
+        "q_start": dict(zip(NAMES, action_values(rnd_v)[s])),
+        "detour": next(m for m, v in history[1:] if route(m) and len(route(m)) == 18),
+        "stuck": {c for c in STATES if abs(history[1][1][INDEX[c]] + 100) < 1e-6},
+        "sweeps": value_iteration(history[-1][1])[0],
+    }
 
-    # 1. The random walker and its values.
-    x, y = 10, 10
-    gx, gy = x + 26, y + 48
-    out += panel("walker", x, y, "1. How good is a random walker?")
-    out += grid(gx, gy, rnd_v, None, spread=True)
+
+def draw_walker(x, y, h, f):
+    """1. Policy evaluation: the random walker's values and the equation they solve."""
+    rnd = f["random_v"]
+    out = panel("walker", x, y, h, "1. How good is a random walker?")
+    out.append(eq(x + 70, y + 60, [("π(a | s)", "green"), (" = 1/4 for each move a", "chalk")], 19))
+    out += under(x + 70 + 19 * 1.37, y + 60, "policy: chance of move a in cell s", "green")
+    gx, gy = x + 26, y + 100
+    out += grid(gx, gy, rnd, None, spread=True)
     out.append(f'<rect x="{gx + 11 * CELL + 2}" y="{gy + 2 * CELL + 2}" width="{CELL - 4}" height="{CELL - 4}" fill="none" {stroke("yellow")} stroke-width="2"/>')
-    out.append(text(gx + 6 * CELL, gy - 6, "every move with chance 1/4", "dim", 14, "middle"))
-    out.append(text(gx, gy + 4 * CELL + 24, f"S: v = {num(rnd_v[INDEX[START]])}", "red", 16))
-    out.append(text(gx + 360, gy + 4 * CELL + 24, f"above G: v = {num(rnd_v[INDEX[(2, 11)]])}", "yellow", 16, "end"))
-    out.append(text(gx, gy + 4 * CELL + 50, "v(s): the average discounted return from s", "chalk", 15))
-    out.append(text(gx, gy + 4 * CELL + 72, f"redder = worse, from {num(rnd_v.max())} to {num(rnd_v.min())}", "dim", 14))
+    out.append(text(gx, gy + 4 * CELL + 24, f"{V_PI}(S) = {num(rnd[INDEX[START]])}", "red", 17))
+    out.append(text(gx + 360, gy + 4 * CELL + 24, f"above G: {num(rnd[INDEX[(2, 11)]])}", "yellow", 17, "end"))
+    out.append(text(x + 200, gy + 4 * CELL + 44, "redder = worse", "dim", 13, "middle"))
+    # The Bellman expectation equation, 18.1 em wide.
+    ex, ey, size = x + 28, y + 314, 19
+    out.append(eq(ex, ey, [(V_PI + "(s)", "blue"), (" = ", "chalk"), ("Σ", "chalk"), (" π(a | s)", "green"), (" Σ", "chalk"),
+                           (" p(s′, r | s, a)", "chalk"), (" [ r + γ ", "chalk"), (V_PI + "(s′)", "blue"), (" ]", "chalk")], size))
+    out.append(text(ex + size * 3.18, ey + 15, "a", "dim", 11, "middle"))
+    out.append(text(ex + size * 7.02, ey + 15, "s′, r", "dim", 11, "middle"))
+    out += under(ex + size * 0.96, ey, "value function", "blue", anchor="start", drop=26)
+    out += under(ex + size * 9.90, ey, "model: where a lands", "dim", drop=26)
+    out += under(ex + size * 16.33, ey, "next cell's value", "blue", anchor="end", drop=26)
+    out.append(text(x + 120, ey + 54, "r: reward", "dim", 13, "middle"))
+    out.append(text(x + 270, ey + 54, "γ = 0.99: discount", "dim", 13, "middle"))
+    out.append(text(x + 200, ey + 82, "one equation per cell: 37 equations, 37 unknowns", "yellow", 15, "middle"))
     out.append("</g>")
+    return out
 
-    # 2. One greedy step.
-    x, y = 430, 10
-    gx, gy = x + 26, y + 48
-    out += panel("greedy", x, y, "2. Act greedily on those numbers")
-    out += grid(gx, gy, v1, m1, stuck=stuck)
+
+def draw_greedy(x, y, h, f):
+    """2. Policy improvement: the action value, the greedy policy and one greedy step on the grid."""
+    rnd, (m1, v1) = f["random_v"], f["history"][1]
+    out = panel("greedy", x, y, h, "2. Act greedily on those numbers")
+    # The action value, 15.2 em wide.
+    ex, ey, size = x + 56, y + 66, 19
+    out.append(eq(ex, ey, [(Q_PI + "(s, a)", "blue"), (" = ", "chalk"), ("Σ", "chalk"), (" p(s′, r | s, a) [ r + γ ", "chalk"),
+                           (V_PI + "(s′)", "blue"), (" ]", "chalk")], size))
+    out.append(text(ex + size * 4.10, ey + 15, "s′, r", "dim", 11, "middle"))
+    out += under(ex + size * 1.42, ey, "action value", "blue", drop=26)
+    out.append(text(ex + size * 9.6, ey + 29, "move a once, then follow π", "dim", 12, "middle"))
+    # The greedy policy, 9 em wide.
+    ex, ey, size = x + 110, y + 138, 20
+    out.append(eq(ex, ey, [("π′(s)", "green"), (" = ", "chalk"), ("argmax", "chalk"), (" ", "chalk"), (Q_PI + "(s, a)", "blue")], size))
+    out.append(text(ex + size * 4.36, ey + 15, "a", "dim", 11, "middle"))
+    out += under(ex + size * 1.01, ey, "new policy", "green", drop=26)
+    out.append(text(ex + size * 7.55, ey + 29, "the best move in each cell", "dim", 12, "middle"))
+    gx, gy = x + 26, y + 200
+    out += grid(gx, gy, v1, m1, stuck=f["stuck"])
     out.append(f'<path d="M{gx + 4:g} {gy - 3:g}h{CELL - 8}" {stroke("red")} stroke-width="3"/>')
-    out.append(text(gx + 3 * CELL + 6, gy - 6, "← red cells end here, against the wall", "red", 14))
-    out.append(text(gx, gy + 4 * CELL + 24, f"S: {num(rnd_v[INDEX[START]])} → {num(v1[INDEX[START]])}", "yellow", 16))
-    out.append(text(gx + 360, gy + 4 * CELL + 24, "no cell got worse", "green", 16, "end"))
-    out.append(text(gx, gy + 4 * CELL + 50, f"red: stuck, −1 each step forever = −100", "red", 15))
-    out.append(text(gx, gy + 4 * CELL + 72, "white: reaches G, some by the top row", "dim", 14))
+    out.append(text(gx + 3 * CELL + 6, gy - 6, "← the red arrows end here, at the wall", "red", 13))
+    out.append(text(gx, gy + 4 * CELL + 24, f"S: {num(rnd[INDEX[START]])} → {num(v1[INDEX[START]])}", "yellow", 17))
+    out.append(text(gx + 360, gy + 4 * CELL + 24, "no cell got worse", "green", 17, "end"))
+    out.append(text(gx, gy + 4 * CELL + 48, f"red: −1 a step forever = −1/(1 − γ) = {num(-1 / (1 - GAMMA))}", "red", 14))
     out.append("</g>")
+    return out
 
-    # 3. Repeat until the greedy step changes nothing.
-    x, y = 10, 305
-    gx, gy = x + 26, y + 44
-    out += panel("rounds", x, y, "3. Repeat until nothing changes")
-    gy += 8
-    out += grid(gx, gy, final_v, final_moves, arrows="dim")
-    out.append(text(gx + 6 * CELL, gy - 6, "arrows: the final policy, round 6", "dim", 14, "middle"))
-    out.append(route_path(gx, gy, detour_moves, "yellow", "6 6", shift=-6))
+
+def draw_theorem(x, y, h, f):
+    """3. Why the greedy step never hurts: at S the best action value beats the average, which is the value."""
+    q, v0 = f["q_start"], f["random_v"][INDEX[START]]
+    v1 = f["history"][1][1][INDEX[START]]
+    out = panel("never-worse", x, y, h, "3. Why greedy never hurts")
+    out.append(text(x + 200, y + 58, f"at S, the four moves under the random walker: {Q_PI}(S, a)", "dim", 14, "middle"))
+    lo, hi, x0, x1, ly = -1185.0, -985.0, x + 26, x + 374, y + 140
+
+    def at(u):
+        return x0 + (u - lo) / (hi - lo) * (x1 - x0)
+    out.append(line(x0, ly, x1, ly, "chalk", 1.6))
+    for t in range(-1175, -985, 25):
+        out.append(line(at(t), ly - 4, at(t), ly + 4, "faint", 1.2))
+    for name, color, label in (("R", "red", "→ cliff"), ("D", "dim", "↓ ← walls"), ("U", "green", "↑ up")):
+        px = at(q[name])
+        out.append(f'<circle cx="{px:.1f}" cy="{ly}" r="5" {fill(color)}/>')
+        out.append(text(px, ly - 14, num(q[name]), color, 15, "middle"))
+        out.append(text(px, ly - 34, label, color, 14, "middle"))
+    out.append(f'<circle cx="{at(q["U"]):.1f}" cy="{ly}" r="11" fill="none" {stroke("green")} stroke-width="1.8"/>')
+    out.append(text(at(q["U"]), ly + 32, "max", "green", 15, "middle"))
+    ax = at(v0)
+    out.append(line(ax, ly - 10, ax, ly + 30, "blue", 2.2))
+    out.append(text(ax, ly + 48, f"average = {V_PI}(S) = {num(v0)}", "blue", 15, "middle"))
+    out.append(text(x + 200, ly + 80, "max ≥ average", "yellow", 19, "middle"))
+    ey = y + 266
+    out.append(eq(x + 128, ey, [(Q_PI + "(s, ", "blue"), ("π′(s)", "green"), (") ≥ " + V_PI + "(s)", "blue")], 20))
+    out.append(text(x + 200, ey + 21, "one greedy move, then π: never worse", "dim", 12, "middle"))
+    out.append(text(x + 116, ey + 48, "⇓", "yellow", 20, "middle"))
+    out.append(text(x + 132, ey + 47, "policy improvement theorem", "yellow", 14))
+    out.append(text(x + 200, ey + 80, f"v{sub('π′')}(s) ≥ {V_PI}(s)", "blue", 20, "middle"))
+    out.append(text(x + 200, ey + 101, "greedy moves every time: never worse", "dim", 12, "middle"))
+    sy = ey + 140
+    out.append(text(x + 14, sy, "at S:", "dim", 15))
+    for cx, value, label in ((x + 110, v0, f"{V_PI}(S)"), (x + 230, q["U"], f"{Q_PI}(S, up)"), (x + 340, v1, f"v{sub('π′')}(S)")):
+        out.append(text(cx, sy, num(value), "chalk", 18, "middle"))
+        out.append(text(cx, sy + 21, label, "blue", 12, "middle"))
+    for cx in (x + 170, x + 290):
+        out.append(text(cx, sy, "≤", "yellow", 18, "middle"))
+    out.append("</g>")
+    return out
+
+
+def draw_rounds(x, y, h, f):
+    """4. Policy iteration: the chain of rounds, the routes, v(S) by round and the stop condition."""
+    history = f["history"]
+    final_moves = history[-1][0]
+    out = panel("rounds", x, y, h, "4. Repeat until nothing changes")
+    cy, step = y + 64, 56
+    items = [("π" + sub("0"), "green"), (V_PI + sub("0"), "blue"), ("π" + sub("1"), "green"), (V_PI + sub("1"), "blue"),
+             ("⋯", "dim"), ("π*", "green"), ("v*", "blue")]
+    for k, (body, color) in enumerate(items):
+        out.append(text(x + 30 + k * step, cy, body, color, 20, "middle"))
+        if k < len(items) - 1:
+            ax = x + 30 + k * step
+            col, letter = ("blue", "E") if color == "green" else ("green", "I")
+            out.append(f'<path d="M{ax + 16} {cy - 6}H{ax + step - 16}" {stroke(col)} stroke-width="1.6" marker-end="url(#gpi-a{col[0]})"/>')
+            out.append(text(ax + step / 2, cy - 14, letter, col, 13, "middle"))
+    out.append(text(x + 120, cy + 26, f"{tint('E', 'blue')}: evaluate (panel 1)", "dim", 13, "middle"))
+    out.append(text(x + 290, cy + 26, f"{tint('I', 'green')}: improve (panel 2)", "dim", 13, "middle"))
+    gx, gy = x + 26, y + 112
+    out += grid(gx, gy, history[-1][1], final_moves, arrows="dim")
+    out.append(route_path(gx, gy, f["detour"], "yellow", "6 6", shift=-6))
     out.append(route_path(gx, gy, final_moves, "green"))
-    cols = [str(k) for k in range(len(history))]
-    vals = [num(v[INDEX[START]], ".0f" if abs(v[INDEX[START]]) >= 99 else ".1f") for _, v in history]
-    vals[-1] = num(history[-1][1][INDEX[START]], ".2f")
-    tx, ty, w = gx + 54, gy + 4 * CELL + 22, 44
-    out.append(text(gx, ty, "round", "dim", 14))
-    out.append(text(gx, ty + 22, "v(S)", "dim", 14))
-    for k, (c, v) in enumerate(zip(cols, vals)):
-        color = "green" if k == len(cols) - 1 else ("yellow" if k == 4 else "chalk")
-        out.append(text(tx + k * w, ty, c, "dim", 14, "middle"))
-        out.append(text(tx + k * w, ty + 22, v, color, 15, "middle"))
-    out.append(text(gx, ty + 48, "yellow, round 4: 17 steps", "yellow", 14))
-    out.append(text(gx + 360, ty + 48, "green, round 6: 13 steps", "green", 14, "end"))
+    out.append(text(gx, gy + 4 * CELL + 22, "round 4: 17 steps", "yellow", 14))
+    out.append(text(gx + 360, gy + 4 * CELL + 22, "round 6: 13 steps", "green", 14, "end"))
+    # v(S) by round, on a log scale of how negative it is.
+    top, span, px0, pstep = y + 292, 58, x + 86, 46
+
+    def py(v):
+        return top + (np.log10(-v) - 1) / 2 * span
+    out.append(text(x + 14, top - 12, f"{V_PI}(S)", "blue", 15))
+    for t in (-10, -100, -1000):
+        out.append(text(px0 - 22, py(t) + 4, num(t), "faint", 11, "end"))
+        out.append(line(px0 - 16, py(t), px0 + 6 * pstep + 8, py(t), "faint", 0.8, ' stroke-dasharray="2 4"'))
+    pts = [(px0 + k * pstep, py(v[INDEX[START]])) for k, (_, v) in enumerate(history)]
+    d = f"M{pts[0][0]:g} {pts[0][1]:.1f}" + "".join(f"H{px:g}V{pyv:.1f}" for px, pyv in pts[1:])
+    out.append(f'<path d="{d}" fill="none" {stroke("blue")} stroke-width="2"/>')
+    labels = {0: (".0f", 10, "start"), 1: (".0f", 8, "start"), 4: (".1f", 0, "middle"), 6: (".2f", 0, "middle")}
+    for k, (px, pyv) in enumerate(pts):
+        color = "green" if k == len(pts) - 1 else "blue"
+        out.append(f'<circle cx="{px:g}" cy="{pyv:.1f}" r="3.5" {fill(color)}/>')
+        out.append(text(px, top + span + 24, str(k), "dim", 12, "middle"))
+        if k in labels:
+            fmt, dx, anchor = labels[k]
+            out.append(text(px + dx, pyv - 9, num(history[k][1][INDEX[START]], fmt), color, 13, anchor))
+    out.append(text(x + 14, top + span + 24, "round", "dim", 12))
+    ex, ey, size = x + 124, y + 430, 20
+    out.append(text(x + 200, ey - 30, "a greedy step changes nothing, so in every cell", "dim", 13, "middle"))
+    out.append(eq(ex, ey, [(V_PI + "(s)", "blue"), (" = ", "chalk"), ("max", "green"), (" ", "chalk"), (Q_PI + "(s, a)", "blue")], size))
+    out.append(text(ex + size * 3.65, ey + 15, "a", "dim", 11, "middle"))
+    out.append(text(x + 200, ey + 34, "Bellman optimality: only v* solves it, so π = π*", "yellow", 14, "middle"))
     out.append("</g>")
+    return out
 
-    # 4. The loop diagram (Sutton and Barto, Section 4.6).
-    x, y = 430, 305
-    out += panel("loop", x, y, "4. Two processes (book, Ch. 4)")
-    px, vx, cy = x + 100, x + 300, y + 122
-    out.append(text(px, cy + 10, "π", "chalk", 34, "middle"))
-    out.append(text(vx, cy + 10, "V", "chalk", 34, "middle"))
-    mid = (px + vx) / 2
-    out.append(f'<path d="M{px + 24} {cy - 16} Q{mid} {cy - 70} {vx - 24} {cy - 16}" fill="none" {stroke("blue")} stroke-width="2.4" marker-end="url(#gpi-ab)"/>')
-    out.append(f'<path d="M{vx - 24} {cy + 16} Q{mid} {cy + 70} {px + 24} {cy + 16}" fill="none" {stroke("green")} stroke-width="2.4" marker-end="url(#gpi-ag)"/>')
-    out.append(text(mid, cy - 54, f"evaluation (panel 1): V → v{SUB}", "blue", 17, "middle"))
-    out.append(text(mid, cy + 68, "improvement (panel 2): π → greedy(V)", "green", 17, "middle"))
-    for k in range(3):
-        out.append(f'<circle cx="{mid}" cy="{cy + 84 + 9 * k}" r="1.8" {fill("dim")}/>')
-    out.append(text(px, y + 244, "π*", "yellow", 22, "middle"))
-    out.append(text(vx, y + 244, "v*", "yellow", 22, "middle"))
-    out.append(f'<path d="M{px + 24} {y + 237}H{vx - 24}" {stroke("yellow")} stroke-width="1.8" marker-end="url(#gpi-ay)" marker-start="url(#gpi-ay)"/>')
-    out.append(text(mid, y + 266, "until neither changes", "dim", 14, "middle"))
+
+def draw_sweeps(x, y, h, f):
+    """5. Evaluation can stop early: policy iteration, value iteration and anything between, on one time line."""
+    out = panel("sweeps", x, y, h, "5. Evaluation can stop early")
+    out.append(text(x + 322, y + 58, "evaluate", "blue", 14, "end"))
+    out.append(text(x + 386, y + 58, "improve", "green", 14, "end"))
+
+    def bars(x0, y0, lengths):
+        res, cx = [], x0
+        for n in lengths:
+            if n:
+                res.append(line(cx, y0, cx + n, y0, "blue", 7, ' stroke-linecap="butt"'))
+            res.append(line(cx + n + 3, y0 - 9, cx + n + 3, y0 + 9, "green", 2.6))
+            cx += n + 9
+        return res, cx
+    rows = [("policy iteration", [62, 62, 62, 62], "evaluate to the end, then improve: 6 rounds"),
+            ("value iteration", [11] * f["sweeps"], f"one sweep, then improve: {f['sweeps']} sweeps on the cliff grid"),
+            ("anything between", [34, 6, 52, 18, 3, 26, 11, 40], "a few sweeps, one cell, one sample ...")]
+    for k, (name, lengths, caption) in enumerate(rows):
+        ry = y + 60 + 74 * k
+        out.append(text(x + 14, ry, name, "chalk", 16))
+        res, end = bars(x + 16, ry + 22, lengths)
+        out += res
+        if k == 0:
+            out.append(text(end + 6, ry + 27, "⋯", "dim", 16))
+        out.append(text(x + 14, ry + 50, caption, "dim", 13))
+    # The value iteration update, 16.5 em wide.
+    ex, ey, size = x + 52, y + 300, 18
+    out.append(eq(ex, ey, [(f"v{sub('k+1')}(s)", "blue"), (" = ", "chalk"), ("max", "green"), (" Σ", "chalk"),
+                           (" p(s′, r | s, a) [ r + γ ", "chalk"), (f"v{sub('k')}(s′)", "blue"), (" ]", "chalk")], size))
+    out.append(text(ex + size * 4.18, ey + 15, "a", "dim", 11, "middle"))
+    out.append(text(ex + size * 5.50, ey + 15, "s′, r", "dim", 11, "middle"))
+    out += under(ex + size * 4.18, ey, "improve: best move", "green", drop=34, start=20)
+    out += under(ex + size * 10.79, ey, "evaluate: one sweep", "blue", drop=34)
+    out.append(text(x + 200, ey + 64, "the max replaces the average over π(a | s) in panel 1", "dim", 13, "middle"))
+    out.append(text(x + 200, ey + 92, f"from v = 0, exact v* after {f['sweeps']} sweeps", "yellow", 15, "middle"))
     out.append("</g>")
+    return out
 
-    # 5. The two-lines diagram (Sutton and Barto, Section 4.6).
-    x, y = 10, 600
-    out += panel("lines", x, y, "5. Two goals pull apart (book, Ch. 4)")
-    top = (x + 200, y + 84)
-    left_end, right_end = (x + 74, y + 238), (x + 326, y + 238)
 
-    def on(end, t):
-        return (top[0] + (end[0] - top[0]) * t, top[1] + (end[1] - top[1]) * t)
-    out.append(f'<path d="M{left_end[0]} {left_end[1]}L{top[0]} {top[1]}" {stroke("blue")} stroke-width="2.4"/>')
-    out.append(f'<path d="M{right_end[0]} {right_end[1]}L{top[0]} {top[1]}" {stroke("green")} stroke-width="2.4"/>')
-    out.append(text(x + 18, y + 258, f"v = v{SUB}", "blue", 16))  # the subscript must clear the view edge at y + 272
-    out.append(text(x + 386, y + 258, "π = greedy(v)", "green", 16, "end"))
-    out.append(text(top[0], top[1] - 10, "v*, π*", "yellow", 18, "middle"))
-    out.append(text(top[0], y + 52, "each point: a value table v and a policy π", "dim", 14, "middle"))
-    zig = [(x + 200, y + 232)]
-    for t in (0.86, 0.72, 0.55, 0.42, 0.28, 0.18, 0.1):
-        zig.append(on(left_end if len(zig) % 2 else right_end, t))
-    out.append(text(zig[0][0], y + 254, "start: v, π", "chalk", 14, "middle"))
-    for k, (a, b) in enumerate(zip(zig, zig[1:])):
-        color, marker = ("blue", "gpi-ab") if k % 2 == 0 else ("green", "gpi-ag")
-        out.append(f'<path d="M{a[0]:.1f} {a[1]:.1f}L{b[0]:.1f} {b[1]:.1f}" {stroke(color)} stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#{marker})"/>')
-    out.append(text(x + 16, y + 106, "evaluate: jump", "blue", 14))
-    out.append(text(x + 16, y + 124, "to the blue line", "blue", 14))
-    out.append(text(x + 384, y + 106, "improve: jump", "green", 14, "end"))
-    out.append(text(x + 384, y + 124, "to the green line", "green", 14, "end"))
+def spiral(cx, cy, radii, squash):
+    """Half turns that alternate over the top (evaluation, blue) and under the bottom (improvement, green),
+    each closer to the center. Every half turn is half an ellipse whose ends lie on the horizontal axis."""
+    out = []
+    for k, (a, b) in enumerate(zip(radii, radii[1:])):
+        top = k % 2 == 0
+        x_from, x_to = (cx - a, cx + b) if top else (cx + a, cx - b)
+        rx = (a + b) / 2
+        color = "blue" if top else "green"
+        out.append(f'<path d="M{x_from:.1f} {cy}A{rx:.1f} {rx * squash:.1f} 0 0 1 {x_to:.1f} {cy}" fill="none" {stroke(color)} '
+                   f'stroke-width="{2.6 - 0.2 * k:.2f}" marker-end="url(#gpi-a{color[0]})"/>')
+    return out
+
+
+def draw_gpi(x, y, h, f):
+    """6. Generalized policy iteration: two processes that pull toward two conditions, which hold together only at the optimum."""
+    out = panel("gpi", x, y, h, "6. GPI: two processes, one loop")
+    cx, cy, squash = x + 200, y + 150, 0.62
+    radii = [150, 112, 82, 60, 42, 0]
+    out += spiral(cx, cy, radii, squash)
+    out.append(text(x + 28, cy + 8, "π", "green", 28, "middle"))
+    out.append(text(x + 28, cy + 26, "policy", "green", 12, "middle"))
+    out.append(text(x + 360, cy + 8, "v", "blue", 28, "middle"))
+    out.append(text(x + 392, cy + 26, "value function", "blue", 12, "end"))
+    rx0, rx1 = (radii[0] + radii[1]) / 2, (radii[1] + radii[2]) / 2
+    out.append(text(cx + (radii[1] - radii[0]) / 2, cy - rx0 * squash - 12, f"evaluate:  v → {V_PI}", "blue", 17, "middle"))
+    out.append(text(cx + (radii[1] - radii[2]) / 2, cy + rx1 * squash + 26, "improve:  π → greedy(v)", "green", 17, "middle"))
+    out.append(f'<circle cx="{cx}" cy="{cy}" r="4.5" {fill("yellow")}/>')
+    out.append(text(cx, cy + 22, "π*, v*", "yellow", 17, "middle"))
+    ty, c1, c2 = y + 272, x + 196, x + 322
+    out.append(text(c1, ty, f"v = {V_PI}", "blue", 17, "middle"))
+    out.append(text(c1, ty + 21, "values fit π", "blue", 12, "middle"))
+    out.append(text(c2, ty, "π = greedy(v)", "green", 17, "middle"))
+    out.append(text(c2, ty + 21, "π acts best on v", "green", 12, "middle"))
+    out.append(line(x + 12, ty + 30, x + 388, ty + 30, "faint", 1))
+    rows = [("after evaluate", "chalk", (True, False)), ("after improve", "chalk", (False, True)), ("at π*, v*", "yellow", (True, True))]
+    for k, (name, color, marks) in enumerate(rows):
+        ry = ty + 56 + 28 * k
+        out.append(text(x + 14, ry, name, color, 15))
+        for col, ok in zip((c1, c2), marks):
+            out.append(check(col, ry - 4) if ok else cross(col, ry - 4))
+    out.append(text(x + 200, ty + 136, "each step breaks the other's condition, until the optimum", "dim", 13, "middle"))
     out.append("</g>")
+    return out
 
-    # 6. Who evaluates, who improves.
-    x, y = 430, 600
-    out += panel("family", x, y, "6. Same loop, different parts")
-    c1, c2, c3 = x + 14, x + 138, x + 270
-    out.append(text(c2, y + 56, "evaluate", "blue", 16))
-    out.append(text(c3, y + 56, "improve", "green", 16))
-    out.append(f'<path d="M{x + 12} {y + 64}H{x + 388}" {stroke("faint")} stroke-width="1"/>')
+
+def draw_family(x, y, h, f):
+    """7. The same two processes inside other methods, and AlphaGo Zero's loss split into them."""
+    out = panel("family", x, y, h, "7. Same loop, different parts")
+    c1, c2, c3 = x + 14, x + 136, x + 268
+    out.append(text(c2, y + 58, "evaluate", "blue", 16))
+    out.append(text(c3, y + 58, "improve", "green", 16))
+    out.append(line(x + 12, y + 66, x + 388, y + 66, "faint", 1))
     rows = [
-        ("policy iteration", f"solve for v{SUB}", "greedy, all cells"),
+        ("policy iteration", f"solve for {V_PI}", "greedy, all cells"),
         ("value iteration", "one sweep", "max in the sweep"),
         ("Monte Carlo", "average returns", "greedy per episode"),
         ("Sarsa", "one TD step on Q", "ε-greedy on Q"),
@@ -351,61 +538,93 @@ def canvas(history):
         ("AlphaGo Zero", "self-play winner z", "tree search (MCTS)"),
     ]
     for k, (name, ev, im) in enumerate(rows):
-        ry = y + 88 + 27 * k
-        color = "yellow" if name == "AlphaGo Zero" else "chalk"
-        out.append(text(c1, ry, name, color, 15))
+        ry = y + 90 + 27 * k
+        out.append(text(c1, ry, name, "yellow" if name == "AlphaGo Zero" else "chalk", 15))
         out.append(text(c2, ry, ev, "dim", 14))
         out.append(text(c3, ry, im, "dim", 14))
-    out.append("</g>")
+    # AlphaGo Zero's loss, 11.4 em wide.
+    ex, ey, size = x + 86, y + 318, 20
+    out.append(text(x + 14, ey - 40, "AlphaGo Zero's training loss", "yellow", 15))
+    out.append(eq(ex, ey, [("l = ", "chalk"), (f"(z − v){sup('2')}", "blue"), (" − ", "chalk"), (f"π{sup('T')} log p", "green"),
+                           (f" + c‖θ‖{sup('2')}", "dim")], size))
+    out += under(ex + size * 2.66, ey, "evaluate: v → winner z", "blue")
+    out += under(ex + size * 6.54, ey, "improve: p → search π", "green", drop=40)
+    out += under(ex + size * 10.0, ey, "regularizer", "dim")
+    out.append(text(x + 200, ey + 70, "p, v: the network's move probabilities and value", "dim", 12, "middle"))
     out.append("</g>")
     return out
 
 
-VIEWS = '{"walker": [16, 38, 388, 244], "greedy": [436, 38, 388, 244], "rounds": [16, 333, 388, 244], "loop": [436, 333, 388, 244], "lines": [16, 628, 388, 244], "family": [436, 628, 388, 244]}'
+# The board: panels in text order, two to a row, the last one centered.
+PANELS = [("walker", draw_walker), ("greedy", draw_greedy), ("never-worse", draw_theorem), ("rounds", draw_rounds),
+          ("sweeps", draw_sweeps), ("gpi", draw_gpi), ("family", draw_family)]
+ROW_H = [410, 480, 420, 400]
+GAP = 15
+
+
+def layout():
+    """Each panel's name, drawing function, top left corner and height."""
+    placed, y = [], 10
+    for row, h in enumerate(ROW_H):
+        pair = PANELS[2 * row:2 * row + 2]
+        xs = (10, 430) if len(pair) == 2 else (220,)
+        placed += [(name, draw, px, y, h) for (name, draw), px in zip(pair, xs)]
+        y += h + GAP
+    return placed, y - GAP + 10
+
+
+def markers():
+    out = ['<defs>', f'<marker id="gpi-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" {stroke("chalk")} stroke-width="1.8"/></marker>',
+           f'<marker id="gpi-ar" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" {stroke("red")} stroke-width="1.8"/></marker>']
+    for color in ("blue", "green", "yellow"):
+        out.append(f'<marker id="gpi-a{color[0]}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" {stroke(color)} stroke-width="1.6"/></marker>')
+    return out + ['</defs>']
+
+
+def canvas(history):
+    f = facts(history)
+    out = markers() + ['<g font-size="15">']
+    for name, draw, x, y, h in layout()[0]:
+        out += draw(x, y, h, f)
+    return out + ["</g>"]
+
+
+def views():
+    """The camera view of each panel: the panel without its title row, which the bar above the board shows."""
+    return json.dumps({name: [x + 6, y + 36, 388, h - 42] for name, _, x, y, h in layout()[0]})
+
+
 TITLE = "Generalized policy iteration on a blackboard"
-DESC = ("Six panels. 1: a random walker's values on the Part 1 cliff grid, −482 to −1072. 2: one greedy step; no cell gets worse. "
-        "3: six rounds of policy iteration; the start value climbs from −1072 to −12.25. 4: the book's loop between evaluation "
-        "and improvement, ending at π* and v*. 5: the book's two-lines diagram. 6: seven methods and what evaluates and improves in each.")
+DESC = ("Seven panels on the Part 1 cliff grid. 1: a random walker's values, −1072 at the start, and the Bellman expectation "
+        "equation. 2: the greedy policy and one greedy step; no cell gets worse. 3: at the start the best move, −1002, beats the "
+        "average, −1072. 4: six rounds of policy iteration, −1072 to −12.25. 5: value iteration, 14 sweeps. 6: a spiral between "
+        "the policy and the value function that closes in on the optimum. 7: what evaluates and what improves in seven methods.")
 
 
 def canvas_svg(history):
     body = "\n".join(canvas(history))
-    return (f'<svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 890" data-whole="0 0 840 890" '
-            f"data-views='{VIEWS}' role=\"img\" aria-labelledby=\"gpi-title gpi-desc\">"
+    _, height = layout()
+    return (f'<svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 {height}" data-whole="0 0 840 {height}" '
+            f"data-views='{views()}' role=\"img\" aria-labelledby=\"gpi-title gpi-desc\">"
             f'<title id="gpi-title">{TITLE}</title><desc id="gpi-desc">{DESC}</desc>\n{body}\n</svg>')
 
 
-def without_panel(markup, name):
-    """Remove one panel group, matching its closing tag through any nested groups."""
-    start = markup.index(f'<g class="rc-panel" data-panel="{name}"')
-    depth, i = 0, start
-    while True:
-        opening, closing = markup.find("<g", i), markup.find("</g>", i)
-        if opening != -1 and opening < closing:
-            depth, i = depth + 1, opening + 2
-        else:
-            depth, i = depth - 1, closing + 4
-            if depth == 0:
-                return markup[:start] + markup[i:]
-
-
 def thumbnail_svg(history):
-    """Panels 3 and 4 as a 720 x 424 card, with the colors and the font written in."""
+    """Panels 4 and 6 side by side as a 720 x 424 card, with the colors and the font written in."""
+    f, h = facts(history), max(ROW_H[1], ROW_H[2])
     font = base64.b64encode(FONT.read_bytes()).decode()
-    inner = "\n".join(canvas(history))
-    for name in ("walker", "greedy", "lines", "family"):
-        inner = without_panel(inner, name)
-    for ref in (" (panel 1)", " (panel 2)"):  # the card has no panels 1 and 2
-        inner = inner.replace(ref, "")
+    inner = "\n".join(markers() + draw_rounds(10, 10, h, f) + draw_gpi(430, 10, h, f))
+    inner = inner.replace(" (panel 1)", "").replace(" (panel 2)", "")  # the card has no panels 1 and 2
     inner = inner.replace('stroke="#b6baaf"', 'stroke="#6f7d75" stroke-width="1.5" stroke-dasharray="2 5"')
+    vh = 840 * 424 / 720
     alt = ("Two blackboard panels: policy iteration on the cliff grid, whose start value climbs from −1072 to −12.25 in six rounds, "
-           "and the book's loop between evaluation and improvement that ends at the optimal policy and value")
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="720" height="424" viewBox="0 197.6 840 494.7" '
+           "and a spiral between evaluation and improvement that closes in on the optimal policy and value")
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="720" height="424" viewBox="0 {10 + h / 2 - vh / 2:.1f} 840 {vh:.1f}" '
             f'preserveAspectRatio="xMidYMid meet" role="img" aria-label="{alt}" color="#f4f1e8">'
             "<!-- Font: Patrick Hand, Copyright (c) 2010-2012 Patrick Wagesreiter, SIL Open Font License 1.1, see /assets/robotics/rl/fonts/OFL.txt -->"
             f'<style>@font-face{{font-family:"RL Chalk";src:url(data:font/woff2;base64,{font}) format("woff2")}}'
             'text,tspan{font-family:"RL Chalk","Patrick Hand","Chalkboard SE","Comic Neue","Segoe Print",cursive;letter-spacing:.01em}</style>'
-            '<rect x="-200" y="0" width="1240" height="900" fill="#1d2824"/>'
+            '<rect x="-200" y="-200" width="1240" height="1000" fill="#1d2824"/>'
             f'<g fill="#f4f1e8" stroke-linecap="round" stroke-linejoin="round">{inner}</g></svg>')
 
 
