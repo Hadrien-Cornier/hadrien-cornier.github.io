@@ -14,7 +14,7 @@
   let activeTag = '';
   let query = '';
 
-  const haystack = (entry) => haystacks.get(entry.getAttribute('href')) || entry.textContent.toLowerCase();
+  const haystack = (entry) => haystacks.get(entry.dataset.url) || entry.textContent.toLowerCase();
 
   const apply = () => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);

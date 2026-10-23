@@ -359,17 +359,20 @@ function articleUnits(articles) {
     return [{series:article.seriesInfo, articles:article.seriesArticles}];
   });
 }
-// Tags on an index entry are display chips; the clickable tag filter sits above the list.
+// Every tag chip links to its tag page, /tags/<tag>/, which lists all articles with that tag.
+const tagHref = (tag) => `/tags/${tag}/`;
 function tagChips(tags) {
-  return tags.map((tag) => `<span class="tag-chip">${escape(tag)}</span>`).join('');
+  return tags.map((tag) => `<a class="tag-chip" href="${tagHref(tag)}">${escape(tag)}</a>`).join('');
 }
 function tagLinks(tags) {
-  return tags.length ? `<p class="post-tags">${tags.map((tag) => `<a class="tag-chip" href="/robotics/#tag-${tag}">${escape(tag)}</a>`).join('')}</p>` : '';
+  return tags.length ? `<p class="post-tags">${tagChips(tags)}</p>` : '';
 }
-function articleCard(article) {
-  const part = article.series ? `<span class="report-part">Part ${article.part}${trackLabel(article)}</span>` : article.section ? `<span class="report-part">${SECTIONS[article.section].name}</span>` : '';
+// A card is not one big link: its title link stretches over the card, and the tag chips stay separate links above it.
+// Outside a series block (for example on a tag page), withSeries names the series and its length beside the part number.
+function articleCard(article, {withSeries = false} = {}) {
+  const part = article.series ? `<span class="report-part">${withSeries ? `${escape(article.seriesInfo.title)} · ` : ''}Part ${article.part}${withSeries ? ` of ${article.seriesInfo.total}` : ''}${trackLabel(article)}</span>` : article.section ? `<span class="report-part">${SECTIONS[article.section].name}</span>` : '';
   const thumb = article.thumbnail ? `<span class="report-thumb"><img src="${escape(article.thumbnail)}" alt="${escape(article.thumbnail_alt)}" loading="lazy" decoding="async"></span>` : '';
-  return `<a class="report-card${trackClass(article)}${thumb ? ' has-thumb' : ''}" href="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span>${thumb}<div class="report-copy"><h2>${escape(article.title)}</h2><p>${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div><span class="report-arrow" aria-hidden="true">↗</span></a>`;
+  return `<article class="report-card${trackClass(article)}${thumb ? ' has-thumb' : ''}" data-url="/robotics/${article.slug}/" data-entry data-tags="${escape(article.tags.join(' '))}"><span class="report-date">${part}<time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></span>${thumb}<div class="report-copy"><h2><a class="card-link" href="/robotics/${article.slug}/">${escape(article.title)}</a></h2><p>${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div><span class="report-arrow" aria-hidden="true">↗</span></article>`;
 }
 // One block per series wherever essays are listed: title, part count, date range, then every part in order.
 // On a phone, assets/series-blocks.js closes a long part list behind its summary. Without JavaScript it stays open.
@@ -441,6 +444,26 @@ function landingPage(articles, root) {
 <header class="robotics-header"><p class="eyebrow">Essays &amp; explorations / ${articles.length} ${articles.length === 1 ? 'essay' : 'essays'}</p><h1>Learning robotics.</h1><p class="series-intro">Experiments, diagrams, and questions from learning how robots move, learn, and make decisions.</p></header>
 ${sectionLinks(articles)}${filterBar(articles)}<section class="report-list" aria-label="Robotics reports">${content || '<p>The first report is on its way.</p>'}</section>`});
 }
+// One page per tag at /tags/<tag>/ lists every published article with that tag, newest first, across all sections.
+function tagGroups(articles) {
+  const groups = new Map();
+  for (const article of articles) for (const tag of article.tags) groups.set(tag, [...(groups.get(tag) || []), article]);
+  return new Map([...groups].sort((a, b) => a[0].localeCompare(b[0])));
+}
+const articleCount = (count) => `${count} ${count === 1 ? 'article' : 'articles'}`;
+function tagPage(tag, items, root) {
+  return shell({title:`Tag: ${tag}`, description:`All ${articleCount(items.length)} tagged ${tag}, newest first.`, pathname:tagHref(tag), root, content:`
+<header class="robotics-header"><p class="eyebrow"><a href="/tags/">Tags</a> / ${articleCount(items.length)}</p><h1 class="tag-title">${escape(tag)}</h1><p class="series-intro">Every article tagged <span class="tag-chip">${escape(tag)}</span>, newest first.</p></header>
+<section class="report-list" aria-label="${escape(`Articles tagged ${tag}`)}">${items.map((article) => articleCard(article, {withSeries:true})).join('\n')}</section>
+<p class="series-return"><a href="/tags/">← All tags</a> · <a href="/#writing">All writing</a></p>`});
+}
+function tagIndexPage(groups, root) {
+  const links = [...groups].map(([tag, items]) => `<a class="tag-chip" href="${tagHref(tag)}">${escape(tag)}<span class="tag-count">${items.length}</span></a>`).join('');
+  return shell({title:'Tags', description:'Every tag used on the site, each with a page that lists its articles.', pathname:'/tags/', root, content:`
+<header class="robotics-header"><p class="eyebrow">Writing / ${groups.size} tags</p><h1>Tags.</h1><p class="series-intro">Each tag opens a page with every article that carries it.</p></header>
+<nav class="tag-index" aria-label="Tags">${links}</nav>
+<p class="series-return"><a href="/#writing">← All writing</a></p>`});
+}
 function previewImage(article) {
   return `<img src="${escape(article.thumbnail)}" alt="${escape(article.thumbnail_alt)}" width="720" height="424" loading="lazy" decoding="async">`;
 }
@@ -463,17 +486,18 @@ function homePage(articles, root) {
   });
   const latest = latestUnit?.series ? articles.find((article) => article.series === latestUnit.series.id) : latestUnit?.article;
   const featureImage = latest ? previewImage(latest, root) : '';
-  const featureImageLabel = latest?.slug === 'how-robot-control-is-changing' ? 'Illustration: a moved target' : 'Figure from the essay';
+  const featureKind = latest?.paper ? 'paper' : 'essay';
+  const featureImageLabel = latest?.slug === 'how-robot-control-is-changing' ? 'Illustration: a moved target' : `Figure from the ${featureKind}`;
   let rowNumber = latestUnit?.series ? 1 : 2;
   const renderRow = (article) => {
     const image = previewImage(article, root);
     const label = String(rowNumber++).padStart(2, '0');
-    return `<a class="writing-row${image ? ' writing-row-with-image' : ''}${trackClass(article)}" href="/robotics/${article.slug}/"><span class="writing-row-number">${label}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3>${escape(article.title)}</h3><p class="writing-description">${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></a>`;
+    return `<article class="writing-row${image ? ' writing-row-with-image' : ''}${trackClass(article)}" data-url="/robotics/${article.slug}/"><span class="writing-row-number">${label}</span><div class="writing-row-copy"><p class="writing-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span></p><h3><a class="card-link" href="/robotics/${article.slug}/">${escape(article.title)}</a></h3><p class="writing-description">${escape(article.description)}</p>${article.tags.length ? `<span class="tag-row">${tagChips(article.tags)}</span>` : ''}</div>${image ? `<div class="writing-row-image">${image}</div>` : ''}<span class="writing-row-arrow" aria-hidden="true">↗</span></article>`;
   };
   const homeSeries = (unit) => seriesBlock(unit, {heading:'h3', className:'series-block-home'});
   const feature = latestUnit?.series
     ? homeSeries(latestUnit)
-    : latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest essay</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the essay <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">${featureImageLabel}</span></div>` : ''}</a>`
+    : latest ? `<a class="writing-feature${featureImage ? '' : ' writing-feature-text'}" href="/robotics/${latest.slug}/"><div class="writing-feature-copy"><p class="eyebrow">Latest ${featureKind}</p><h3>${escape(latest.title)}</h3><p class="writing-description">${escape(latest.description)}</p><p class="writing-meta"><time datetime="${latest.date}">${displayDate(latest.date)}</time><span>${latest.readingMinutes} min read</span><span>Robotics</span></p><span class="writing-read">Read the ${latest.paper ? 'article' : 'essay'} <span aria-hidden="true">↗</span></span></div>${featureImage ? `<div class="writing-feature-image">${featureImage}<span class="writing-image-label">${featureImageLabel}</span></div>` : ''}</a>`
     : '<p class="writing-empty">The first essay is on its way.</p>';
   // The timeline stays in date order. Each series sits once, at the date of its newest part.
   const rows = restUnits.map((unit) => unit.series ? homeSeries(unit) : renderRow(unit.article)).join('');
@@ -569,6 +593,9 @@ export function build(root = ROOT) {
   }
   pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);
   for (const slug of sectionSlugs) pages.push([path.join(root, 'robotics', slug, 'index.html'), sectionPage(slug, articles, root)]);
+  const tags = tagGroups(articles);
+  if (tags.size) pages.push([path.join(root, 'tags', 'index.html'), tagIndexPage(tags, root)]);
+  for (const [tag, items] of tags) pages.push([path.join(root, 'tags', tag, 'index.html'), tagPage(tag, items, root)]);
   // The search bar reads this small index; drafts never reach it because they are not in articles.
   const searchIndex = articles.map((article) => ({title:article.title, description:article.description, tags:[...article.tags], date:article.date, url:`/robotics/${article.slug}/`}));
   pages.push([path.join(root, 'robotics', 'search-index.json'), `${JSON.stringify(searchIndex, null, 2)}\n`]);
@@ -582,12 +609,15 @@ export function build(root = ROOT) {
   fs.cpSync(path.join(katexDir,'dist/fonts'), path.join(vendor,'fonts'), {recursive:true});
   const sitemapFile = path.join(root,'sitemap.xml');
   const current = fs.readFileSync(sitemapFile,'utf8');
-  const preserved = current.replace(/\s*<url>\s*<loc>https:\/\/hadrien-cornier\.github\.io\/robotics\/[\s\S]*?<\/url>/g, '');
+  const preserved = current.replace(/\s*<url>\s*<loc>https:\/\/hadrien-cornier\.github\.io\/(?:robotics|tags)\/[\s\S]*?<\/url>/g, '');
   // Stable pages go before the series so their position survives the next build.
   let entries = '';
   if (!preserved.includes(`<loc>${ORIGIN}/</loc>`)) entries += `  <url>\n    <loc>${ORIGIN}/</loc>\n    <changefreq>monthly</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
   if (fs.existsSync(path.join(root, 'about.html')) && !preserved.includes(`<loc>${ORIGIN}/about.html</loc>`)) entries += `  <url>\n    <loc>${ORIGIN}/about.html</loc>\n    <changefreq>monthly</changefreq>\n  </url>\n`;
-  entries += [{slug:'', updated:articles.map((article) => article.updated).sort().at(-1)}, ...sectionSlugs.map((slug) => ({slug:`${slug}/`, updated:articles.filter((article) => article.section === slug).map((article) => article.updated).sort().at(-1)})), ...articles.map((article) => ({slug:`${article.slug}/`, updated:article.updated}))].map(({slug, updated}) => `  <url>\n    <loc>${ORIGIN}/robotics/${slug}</loc>${updated ? `\n    <lastmod>${updated}</lastmod>` : ''}\n    <changefreq>monthly</changefreq>\n  </url>\n`).join('');
+  const latest = (items) => items.map((article) => article.updated).sort().at(-1);
+  const roboticsEntries = [{pathname:'/robotics/', updated:latest(articles)}, ...sectionSlugs.map((slug) => ({pathname:`/robotics/${slug}/`, updated:latest(articles.filter((article) => article.section === slug))})), ...articles.map((article) => ({pathname:`/robotics/${article.slug}/`, updated:article.updated}))];
+  const tagEntries = tags.size ? [{pathname:'/tags/', updated:latest(articles)}, ...[...tags].map(([tag, items]) => ({pathname:tagHref(tag), updated:latest(items)}))] : [];
+  entries += [...roboticsEntries, ...tagEntries].map(({pathname, updated}) => `  <url>\n    <loc>${ORIGIN}${pathname}</loc>${updated ? `\n    <lastmod>${updated}</lastmod>` : ''}\n    <changefreq>monthly</changefreq>\n  </url>\n`).join('');
   if (!preserved.includes('</urlset>')) throw new Error('Expected sitemap urlset');
   fs.writeFileSync(sitemapFile, preserved.replace('</urlset>', `${entries}</urlset>`));
   // Remove only obsolete HTML bearing this builder's ownership marker.
@@ -603,6 +633,17 @@ export function build(root = ROOT) {
     fs.unlinkSync(index);
     if (fs.readdirSync(directory).length === 0) fs.rmdirSync(directory);
   }
-  console.log(`Built writing home and Robotics: ${articles.length} report(s), local math styles and fonts.`);
+  // A tag that no published article carries any more loses its generated page.
+  const tagsDir = path.join(root, 'tags');
+  if (fs.existsSync(tagsDir)) {
+    for (const entry of fs.readdirSync(tagsDir, {withFileTypes:true})) {
+      if (!entry.isDirectory() || tags.has(entry.name)) continue;
+      const index = path.join(tagsDir, entry.name, 'index.html');
+      if (!fs.existsSync(index) || !fs.readFileSync(index, 'utf8').startsWith(`<!doctype html>\n${GENERATED_MARKER}\n`)) continue;
+      fs.unlinkSync(index);
+      if (fs.readdirSync(path.dirname(index)).length === 0) fs.rmdirSync(path.dirname(index));
+    }
+  }
+  console.log(`Built writing home and Robotics: ${articles.length} report(s), ${tags.size} tag page(s), local math styles and fonts.`);
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) build();
