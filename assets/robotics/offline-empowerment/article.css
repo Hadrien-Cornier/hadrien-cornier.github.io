@@ -1,5 +1,5 @@
 /* Offline empowerment: an intro paragraph, one blackboard canvas, then a math paragraph. The wide drawing fits desktops, the tall one phones. */
-.paper-header .paper-takeaway { display: none; }
+.post-header .post-description { display: none; }
 .oe-intro { max-width: 760px; margin: 0 0 30px; font-size: 18px; line-height: 1.65; color: var(--ink); }
 .oe-math { max-width: 760px; margin: 30px 0 0; font-size: 18px; line-height: 1.65; color: var(--ink); }
 .oe-math .katex { font-size: 1.05em; }

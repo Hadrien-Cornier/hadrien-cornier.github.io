@@ -55,6 +55,11 @@
 .series-intro, .post-description { max-width: 740px; color: var(--muted); font-size: 18px; line-height: 1.7; }
 .post-header { max-width: 1080px; margin: auto; }
 .post-header h1 { max-width: 880px; }
+/* A short article: one authored body, for example a blackboard canvas between two short paragraphs. It keeps the header width, without a contents sidebar. */
+.paper-source { margin: -6px 0 16px; font: 13px/1.6 var(--mono); color: var(--muted); }
+.paper-source a { display: inline-block; padding: 6px 0; color: var(--accent); }
+.short-body { max-width: 1080px; margin: auto; padding: 40px 0 75px; }
+.short-body > .series-return { margin-top: 54px; padding-top: 27px; border-top: 1px solid var(--line); font-size: 14px; }
 .post-meta { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 27px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; line-height: 1.7; }
 .report-list { padding: 7px 0 65px; }
 .report-card { display: grid; grid-template-columns: 180px minmax(0, 1fr) 25px; gap: 28px; padding: 34px 0; border-bottom: 1px solid var(--line); }
@@ -174,6 +179,8 @@
   .robotics-header { padding: 38px 0 30px; }
   .robotics-header h1 { font-size: clamp(37px, 9.6vw, 48px); letter-spacing: -1.2px; margin: 20px 0; }
   .series-intro, .post-description { font-size: 16px; line-height: 1.7; }
+  .paper-source { font-size: 12px; }
+  .short-body { padding: 28px 0 50px; }
   .post-meta { font-size: 10px; gap: 6px 17px; margin-top: 22px; }
   .report-card, .report-card.has-thumb { grid-template-columns: minmax(0, 1fr) 19px; gap: 16px; padding: 26px 0; }
   .report-thumb { grid-column: 1 / -1; max-width: 340px; margin-top: 0; }

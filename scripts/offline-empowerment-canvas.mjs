@@ -3,7 +3,7 @@
  * Numbers come from scripts/offline-empowerment-figures.json, which scripts/offline-empowerment-figures.py
  * reads out of the paper: the Fig. 1b empowerment map and the Fig. 4 antmaze-medium / navigate curves.
  * Panels 2 and 5 are schematics. Run `node scripts/offline-empowerment-canvas.mjs` to rewrite
- * content/papers/offline-empowerment.html, then build the site.
+ * content/robotics/offline-empowerment.html, then build the site.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +12,7 @@ import katex from 'katex';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/offline-empowerment-figures.json'), 'utf8'));
-export const OUTPUT = path.join(ROOT, 'content/papers/offline-empowerment.html');
+export const OUTPUT = path.join(ROOT, 'content/robotics/offline-empowerment.html');
 
 // The RL series palette after its dark-mode filter, invert(.9) hue-rotate(180deg), so the canvas matches it.
 const C = {

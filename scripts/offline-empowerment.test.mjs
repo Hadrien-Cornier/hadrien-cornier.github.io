@@ -14,7 +14,7 @@ test('the math paragraph prerenders its equations and the built page loads the K
  assert.equal((html.match(/class="katex-display"/g) || []).length, 1);
  assert.ok(!html.includes('katex-error') && !MATH_NOTE.includes('PLACEHOLDER'));
  assert.ok(!/[\u2013\u2014]/.test(INTRO + MATH_NOTE), 'no en or em dashes');
- const page = fs.readFileSync(new URL('../papers/offline-empowerment/index.html', import.meta.url), 'utf8');
+ const page = fs.readFileSync(new URL('../robotics/offline-empowerment/index.html', import.meta.url), 'utf8');
  assert.ok(page.includes('<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">'));
 });
 
