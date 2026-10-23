@@ -1,0 +1,108 @@
+/* Shared blackboard chalk style for inline SVG figures.
+   Load it on an article: <link rel="stylesheet" href="/assets/robotics/chalk/chalk.css">
+   Then add class="chalk" to each inline <svg>. Values match the RL series boards
+   (assets/robotics/rl/series.css). The board stays dark in both site themes, as the RL boards do.
+
+   Two ways to color a drawing:
+   1. New drawings use the classes below (c-* for fill, s-* for stroke).
+   2. Older drawings keep their authored light palette (#242622 ink, #2b6a8e blue, #b44c2c red,
+      white paper and so on). The attribute rules below map it to chalk, so geometry, text and
+      numbers stay untouched. */
+
+@font-face { font-family: 'Chalk Hand'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(/assets/robotics/rl/fonts/patrick-hand-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Chalk Hand'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url(/assets/robotics/rl/fonts/patrick-hand-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root {
+  --bb-board: #1d2824;
+  --bb-board-2: #24312c;
+  --bb-chalk: #f4f1e8;
+  --bb-dim: #c3c9bd;
+  --bb-faint: #6f7d75;
+  --bb-red: #ff9f88;
+  --bb-pink: #ff93b8;
+  --bb-blue: #93d4ff;
+  --bb-green: #a8e2a0;
+  --bb-yellow: #ffe17c;
+  --bb-lavender: #c9b6ff;
+  --bb-slate: #9fb4c4;
+  --chalk-hand: 'Chalk Hand', 'RL Chalk', 'Patrick Hand', 'Chalkboard SE', 'Comic Neue', 'Segoe Print', Arial, sans-serif;
+}
+
+/* The board. The selector repeats the site rule that keeps other inline drawings light, so it wins. */
+:root .article-body svg.chalk,
+:root:not([data-theme="light"]) .article-body svg.chalk[role="img"] {
+  color-scheme: dark;
+  background: var(--bb-board) !important;
+  color: var(--bb-chalk) !important;
+  border-radius: 4px;
+  font-family: var(--chalk-hand);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Drawings that use the site variables get chalk values too. */
+  --paper: var(--bb-board); --white: var(--bb-board); --ink: var(--bb-chalk);
+  --muted: var(--bb-dim); --accent: var(--bb-red); --line: var(--bb-faint);
+}
+/* The hand wobble and chalk grain, defined once per page by the #bb-chalk filter (see README). */
+.article-body svg.chalk.chalk-filter { filter: url(#bb-chalk); }
+.article-body svg.chalk text { font-family: var(--chalk-hand) !important; letter-spacing: .01em; }
+/* Hand lettering has no true bold; weight becomes color through the yellow and chalk rules. */
+.article-body svg.chalk text[font-weight="700"], .article-body svg.chalk text[font-weight="bold"] { font-weight: 400; }
+
+/* Ink: dark authored ink becomes chalk. */
+.article-body svg.chalk :is([fill="#242622"], [fill="#1f2933"], [fill="#000"], [fill="#000000"], [fill="#111"], [fill="black"]) { fill: var(--bb-chalk); }
+.article-body svg.chalk :is([stroke="#242622"], [stroke="#1f2933"], [stroke="#000"], [stroke="#000000"], [stroke="#111"], [stroke="black"], [stroke="#4a4d47"]) { stroke: var(--bb-chalk); }
+.article-body svg.chalk :is([fill="#50554e"], [fill="#656b62"], [fill="#6b7280"], [fill="#777"], [fill="#8d9087"], [fill="#7f8f79"], [fill="#4a4d47"]) { fill: var(--bb-dim); }
+.article-body svg.chalk :is([stroke="#50554e"], [stroke="#656b62"], [stroke="#6b7280"], [stroke="#777"], [stroke="#8d9087"], [stroke="#7f8f79"]) { stroke: var(--bb-dim); }
+.article-body svg.chalk :is([fill="#b6baaf"], [fill="#cfd1c8"], [fill="#c9ccc2"], [fill="#d3d6cb"]) { fill: var(--bb-faint); }
+.article-body svg.chalk :is([stroke="#b6baaf"], [stroke="#cfd1c8"], [stroke="#dcded6"], [stroke="#d3d6cb"], [stroke="#c9ccc2"], [stroke="#e5e7eb"]) { stroke: var(--bb-faint); }
+
+/* Paper: light surfaces become the board, so boxes read as chalk outlines.
+   Text halos drawn in the paper color (paint-order stroke) become board halos. */
+.article-body svg.chalk :is([fill="#fff"], [fill="#ffffff"], [fill="white"], [fill="#fbfbf8"], [fill="#f7f6f2"], [fill="#f1f2ed"], [fill="#f5f4ed"], [fill="#efefe9"], [fill="#eceae2"], [fill="#eee"], [fill="#eeefe9"], [fill="#f8f9f4"], [fill="#f4f5f0"], [fill="#f3f4f6"]) { fill: var(--bb-board); }
+.article-body svg.chalk :is([stroke="#fff"], [stroke="#ffffff"], [stroke="white"], [stroke="#fbfbf8"], [stroke="#f7f6f2"], [stroke="#f1f2ed"], [stroke="#f4f5f0"]) { stroke: var(--bb-board); }
+.article-body svg.chalk :is([fill="#d9d6cc"], [fill="#dcded6"], [fill="#e4e6de"]) { fill: var(--bb-board-2); }
+
+/* Tints keep their meaning as faint colored chalk washes. */
+.article-body svg.chalk :is([fill="#d7e5ee"], [fill="#e4eef4"], [fill="#eef3f6"], [fill="#dbeafe"]) { fill: rgba(147, 212, 255, .16); }
+.article-body svg.chalk :is([fill="#f6e5e0"], [fill="#e7c5b8"], [fill="#efd9cf"], [fill="#fbeef1"], [fill="#f6dbe1"], [fill="#ffedd5"]) { fill: rgba(255, 159, 136, .17); }
+.article-body svg.chalk :is([fill="#e6f0e1"], [fill="#dcfce7"]) { fill: rgba(168, 226, 160, .15); }
+.article-body svg.chalk :is([fill="#f8f0cf"], [fill="#fef9c3"]) { fill: rgba(255, 225, 124, .16); }
+
+/* Meaning colors become chalk colors. */
+.article-body svg.chalk :is([fill="#b44c2c"], [fill="#c2410c"]) { fill: var(--bb-red); }
+.article-body svg.chalk :is([stroke="#b44c2c"], [stroke="#c2410c"]) { stroke: var(--bb-red); }
+.article-body svg.chalk :is([fill="#8f1d36"], [fill="#4a0f1c"], [fill="#dc2626"]) { fill: var(--bb-pink); }
+.article-body svg.chalk :is([stroke="#8f1d36"], [stroke="#dc2626"]) { stroke: var(--bb-pink); }
+.article-body svg.chalk :is([fill="#2b6a8e"], [fill="#3d6f9e"], [fill="#1d4ed8"]) { fill: var(--bb-blue); }
+.article-body svg.chalk :is([stroke="#2b6a8e"], [stroke="#3d6f9e"], [stroke="#1d4ed8"]) { stroke: var(--bb-blue); }
+.article-body svg.chalk :is([fill="#5f7f4f"], [fill="#49724e"], [fill="#3f7a45"], [fill="#0f766e"]) { fill: var(--bb-green); }
+.article-body svg.chalk :is([stroke="#5f7f4f"], [stroke="#49724e"], [stroke="#3f7a45"], [stroke="#0f766e"]) { stroke: var(--bb-green); }
+.article-body svg.chalk :is([fill="#7c3aed"]) { fill: var(--bb-lavender); }
+.article-body svg.chalk :is([stroke="#7c3aed"]) { stroke: var(--bb-lavender); }
+.article-body svg.chalk :is([fill="#eab308"], [fill="#b7791f"]) { fill: var(--bb-yellow); }
+.article-body svg.chalk :is([stroke="#eab308"], [stroke="#b7791f"]) { stroke: var(--bb-yellow); }
+
+/* New drawings use these classes directly. */
+.article-body svg.chalk .c-chalk { fill: var(--bb-chalk); } .article-body svg.chalk .s-chalk { stroke: var(--bb-chalk); }
+.article-body svg.chalk .c-dim { fill: var(--bb-dim); } .article-body svg.chalk .s-dim { stroke: var(--bb-dim); }
+.article-body svg.chalk .c-faint { fill: var(--bb-faint); } .article-body svg.chalk .s-faint { stroke: var(--bb-faint); }
+.article-body svg.chalk .c-red { fill: var(--bb-red); } .article-body svg.chalk .s-red { stroke: var(--bb-red); }
+.article-body svg.chalk .c-pink { fill: var(--bb-pink); } .article-body svg.chalk .s-pink { stroke: var(--bb-pink); }
+.article-body svg.chalk .c-blue { fill: var(--bb-blue); } .article-body svg.chalk .s-blue { stroke: var(--bb-blue); }
+.article-body svg.chalk .c-green { fill: var(--bb-green); } .article-body svg.chalk .s-green { stroke: var(--bb-green); }
+.article-body svg.chalk .c-yellow { fill: var(--bb-yellow); } .article-body svg.chalk .s-yellow { stroke: var(--bb-yellow); }
+.article-body svg.chalk .c-lavender { fill: var(--bb-lavender); } .article-body svg.chalk .s-lavender { stroke: var(--bb-lavender); }
+.article-body svg.chalk .c-board { fill: var(--bb-board); } .article-body svg.chalk .s-board { stroke: var(--bb-board); }
+.article-body svg.chalk .c-board-2 { fill: var(--bb-board-2); }
+.article-body svg.chalk .c-none { fill: none; }
+.article-body svg.chalk .chalk-title { fill: var(--bb-yellow); }
+
+/* Raster chalk figures and posters: a faint chalk frame instead of the white paper frame. */
+.article-body img.chalk, .article-body .chalk-figure img { background: var(--bb-board); border-color: var(--bb-faint); border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) { .article-body svg.chalk.chalk-filter { filter: none; } }
+@media print { .article-body svg.chalk.chalk-filter { filter: none; } }
