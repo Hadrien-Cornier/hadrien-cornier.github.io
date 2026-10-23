@@ -505,7 +505,8 @@ def spring_goal(layout="stack", out=None):
 
     fig.text(margin / fig_w + (0 if row else 0.1 / fig_w), 0.08 / fig_h, footnote, ha="left", va="bottom",
              fontsize=NOTE_SIZE, color=MUTED, linespacing=0.9)
-    chalk.save(fig, out)
+    # The stacked figure is the part 1 panel on the long-form canvas; the row is only a card.
+    chalk.save(fig, out, panel=not row)
 
 
 FIGURES = [worn_hold_motion, friction_models, heat_torque, torque_limit, constants_dumbbell, speed_coupling,

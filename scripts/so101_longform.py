@@ -22,6 +22,23 @@ CONTENT = ROOT / "content/robotics"
 # The short title of each step, by figure file. It names the step in the canvas menu
 # and above the figure on a phone.
 TITLES = {
+    "so101-1-target-and-goal": {
+        "spring-goal.png": "The joint as a torsion spring",
+        "servo-inside.png": "Inside a smart servo",
+        "two-loops.png": "Two nested loops",
+        "pid-parts.png": "P, D and I on a sagging joint",
+        "calibration-columns.png": "What calibration stores",
+        "three-delays.png": "Three delays",
+        "dead-time-ranges.png": "Dead time, measured two ways",
+        "torque-limit.png": "A late brake hits the torque limit",
+        "heat-torque.png": "Heat lowers the torque",
+        "lag-on-path.png": "The joint follows later",
+        "worn-hold-motion.png": "Friction on a hold and in motion",
+        "friction-models.png": "Four friction models",
+        "speed-coupling.png": "Speed coupling",
+        "error-vs-kp.png": "Error against stiffness",
+        "constants-dumbbell.png": "Simulator against my arm",
+    },
     "so101-2-finer-than-the-sensor": {
         "tick-rounding.png": "Rounding error of one tick",
         "accel-pipelines.png": "Two ways to get an acceleration",
@@ -29,7 +46,67 @@ TITLES = {
         "observer-step.png": "One observer step",
         "two-observers.png": "Two observers, one loop",
     },
+    "so101-3-choosing-the-goal": {
+        "map-errors.png": "Real-arm error by controller",
+        "sim-five.png": "Simulation error by controller",
+        "inv-goal.png": "Sending the goal ahead",
+        "pi-five.png": "Five times the stiffness",
+        "shake-test.png": "The shake test",
+        "hold-torque.png": "Torque during one step",
+        "deadband-cost.png": "A flat cost in the dead band",
+        "real-arm-joints.png": "Error per joint on the real arm",
+        "known-timeline.png": "Known methods and their history",
+    },
+    "so101-4-learning-what-physics-misses": {
+        "hindsight-label.png": "The hindsight label",
+        "network-io.png": "What the network learns",
+        "nn-vs-fitted.png": "Network against Fitted",
+        "sensitivity.png": "Trusting the model more",
+        "data-curves.png": "Error against minutes of data",
+        "residual.png": "First try: a residual",
+    },
+    "so101-8-measuring-the-tool-in-3d": {
+        "plane.svg": "The tablet sees only its plane",
+        "camera.svg": "A camera and a ChArUco target",
+        "pinhole.svg": "Depth changes the target size",
+        "stations.svg": "Sweeping base stations",
+        "mocap.svg": "Infrared motion capture",
+        "laser.svg": "A laser tracker",
+        "accuracy.svg": "Accuracy on one log axis",
+        "rate.svg": "Sample rates on one log axis",
+        "chain.svg": "From the sensor target to the nib",
+    },
+    "so101-7-learning-between-and-during-strokes": {
+        "timing-and-shape.png": "Timing and shape",
+        "repeat-budget.png": "Seeing an error, predicting it",
+        "twin-across-days.png": "The twin across days",
+    },
 }
+
+
+# Part 8 draws its figures by hand in SVG. They become panel files in this folder.
+PART8 = "/assets/robotics/so101-series/part8"
+INLINE = re.compile(r'<figure class="article-figure">\n(<svg class="chalk[^"]*"[^\n]*</svg>)\n<figcaption>(.*)</figcaption>\n</figure>')
+
+
+def extract_inline(text, folder):
+    """Move each inline SVG figure to a panel file and leave a markdown figure in its place."""
+    def move(m):
+        svg, caption = m.group(1), m.group(2)
+        key = re.search(r'aria-labelledby="fig-([a-z0-9-]+)-t', svg).group(1)
+        title = re.search(r"<title[^>]*>(.*?)</title>", svg).group(1)
+        desc = re.search(r"<desc[^>]*>(.*?)</desc>", svg).group(1)
+        # The board draws the grain; the slot keeps the title and the description for screen readers.
+        panel = re.sub(r"<title[^>]*>.*?</title><desc[^>]*>.*?</desc>", "", svg)
+        panel = panel.replace('class="chalk chalk-filter"', 'class="chalk"')
+        panel = re.sub(r' (?:role|aria-labelledby|style)="[^"]*"', "", panel, count=3)
+        (ROOT / folder.lstrip("/") / f"{key}.svg").write_text(panel + "\n")
+        alt = f"{title}. {desc}".replace("]", ")").replace("[", "(")
+        return f'![{alt}]({folder}/{key}.svg "{caption}")'
+    (ROOT / folder.lstrip("/")).mkdir(parents=True, exist_ok=True)
+    text = INLINE.sub(move, text)
+    # The grain filter of chalk.css now comes from the board.
+    return re.sub(r'<svg class="chalk-defs".*?</svg>\n', "", text, count=1)
 
 
 def title_of(text):
@@ -45,7 +122,10 @@ def build(path):
 def main(argv):
     if argv[:1] == ["convert"] and len(argv) == 2:
         path = CONTENT / f"{argv[1]}.md"
-        path.write_text(canvas.convert(path.read_text(), TITLES[argv[1]]))
+        text = path.read_text()
+        if argv[1].startswith("so101-8-"):
+            text = extract_inline(text, PART8)
+        path.write_text(canvas.convert(text, TITLES[argv[1]]))
         build(path)
         print(f"converted {path.relative_to(ROOT)}")
     elif argv == ["build"]:
