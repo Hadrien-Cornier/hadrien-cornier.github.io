@@ -42,6 +42,9 @@ PAD = 10
 TITLE_H = 40       # the panel title row, shown only on the whole board
 CAPTION = 15       # caption font size
 CAPTION_LINE = 19
+# On a phone a figure keeps the shape of its panel up to this height-to-width ratio
+# (canvas.js data-fig-max), so stacked plots stay at full width and readable.
+FIG_MAX = 2.8
 
 START = '<div class="rc rls-canvas" id="rc">'
 BODY = '<div class="rc-body">'
@@ -184,7 +187,7 @@ def board(figures, title, desc, prefix):
     head = (f'<div class="rc-stage"><div class="rc-bar"><button class="rc-reset" type="button">Whole canvas &#8689;</button>'
             f'<div class="rc-where" aria-live="polite"></div></div><div class="rc-view">'
             f'<svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="{whole}" data-whole="{whole}" '
-            f"data-views='{json.dumps(views, separators=(',', ':'))}' role=\"img\" aria-labelledby=\"{prefix}-title {prefix}-desc\">"
+            f"data-views='{json.dumps(views, separators=(',', ':'))}' data-fig-max=\"{FIG_MAX}\" role=\"img\" aria-labelledby=\"{prefix}-title {prefix}-desc\">"
             f'<title id="{prefix}-title">{html.escape(title, quote=False)}</title><desc id="{prefix}-desc">{html.escape(desc, quote=False)}</desc>')
     return [head, *panels, "</svg></div></div>"]
 
@@ -221,7 +224,7 @@ def convert(text, titles):
     titles maps the file name of each figure (for example "tick-rounding.png") to the short
     title of its step. Figures that are not in titles stay in the text as they are.
     The mark goes before the paragraph just above the figure, so the board shows the figure
-    while that paragraph is read; inside a <details> drawer it goes before the drawer.
+    while that paragraph is read.
     """
     if START in text:
         raise ValueError("the article already has a canvas")
@@ -230,15 +233,8 @@ def convert(text, titles):
     # The essay layout gives the canvas the full width (no table of contents column).
     if not re.search(r"^layout:", front, flags=re.M):
         front = front[:-4] + "\nlayout: essay\n---"
-    lines = body.split("\n")
-    out, depth, details_at = [], 0, None
-    for line in lines:
-        if "<details" in line:
-            if depth == 0:
-                details_at = len(out)
-            depth += line.count("<details")
-        if "</details>" in line:
-            depth -= line.count("</details>")
+    out = []
+    for line in body.split("\n"):
         m = IMAGE.match(line)
         name = m and m.group("src").rsplit("/", 1)[-1]
         if not m or name not in titles:
@@ -249,30 +245,31 @@ def convert(text, titles):
         mark = f'<div class="rc-mark" id="fig-{key}" data-panel="{key}" data-title="{html.escape(titles[name])}"></div>'
         slot = (f'<div class="rc-slot" data-for="fig-{key}" data-src="{src}" data-caption="{html.escape(m.group("caption") or "")}">'
                 f'<span class="rc-sr">{html.escape(m.group("alt"), quote=False)}</span></div>')
-        # Where the mark goes.
+        # Where the mark goes: walk up over display math and video figures to the paragraph
+        # that introduces the figure. The walk stops at a heading, a drawer or another figure.
+        # In a <details> drawer the mark stays in the drawer: canvas.js skips the marks of a
+        # closed drawer, so the board shows that figure only to a reader who opens it.
         at = len(out)
-        if depth > 0 and details_at is not None:
-            at = details_at
-        else:
-            # Walk up over display math to the paragraph that introduces the figure.
-            k = len(out) - 1
-            while True:
-                while k >= 0 and not out[k].strip():
-                    k -= 1
-                s = k
-                while s > 0 and out[s - 1].strip():
-                    s -= 1
-                if k < 0 or "rc-slot" in out[k]:
-                    break
-                if out[s].lstrip().startswith("$$"):
-                    k = s - 1
-                    continue
-                if _plain(out[s]):
-                    at = s
+        k = len(out) - 1
+        while True:
+            while k >= 0 and not out[k].strip():
+                k -= 1
+            s = k
+            while s > 0 and out[s - 1].strip():
+                s -= 1
+            if k < 0 or "rc-slot" in out[k]:
                 break
+            if out[s].lstrip().startswith(("$$", "<figure")):
+                k = s - 1
+                continue
+            # Not right after another figure: the two marks would then sit together and hide the first step.
+            above = s - 1
+            while above >= 0 and not out[above].strip():
+                above -= 1
+            if _plain(out[s]) and (above < 0 or "rc-slot" not in out[above]):
+                at = s
+            break
         out[at:at] = [mark, ""]
-        if depth > 0 and details_at is not None:
-            details_at += 2
         out.append(slot)
     body = "\n".join(out)
     return f"{front}\n\n{HEAD}\n{START}\n{BODY}\n\n{body}\n\n</div>\n</div>\n{TAIL}\n"
