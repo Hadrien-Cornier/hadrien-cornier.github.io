@@ -1,12 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {DATA, OUTPUT, PANEL, LAYOUTS, MAP_RANGE, EPISODE, mapValue, episodeValues, render} from './offline-empowerment-canvas.mjs';
+import {DATA, OUTPUT, PANEL, LAYOUTS, MAP_RANGE, EPISODE, INTRO, MATH_NOTE, mapValue, episodeValues, render} from './offline-empowerment-canvas.mjs';
 
 const finalOf = (family, series) => DATA.curves[family].series[series].at(-1)[1];
 
 test('the committed page is the current generator output', () => {
  assert.equal(fs.readFileSync(OUTPUT, 'utf8'), render(), 'run node scripts/offline-empowerment-canvas.mjs');
+});
+
+test('the math paragraph prerenders its equations and the built page loads the KaTeX stylesheet', () => {
+ const html = render();
+ assert.equal((html.match(/class="katex-display"/g) || []).length, 1);
+ assert.ok(!html.includes('katex-error') && !MATH_NOTE.includes('PLACEHOLDER'));
+ assert.ok(!/[\u2013\u2014]/.test(INTRO + MATH_NOTE), 'no en or em dashes');
+ const page = fs.readFileSync(new URL('../papers/offline-empowerment/index.html', import.meta.url), 'utf8');
+ assert.ok(page.includes('<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">'));
 });
 
 test('the empowerment map follows the medium maze and peaks at a junction', () => {
