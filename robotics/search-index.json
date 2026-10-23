@@ -12,6 +12,16 @@
     "url": "/robotics/molmobot/"
   },
   {
+    "title": "Generalized policy iteration: judge, improve, repeat",
+    "description": "The loop of evaluation and improvement inside most reinforcement learning methods, worked through on the cliff grid and traced from dynamic programming to AlphaGo Zero.",
+    "tags": [
+      "reinforcement-learning",
+      "machine-learning"
+    ],
+    "date": "2026-10-23",
+    "url": "/robotics/rl-gpi/"
+  },
+  {
     "title": "World action models vs VLAs: predict the video, or just the moves",
     "description": "Both look at a camera image, read an instruction and output robot moves. A VLA starts from an image-and-text model and learns the moves. A WAM starts from a video model and also learns the frames that come next. Eight drawings on what that changes.",
     "tags": [
