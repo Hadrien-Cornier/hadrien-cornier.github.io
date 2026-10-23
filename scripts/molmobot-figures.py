@@ -3,9 +3,9 @@
 Source: MolmoBot: Large-Scale Simulation Enables Zero-Shot Manipulation,
 arXiv 2603.16861v2 (26 Mar 2026).
 
-- Tables 1, 2, 6, 7 and 8 are HTML tables in the arXiv rendering, read cell by cell.
+- Tables 1, 2, 6, 7, 8 and appendix Table 10 are HTML tables in the arXiv rendering.
 - Fig. 7 success rates are read from the bar heights in the SVG. The script checks
-  each bar against its exact count out of 120 trials.
+  each bar against its exact count out of 120 trials and Table 10 room totals.
 - The script stops if a quoted sentence is no longer in the paper.
 
 Run from the repository root:
@@ -26,13 +26,23 @@ ARXIV = '2603.16861v2'
 PAPER_URL = 'https://arxiv.org/html/2603.16861v2'
 SVG_URL = 'https://arxiv.org/html/2603.16861v2/real_results_droid_all.svg'
 TABLES = {'S3.T1': 'dataset', 'S3.T2': 'prior', 'S5.T6': 'sim',
-          'S5.T7': 'single_camera', 'S5.T8': 'rby1_sim'}
+          'S5.T7': 'single_camera', 'S5.T8': 'rby1_sim', 'A2.T10': 'room_table'}
+POLICY_NAMES = {
+    r'\pi_{0}': 'π0-DROID',
+    r'\pi_{0}\text{-DROID}': 'π0-DROID',
+    r'\pi_{0.5}\text{-DROID}': 'π0.5-DROID',
+    'MolmoBot-Pi0': 'MolmoBot-Pi0',
+    'MolmoBot-Img': 'MolmoBot-Img',
+    'MolmoBot': 'MolmoBot (F=2)',
+    'MolmoBot (F=2)': 'MolmoBot (F=2)',
+}
+TRIAL_RE = re.compile(r'([0-3])/3\Z')
 MODEL_NAMES = ['π0-DROID', 'π0.5-DROID', 'MolmoBot-Pi0', 'MolmoBot-Img', 'MolmoBot (F=2)']
 
-# Table 6 prints π0.5 Real as 31.3 while the abstract, Sec. 1 and Fig. 7 give 39.2.
-# The canvas uses Fig. 7.
-TABLE6_NOTE = ('Table 6 prints π0.5 Real as 31.3 while the abstract, Sec. 1 and Fig. 7 give 39.2; '
-               'the canvas uses Fig. 7.')
+# Table 6 prints π0.5 Real as 31.3, which is not a count out of 120; the abstract, Sec. 1,
+# Fig. 7 and appendix Table 10 (47 of 120) give 39.2. The canvas uses Fig. 7, checked against Table 10.
+TABLE6_NOTE = ('Table 6 prints π0.5 Real as 31.3, which is not a count out of 120; the abstract, Sec. 1, '
+               'Fig. 7 and appendix Table 10 (47 of 120) give 39.2. The canvas uses Fig. 7, checked against Table 10.')
 
 QUOTES = {
     'evaluation_count': 'Cumulatively, each policy is evaluated 120 times.',
@@ -147,6 +157,52 @@ def table_rows(table, name):
     return columns, rows
 
 
+def read_rooms(table, bars):
+    rooms = {}
+    current_room = None
+    for raw in table[1:]:
+        cells = [clean(cell) for cell in raw]
+        if len(cells) == 13 and cells[1] == 'Policy':
+            continue
+        if len(cells) == 13 and cells[0] and cells[1]:
+            room, policy = cells[0], cells[1]
+            values = cells[2:12]
+            current_room = room
+            rooms.setdefault(room, {})
+        elif len(cells) == 12 and cells[0]:
+            require(current_room is not None, 'Table 10 policy row appears before a room name')
+            room, policy, values = current_room, cells[0], cells[1:11]
+        else:
+            continue
+
+        require(policy in POLICY_NAMES,
+                f'Table 10 has unknown policy name {policy!r} in room {room}')
+        name = POLICY_NAMES[policy]
+        require(len(values) == 10,
+                f'Table 10 {room} {name} has {len(values)} trials-of-3 cells, expected 10')
+        require(name not in rooms[room],
+                f'Table 10 {room} has duplicate policy {name}')
+        successes = 0
+        for value in values:
+            match = TRIAL_RE.fullmatch(value)
+            require(match is not None,
+                    f'Table 10 {room} {name} has invalid trial cell {value!r}, expected k/3 with 0 <= k <= 3')
+            successes += int(match.group(1))
+        rooms[room][name] = successes
+
+    require(len(rooms) == 4, f'Table 10 has {len(rooms)} rooms, expected 4')
+    for room, policies in rooms.items():
+        require(set(policies) == set(MODEL_NAMES),
+                f'Table 10 {room} has policies {sorted(policies)}, expected {MODEL_NAMES}')
+
+    for policy in MODEL_NAMES:
+        total = sum(room[policy] for room in rooms.values() if policy in room)
+        expected = bars[policy]['successes']
+        require(total == expected,
+                f'Table 10 {policy} total {total} does not match Fig. 7 total {expected}')
+    return rooms
+
+
 def model_name(value):
     value = value.replace(r'\pi_{0.5}', 'π0.5').replace(r'\pi_{0}', 'π0')
     return re.sub(r'\s*\[\d+\]$', '', value)
@@ -220,6 +276,7 @@ def extract(html_path, svg_path):
     rby1_sim = {row[0]: {column: first_number(value) for column, value in zip(rby1_columns[1:], row[1:])}
                 for row in rby1_rows}
     real = read_real(svg_path)
+    real['rooms'] = read_rooms(tables['room_table'], real['bars'])
 
     dataset_total = next((row for row in dataset_rows if row[0] == 'Total'), None)
     require(dataset_total is not None and dataset_total[2] == '1.7M' and

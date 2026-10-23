@@ -32,6 +32,9 @@ test('every plotted number is a table value or a Fig. 7 bar', () => {
   assert.ok(Math.abs(RESULT.find((row) => row.label === label).value - DATA.sim.rows[model][real]) < 0.05, label);
  }
  assert.ok(Math.abs(RESULT[1].value - 39.2) < 0.05);
+ // Appendix Table 10 gives every trial: 4 rooms, 30 per room, and its sums are the Fig. 7 counts.
+ assert.equal(Object.keys(DATA.real.rooms).length, 4);
+ for (const row of RESULT) assert.equal(Object.values(DATA.real.rooms).reduce((sum, room) => sum + room[row.key], 0), row.wins, `${row.label} Table 10`);
 });
 
 test('the result panel shows what the paper claims', () => {
@@ -60,7 +63,8 @@ test('the prose renders its math, defines its terms and keeps to the house style
  assert.match(html, /class="katex-display"/);
  assert.doesNotMatch(html, /katex-error|<script/);
  for (const value of [INTRO, MATH_BEFORE, MATH_AFTER, html]) assert.doesNotMatch(value, /—/, 'no em dashes');
- for (const term of ['sim-to-real', 'zero-shot', 'domain randomization', 'Scripted experts']) assert.ok(INTRO.includes(term), `the intro defines ${term}`);
+ for (const term of ['sim-to-real', 'zero-shot', 'domain randomization', 'scripted experts']) assert.ok(INTRO.toLowerCase().includes(term), `the intro defines ${term}`);
+ assert.doesNotMatch(INTRO, /no real data/, 'the pretrained models saw real images, so say no real robot data');
  for (const value of ['79.2%', '39.2%', '120 trials', '10,000 hours']) assert.ok(INTRO.includes(value), `the intro quotes ${value}`);
  // The released code (molmobot.py) mixes xt = (1 - t) noise + t actions and regresses on actions - noise.
  assert.ok(EQUATION.includes('(A - \\epsilon)') && EQUATION.includes('\\tau A + (1-\\tau)\\,\\epsilon'));

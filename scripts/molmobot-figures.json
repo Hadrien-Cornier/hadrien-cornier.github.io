@@ -415,6 +415,36 @@
     "successes": 95,
     "real_data": false
    }
+  },
+  "rooms": {
+   "Workroom": {
+    "MolmoBot (F=2)": 27,
+    "MolmoBot-Img": 23,
+    "MolmoBot-Pi0": 18,
+    "π0.5-DROID": 8,
+    "π0-DROID": 1
+   },
+   "Kitchen": {
+    "MolmoBot (F=2)": 21,
+    "MolmoBot-Img": 26,
+    "MolmoBot-Pi0": 16,
+    "π0.5-DROID": 19,
+    "π0-DROID": 6
+   },
+   "Bedroom": {
+    "MolmoBot (F=2)": 26,
+    "MolmoBot-Img": 20,
+    "MolmoBot-Pi0": 7,
+    "π0.5-DROID": 3,
+    "π0-DROID": 0
+   },
+   "Office": {
+    "MolmoBot (F=2)": 21,
+    "MolmoBot-Img": 18,
+    "MolmoBot-Pi0": 15,
+    "π0.5-DROID": 17,
+    "π0-DROID": 4
+   }
   }
  },
  "quotes": {
@@ -433,6 +463,6 @@
   "frozen_vision": "We freeze the vision encoder and the projector weights during training"
  },
  "notes": [
-  "Table 6 prints π0.5 Real as 31.3 while the abstract, Sec. 1 and Fig. 7 give 39.2; the canvas uses Fig. 7."
+  "Table 6 prints π0.5 Real as 31.3, which is not a count out of 120; the abstract, Sec. 1, Fig. 7 and appendix Table 10 (47 of 120) give 39.2. The canvas uses Fig. 7, checked against Table 10."
  ]
 }

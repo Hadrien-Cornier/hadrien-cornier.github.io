@@ -2,10 +2,10 @@
   "slug": "molmobot",
   "shortTitle": "MolmoBot",
   "title": "Train a robot only in simulation, then run it in the real world.",
-  "description": "1.7 million scripted demos in randomized simulated houses, and no real data, beat a policy trained on real robots.",
+  "description": "With no real robot data, only simulated demos, MolmoBot doubles the real-world success of a policy trained on 10,000+ hours of real robot data.",
   "date": "2026-10-23",
   "paperTitle": "MolmoBot: Large-Scale Simulation Enables Zero-Shot Manipulation",
-  "paperUrl": "https://arxiv.org/abs/2603.16861",
+  "paperUrl": "https://arxiv.org/abs/2603.16861v2",
   "projectUrl": "https://allenai.github.io/MolmoBot/",
   "codeUrl": "https://github.com/allenai/MolmoBot"
 }
