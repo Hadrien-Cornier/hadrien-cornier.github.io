@@ -58,7 +58,11 @@ function shell(root, {title, description, pathname, content, slug}) {
   const themeHead = fs.readFileSync(localOrShared(root, 'scripts/templates/theme-head.html'), 'utf8');
   const themeScript = `<script src="/assets/theme.js?v=${version(root, 'assets/theme.js')}" defer></script>`;
   const tokens = {writing_current:'', papers_current:' aria-current="page"', notes_current:'', about_current:'', resume_href:'/out/resume.pdf', site_css:'/assets/site.css'};
-  const assets = slug ? `<link rel="stylesheet" href="/assets/papers-${slug}.css?v=${version(root, `assets/papers-${slug}.css`)}"><script type="module" src="/assets/papers-${slug}.js?v=${version(root, `assets/papers-${slug}.js`)}"></script>` : '';
+  // A paper may ship a stylesheet only; its script is optional.
+  const script = slug && fs.existsSync(localOrShared(root, `assets/papers-${slug}.js`));
+  // A body with equations prerendered by KaTeX needs the same vendored stylesheet as the robotics articles.
+  const math = content.includes('class="katex"') ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : '';
+  const assets = slug ? `${math}<link rel="stylesheet" href="/assets/papers-${slug}.css?v=${version(root, `assets/papers-${slug}.css`)}">${script ?`<script type="module" src="/assets/papers-${slug}.js?v=${version(root, `assets/papers-${slug}.js`)}"></script>` : ''}` : '';
   return `<!doctype html>
 ${MARKER}
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">

@@ -1,0 +1,212 @@
+{
+ "source": {
+  "paper": "arXiv 2610.14406v1",
+  "url": "https://arxiv.org/html/2610.14406v1"
+ },
+ "rmbench": {
+  "source": "Table 10 (Fig. 3), success %, 100 trials per task",
+  "tasks": ["Observe / pick", "Rearrange blocks", "Put back block", "Swap blocks", "Swap T", "Battery", "Block ranking", "Cover blocks", "Press button"],
+  "methods": {
+   "\\pi_{0.5} (no memory)": [8.0, 63.0, 20.0, 16.0, 8.0, 30.0, 66.0, 15.0, 3.0, 25.4],
+   "Uniform sampling": [5.0, 79.0, 100.0, 62.0, 30.0, 28.0, 82.0, 13.0, 3.0, 44.7],
+   "EventVLA†": [21.0, 96.0, 95.0, 96.0, 87.0, 35.0, 81.0, 97.0, 3.0, 67.8],
+   "MemER†": [7.0, 17.0, 0.0, 14.0, 7.0, 27.0, 0.0, 6.0, 0.0, 8.7],
+   "Mem-0†": [4.0, 89.0, 90.0, 67.0, 14.0, 28.0, 18.0, 68.0, 0.0, 42.0],
+   "HAMLET": [6.0, 76.0, 23.0, 25.0, 13.0, 26.0, 70.0, 14.0, 0.0, 28.1],
+   "MemoryVLA†": [2.0, 53.0, 81.0, 76.0, 9.0, 33.0, 53.0, 69.0, 0.0, 41.7],
+   "IMPRINT (full)": [9.0, 100.0, 100.0, 100.0, 100.0, 41.0, 83.0, 100.0, 21.0, 72.7],
+   "IMPRINT (recurrent)": [6.0, 99.0, 100.0, 100.0, 100.0, 35.0, 84.0, 100.0, 31.0, 72.8]
+  }
+ },
+ "robocasa": {
+  "source": "Table 11 (Fig. 4), success %, 50 trials per task",
+  "columns": ["pi05", "heuristic action", "heuristic VLM", "IMPRINT full", "IMPRINT recurrent"],
+  "rows": {
+   "Retrieve fruit": {
+    "type": "Memory",
+    "values": [42.0, 88.0, 60.0, 84.0, 90.0]
+   },
+   "Retrieve oil": {
+    "type": "Memory",
+    "values": [48.0, 98.0, 50.0, 76.0, 80.0]
+   },
+   "Wash and return": {
+    "type": "Memory",
+    "values": [46.0, 58.0, 46.0, 86.0, 96.0]
+   },
+   "Wash and return to same location": {
+    "type": "Memory",
+    "values": [46.0, 36.0, 44.0, 62.0, 58.0]
+   },
+   "Rinse cutting board": {
+    "type": "Memory",
+    "values": [4.0, 8.0, 0.0, 0.0, 4.0]
+   },
+   "Sweeten hot chocolate": {
+    "type": "Memory",
+    "values": [46.0, 36.0, 34.0, 58.0, 64.0]
+   },
+   "Pan transfer": {
+    "type": "Non-memory",
+    "values": [74.0, 48.0, 44.0, 76.0, 72.0]
+   },
+   "Frying-pan adjustment": {
+    "type": "Non-memory",
+    "values": [76.0, 52.0, 22.0, 72.0, 70.0]
+   },
+   "Organize condiments": {
+    "type": "Non-memory",
+    "values": [72.0, 32.0, 48.0, 62.0, 74.0]
+   },
+   "Place equal ice cubes": {
+    "type": "Non-memory",
+    "values": [16.0, 6.0, 6.0, 6.0, 20.0]
+   },
+   "Scrub cutting board": {
+    "type": "Non-memory",
+    "values": [60.0, 50.0, 56.0, 66.0, 76.0]
+   },
+   "Counter to sink": {
+    "type": "Non-memory",
+    "values": [96.0, 74.0, 88.0, 98.0, 96.0]
+   },
+   "Memory task average": {
+    "type": "–",
+    "values": [38.7, 54.0, 39.0, 61.0, 65.3]
+   },
+   "Non-memory task average": {
+    "type": "–",
+    "values": [65.7, 43.7, 44.0, 63.3, 68.0]
+   },
+   "Overall average": {
+    "type": "–",
+    "values": [52.2, 48.8, 41.5, 62.2, 66.7]
+   }
+  }
+ },
+ "real": {
+  "source": "Table 12 (Fig. 5), successes / rollouts; base policy pi0",
+  "tasks": ["Dust Table", "Scan Bottle", "Fold Cloth"],
+  "methods": {
+   "\\pi_{0}": {
+    "tasks": [
+     [6, 20],
+     [5, 20],
+     [7, 32]
+    ],
+    "average": 25.6
+   },
+   "HAMLET": {
+    "tasks": [
+     [5, 20],
+     [5, 20],
+     [6, 32]
+    ],
+    "average": 22.9
+   },
+   "MemER": {
+    "tasks": [
+     [8, 20],
+     [7, 20],
+     [12, 32]
+    ],
+    "average": 37.5
+   },
+   "Uniform sampling": {
+    "tasks": [
+     [10, 20],
+     [10, 20],
+     [15, 32]
+    ],
+    "average": 49.0
+   },
+   "IMPRINT": {
+    "tasks": [
+     [16, 20],
+     [15, 20],
+     [23, 32]
+    ],
+    "average": 75.6
+   },
+   "IMPRINT (OOD)": {
+    "tasks": [
+     [9, 20],
+     [14, 20],
+     [10, 32]
+    ],
+    "average": 48.8
+   }
+  }
+ },
+ "recipe": {
+  "source": "Table 15 (Fig. 8), RMBench success %",
+  "columns": ["E2E", "IMPRINT frozen", "IMPRINT", "IMPRINT (objectives)", "Without progress", "Visual only", "Action + state"],
+  "rows": {
+   "Observe / pick": [12.0, 7.0, 9.0, 9.0, 6.0, 6.0, 5.0],
+   "Rearrange blocks": [90.0, 99.0, 100.0, 100.0, 91.0, 78.0, 100.0],
+   "Put back block": [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0],
+   "Swap blocks": [90.0, 99.0, 100.0, 100.0, 90.0, 89.0, 89.0],
+   "Swap T": [45.0, 99.0, 100.0, 100.0, 97.0, 99.0, 98.0],
+   "Battery": [27.0, 20.0, 41.0, 41.0, 35.0, 30.0, 36.0],
+   "Block ranking": [73.0, 68.0, 83.0, 83.0, 73.0, 85.0, 61.0],
+   "Cover blocks": [15.0, 35.0, 100.0, 100.0, 100.0, 100.0, 52.0],
+   "Press button": [5.0, 2.0, 21.0, 21.0, 26.0, 15.0, 23.0],
+   "Average": [50.8, 58.8, 72.7, 72.7, 68.7, 66.9, 62.7]
+  }
+ },
+ "backbones": {
+  "source": "Table 16 (Fig. 10), RMBench success %",
+  "columns": ["pi05 no memory", "pi05 IMPRINT", "pi0 no memory", "pi0 IMPRINT", "MolmoAct2 no memory", "MolmoAct2 IMPRINT"],
+  "rows": {
+   "Observe / pick": [8.0, 9.0, 8.0, 6.0, 4.0, 4.0],
+   "Rearrange blocks": [63.0, 100.0, 13.0, 99.0, 52.0, 100.0],
+   "Put back block": [20.0, 100.0, 49.0, 100.0, 0.0, 100.0],
+   "Swap blocks": [16.0, 100.0, 4.0, 100.0, 11.0, 65.0],
+   "Swap T": [8.0, 100.0, 0.0, 98.0, 15.0, 100.0],
+   "Battery": [30.0, 41.0, 27.0, 30.0, 7.0, 5.0],
+   "Block ranking": [66.0, 83.0, 54.0, 56.0, 62.0, 74.0],
+   "Cover blocks": [15.0, 100.0, 0.0, 78.0, 18.0, 83.0],
+   "Press button": [3.0, 21.0, 2.0, 0.0, 0.0, 6.0],
+   "Average": [25.4, 72.7, 17.4, 63.0, 18.8, 59.7]
+  }
+ },
+ "probe": {
+  "source": "Table 17 (Fig. 9), Cover Blocks color-order linear probe, %; chance is 1/6",
+  "columns": ["timestep accuracy", "balanced accuracy", "episode accuracy", "task success"],
+  "rows": {
+   "E2E": [19.94, 17.29, 42.0, 15.0],
+   "Frozen": [83.31, 83.68, 90.0, 35.0],
+   "IMPRINT": [91.53, 85.95, 98.0, 100.0]
+  }
+ },
+ "latency_by_history": {
+  "source": "Table 18, ms per policy call by memory tokens B",
+  "columns": ["full 1 frame", "full 1451 frames", "recurrent 1 frame", "recurrent 1451 frames"],
+  "rows": {
+   "4": [109.0, 144.1, 114.1, 124.4],
+   "16": [107.4, 143.4, 115.3, 125.4],
+   "64": [109.7, 143.7, 116.2, 128.3],
+   "256": [111.9, 148.2, 116.8, 127.1]
+  }
+ },
+ "latency": {
+  "source": "Fig. 6 values quoted in Sec. 5.2, 5.3 and App. C.5; ms per 50-step action chunk, L40S GPU",
+  "ms": {
+   "pi05": 91.0,
+   "hamlet": 144,
+   "memoryvla": 321,
+   "eventvla": 960,
+   "imprint_full": 130.8,
+   "imprint_recurrent": 122.8
+  },
+  "quotes": {
+   "pi05": "The non-memory \\pi_{0.5} policy requires 91.0 ms per 50-action prediction",
+   "hamlet": "HAMLET and MemoryVLA reach 28.1% and 41.7% success at 144 and 321 ms",
+   "memoryvla": "HAMLET and MemoryVLA reach 28.1% and 41.7% success at 144 and 321 ms",
+   "eventvla": "EventVLA reaches 67.8% but requires 960 ms due to long context to Qwen backbone",
+   "imprint_full": "reducing average inference latency from 130.8 ms to 122.8 ms per action chunk",
+   "imprint_recurrent": "recurrent Imprint achieves the highest success (72.8%) at 122.8 ms"
+  },
+  "reported": ["eventvla"]
+ }
+}
