@@ -250,7 +250,7 @@ def hold_torque():
             label=r"servo torque $k_p(goal-q(t))$")
     ax.plot(time_ms, classical, color=BLUE, lw=2.4, ls="--",
             label="Classical assumption, 0.886 N m")
-    ax.fill_between(time_ms, classical, torque, color=ORANGE, alpha=0.22, lw=0,
+    ax.fill_between(time_ms, classical, torque, color=ORANGE, alpha=0.4, lw=0,
                     label="extra torque Classical did not plan")
     ax.scatter([0, duration_ms], [start_torque, final_torque], color=[ORANGE, TEAL],
                zorder=4, s=60, clip_on=False)
@@ -337,7 +337,9 @@ def shake_test():
             keep = (tt >= 4) & (tt < 6.5)
             ax.plot(tt[keep], error[keep], color=colors[controller], lw=2.4,
                     label=names[controller])
-        ax.axhline(0, color=MUTED, lw=1.4)
+        # A thin guide line, in a different color from the gray "direct" series.
+        ax.axhline(0, color=GRID, lw=1.3)
+        ax.set_yticks([-100, -50, 0, 50, 100, 150] if shake == "vertical" else range(-100, 101, 25))
         ax.set_title(f"{shake.capitalize()} shake, {joint_name}, 1 Hz", loc="left",
                      pad=10, x=-(line_left - 0.15) / line_width)
         ax.set_xlabel("time (s)")

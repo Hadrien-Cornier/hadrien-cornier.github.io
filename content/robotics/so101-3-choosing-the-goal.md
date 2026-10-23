@@ -375,7 +375,7 @@ On the real arm, on the cat motion at 60 Hz, the errors in mrad were:
 | solve | 6.2 | 3.2 | 7.4 | 6.7 | 8.7 | 2.8 |
 | mpc | 6.0 | 3.0 | 7.0 | 6.1 | 8.6 | 2.8 |
 
-![Left: RMS error per joint on the real arm for pi, solve and mpc. The planners win on pan, lift, elbow and roll, and lose on wrist flex. Right: at the fastest speeds pi has 11.7 mrad against 14.2 for solve and 13.4 for mpc.](/assets/robotics/so101-series/real-arm-joints.png "Real arm, cat motion, 60 Hz. The planners win overall, and pi wins at the fastest speeds.")
+![Top: RMS error per joint on the real arm for pi, solve and mpc. The planners win on pan, lift, elbow and roll, and lose on wrist flex. Bottom: at the fastest speeds pi has 11.7 mrad against 14.2 for solve and 13.4 for mpc.](/assets/robotics/so101-series/real-arm-joints.png "Real arm, cat motion, 60 Hz. The planners win overall, and pi wins at the fastest speeds.")
 
 The planners win overall, but the picture changes with speed. On the fastest parts of the motions, `pi` does better, 11.7 mrad against 14.2 for `solve` and 13.4 for `mpc`. Most of that comes from wrist_flex, with 24.7 and 24.8 mrad for `solve` and `mpc` against 16.0 for `pi`. One possible cause is a step limit that the planners hit on 1 % to 3 % of the steps, but I haven't verified it, and each controller ran only once.
 
