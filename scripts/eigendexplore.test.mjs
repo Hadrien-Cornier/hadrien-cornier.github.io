@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {BASIS,SIGMA,sampleOffsets,jointTargets,fingerShape} from '../assets/papers-eigendexplore.js';
+import {BASIS,SIGMA,sampleOffsets,jointTargets,fingerShape} from '../assets/robotics/eigendexplore/article.js';
 
 test('correlated exploration preserves independent noise and the initial total variance',()=>{
  assert.ok(Math.abs(Math.hypot(...BASIS)-1)<1e-12);
