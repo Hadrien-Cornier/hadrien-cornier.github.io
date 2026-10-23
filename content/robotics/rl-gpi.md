@@ -294,8 +294,8 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 <text class="rls-panel-title" x="24" y="628" fill="#ffe17c" font-size="16">5. Two goals pull apart (book, p. 87)</text>
 <path d="M84 838L210 684" stroke="#93d4ff" class="s-blue" stroke-width="2.4"/>
 <path d="M336 838L210 684" stroke="#a8e2a0" class="s-green" stroke-width="2.4"/>
-<text x="28" y="864" fill="#93d4ff" class="c-blue" font-size="16">v = v<tspan baseline-shift="sub" font-size="75%">π</tspan></text>
-<text x="396" y="864" fill="#a8e2a0" class="c-green" font-size="16" text-anchor="end">π = greedy(v)</text>
+<text x="28" y="858" fill="#93d4ff" class="c-blue" font-size="16">v = v<tspan baseline-shift="sub" font-size="75%">π</tspan></text>
+<text x="396" y="858" fill="#a8e2a0" class="c-green" font-size="16" text-anchor="end">π = greedy(v)</text>
 <text x="210" y="674" fill="#ffe17c" class="c-yellow" font-size="18" text-anchor="middle">v*, π*</text>
 <text x="210" y="652" fill="#c3c9bd" class="c-dim" font-size="14" text-anchor="middle">each point: a value table v and a policy π</text>
 <text x="210" y="854" fill="#f4f1e8" class="c-chalk" font-size="14" text-anchor="middle">start: v, π</text>

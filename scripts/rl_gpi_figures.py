@@ -317,8 +317,8 @@ def canvas(history):
         return (top[0] + (end[0] - top[0]) * t, top[1] + (end[1] - top[1]) * t)
     out.append(f'<path d="M{left_end[0]} {left_end[1]}L{top[0]} {top[1]}" {stroke("blue")} stroke-width="2.4"/>')
     out.append(f'<path d="M{right_end[0]} {right_end[1]}L{top[0]} {top[1]}" {stroke("green")} stroke-width="2.4"/>')
-    out.append(text(x + 18, y + 264, f"v = v{SUB}", "blue", 16))
-    out.append(text(x + 386, y + 264, "π = greedy(v)", "green", 16, "end"))
+    out.append(text(x + 18, y + 258, f"v = v{SUB}", "blue", 16))  # the subscript must clear the view edge at y + 272
+    out.append(text(x + 386, y + 258, "π = greedy(v)", "green", 16, "end"))
     out.append(text(top[0], top[1] - 10, "v*, π*", "yellow", 18, "middle"))
     out.append(text(top[0], y + 52, "each point: a value table v and a policy π", "dim", 14, "middle"))
     zig = [(x + 200, y + 232)]
