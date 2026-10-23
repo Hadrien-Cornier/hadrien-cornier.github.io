@@ -356,7 +356,7 @@ Start with a random walker that picks each move with chance ¼. Such a rule is a
 
 $$v_\pi(s) = \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_\pi(s')\big]$$
 
-The **model** $p(s', r \mid s, a)$ is the chance that move $a$ in $s$ lands in $s'$ with reward $r$. You know it, so that's 37 linear equations in 37 unknowns. You can solve them directly, or in **sweeps**: replace every value with the right-hand side, using the current guesses, and repeat until nothing moves. Panel 1 shows the solution: about −482 above the flag, −1072 at S.
+The **model** $p(s', r \mid s, a)$ is the chance that move $a$ in $s$ lands in $s'$ with reward $r$. You know it, so that's 37 linear equations in 37 unknowns. You can solve them directly, or in **sweeps**: replace every value with the right-hand side, using the current guesses, and repeat until the values barely move. Panel 1 shows the solution: about −482 above the flag, −1072 at S.
 
 <div class="rc-slot" data-for="sec-evaluate"></div>
 
@@ -426,7 +426,7 @@ It takes six rounds of one evaluation and one greedy step each (panel 3); panel 
 
 <div class="rc-slot" data-for="sec-repeat"></div>
 
-After round 6 a greedy step changes nothing, so the loop stops. No change means every value already equals its best action value: $v_\pi(s) = \max_a q_\pi(s, a)$ in every cell. That's the **Bellman optimality equation** (eq. 4.1, p. 73), and in a finite problem its only solution is $v_*$, the best value any policy can reach. So the final policy is optimal (pp. 64 and 79). It must stop, too: no policy comes back, and there are finitely many.
+After round 6 a greedy step changes nothing, so the loop stops. No change means every value already equals its best action value: $v_\pi(s) = \max_a q_\pi(s, a)$ in every cell. That's the **Bellman optimality equation** (eq. 4.1, p. 73), and in a finite problem its only solution is $v_*$, the best value any policy can reach. So the final policy is optimal (pp. 64 and 79). It must stop, too: with the tie rule in the drawer, each change makes some cell strictly better, so no policy comes back, and only finitely many policies pick one move per cell.
 
 <details>
 <summary>Every round</summary>
@@ -450,11 +450,11 @@ Round 1 breaks ties in the order up, right, down, left; all 24 orders give the s
 </details>
 
 <details>
-<summary>Why it must stop</summary>
+<summary>Why it stops, written out</summary>
 
 When two moves tie, the policy keeps its current move (the fix that Exercise 4.4 asks for, p. 82), so a round only switches to strictly better moves. Then some cell gets strictly better (p. 78), so no policy can come back. With finitely many **deterministic** policies, the ones that pick one move per cell, the loop must stop (p. 80).
 
-Written out with the model, the stable values satisfy (eq. 4.1, p. 73)
+At the stop $\pi' = \pi$, and written out with the model, its values satisfy (eq. 4.1, p. 73)
 
 $$v_{\pi'}(s) = \max_a \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_{\pi'}(s')\big]$$
 
@@ -470,7 +470,7 @@ $$v_{k+1}(s) = \max_a \sum_{s', r} p(s', r \mid s, a)\,\big[r + \gamma\, v_k(s')
 
 On the cliff grid, from all zeros, it reaches $v_*$ exactly at sweep 14, though in general it only converges in the limit (p. 83).
 
-The general idea is **generalized policy iteration** (GPI): "letting policy-evaluation and policy-improvement processes interact, independent of the granularity and other details of the two processes" (§4.6, p. 86). In panel 4, evaluation pulls V, the current value estimate, toward $v_\pi$, and improvement pulls $\pi$ toward greedy(V). If both stop changing, V is the policy's true value and the policy is greedy for it, the stop condition from above, so you're at an optimal $\pi_*$ and $v_*$ (p. 86). And "Almost all reinforcement learning methods are well described as GPI" (p. 86).
+The general idea is **generalized policy iteration** (GPI): "letting policy-evaluation and policy-improvement processes interact, independent of the granularity and other details of the two processes" (§4.6, p. 86). In panel 4, evaluation pulls V, the current value estimate, toward $v_\pi$, and improvement pulls $\pi$ toward greedy(V). If both stop changing, V is the policy's true value and the policy is fully greedy for it, the stop condition from above, so you're at an optimal $\pi_*$ and $v_*$ (p. 86). And "Almost all reinforcement learning methods are well described as GPI" (p. 86).
 
 <div class="rc-slot" data-for="sec-gpi"></div>
 
@@ -478,7 +478,7 @@ The general idea is **generalized policy iteration** (GPI): "letting policy-eval
 
 ## Two goals that pull apart
 
-In panel 5, the book's sketch (p. 87), each point pairs a value table $v$ with a policy $\pi$. The blue line is $v = v_\pi$, where the values fit the policy, and the green line is $\pi = \text{greedy}(v)$. Each jump onto one line usually knocks you off the other: new values can favor new moves, and a new policy makes old values wrong. Yet the zigzag climbs to where they meet, because no greedy step lowers a value. The two processes "can be viewed as both competing and cooperating" (p. 86).
+In panel 5, the book's sketch (p. 87), each point pairs a value table $v$ with a policy $\pi$. The blue line is $v = v_\pi$, where the values fit the policy, and the green line is $\pi = \text{greedy}(v)$. Each jump onto one line usually knocks you off the other: new values can favor new moves, and a new policy makes old values wrong. Yet the zigzag climbs to where they meet, the optimum, for the reasons in section 3. The two processes "can be viewed as both competing and cooperating" (p. 86).
 
 <div class="rc-mark" id="sec-family" data-panel="family" data-view="family" data-title="Same loop, different parts"></div>
 
@@ -486,7 +486,7 @@ In panel 5, the book's sketch (p. 87), each point pairs a value table $v$ with a
 
 Without the model, most methods run both processes on experience (panel 6).
 
-- **Monte Carlo control** (§5.2-5.3, pp. 96-99) evaluates by averaging what whole episodes earn. Without a model, $v$ can't pick a move (p. 96), so it learns action values $Q(s,a)$ and acts greedily on them after each episode. In the book's version, Monte Carlo ES, episodes start from a random cell and move, so every move gets tried (pp. 98-99).
+- **Monte Carlo control** (§5.2-5.3, pp. 96-99) evaluates by averaging what whole episodes earn. Without a model, $v$ can't pick a move (p. 96), so it learns action values $Q(s,a)$ and acts greedily on them after each episode. In the book's version, Monte Carlo with exploring starts (ES), episodes start from a random cell and move, so every move gets tried (pp. 98-99).
 - **Sarsa** (§6.4, p. 129) nudges $Q(s,a)$ toward one reward plus the next estimate, a temporal-difference (TD) update, and acts ε-greedy (mostly greedy, sometimes random). That's "the pattern of generalized policy iteration (GPI), only this time using TD methods for the evaluation or prediction part".
 - **Q-learning** (§6.5, p. 131) puts the max inside its TD target, $R + \gamma \max_a Q(S', a)$, so improvement happens inside every evaluation update (Figure 8.6, p. 172).
 - **Actor-critic** (§13.5, p. 331): the actor is a policy updated by gradient steps. The critic evaluates the actor's policy with TD and the actor improves it (p. 346), though the book never names this GPI outright (see Sources).
@@ -504,8 +504,6 @@ $$l = (z - v)^2 - \pi^\top \log p + c\,\lVert\theta\rVert^2$$
 - $(z - v)^2$ is evaluation: $v$ moves toward the winner $z$, $+1$ or $-1$ from the current player's side.
 - $-\pi^\top \log p$ is improvement: $p$ moves toward the search probabilities $\pi$.
 - $c\,\lVert\theta\rVert^2$ is weight regularization.
-
-Trained from random play for about 3 days and 4.9 million self-play games, it beat AlphaGo Lee 100 games to 0 (Silver et al., pp. 6 and 8).
 
 </details>
 
