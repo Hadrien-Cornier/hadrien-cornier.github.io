@@ -126,7 +126,8 @@
       return heading || m;
     }
     function figView(i, W) { var m = marks[i], vn = m.getAttribute('data-view'); return (W < narrowAt && views[vn + '_n']) || views[vn] || views[m.getAttribute('data-panel')] || whole; }
-    function figHeight(v, W) { return Math.round(Math.max(W * 0.5, Math.min(W * v[3] / v[2], W * 1.25, window.innerHeight * 0.75))); }
+    /* A figure is as tall as its view at full width, within limits; a step drawn by an HTML widget (the family tree) keeps the live view's height. */
+    function figHeight(v, W, minH) { return Math.round(Math.max(W * 0.5, minH || 0, Math.min(W * v[3] / v[2], W * 1.25, window.innerHeight * 0.75))); }
     /* The board map: every panel as a small box; done panels filled, the current one bright, later ones dashed. */
     function boardMap(i) {
       var m = document.createElementNS(SVGNS, 'svg'), seen = {}, now = marks[i].getAttribute('data-panel');
@@ -162,7 +163,7 @@
       figs.forEach(function (f) { io.observe(f.el); });
     }
     function sizeFigure(i, W) {
-      var f = figs[i], v = figView(i, W), H = figHeight(v, W); f.box.style.height = H + 'px';
+      var f = figs[i], v = figView(i, W), H = figHeight(v, W, snaps[i] && snaps[i].minH); f.box.style.height = H + 'px';
       var s = f.box.querySelector('svg.rc-svg'); if (s) s.setAttribute('viewBox', vbStr(fit(v, W, H)));
     }
     function sizeFigures() { if (figs) { var W = Math.max(1, figs[0].el.clientWidth); figs.forEach(function (f, i) { sizeFigure(i, W); }); } }
@@ -183,7 +184,8 @@
       uniqueIds(c, '--f' + i);
       [].forEach.call(c.querySelectorAll('a[href], button, input, select, textarea, [tabindex]'), function (el) { el.setAttribute('tabindex', '-1'); });
       if (i !== 0) c.setAttribute('aria-hidden', 'true'); /* the board's own title and description are read once, on the first figure */
-      return { node: c, zoomed: stage.classList.contains('is-zoomed'), panel: stage.getAttribute('data-active-panel'), view: stage.getAttribute('data-active-view'),
+      var overlay = [].some.call(view.children, function (el) { return !/^svg$/i.test(el.tagName) && getComputedStyle(el).display !== 'none'; });
+      return { node: c, minH: overlay ? view.clientHeight : 0, zoomed: stage.classList.contains('is-zoomed'), panel: stage.getAttribute('data-active-panel'), view: stage.getAttribute('data-active-view'),
         live: hasLive && [].some.call(stage.querySelectorAll('.rc-bar > :not(.rc-reset):not(.rc-where)'), function (el) { return getComputedStyle(el).display !== 'none'; }) };
     }
     function fill(i) {
@@ -216,7 +218,7 @@
       svg.removeAttribute('style'); view.style.height = ''; runQueue();
     }
     function frameDocked() {
-      var f = figs[docked], W = f.box.clientWidth || f.el.clientWidth, v = figView(docked, W), H = figHeight(v, W);
+      var f = figs[docked], W = f.box.clientWidth || f.el.clientWidth, v = figView(docked, W), H = figHeight(v, W, snaps[docked] && snaps[docked].minH);
       view.style.height = H + 'px'; svg.removeAttribute('style'); svg.setAttribute('viewBox', vbStr(fit(v, W, H)));
     }
 

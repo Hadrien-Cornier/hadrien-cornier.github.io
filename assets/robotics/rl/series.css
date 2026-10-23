@@ -71,7 +71,7 @@
 .article-body .rc-map rect.is-done { fill: var(--bb-dim); fill-opacity: .5; stroke: none; }
 .article-body .rc-map rect.is-now { fill: var(--bb-yellow); stroke: none; }
 .article-body .rc-fig .rc-view { position: relative; overflow: hidden; }
-.article-body .rc-fig .rc-view > svg.rc-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; margin: 0; }
+.article-body .rc-fig .rc-view > svg.rc-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; margin: 0; pointer-events: none; } /* a snapshot: no hit testing */
 .article-body .rc-fig .rc-fig-live { flex: 0 0 auto; min-height: 32px; padding: 6px 10px; font: 600 12px/1 Arial, Helvetica, sans-serif; color: var(--bb-chalk) !important; background: transparent !important; border: 1px solid var(--bb-dim) !important; cursor: pointer; }
 .article-body .rc-fig.is-docked > .rc-fig-view { display: none; }
 .article-body .rc-fig > .rc-stage { position: relative; top: auto; height: auto; border: 0; }
