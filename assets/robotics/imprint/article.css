@@ -1,5 +1,6 @@
 /* Imprint: one intro paragraph, one blackboard canvas, one math paragraph. The canvas has three drawings: wide for desktops, two columns for mid-size screens, tall for phones. */
 .im-intro { max-width: 760px; margin: 0 0 30px; font-size: 18px; line-height: 1.65; color: var(--ink); }
+.im-intro a { color: var(--accent); }
 .im-canvas { margin: 0; padding: 0; background: #1d1d1b; border: 1px solid var(--line); }
 .im-canvas svg { display: block; width: 100%; height: auto; }
 .im-canvas .im-mid, .im-canvas .im-tall { display: none; }
