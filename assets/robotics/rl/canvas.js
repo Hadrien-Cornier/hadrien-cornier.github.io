@@ -44,7 +44,7 @@
     var views = JSON.parse(svg.getAttribute('data-views')), whole = svg.getAttribute('data-whole').split(' ').map(Number);
     var narrowAt = +svg.getAttribute('data-narrow') || 0; /* optional: below this width (a phone), prefer the _n views */
     var figMax = +svg.getAttribute('data-fig-max') || 0; /* optional: inline figures keep the shape of a tall view up to this height-to-width ratio */
-    var marks = [].slice.call(rc.querySelectorAll('.rc-mark')), where = stage.querySelector('.rc-where'), reset = stage.querySelector('.rc-reset');
+    var marks = [].slice.call(rc.querySelectorAll('.rc-mark')), where = stage.querySelector('.rc-where');
     var panels = [].slice.call(svg.querySelectorAll('.rc-panel'));
     var idx = -1, hold = false, holdAt = -1, peekY = null, tick = 0, mode = '', base = 1, home = stage.nextSibling;
     function label(i) { var n = marks[i].getAttribute('data-num'); if (n === null) n = String(i + 1); return (n ? n + '. ' : '') + marks[i].getAttribute('data-title'); }
@@ -127,7 +127,7 @@
 
     /* ---- Inline figures ---- */
     var figs = null, snaps = [], pre = [], queue = [], inflight = -1, docked = -1, back = null, io = null, boxes = {}, resnapT = 0;
-    var hasLive = !!stage.querySelector('.rc-bar > :not(.rc-reset):not(.rc-where)');
+    var hasLive = !!stage.querySelector('.rc-bar > :not(.rc-where)');
     /* Widgets (bar controls, HTML drawn over the board) redraw the live board for each step. A board without them is a plain
        drawing: on narrow screens its live copy stays hidden with display: none, so setting a step there costs no layout. */
     var widgets = hasLive || [].some.call(view.children, function (el) { return !/^svg$/i.test(el.tagName); });
@@ -239,7 +239,7 @@
       c.setAttribute('aria-hidden', 'true'); c.setAttribute('inert', '');
       var overlay = [].some.call(view.children, function (el) { return !/^svg$/i.test(el.tagName) && getComputedStyle(el).display !== 'none'; });
       return { node: c, minH: overlay ? view.clientHeight : 0, zoomed: stage.classList.contains('is-zoomed'), panel: stage.getAttribute('data-active-panel'), view: stage.getAttribute('data-active-view'),
-        live: hasLive && [].some.call(stage.querySelectorAll('.rc-bar > :not(.rc-reset):not(.rc-where)'), function (el) { return getComputedStyle(el).display !== 'none'; }) };
+        live: hasLive && [].some.call(stage.querySelectorAll('.rc-bar > :not(.rc-where)'), function (el) { return getComputedStyle(el).display !== 'none'; }) };
     }
     function fill(i) {
       var f = figs[i], sn = snaps[i]; if (!f.near || !sn || f.shown === sn) return;
@@ -344,7 +344,6 @@
       if (target) { jump(function () { target.scrollIntoView({ block: 'start' }); }); spot = readingSpot(); } else keepSpot();
       if (m === 'wide') apply(current(), true); else runQueue();
     }
-    reset.addEventListener('click', function () { hold = true; holdAt = current(); peekY = null; apply(-1); });
     sel.addEventListener('change', function () { go(parseInt(sel.value, 10)); });
     prev.addEventListener('click', function () { go(Math.max(-1, (hold ? holdAt : idx) - 1)); });
     next.addEventListener('click', function () { go(Math.min(marks.length - 1, (hold ? holdAt : idx) + 1)); });

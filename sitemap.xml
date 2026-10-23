@@ -38,8 +38,23 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/robotics/molmobot/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/robotics/world-action-models-vs-vlas/</loc>
     <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/imprint/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/offline-empowerment/</loc>
+    <lastmod>2026-10-22</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -128,6 +143,11 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/robotics/eigendexplore/</loc>
+    <lastmod>2026-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/robotics/robot-brains-robot-bodies/</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
@@ -173,23 +193,158 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/papers/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <loc>https://hadrien-cornier.github.io/tags/</loc>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/papers/imprint/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <loc>https://hadrien-cornier.github.io/tags/3d-printing/</loc>
+    <lastmod>2026-10-10</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/papers/offline-empowerment/</loc>
-    <lastmod>2026-10-22</lastmod>
+    <loc>https://hadrien-cornier.github.io/tags/agents/</loc>
+    <lastmod>2026-10-19</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
-    <loc>https://hadrien-cornier.github.io/papers/eigendexplore/</loc>
+    <loc>https://hadrien-cornier.github.io/tags/ai/</loc>
     <lastmod>2026-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/calibration/</loc>
+    <lastmod>2026-10-11</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/code-as-policy/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/control/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/dexterous-hands/</loc>
+    <lastmod>2026-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/education/</loc>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/exploration/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/flow-matching/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/hardware/</loc>
+    <lastmod>2026-10-10</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/imitation-learning/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/industry/</loc>
+    <lastmod>2026-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/kv-cache/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/lerobot/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/long-horizon/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/machine-learning/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/measurement/</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/navigation/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/nvidia/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/reinforcement-learning/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/robot-memory/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/robotics/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/sensors/</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/sim-to-real/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/simulation/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/skill-learning/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/so-101/</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/vla/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/tags/world-action-models/</loc>
+    <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>
   </url>
 </urlset>

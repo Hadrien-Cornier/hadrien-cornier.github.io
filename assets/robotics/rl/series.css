@@ -30,8 +30,6 @@
 .article-body .rc-bar { flex: 0 0 var(--rc-bar); box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 8px; border-bottom: 1px solid var(--line); background: #fff; }
 .article-body .rc-view { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .article-body .rc-stage svg.rc-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; margin: 0; }
-.article-body .rc-reset { flex: 0 0 auto; font: 600 13px/1 var(--sans, Arial, sans-serif); color: var(--ink); background: #fff; border: 1px solid var(--line); padding: 7px 11px; cursor: pointer; }
-.article-body .rc-reset:hover, .article-body .rc-reset:focus-visible { border-color: var(--accent); }
 .article-body .rc-where { min-width: 0; font: 600 12.5px/1.3 var(--sans, Arial, sans-serif); color: var(--accent); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .article-body .rc-nav { position: sticky; top: var(--rc-nav-top, var(--rc-stage-h)); z-index: 19; display: flex; gap: 8px; align-items: center; padding: 8px 0; background: #fbfbf8; border-bottom: 1px solid var(--line); font: 14px/1.3 var(--sans, Arial, sans-serif); }
 .article-body .rc-nav select { flex: 1 1 auto; min-width: 0; font: inherit; padding: 8px 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); }
@@ -57,7 +55,7 @@
 @media (min-width: 1000px) and (max-width: 1199px) {
   .article-body .rc { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; }
 }
-@media (max-width: 520px) { .article-body .rc-reset { padding: 6px 8px; font-size: 12px; } .article-body .rc-where { font-size: 11.5px; } }
+@media (max-width: 520px) { .article-body .rc-where { font-size: 11.5px; } }
 /* Inline figures. The live board stays in the page, hidden, as the source of the snapshots. */
 .article-body .rc.rc-inline { position: relative; }
 .article-body .rc.rc-inline > .rc-stage { position: absolute; top: 0; left: 0; right: 0; visibility: hidden; pointer-events: none; z-index: -1; }
@@ -75,7 +73,6 @@
 .article-body .rc-fig .rc-view > svg.rc-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; margin: 0; }
 .article-body .rc-fig > .rc-fig-view { pointer-events: none; } /* a snapshot: no hit testing; the docked live board keeps its taps */
 .article-body .rc-fig.is-live:not(.is-docked) { cursor: pointer; } /* a tap opens the live board here */
-.article-body .rc-fig > .rc-stage .rc-reset { display: none; } /* the whole board does not fit a figure */
 .article-body .rc-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 @media print { .article-body .rc-fig:not(.is-ready) { display: none; } }
 .article-body .rc-fig .rc-fig-live { flex: 0 0 auto; min-height: 32px; padding: 6px 10px; font: 600 12px/1 Arial, Helvetica, sans-serif; color: var(--bb-chalk) !important; background: transparent !important; border: 1px solid var(--bb-dim) !important; cursor: pointer; }
@@ -196,7 +193,7 @@ body td.low { background: var(--rl-warning) !important; }
 .article-body .katex-display { background: transparent; }
 body button, body select, body input, body textarea,
 #rc .ft-toolbar, #rc .dt-controls, #rc .ft-toolbar button, #rc .dt-controls button,
-#rc .rc-bar, #rc .rc-nav, #rc .rc-reset, #rc .rc-where {
+#rc .rc-bar, #rc .rc-nav, #rc .rc-where {
   background: var(--rl-surface) !important;
   color: var(--ink) !important;
   border-color: var(--line) !important;

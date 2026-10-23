@@ -184,7 +184,7 @@ def board(figures, title, desc, prefix):
             y += max(row) + GAP
             row = []
     whole = f"0 0 {BOARD_W} {n(y - GAP + PAD)}"
-    head = (f'<div class="rc-stage"><div class="rc-bar"><button class="rc-reset" type="button">Whole canvas &#8689;</button>'
+    head = (f'<div class="rc-stage"><div class="rc-bar">'
             f'<div class="rc-where" aria-live="polite"></div></div><div class="rc-view">'
             f'<svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="{whole}" data-whole="{whole}" '
             f"data-views='{json.dumps(views, separators=(',', ':'))}' data-fig-max=\"{FIG_MAX}\" role=\"img\" aria-labelledby=\"{prefix}-title {prefix}-desc\">"

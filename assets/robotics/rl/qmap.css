@@ -18,7 +18,7 @@
 .article-body .qm-jump { display: flex; flex-wrap: wrap; gap: 8px; }
 .article-body .qm-jump button { font: 600 14px/1.2 Arial, sans-serif; padding: 9px 12px; min-height: 40px; border: 1px solid var(--line); border-radius: 3px; cursor: pointer; }
 .article-body .qm-jump button:hover, .article-body .qm-jump button:focus-visible { border-color: var(--accent); }
-@media (max-width: 520px) { #rc :is(.rc-stage, .rc-fig):is([data-active-panel="map"], [data-active-panel="update"]) .rc-bar > .rc-reset { display: none; } #rc .qm-readout { min-width: 0; font-size: 14px; } }
+@media (max-width: 520px) { #rc .qm-readout { min-width: 0; font-size: 14px; } }
 /* Phones see the 12-column map at about 0.43 CSS px per unit, so its small labels grow to about 10 px,
    the long key line gives way to a short one, and the close-up waits for "Two readouts". */
 #rc .qm-narrow-only { display: none; }
