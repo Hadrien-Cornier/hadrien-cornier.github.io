@@ -398,7 +398,8 @@ def thumbnail_svg(history):
     inner = "\n".join(canvas(history))
     for name in ("walker", "greedy", "lines", "family"):
         inner = without_panel(inner, name)
-    inner = inner.replace(">panel 1, then panel 2<", "><")  # the card has no panels 1 and 2
+    for ref in (" (panel 1)", " (panel 2)"):  # the card has no panels 1 and 2
+        inner = inner.replace(ref, "")
     inner = inner.replace('stroke="#b6baaf"', 'stroke="#6f7d75" stroke-width="1.5" stroke-dasharray="2 5"')
     alt = ("Two blackboard panels: policy iteration on the cliff grid, whose start value climbs from −1072 to −12.25 in six rounds, "
            "and the book's loop between evaluation and improvement that ends at the optimal policy and value")
