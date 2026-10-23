@@ -1,10 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import matter from 'gray-matter';
 import {DATA, OUTPUT, PANEL, LAYOUTS, SCALE, RESULT, TRIALS, PHASES, count, INTRO, MATH_BEFORE, EQUATION, MATH_AFTER, render} from './molmobot-canvas.mjs';
 
 test('the committed page is the current generator output', () => {
  assert.equal(fs.readFileSync(OUTPUT, 'utf8'), render(), 'run node scripts/molmobot-canvas.mjs');
+});
+
+test('the title is the paper\'s exact name, MolmoBot first, and the first line under it gives the paper date and link', () => {
+ const {data} = matter(fs.readFileSync(new URL('../content/robotics/molmobot.md', import.meta.url), 'utf8'));
+ // The arXiv abstract page of 2603.16861: the title draws the O as a robot face, the text writes MolmoBot. We read v2, 26 Mar 2026.
+ assert.equal(data.paper.title, 'MolmoBot: Large-Scale Simulation Enables Zero-Shot Manipulation');
+ assert.equal(data.title, data.paper.title);
+ assert.doesNotMatch(data.title, /[—–]/, 'no em or en dashes');
+ assert.equal(data.paper.date, '2026-03-26');
+ const page = fs.readFileSync(new URL('../robotics/molmobot/index.html', import.meta.url), 'utf8');
+ assert.match(page, /<h1>MolmoBot: Large-Scale Simulation Enables Zero-Shot Manipulation<\/h1><p class="paper-source">Posted to arXiv on 26 March 2026 · <a href="https:\/\/arxiv\.org\/abs\/2603\.16861v2">arXiv 2603\.16861v2 ↗<\/a><\/p><p class="post-description">/);
 });
 
 test('Table 1 adds up to its own total row', () => {

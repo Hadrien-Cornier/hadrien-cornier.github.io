@@ -8,7 +8,6 @@ import matter from 'gray-matter';
 import { katex } from '@mdit/plugin-katex';
 import { parseMarket, renderMarket, renderValueLoop } from './robotics-market.mjs';
 import { parseTimeline, renderTimeline, timelineProse } from './robotics-timeline.mjs';
-import { homePapers } from './build_papers.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ORIGIN = 'https://hadrien-cornier.github.io';
@@ -56,6 +55,22 @@ const SECTIONS = {
 function validateSection(data) {
   if (data.section !== undefined && !SECTIONS[data.section]) throw new Error(`section must be one of: ${Object.keys(SECTIONS).join(', ')}`);
 }
+// An essay about one paper may name it. The header then shows the paper's date and link.
+function validatePaper(data) {
+  if (data.paper === undefined) return;
+  const paper = data.paper;
+  if (!paper || typeof paper !== 'object' || Array.isArray(paper)) throw new Error('paper must be a map with title and url');
+  const unknown = Object.keys(paper).filter((key) => !['title', 'url', 'date', 'project', 'code'].includes(key));
+  if (unknown.length) throw new Error(`paper has unknown field ${unknown[0]}`);
+  if (typeof paper.title !== 'string' || !paper.title.trim()) throw new Error('paper.title must be a non-empty string');
+  for (const key of ['url', 'project', 'code']) {
+    if (paper[key] === undefined && key !== 'url') continue;
+    let url;
+    try { url = new URL(paper[key]); } catch { throw new Error(`paper.${key} must be an HTTPS URL`); }
+    if (url.protocol !== 'https:' || url.username || url.password) throw new Error(`paper.${key} must be an HTTPS URL`);
+  }
+  if (paper.date !== undefined) dateValue(paper.date, 'paper.date');
+}
 // Published cards require an article figure/frame under /assets/ and descriptive alt text.
 function validateThumbnail(data, root) {
   if (data.thumbnail === undefined) {
@@ -71,9 +86,10 @@ function validateThumbnail(data, root) {
 const TRACKS = {hardware:'Hardware'};
 const trackClass = (article) => article.track ? ` track-${article.track}` : '';
 const trackLabel = (article) => article.track ? ` · ${TRACKS[article.track]}` : '';
+const htmlText = (value) => value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ');
 const displayDate = (value) => new Intl.DateTimeFormat('en', {year:'numeric', month:'long', day:'numeric', timeZone:'UTC'}).format(new Date(value));
 
-export function renderArticle(source, root = ROOT) {
+export function renderArticle(source, root = ROOT, html = undefined) {
   const {data, content} = matter(source);
   for (const field of ['title', 'description']) {
     if (typeof data[field] !== 'string' || !data[field].trim()) throw new Error(`Missing frontmatter ${field}`);
@@ -81,10 +97,24 @@ export function renderArticle(source, root = ROOT) {
   const date = dateValue(data.date, 'date');
   const updated = data.updated ? dateValue(data.updated, 'updated') : date;
   if (data.draft !== undefined && typeof data.draft !== 'boolean') throw new Error('draft must be true or false');
-  if (data.layout !== undefined && data.layout !== 'essay') throw new Error('layout must be essay when provided');
+  if (data.layout !== undefined && !['essay', 'short'].includes(data.layout)) throw new Error('layout must be essay or short when provided');
   validateSeriesMetadata(data);
   validateTags(data);
+  validatePaper(data);
   if (updated < date) throw new Error('updated cannot be earlier than date');
+  const paper = data.paper ? {...data.paper, date:data.paper.date === undefined ? undefined : dateValue(data.paper.date, 'paper.date')} : undefined;
+  // A short article is one authored HTML body, for example a blackboard canvas between two short paragraphs.
+  // Its frontmatter lives in <slug>.md and its body in <slug>.html beside it.
+  if (data.layout === 'short') {
+    if (content.trim()) throw new Error('A short article keeps its body in the .html file beside it; leave the Markdown body empty');
+    if (typeof html !== 'string' || !html.trim()) throw new Error('A short article needs a non-empty .html body beside its .md file');
+    if (/<h1\b/i.test(html)) throw new Error('Use H2 or deeper in articles; title supplies H1');
+    // Drawings carry long accessible descriptions; reading time counts the prose around them.
+    const words = htmlText(html.replace(/<svg\b[\s\S]*?<\/svg>/gi, ' ')).trim().split(/\s+/).filter(Boolean).length;
+    const components = {timeline:false, geometry:false, so101:false, market:false, futures:false};
+    return {...data, paper, tags:data.tags ? [...data.tags] : [], date, updated, body:html, headings:[], components, readingMinutes:Math.max(1, Math.ceil(words / 220))};
+  }
+  if (html !== undefined) throw new Error('Only a short article (layout: short) may have an .html body');
   const md = new MarkdownIt({html:true, linkify:true, typographer:false}).use(katex, {
     delimiters:'dollars', throwOnError:true, trust:false, output:'htmlAndMathml',
   });
@@ -189,7 +219,6 @@ export function renderArticle(source, root = ROOT) {
   const body = md.renderer.render(tokens, md.options, environment);
   if (body.includes('katex-error')) throw new Error('Math rendering failed');
   // Count authored prose before KaTeX turns each equation into HTML and MathML.
-  const htmlText = (value) => value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ').replace(/<[^>]+>/g, ' ');
   const prose = tokens.flatMap((token) => {
     if (token.type === 'html_block') return [htmlText(token.content)];
     if (token.meta?.timeline) return [timelineProse(token.meta.timeline)];
@@ -204,7 +233,7 @@ export function renderArticle(source, root = ROOT) {
     });
   }).join(' ');
   const words = prose.trim().split(/\s+/).filter(Boolean).length;
-  return {...data, tags:data.tags ? [...data.tags] : [], date, updated, body, headings, components, readingMinutes:Math.max(1, Math.ceil(words / 220))};
+  return {...data, paper, tags:data.tags ? [...data.tags] : [], date, updated, body, headings, components, readingMinutes:Math.max(1, Math.ceil(words / 220))};
 }
 
 function template(name, root = ROOT, values = {}) {
@@ -224,6 +253,13 @@ function assetVersion(root, ...filenames) {
   }
   return hash.digest('hex').slice(0, 12);
 }
+// An article may ship its own styles and module script beside its figures, at assets/robotics/<slug>/article.css and article.js.
+function articleAssets(article, root) {
+  const local = (filename) => fs.existsSync(path.join(root, filename));
+  const css = `assets/robotics/${article.slug}/article.css`;
+  const js = `assets/robotics/${article.slug}/article.js`;
+  return `${local(css) ? `<link rel="stylesheet" href="/${css}?v=${assetVersion(root, css)}">` : ''}${local(js) ? `<script type="module" src="/${js}?v=${assetVersion(root, js)}"></script>` : ''}`;
+}
 function shell({title, description, pathname, content, article, root = ROOT, interactive = false, search = false}) {
   const canonical = `${ORIGIN}${pathname}`;
   const siteCss = `/assets/site.css?v=${assetVersion(root, 'assets/site.css')}`;
@@ -232,7 +268,7 @@ function shell({title, description, pathname, content, article, root = ROOT, int
   const themeScript = `<script src="/assets/theme.js?v=${assetVersion(root, 'assets/theme.js')}" defer></script>`;
   const header = template('header.html', root, {
     writing_current:` aria-current="${pathname === '/' ? 'page' : 'location'}"`,
-    papers_current:'', notes_current:'', about_current:'', resume_href:'/out/resume.pdf', site_css:siteCss,
+    notes_current:'', about_current:'', resume_href:'/out/resume.pdf', site_css:siteCss,
   });
   const footer = template('footer.html', root, {resume_href:'/out/resume.pdf', site_css:siteCss});
   const schema = article ? `<script type="application/ld+json">${JSON.stringify({
@@ -246,7 +282,7 @@ ${GENERATED_MARKER}
 <title>${escape(title)} | Hadrien Cornier</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${canonical}"><meta name="theme-color" content="#f7f6f2">
 <meta property="og:title" content="${escape(title)}"><meta property="og:description" content="${escape(description)}"><meta property="og:type" content="${article ? 'article' : 'website'}"><meta property="og:url" content="${canonical}">
-${themeHead}${themeScript}<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/papers.css?v=${assetVersion(root, 'assets/papers.css')}"><link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.layout === 'essay' || article?.components.futures ? `<link rel="stylesheet" href="/assets/robotics-futures.css?v=${assetVersion(root, 'assets/robotics-futures.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${search ? `\n<script src="/assets/robotics-search.js?v=${assetVersion(root, 'assets/robotics-search.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
+${themeHead}${themeScript}<link rel="stylesheet" href="${siteCss}">${article ? '<link rel="stylesheet" href="/assets/vendor/katex/katex.min.css">' : ''}<link rel="stylesheet" href="/assets/robotics.css?v=${STYLE_VERSION}">${pathname === '/' ? `<link rel="stylesheet" href="/assets/control-playground.css?v=${assetVersion(root, 'assets/control-playground.css')}">` : ''}${article?.layout === 'essay' || article?.components.futures ? `<link rel="stylesheet" href="/assets/robotics-futures.css?v=${assetVersion(root, 'assets/robotics-futures.css')}">` : ''}${article?.components.market ? `<link rel="stylesheet" href="/assets/robotics-market.css?v=${assetVersion(root, 'assets/robotics-market.css')}"><script src="/assets/robotics-market.js?v=${assetVersion(root, 'assets/robotics-market.js')}" defer></script>` : ''}${article ? articleAssets(article, root) : ''}${schema}${interactive ? `\n<script src="/assets/site.js?v=${assetVersion(root, 'assets/site.js')}" defer></script>` : ''}${search ? `\n<script src="/assets/robotics-search.js?v=${assetVersion(root, 'assets/robotics-search.js')}" defer></script>` : ''}${pathname === '/' ? `\n<script type="module" src="/assets/control-playground.js?v=${assetVersion(root, 'assets/control-playground.js', 'assets/control-simulator.mjs', 'assets/control-approaches.mjs', 'assets/control-visuals.mjs')}"></script>` : ''}${article?.components.geometry ? `\n<script src="/assets/arm-geometry.js?v=${assetVersion(root, 'assets/arm-geometry.js')}" defer></script>` : ''}${article?.components.timeline ? `\n<script src="/assets/robotics-timeline.js?v=${assetVersion(root, 'assets/robotics-timeline.js')}" defer></script>` : ''}${article?.components.so101 ? `\n<script type="module" src="/assets/so101-widgets.js?v=${assetVersion(root, 'assets/so101-widgets.js', 'assets/so101-sims.js')}"></script>` : ''}
 </head><body class="${pathname === '/' ? 'home-page' : 'robotics'}${article ? trackClass(article) : ''}"><a class="skip" href="#main">Skip to content</a>
 ${header}
 <main id="main" class="${pathname === '/' ? 'home-main' : 'robotics-main'}">${content}
@@ -261,10 +297,29 @@ function seriesBox(article) {
   const next = article.seriesNext ? `<a rel="next" href="/robotics/${article.seriesNext.slug}/">Next: ${escape(article.seriesNext.title)} →</a>` : '';
   return `<nav class="series-box" aria-label="Series"><p class="series-box-name">${escape(article.series)}</p><p class="series-box-position">Part ${article.part} of ${(article.seriesArticles.some((part) => part.part === 0) ? Math.max(...article.seriesArticles.map((part) => part.part)) : article.seriesArticles.length)}${trackLabel(article)}</p><ol>${parts}</ol><div class="series-box-links">${previous}${next}</div></nav>`;
 }
+// The paper's own date and link, shown as the first line under the title when paper.date is set.
+function paperSource(paper) {
+  if (!paper?.date) return '';
+  const arxiv = /^https:\/\/arxiv\.org\/abs\/([^/?#]+)$/.exec(paper.url);
+  const day = new Intl.DateTimeFormat('en-GB', {day:'numeric', month:'long', year:'numeric', timeZone:'UTC'}).format(new Date(paper.date));
+  return `<p class="paper-source">${arxiv ? 'Posted to arXiv' : 'Published'} on ${escape(day)} · <a href="${escape(paper.url)}">${escape(arxiv ? `arXiv ${arxiv[1]}` : 'Read the paper')} ↗</a></p>`;
+}
+function eyebrowLink(article) {
+  return article.section ? `<a class="eyebrow" href="/robotics/${article.section}/">Writing / ${SECTIONS[article.section].name}</a>` : '<a class="eyebrow" href="/#writing">Writing / Robotics</a>';
+}
+function postMeta(article) {
+  return `<p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p>`;
+}
+function shortPage(article, root) {
+  return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
+<header class="robotics-header post-header post-header-short">${eyebrowLink(article)}<h1>${escape(article.title)}</h1>${paperSource(article.paper)}<p class="post-description">${escape(article.description)}</p>${postMeta(article)}${tagLinks(article.tags)}</header>
+<article class="short-body" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article>`});
+}
 function articlePage(article, root) {
+  if (article.layout === 'short') return shortPage(article, root);
   const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
-<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}">${article.section ? `<a class="eyebrow" href="/robotics/${article.section}/">Writing / ${SECTIONS[article.section].name}</a>` : '<a class="eyebrow" href="/#writing">Writing / Robotics</a>'}<h1>${escape(article.title)}</h1><p class="post-description">${escape(article.description)}</p><p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p>${tagLinks(article.tags)}</header>
+<header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}">${eyebrowLink(article)}<h1>${escape(article.title)}</h1>${paperSource(article.paper)}<p class="post-description">${escape(article.description)}</p>${postMeta(article)}${tagLinks(article.tags)}</header>
 ${seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
 function articleUnits(articles) {
@@ -391,25 +446,28 @@ function homePage(articles, root) {
   return shell({title:'Robotics, learning, and systems', description:'Personal essays by Hadrien Cornier on robot learning, engineering, and the systems behind them.', pathname:'/', root, interactive:true, content:`
 <section class="home-hero" aria-labelledby="home-title"><div class="home-hero-copy"><p class="eyebrow">Hadrien Cornier / Personal notes</p><h1 id="home-title">Robotics, learning,<br>and the systems<br>behind them.</h1><p class="home-intro">I build data infrastructure and production ML. Here I write about robot learning, the math behind it, and what I learn by building.</p><div class="home-hero-links"><a href="#writing">Explore the writing <span aria-hidden="true">↓</span></a><a href="/about.html">More about me <span aria-hidden="true">↗</span></a></div></div>${controlDemo}</section>
 <section class="home-writing" id="writing" aria-labelledby="writing-title"><div class="home-section-heading"><div><p class="eyebrow">Essays &amp; explorations</p><h2 id="writing-title">Writing</h2></div><p class="home-count">${String(articles.length).padStart(2, '0')} ${articles.length === 1 ? 'essay' : 'essays'}</p></div>${feature}<div class="writing-rows">${rows}</div></section>
-${homePapers(root)}
 ${homeNotes(root)}
 <section class="home-about home-projects" id="projects" aria-labelledby="home-projects-title"><div><p class="eyebrow">Outside robotics</p><h2 id="home-projects-title">Projects</h2></div><div><h3><a href="https://hadrien-cornier.github.io/Culture-Calendar/">Culture Calendar <span aria-hidden="true">↗</span></a></h3><p>A calendar of film, classical music, opera, ballet, book clubs, and visual arts in Austin.</p></div></section>
 <section class="home-about" aria-labelledby="home-about-title"><div><p class="eyebrow">A little context</p><h2 id="home-about-title">About me.</h2></div><div><p>Engineering manager at Talroo, based in Austin. I work on data infrastructure, production ML, and teams. Outside work, I’m learning robotics through experiments with simulation and an SO-101 arm.</p><div class="home-about-links"><a href="/about.html">Full experience <span aria-hidden="true">↗</span></a><a href="mailto:hadrien.cornier@gmail.com">Get in touch <span aria-hidden="true">↗</span></a></div><nav class="home-profile-sections" aria-label="Profile sections"><a id="experience" href="/about.html#experience">Experience</a><a id="management" href="/about.html#management">Management</a><a id="education" href="/about.html#education">Education</a></nav></div></section>`});
 }
-// Old article URLs that moved. content/robotics/redirects.json maps an old slug to a published article path.
-function readRedirects(sourceDir, published) {
+// Old URLs that moved. content/robotics/redirects.json maps an old article slug, or an old site path such
+// as /papers/imprint/, to a published article or section path.
+function readRedirects(sourceDir, published, sections) {
   const file = path.join(sourceDir, 'redirects.json');
   if (!fs.existsSync(file)) return [];
   let data;
   try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (error) { throw new Error(`redirects.json must be valid JSON: ${error.message}`); }
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('redirects.json must be an object');
-  return Object.entries(data).map(([slug, target]) => {
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error(`Invalid redirect slug: ${slug}`);
-    if (published.has(slug)) throw new Error(`Redirect ${slug} has the same slug as a published article`);
+  return Object.entries(data).map(([key, target]) => {
+    const isPath = key.startsWith('/');
+    if (isPath ? !/^\/(?:[a-z0-9]+(?:-[a-z0-9]+)*\/)+$/.test(key) || key.startsWith('/robotics/') : !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(key)) {
+      throw new Error(`Invalid redirect source: ${key}; use an article slug or a site path outside /robotics/ such as /papers/<slug>/`);
+    }
+    if (!isPath && (published.has(key) || sections.has(key))) throw new Error(`Redirect ${key} has the same slug as a published page`);
     const match = typeof target === 'string' && target.match(/^\/robotics\/([a-z0-9]+(?:-[a-z0-9]+)*)\/(#[a-z0-9-]+)?$/);
-    if (!match) throw new Error(`Redirect ${slug} needs a target like /robotics/<slug>/#<anchor>`);
-    if (!published.has(match[1])) throw new Error(`Redirect ${slug} points to an unpublished article: ${match[1]}`);
-    return {slug, target};
+    if (!match) throw new Error(`Redirect ${key} needs a target like /robotics/<slug>/#<anchor>`);
+    if (!published.has(match[1]) && !sections.has(match[1])) throw new Error(`Redirect ${key} points to an unpublished article: ${match[1]}`);
+    return {slug:isPath ? null : key, path:isPath ? key : `/robotics/${key}/`, target};
   });
 }
 function redirectPage(target) {
@@ -418,7 +476,7 @@ function redirectPage(target) {
 ${GENERATED_MARKER}
 <html lang="en"><head><meta charset="utf-8"><title>Moved</title><meta name="robots" content="noindex"><link rel="canonical" href="${url}"><meta http-equiv="refresh" content="0; url=${escape(target)}">
 <script>location.replace(${JSON.stringify(target).replace(/</g, '\\u003c')}${target.includes('#') ? '' : ' + location.hash'});</script></head>
-<body><p>This article moved to <a href="${escape(target)}">${url}</a>.</p></body></html>
+<body><p>This page moved to <a href="${escape(target)}">${url}</a>.</p></body></html>
 `;
 }
 function validateThumbnailSources(articles, root) {
@@ -440,10 +498,16 @@ function validateThumbnailSources(articles, root) {
 export function build(root = ROOT) {
   const sourceDir = path.join(root, 'content/robotics');
   if (!fs.existsSync(sourceDir)) return;
-  const allArticles = fs.readdirSync(sourceDir).filter((name) => name.endsWith('.md')).sort().map((name) => {
+  const filenames = fs.readdirSync(sourceDir);
+  for (const name of filenames.filter((name) => name.endsWith('.html'))) {
+    if (!filenames.includes(`${name.slice(0, -5)}.md`)) throw new Error(`${name} has no ${name.slice(0, -5)}.md with its frontmatter`);
+  }
+  const allArticles = filenames.filter((name) => name.endsWith('.md')).sort().map((name) => {
     const slug = name.slice(0, -3);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error(`Invalid article filename: ${name}`);
     const source = fs.readFileSync(path.join(sourceDir, name), 'utf8');
+    const htmlFile = path.join(sourceDir, `${slug}.html`);
+    const html = fs.existsSync(htmlFile) ? fs.readFileSync(htmlFile, 'utf8') : undefined;
     const metadata = matter(source).data;
     validateSeriesMetadata(metadata);
     validateTags(metadata);
@@ -451,18 +515,25 @@ export function build(root = ROOT) {
     try { validateThumbnail(metadata, root); }
     catch (error) { throw new Error(`${name}: ${error.message}`); }
     if (SECTIONS[slug]) throw new Error(`Article filename ${name} collides with the ${slug} section index`);
-    return {...metadata, slug, source};
+    return {...metadata, slug, source, html};
   });
   validateThumbnailSources(allArticles, root);
-  const articles = allArticles.filter((article) => article.draft !== true).map(({source, slug}) => ({...renderArticle(source, root), slug}))
-    .sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
+  const articles = allArticles.filter((article) => article.draft !== true).map(({source, slug, html}) => {
+    try { return {...renderArticle(source, root, html), slug}; }
+    catch (error) { throw new Error(`${slug}.md: ${error.message}`); }
+  }).sort((a,b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug));
   attachSeries(articles);
   // Render everything first. A malformed article cannot leave a half-built series.
   const pages = articles.map((article) => [path.join(root, 'robotics', article.slug, 'index.html'), articlePage(article, root)]);
-  const redirects = readRedirects(sourceDir, new Set(articles.map((article) => article.slug)));
-  for (const {slug, target} of redirects) pages.push([path.join(root, 'robotics', slug, 'index.html'), redirectPage(target)]);
-  pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);
   const sectionSlugs = Object.keys(SECTIONS).filter((slug) => articles.some((article) => article.section === slug));
+  const redirects = readRedirects(sourceDir, new Set(articles.map((article) => article.slug)), new Set(sectionSlugs));
+  for (const redirect of redirects) {
+    const filename = path.join(root, redirect.path, 'index.html');
+    // A redirect may replace a generated page, never a hand-written one.
+    if (!redirect.slug && fs.existsSync(filename) && !/^<!doctype html>\n<!-- Generated by scripts\//.test(fs.readFileSync(filename, 'utf8'))) throw new Error(`Redirect ${redirect.path} would overwrite a hand-written page`);
+    pages.push([filename, redirectPage(redirect.target)]);
+  }
+  pages.push([path.join(root, 'robotics/index.html'), landingPage(articles, root)]);
   for (const slug of sectionSlugs) pages.push([path.join(root, 'robotics', slug, 'index.html'), sectionPage(slug, articles, root)]);
   // The search bar reads this small index; drafts never reach it because they are not in articles.
   const searchIndex = articles.map((article) => ({title:article.title, description:article.description, tags:[...article.tags], date:article.date, url:`/robotics/${article.slug}/`}));
@@ -487,7 +558,7 @@ export function build(root = ROOT) {
   fs.writeFileSync(sitemapFile, preserved.replace('</urlset>', `${entries}</urlset>`));
   // Remove only obsolete HTML bearing this builder's ownership marker.
   // Other files inside an old report directory belong to their author and stay intact.
-  const published = new Set([...articles.map((article) => article.slug), ...redirects.map((item) => item.slug), ...sectionSlugs]);
+  const published = new Set([...articles.map((article) => article.slug), ...redirects.filter((item) => item.slug).map((item) => item.slug), ...sectionSlugs]);
   const outputDir = path.join(root, 'robotics');
   for (const entry of fs.readdirSync(outputDir, {withFileTypes:true})) {
     if (!entry.isDirectory() || published.has(entry.name)) continue;

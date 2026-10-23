@@ -2,7 +2,7 @@
  *
  * Numbers come from scripts/molmobot-figures.json, which scripts/molmobot-figures.py reads out of the
  * paper's tables and its Fig. 7. Panels 1, 2, 3 and 5 are schematics of the method; panels 4 and 6 plot
- * the paper's numbers. Run `node scripts/molmobot-canvas.mjs` to rewrite content/papers/molmobot.html,
+ * the paper's numbers. Run `node scripts/molmobot-canvas.mjs` to rewrite content/robotics/molmobot.html,
  * then build the site.
  */
 import fs from 'node:fs';
@@ -13,7 +13,7 @@ import { C, HAND, esc, n, random, rect, line, curve, text, tag, snowflake } from
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const DATA = JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/molmobot-figures.json'), 'utf8'));
-export const OUTPUT = path.join(ROOT, 'content/papers/molmobot.html');
+export const OUTPUT = path.join(ROOT, 'content/robotics/molmobot.html');
 export const PANEL = { w: 560, h: 460 };
 
 // Blue for the simulator, gray for the real world and real-data baselines (as in the paper's Fig. 7), lavender for the scripted expert, pink for MolmoBot.

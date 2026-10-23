@@ -38,8 +38,23 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/robotics/molmobot/</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/robotics/world-action-models-vs-vlas/</loc>
     <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/imprint/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/offline-empowerment/</loc>
+    <lastmod>2026-10-22</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -128,6 +143,11 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/robotics/eigendexplore/</loc>
+    <lastmod>2026-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/robotics/robot-brains-robot-bodies/</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
@@ -170,31 +190,6 @@
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/from-joint-angles-to-a-moving-arm/</loc>
     <lastmod>2026-10-01</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/papers/</loc>
-    <lastmod>2026-10-23</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/papers/molmobot/</loc>
-    <lastmod>2026-10-23</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/papers/imprint/</loc>
-    <lastmod>2026-10-22</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/papers/offline-empowerment/</loc>
-    <lastmod>2026-10-22</lastmod>
-    <changefreq>monthly</changefreq>
-  </url>
-  <url>
-    <loc>https://hadrien-cornier.github.io/papers/eigendexplore/</loc>
-    <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
   </url>
 </urlset>

@@ -1,5 +1,17 @@
 [
   {
+    "title": "MolmoBot: Large-Scale Simulation Enables Zero-Shot Manipulation",
+    "description": "With no real robot data, only simulated demos, MolmoBot doubles the real-world success of a policy trained on 10,000+ hours of real robot data.",
+    "tags": [
+      "sim-to-real",
+      "simulation",
+      "imitation-learning",
+      "vla"
+    ],
+    "date": "2026-10-23",
+    "url": "/robotics/molmobot/"
+  },
+  {
     "title": "World action models vs VLAs: predict the video, or just the moves",
     "description": "Both look at a camera image, read an instruction and output robot moves. A VLA starts from an image-and-text model and learns the moves. A WAM starts from a video model and also learns the frames that come next. Eight drawings on what that changes.",
     "tags": [
@@ -10,6 +22,26 @@
     ],
     "date": "2026-10-23",
     "url": "/robotics/world-action-models-vs-vlas/"
+  },
+  {
+    "title": "Imprint: Memory Without Curation - Learning Multi-Stream Latent Memory for Robot Policies",
+    "description": "Keep every stream, compress it as you go, and learn what to remember.",
+    "tags": [
+      "robot-memory",
+      "vla"
+    ],
+    "date": "2026-10-22",
+    "url": "/robotics/imprint/"
+  },
+  {
+    "title": "Learn where to explore from old data.",
+    "description": "Empowerment measured from unlabeled data guides online exploration.",
+    "tags": [
+      "reinforcement-learning",
+      "exploration"
+    ],
+    "date": "2026-10-22",
+    "url": "/robotics/offline-empowerment/"
   },
   {
     "title": "Faster-WAM in LeRobot: from 300 cache reads to 10",
@@ -193,6 +225,17 @@
     ],
     "date": "2026-10-11",
     "url": "/robotics/so101-6-where-the-last-millimeter-goes/"
+  },
+  {
+    "title": "Teach a robot hand how to explore.",
+    "description": "Human motion guides its experiments. Every joint stays free.",
+    "tags": [
+      "reinforcement-learning",
+      "exploration",
+      "dexterous-hands"
+    ],
+    "date": "2026-10-08",
+    "url": "/robotics/eigendexplore/"
   },
   {
     "title": "A few predictions about robotics",
