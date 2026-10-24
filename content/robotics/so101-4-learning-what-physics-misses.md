@@ -3,7 +3,7 @@ title: 'Learning what the physics misses'
 description: 'Where a neural network fits in a robot controller. A network that learns only what the physics model gets wrong does the same job as a Kalman disturbance estimate, with more freedom, and this is where recent research is going.'
 date: '2026-10-05'
 draft: false
-series: 'From policy to action: the last mile of robotics control'
+series: 'so101-control'
 part: 4
 tags: ['so-101', 'control', 'machine-learning']
 thumbnail: /assets/robotics/thumbnails/so101-4-learning-what-physics-misses.jpg

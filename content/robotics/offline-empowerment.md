@@ -1,5 +1,5 @@
 ---
-title: 'Learn where to explore from old data.'
+title: 'Offline empowerment: Learn where to explore from old data'
 description: 'Empowerment measured from unlabeled data guides online exploration.'
 date: '2026-10-22'
 layout: 'short'

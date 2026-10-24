@@ -14,7 +14,7 @@
   let activeTag = '';
   let query = '';
 
-  const haystack = (entry) => haystacks.get(entry.getAttribute('href')) || entry.textContent.toLowerCase();
+  const haystack = (entry) => haystacks.get(entry.dataset.url) || entry.textContent.toLowerCase();
 
   const apply = () => {
     const words = query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -27,6 +27,9 @@
     }
     for (const block of blocks) {
       block.hidden = ![...block.querySelectorAll('[data-entry]')].some((entry) => !entry.hidden);
+      // A match inside a closed part list must be visible.
+      const parts = block.querySelector('details');
+      if (parts && (activeTag || words.length) && !block.hidden) parts.open = true;
     }
     status.textContent = shown === 0 ? 'No essays match your search.'
       : shown === entries.length ? `Showing all ${shown} essays.`
