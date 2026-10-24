@@ -34,7 +34,7 @@ Those parts measured the arm in joint angles. Here I measure it at the pen tip, 
 
 My SO-101 arm measures each joint with an encoder, which reads the joint angle in whole steps called ticks. The first joint, the shoulder pan, turns the whole arm about a vertical axis. One tick of the pan is $2\pi/4096 = 1.534$ mrad. With the pen 231 mm from the pan axis, one tick moves the pen 0.354 mm.
 
-![Left: side view of the arm with the pan, shoulder lift, elbow flex, wrist flex and wrist roll joints named, and the distance R from the pan axis to the pen. Right: top view of the arm. One tick of the pan, drawn 100 times too big, moves the pen 0.354 mm, which is 231 mm times 1.534 mrad.](/assets/robotics/so101-controllers/arm-pan-lever.png "The pan sits at the base, so its lever to the pen is long. One tick of the pan is 0.354 mm at the pen.")
+![Top: side view of the arm with the pan, shoulder lift, elbow flex, wrist flex and wrist roll joints named, and the distance R from the pan axis to the pen. Bottom: top view of the arm. One tick of the pan, drawn 100 times too big, moves the pen 0.354 mm, which is 231 mm times 1.534 mrad.](/assets/robotics/so101-controllers/arm-pan-lever.png "The pan sits at the base, so its lever to the pen is long. One tick of the pan is 0.354 mm at the pen.")
 
 So the encoder is a coarse ruler at the pen. Rounding alone gives up to ±0.18 mm of error, and about 0.10 mm RMS. The controller can only command whole ticks. This is the first limit, and it is not the worst one.
 
@@ -124,7 +124,7 @@ I use two sets of drawings. I choose controllers on the **test drawings** (kitte
 
 ### Time-lapse: the drawings get more precise
 
-The video shows all four test drawings at once, with four controllers in sequence. Each stage redraws the real arm's tablet recording at 8 times speed. The bars on the right keep the error of every stage. All four stages ran the same night, at the same tablet pose. They are ordered by error and not by clock time.
+The video shows all four test drawings at once, with four controllers in sequence. Each stage redraws the real arm's tablet recording at 8 times speed. The bars under the drawings keep the error of every stage. All four stages ran the same night, at the same tablet pose. They are ordered by error and not by clock time.
 
 <figure class="article-figure">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/timelapse-poster.jpg" aria-label="Time-lapse of four drawings, a kitten, a star, a spiral and a square, drawn with four controllers in turn. The pen trace sits further from the gray reference line for the physics base, closer with a learned torque, close with a neural-network correction and closest with the frozen correction head. The bars show the mean error: 2.74, 2.27, 1.15 and 1.03 millimeters.">
@@ -168,7 +168,7 @@ The system takes a drawing, a path in tablet millimeters, and moves the pen alon
 
 The correction head takes the planned joint path as input. A small linear map turns it into a few milliradians of offset for each joint, added to the goals to stand in for effects that the physical model does not contain.
 
-![Block diagram of the correction head. The planned joint path gives 31 features, which a 5 by 31 linear map W turns into joint offsets. The offsets are added to the path and go to the physics controller. In the lab, the tablet error becomes a label, and an RLS update changes W. The frozen head skips this step.](/assets/robotics/so101-controllers/head-schematic.png "The head: path features in, joint offsets out. Orange is the lab-only learning step.")
+![Block diagram of the correction head. The planned joint path gives 31 features, which a 5 by 31 linear map W turns into joint offsets. The offsets are added to the path and go to the physics controller. In the lab, the tablet error becomes a label, and an RLS update changes W. The frozen head skips this step.](/assets/robotics/so101-controllers/head-schematic.png "The head: path features in, joint offsets out. Red is the lab-only learning step.")
 
 This is what the frozen head adds to the pan goal while the arm draws the kitten.
 
@@ -204,7 +204,7 @@ $$
 
 If tracking were perfect, the error would be $u$ alone: **2.22 mm**. A torque model acts on tracking only, so even its best case leaves far more error than the head's 1.06 mm.
 
-![Bar chart of ten error parts. Pen lag on the x axis, the pan direction, 39 percent. Pan start after a direction change 18 percent. Unexplained rest 10. Tablet stream delay 10. Static map 9. Wrist flex 4. Pan steady and hold 4. Elbow, lift and roll 3. Pen lag on y 2. Nib height, pressure and acceleration 1.](/assets/robotics/so101-controllers/error-parts.png "The three orange bars are the pan axis: 39 + 18 + 4 = 61 % of the squared error. Offline fit on Measured logs.")
+![Bar chart of ten error parts. Pen lag on the x axis, the pan direction, 39 percent. Pan start after a direction change 18 percent. Unexplained rest 10. Tablet stream delay 10. Static map 9. Wrist flex 4. Pan steady and hold 4. Elbow, lift and roll 3. Pen lag on y 2. Nib height, pressure and acceleration 1.](/assets/robotics/so101-controllers/error-parts.png "The three red bars are the pan axis: 39 + 18 + 4 = 61 % of the squared error. Offline fit on Measured logs.")
 
 Two bars include error that does not come from the arm. The tablet stream delay (about 20 ms) changes the score and not the ink. The unexplained rest contains about 0.4 mm of tablet and encoder noise. If the pan error were gone, the error would fall from 2.74 mm to 1.63 mm (Offline).
 
@@ -242,11 +242,11 @@ On my tablet, the pan moves the pen mostly along x: one milliradian of pan angle
 
 **It starts late.** When the planner reverses a goal, the lift and the elbow follow within 50 ms. The pan takes 267 ms to follow (Measured, median of 46 events), then lags by about 10 mrad. At 0.231 mm per mrad, that is about 2.3 mm at the pen.
 
-![Two panels of the mean goal and the mean joint angle in mrad after a direction change. Pan joint: the goal rises at once and the joint angle starts 267 ms later. Shoulder lift joint: the joint starts 0 ms after the goal.](/assets/robotics/so101-controllers/pan-reversal.png "Left: the pan waits about 267 ms after its goal moves. Right: the lift follows at once. Measured.")
+![Two panels of the mean goal and the mean joint angle in mrad after a direction change. Pan joint: the goal rises at once and the joint angle starts 267 ms later. Shoulder lift joint: the joint starts 0 ms after the goal.](/assets/robotics/so101-controllers/pan-reversal.png "Top: the pan waits about 267 ms after its goal moves. Bottom: the lift follows at once. Measured.")
 
 **The pen lags the encoders on x.** The gap between the tablet and the encoders grows in a straight line with the pen speed along x. The slope corresponds to a lag of 86 ms on x and 35 ms on y.
 
-![Two scatter plots of tablet minus encoder position against planned pen speed. Left, x axis, the pan direction: a steep line down. Right, y axis: a gentle slope.](/assets/robotics/so101-controllers/nib-error-vs-speed.png "The x axis, the pan direction, has a steep slope. The y axis has a gentle one. Measured.")
+![Two scatter plots of tablet minus encoder position against planned pen speed. Top, x axis, the pan direction: a steep line down. Bottom, y axis: a gentle slope.](/assets/robotics/so101-controllers/nib-error-vs-speed.png "The x axis, the pan direction, has a steep slope. The y axis has a gentle one. Measured.")
 
 The dead band is friction (Measured), but the cause of the lag on x is still unknown. Compliance and pen drag are suspects, and backlash is small. The expandable section has the three tests.
 
