@@ -267,7 +267,7 @@ def clean(ax, limits=((-0.2, 0.9), (-0.55, 0.55), (-0.015, 0.95)), eye=(20, -65)
     ax.patch.set_visible(False)  # panels may overlap the empty corners of their neighbors
 
 
-def table(ax, geometry, offset, clip=True):
+def table(ax, geometry, offset, clip=False):
     b = np.asarray(geometry["table_bounds"]) - offset
     v = [
         [b[0, 0], b[0, 1], b[1, 2]],
@@ -275,6 +275,8 @@ def table(ax, geometry, offset, clip=True):
         [b[1, 0], b[1, 1], b[1, 2]],
         [b[0, 0], b[1, 1], b[1, 2]],
     ]
+    # Keep the whole tabletop, as in the source figure. Clipping it to a 3D axes cut its right
+    # and near edges out of the redraw; the board crop still bounds the finished figure.
     ax.add_collection3d(Poly3DCollection([v], facecolor=mcolors.to_rgba(chalk.DIM, 0.045),
                                          edgecolor=mcolors.to_rgba(chalk.DIM, 0.45),
                                          linewidth=1.2, zorder=-2, clip_on=clip))
@@ -318,10 +320,12 @@ def inches(fig, value):
 
 
 def labeled_arm(geometry, meshes, rest, offset, path):
-    fig = plt.figure(figsize=(WIDTH, 4.6))
+    fig = plt.figure(figsize=(WIDTH, 5.4))
     title(fig, "Seven joints, seven ways to turn", 0.985)
-    ax = add_3d(fig, [-0.04, inches(fig, 0.62), 0.70, inches(fig, 3.5)])
-    clean(ax, zoom=1.55)
+    # Keep the source renderer's projection and axes rectangle: its whole tabletop then fits
+    # beside the joint labels, with no change to the physical table relative to the robot.
+    ax = add_3d(fig, [0.0, 0.10, 0.63, 0.78])
+    clean(ax, zoom=1.0)
     draw_robot(ax, meshes, rest, offset)
     table(ax, geometry, offset)
     for number, radius in enumerate([0.055, 0.083, 0.050, 0.057, 0.051, 0.077, 0.048], 1):
@@ -368,8 +372,8 @@ def labeled_arm(geometry, meshes, rest, offset, path):
                         "path_effects": halo(3.5)},
         )
     for i, (label, color) in enumerate(zip(LABELS, JOINT_COLORS, strict=True)):
-        fig.text(0.665, 0.80 - 0.074 * i, f"J{i + 1}  {label}", color=color, fontsize=16)
-    fig.text(0.665, 0.215, "Fingers slide\nopen / closed", color=INK, fontsize=15,
+        fig.text(0.74, 0.80 - 0.074 * i, f"J{i + 1}  {label}", color=color, fontsize=15)
+    fig.text(0.74, 0.215, "Fingers slide\nopen / closed", color=INK, fontsize=15,
              linespacing=0.95)
     footer(
         fig,
@@ -381,15 +385,17 @@ def labeled_arm(geometry, meshes, rest, offset, path):
 
 
 def same_pose(geometry, meshes, data, offset, path):
-    fig = plt.figure(figsize=(WIDTH, 3.9))
+    fig = plt.figure(figsize=(WIDTH, 4.9))
     title(fig, "Different joint angles. The same hand pose.", 0.985)
     target = np.asarray(data["rest"]["p"]) - offset
     cube = np.array([[x, y, z] for x in [-0.03, 0.03] for y in [-0.03, 0.03] for z in [-0.03, 0.03]])
     cube = cube @ np.asarray(data["rest"]["R"]).T + target
     faces = [[0, 1, 3, 2], [4, 5, 7, 6], [0, 1, 5, 4], [2, 3, 7, 6], [0, 2, 6, 4], [1, 3, 7, 5]]
     for i, name in enumerate(["rest", "alternate"]):
-        ax = add_3d(fig, [i * 0.5, inches(fig, 0.80), 0.5, inches(fig, 2.6)])
-        clean(ax, ((-0.14, 0.85), (-0.22, 0.42), (-0.02, 0.78)), eye=(23, -65), zoom=1.35)
+        # Raise the source axes rectangle within the taller phone canvas so the tabletop's
+        # near edge stays above the three-line footer; the table and robot keep the same scale.
+        ax = add_3d(fig, [i * 0.49 + 0.005, 0.32, 0.49, 0.53])
+        clean(ax, ((-0.14, 0.85), (-0.22, 0.42), (-0.02, 0.78)), eye=(23, -65), zoom=1.0)
         draw_robot(ax, meshes, data[name], offset)
         table(ax, geometry, offset)
         ax.add_collection3d(
@@ -485,10 +491,10 @@ def video(fig, path, count, draw, poster, preview=False, crf=26):
 
 
 def wrist_video(geometry, meshes, data, offset, path, preview=False):
-    fig = plt.figure(figsize=(WIDTH, 4.25))
+    fig = plt.figure(figsize=(WIDTH, 5.2))
     title(fig, "J7 turns the hand around its own blue axis", 0.985)
-    axes = [add_3d(fig, [0.0, inches(fig, 0.98), 0.5, inches(fig, 3.1)]),
-            add_3d(fig, [0.5, inches(fig, 0.98), 0.5, inches(fig, 3.1)])]
+    axes = [add_3d(fig, [0.0, 0.17, 0.53, 0.67]),
+            add_3d(fig, [0.53, 0.17, 0.46, 0.67])]
     panel_title(fig, 0.25, 1 - inches(fig, 0.79), "Whole arm")
     panel_title(fig, 0.75, 1 - inches(fig, 0.79), "Hand close-up")
     r0 = np.asarray(data["rest"]["R"])
@@ -505,7 +511,7 @@ def wrist_video(geometry, meshes, data, offset, path, preview=False):
         current = data["wrist"][i]
         for ax in axes:
             ax.clear()
-        clean(axes[0], zoom=1.45)
+        clean(axes[0], zoom=1.0)
         draw_robot(axes[0], meshes, current, offset)
         table(axes[0], geometry, offset)
         close = {
@@ -568,7 +574,7 @@ def workspace_video(geometry, meshes, data, samples, offset, path, preview=False
                                                   edgecolor=SLAB, linewidths=1.2,
                                                   clip_on=False))
         draw_robot(ax3, meshes, data["rest"], offset)
-        table(ax3, geometry, offset, clip=False)  # the whole table, as in the old figure
+        table(ax3, geometry, offset, clip=False)  # the whole physical table, slab and cells
         base_marker(ax3)
         _, good, _ = occupancy_cut(p, valid, 1, coordinate, edges, thickness=0.06)
         ax2.clear()
@@ -598,10 +604,10 @@ def workspace_video(geometry, meshes, data, samples, offset, path, preview=False
 
 
 def wine_video(geometry, meshes, data, offset, path, preview=False):
-    fig = plt.figure(figsize=(WIDTH, 4.6))
+    fig = plt.figure(figsize=(WIDTH, 5.4))
     title(fig, "Keep the same stem point. Change the approach.", 0.985)
-    axes = [add_3d(fig, [0.0, inches(fig, 0.8), 0.5, inches(fig, 3.1)]),
-            add_3d(fig, [0.5, inches(fig, 0.8), 0.5, inches(fig, 3.1)])]
+    axes = [add_3d(fig, [0.0, 0.17, 0.53, 0.67]),
+            add_3d(fig, [0.53, 0.17, 0.46, 0.67])]
     panel_title(fig, 0.25, 1 - inches(fig, 0.74), "The arm changes its joint angles", size=15)
     panel_title(fig, 0.75, 1 - inches(fig, 0.74), "The yellow target stays fixed", size=15)
     center = np.asarray(data["wine_target"]) - offset
@@ -618,7 +624,7 @@ def wine_video(geometry, meshes, data, offset, path, preview=False):
         pose = data["wine"][indices[i]]
         for ax in axes:
             ax.clear()
-        clean(axes[0], eye=(22, -65), zoom=1.45)
+        clean(axes[0], eye=(22, -65), zoom=1.0)
         draw_robot(axes[0], meshes, pose, offset)
         table(axes[0], geometry, offset)
         glass(axes[0], data["wine_target"], offset)
