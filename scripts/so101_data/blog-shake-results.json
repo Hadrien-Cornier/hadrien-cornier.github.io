@@ -1,0 +1,222 @@
+[
+ {
+  "controller": "direct",
+  "joint": "shoulder_lift",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 87.94517337025516,
+  "rms_all_mrad": 48.31386032796012,
+  "mean_err_joint_mrad": 50.17218849944235,
+  "peak_torque_nm": 1.8590365217756615,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "pi",
+  "joint": "shoulder_lift",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 76.54996411126372,
+  "rms_all_mrad": 34.24597968419656,
+  "mean_err_joint_mrad": 0.0836128489803643,
+  "peak_torque_nm": 2.177724081967881,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "inv+pi",
+  "joint": "shoulder_lift",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 21.759346725449987,
+  "rms_all_mrad": 9.78366306173263,
+  "mean_err_joint_mrad": -0.08309175986969859,
+  "peak_torque_nm": 2.0181936381001124,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "preview",
+  "joint": "shoulder_lift",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 6.049539278704833,
+  "rms_all_mrad": 2.946164786194587,
+  "mean_err_joint_mrad": -0.04180228904155401,
+  "peak_torque_nm": 1.751179258724088,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "preview+payload",
+  "joint": "shoulder_lift",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 0.8283896805785582,
+  "rms_all_mrad": 0.3767427105485163,
+  "mean_err_joint_mrad": -0.0017945807797406818,
+  "peak_torque_nm": 1.674875822526431,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "direct",
+  "joint": "shoulder_lift",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 121.47915887584685,
+  "rms_all_mrad": 61.42837800302506,
+  "mean_err_joint_mrad": 50.53967767681613,
+  "peak_torque_nm": 2.515732895652717,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "pi",
+  "joint": "shoulder_lift",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 141.29351492726985,
+  "rms_all_mrad": 63.942504158879366,
+  "mean_err_joint_mrad": 0.044799539778349794,
+  "peak_torque_nm": 3.5122423060899166,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "inv+pi",
+  "joint": "shoulder_lift",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 57.94720259940959,
+  "rms_all_mrad": 28.28010786555874,
+  "mean_err_joint_mrad": 0.009669793268826974,
+  "peak_torque_nm": 3.766264325362579,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "preview",
+  "joint": "shoulder_lift",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 15.634728789555643,
+  "rms_all_mrad": 7.193270491960695,
+  "mean_err_joint_mrad": 0.06307718795512457,
+  "peak_torque_nm": 2.861099433515715,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "preview+payload",
+  "joint": "shoulder_lift",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 1.5383096656063084,
+  "rms_all_mrad": 0.7015203806270989,
+  "mean_err_joint_mrad": -0.13832481323878082,
+  "peak_torque_nm": 2.686178423797954,
+  "saturated_pct": 0.0,
+  "shake": "vertical"
+ },
+ {
+  "controller": "direct",
+  "joint": "shoulder_pan",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 65.45949902824009,
+  "rms_all_mrad": 46.029962775518015,
+  "mean_err_joint_mrad": -0.00019002990239621226,
+  "peak_torque_nm": 1.0471966146030391,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "pi",
+  "joint": "shoulder_pan",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 66.11454435213454,
+  "rms_all_mrad": 29.626787505780303,
+  "mean_err_joint_mrad": -0.030189709363605422,
+  "peak_torque_nm": 1.340883917244351,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "inv+pi",
+  "joint": "shoulder_pan",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 10.99096203228959,
+  "rms_all_mrad": 5.26120331009214,
+  "mean_err_joint_mrad": -0.0941508560896311,
+  "peak_torque_nm": 1.204871281983366,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "preview",
+  "joint": "shoulder_pan",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 1.8263127160534216,
+  "rms_all_mrad": 2.0228658321195354,
+  "mean_err_joint_mrad": -0.011276665382602843,
+  "peak_torque_nm": 1.0287766625875607,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "preview+payload",
+  "joint": "shoulder_pan",
+  "freq_hz": 1.0,
+  "rms_joint_mrad": 0.8220738746061879,
+  "rms_all_mrad": 0.41772787504250897,
+  "mean_err_joint_mrad": -0.11159715069117664,
+  "peak_torque_nm": 1.0090498663289116,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "direct",
+  "joint": "shoulder_pan",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 103.53127459316387,
+  "rms_all_mrad": 58.43624633161078,
+  "mean_err_joint_mrad": -0.14766223761717373,
+  "peak_torque_nm": 1.6768198617830963,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "pi",
+  "joint": "shoulder_pan",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 123.81204102931126,
+  "rms_all_mrad": 55.40063541709779,
+  "mean_err_joint_mrad": -0.03156799484805634,
+  "peak_torque_nm": 2.4542656555948374,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "inv+pi",
+  "joint": "shoulder_pan",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 34.366358067012186,
+  "rms_all_mrad": 15.4762462985339,
+  "mean_err_joint_mrad": 0.11817506920424774,
+  "peak_torque_nm": 2.648115124266359,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "preview",
+  "joint": "shoulder_pan",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 6.03792481466316,
+  "rms_all_mrad": 3.2643464650968697,
+  "mean_err_joint_mrad": 0.02249712690964499,
+  "peak_torque_nm": 2.055336669879073,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ },
+ {
+  "controller": "preview+payload",
+  "joint": "shoulder_pan",
+  "freq_hz": 2.0,
+  "rms_joint_mrad": 1.3214257425156573,
+  "rms_all_mrad": 0.6210267241373888,
+  "mean_err_joint_mrad": -0.04832804830554515,
+  "peak_torque_nm": 1.925062380861418,
+  "saturated_pct": 0.0,
+  "shake": "horizontal"
+ }
+]
