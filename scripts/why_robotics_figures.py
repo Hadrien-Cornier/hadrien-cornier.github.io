@@ -24,6 +24,7 @@ import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Circle, FancyArrowPatch, FancyBboxPatch, PathPatch, Rectangle
 from matplotlib.path import Path as MplPath
+from matplotlib.transforms import offset_copy
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -156,8 +157,12 @@ def human_robot_tsne_schematic():
         for side in ["top", "right", "bottom", "left"]:
             ax.spines[side].set_visible(True)
             ax.spines[side].set_color(chalk.FAINT)
-        # Titles stay chalk white: yellow is the human points here.
-        ax.set_title(title, loc="center", color=chalk.CHALK, fontsize=15, linespacing=1.05)
+        # Titles stay chalk white: yellow is the human points here. Each title line is its own
+        # text on a fixed baseline, so the comma in "Large, diverse" cannot lift its line.
+        first, second = title.split("\n")
+        for line_text, rise in ((second, 6), (first, 24)):
+            ax.text(0.5, 1.0, line_text, transform=offset_copy(ax.transAxes, fig=fig, y=rise, units="points"),
+                    ha="center", va="baseline", color=chalk.CHALK, fontsize=15)
     for text, lx, ly, color in labels:
         axes[0].text(lx, ly, text, color=color, ha="center", va="center", fontsize=15)
     arrow_note = fig.text(0.5, 0.03, "more diverse robot pre-training  \u2192", color=chalk.DIM,
