@@ -230,7 +230,7 @@ Why keep past error? Imagine the arm stops a little below its target under a ste
 <source src="/assets/robotics/arm-control/v4/why_integral_helps.mp4" type="video/mp4">
 <a href="/assets/robotics/arm-control/v4/why_integral_helps.mp4">Watch the video</a>
 </video>
-<figcaption>The orange area records past error. As the arm reaches its target, the stored integral supplies the 2 N·m needed to hold the load. <a class="video-link" href="/assets/robotics/arm-control/v4/why_integral_helps.mp4">Open video</a></figcaption>
+<figcaption>The red area records past error. As the arm reaches its target, the stored integral supplies the 2 N·m needed to hold the load. <a class="video-link" href="/assets/robotics/arm-control/v4/why_integral_helps.mp4">Open video</a></figcaption>
 </figure>
 
 ### What happens if we remove P, I, or D?
@@ -424,7 +424,7 @@ I tested the question on the Franka model. For each sampled set of joint angles,
 <figcaption>Sampled workspace: the highlighted slab in 3D corresponds to the 2D cut beside it. <a class="video-link" href="/assets/robotics/arm-control/v3/franka_workspace_slab.mp4">Open video</a></figcaption>
 </figure>
 
-The orange slab is a **6 cm thick band**, moving sideways through the cloud. The right panel looks straight at that band: signed forward/back position relative to the base versus height, grouped into 4 cm cells. It shows only the above-table portion of the data. Teal means at least one valid hand position was found in that cell. Blank cells contain no accepted sample. The arm stays fixed as a spatial reference while the slab scans the cloud.
+The red slab is a **6 cm thick band**, moving sideways through the cloud. The right panel looks straight at that band: signed forward/back position relative to the base versus height, grouped into 4 cm cells. It shows only the above-table portion of the data. Green means at least one valid hand position was found in that cell. Blank cells contain no accepted sample. The arm stays fixed as a spatial reference while the slab scans the cloud.
 
 <details>
 <summary>What did the experiment actually measure?</summary>
