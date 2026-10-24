@@ -3,7 +3,6 @@ title: "Why can't robots remember?"
 description: 'Many robot policies decide from the last few frames. A snapshot of six ways to give them memory in October 2026, what each one stores, and what has been measured.'
 date: '2026-10-19'
 tags: ['robot-memory', 'long-horizon', 'navigation', 'vla']
-section: 'recent-papers'
 thumbnail: '/assets/robotics/why-cant-robots-remember/memer-object-search.png'
 thumbnail_alt: 'Bar chart of MemER object search on a real robot: 32 of 60 objects retrieved with no history, 38 with 8 recent frames, 47 with 32 recent frames, and 59 with 8 key frames.'
 ---

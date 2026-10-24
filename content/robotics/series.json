@@ -1,0 +1,12 @@
+{
+  "so101-control": {
+    "title": "Precise control of the SO-101 arm",
+    "subtitle": "How I built the best controller for the SO-101",
+    "description": "Why a low-cost servo arm misses its target, and what sensing, goal choice, learned corrections, a pen holder and a drawing tablet do about it."
+  },
+  "reinforcement-learning": {
+    "title": "Reinforcement learning, one problem at a time",
+    "subtitle": "Speedrunning RL for an ML practitioner",
+    "description": "The problems that shaped reinforcement learning, from Q-learning to fixed datasets and flow policies, following Sutton and Barto."
+  }
+}

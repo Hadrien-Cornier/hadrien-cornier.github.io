@@ -1,10 +1,10 @@
 /* Scoped to the RL method article's family tree. */
 #rc .ft-viewer{display:none}
-#rc[data-active-panel="tree"] .rc-view>.rc-svg{visibility:hidden}
-#rc[data-active-panel="tree"] .ft-viewer{position:absolute;inset:0;display:flex;flex-direction:column;background:#f5f4ed;color:#242622;font-family:Arial,Helvetica,sans-serif}
+#rc :is(.rc-stage,.rc-fig)[data-active-panel="tree"] .rc-view>.rc-svg{visibility:hidden}
+#rc :is(.rc-stage,.rc-fig)[data-active-panel="tree"] .ft-viewer{position:absolute;inset:0;display:flex;flex-direction:column;background:#f5f4ed;color:#242622;font-family:Arial,Helvetica,sans-serif}
 #rc .ft-toolbar{display:none}
-#rc[data-active-panel="tree"] .rc-bar>.rc-reset,#rc[data-active-panel="tree"] .rc-bar>.rc-where{display:none}
-#rc[data-active-panel="tree"] .ft-toolbar{display:flex;align-items:center;gap:6px;width:100%;background:#fff}
+#rc :is(.rc-stage,.rc-fig)[data-active-panel="tree"] .rc-bar>.rc-where{display:none}
+#rc :is(.rc-stage,.rc-fig)[data-active-panel="tree"] .ft-toolbar{display:flex;align-items:center;gap:6px;width:100%;background:#fff}
 #rc .ft-toolbar button{font:600 14px/1 Arial,sans-serif;background:#fff;color:#242622;border:1px solid #aeb6a5;border-radius:3px;min-width:44px;min-height:34px;padding:6px 10px;cursor:pointer}
 #rc .ft-toolbar button:focus-visible,#rc .ft-viewport:focus-visible{outline:2px solid #b44c2c;outline-offset:-2px}
 #rc .ft-zoom-readout{font-size:13px;color:#656b62;margin-left:auto}
