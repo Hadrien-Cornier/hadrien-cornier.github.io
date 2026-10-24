@@ -147,7 +147,7 @@ There's no defensible count of the off-policy share of RL methods. A rough proxy
 
 <details><summary>Source note: definitions, counts and dated examples</summary>
 
-**Definition used.** On-policy methods "attempt to evaluate or improve the policy that is used to make decisions, whereas off-policy methods evaluate or improve a policy different from that used to generate the data" ([Sutton and Barto, 2020, §5.4, p. 100](http://incompleteideas.net/book/RLbook2020.pdf)). The same book warns that off-policy methods "are often of greater variance and are slower to converge" (§5.5, p. 103).
+**Definition used.** On-policy methods "attempt to evaluate or improve the policy that is used to make decisions, whereas off-policy methods evaluate or improve a policy different from that used to generate the data" ([Sutton and Barto, 2020, §5.4](http://incompleteideas.net/book/RLbook2020.pdf)). The same book warns that off-policy methods "are often of greater variance and are slower to converge" (§5.5).
 
 **Five ideas that get called off-policy.** They aren't the same thing, and only some of them need an off-policy learner.
 
