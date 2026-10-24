@@ -88,7 +88,7 @@ What's still missing is **memory** and a **cheap way to imagine**. The timeline 
       "summary": "A vision-language model learns to output robot actions.",
       "mechanism": "RT-2 and OpenVLA turn actions into tokens, so a model pretrained on images and text can predict them.",
       "anchor": "section-from-vlm-to-vla-borrow-what-the-web-knows",
-      "visual": {"src": "/assets/robotics/why-robotics/openvla-architecture.png", "alt": "OpenVLA architecture: image encoders, a 7B language model, and an action de-tokenizer.", "caption": "OpenVLA (Kim et al., 2024), CC BY 4.0."},
+      "visual": {"src": "/assets/robotics/why-robotics/openvla-architecture-chalk.png", "alt": "OpenVLA architecture: image encoders, a 7B language model, and an action de-tokenizer.", "caption": "Redrawn from OpenVLA (Kim et al., 2024), CC BY 4.0."},
       "stack": [
         {"role": "goal", "text": "A language instruction", "mode": "designed"},
         {"role": "scene", "text": "Pretrained vision-language features", "mode": "learned"},
@@ -123,7 +123,7 @@ What's still missing is **memory** and a **cheap way to imagine**. The timeline 
       "summary": "Reinforcement learning turns a policy that sometimes works into one that rarely fails.",
       "mechanism": "A critic scores actions. HIL-SERL, RECAP, RLT and EXPO-FT use those scores in different ways to improve the policy from real attempts.",
       "anchor": "section-practice-reinforcement-learning-on-real-robots",
-      "visual": {"src": "/assets/robotics/modern-control/v3/expo-ft-architecture.png", "alt": "EXPO-FT: a VLA proposes action chunks, an edit actor adjusts them, and a critic picks the best.", "caption": "EXPO-FT (Dong et al., 2026), CC BY 4.0."},
+      "visual": {"src": "/assets/robotics/modern-control/v3/expo-ft-architecture-chalk.png", "alt": "EXPO-FT: a VLA proposes action chunks, an edit actor adjusts them, and a critic picks the best.", "caption": "Redrawn from EXPO-FT (Dong et al., 2026), CC BY 4.0."},
       "stack": [
         {"role": "goal", "text": "A task with a success detector", "mode": "designed"},
         {"role": "scene", "text": "The generalist's learned features", "mode": "learned"},
@@ -141,7 +141,7 @@ What's still missing is **memory** and a **cheap way to imagine**. The timeline 
       "summary": "One model predicts the next video frames and the next actions.",
       "mechanism": "DreamZero starts from a 14B video model and denoises future video and action chunks together, at 7 Hz on the robot.",
       "anchor": "section-world-action-models-imagine-the-video-and-the-action-together",
-      "visual": {"src": "/assets/robotics/modern-control/v3/dreamzero-architecture.png", "alt": "DreamZero: past frames, language and robot state go into a causal video transformer that outputs future frames and an action chunk.", "caption": "DreamZero (Ye et al., 2026), CC BY 4.0."},
+      "visual": {"src": "/assets/robotics/modern-control/v3/dreamzero-architecture-chalk.png", "alt": "DreamZero: past frames, language and robot state go into a causal video transformer that outputs future frames and an action chunk.", "caption": "Redrawn from DreamZero (Ye et al., 2026), CC BY 4.0."},
       "stack": [
         {"role": "goal", "text": "A language instruction", "mode": "designed"},
         {"role": "scene", "text": "Video latents of past frames", "mode": "learned"},
@@ -159,7 +159,7 @@ What's still missing is **memory** and a **cheap way to imagine**. The timeline 
       "summary": "The same image can need a different next step.",
       "mechanism": "MEM keeps recent video in a compact encoder and older events as a text summary.",
       "anchor": "section-memory-the-same-image-a-different-next-step",
-      "visual": {"src": "/assets/robotics/modern-control/v3/mem-architecture.png", "alt": "MEM: a high-level policy updates a language memory and picks a subtask; a low-level policy with a video memory encoder outputs actions.", "caption": "MEM (Torne et al., 2026), CC BY 4.0."},
+      "visual": {"src": "/assets/robotics/modern-control/v3/mem-architecture-chalk.png", "alt": "MEM: a high-level policy updates a language memory and picks a subtask; a low-level policy with a video memory encoder outputs actions.", "caption": "Redrawn from MEM (Torne et al., 2026), CC BY 4.0."},
       "stack": [
         {"role": "goal", "text": "Subtask chosen from the task and a text memory", "mode": "learned"},
         {"role": "scene", "text": "Compressed video of recent frames", "mode": "learned"},
@@ -240,7 +240,7 @@ Put an obstacle between the gripper and the block. A person goes around it on th
 
 **Diffusion Policy** (2023) learns the whole distribution of action sequences instead of their average. At run time it starts from random numbers and refines them, step by step, into one coherent route, left or right, never the average. [Diffusion Policy, §§II-C, IV-A, pp. 3–4](https://www.roboticsproceedings.org/rss19/p026.pdf#page=3) The π models below use a close relative, **flow matching**, for the same reason. It matters again in the RL section: this kind of policy has no simple formula for the probability of an action, which breaks some classic RL methods.
 
-![Two identical top views of an arm, block, tray and obstacle. One dashed path goes around the obstacle. The other passes through it, with the conflict circled.](/assets/robotics/modern-control/v2/candidate-paths.png "Two candidate paths with the same start and goal. Averaging the left and right detours gives the path through the obstacle.")
+![Two identical top views of an arm, block, tray and obstacle. One dashed path goes around the obstacle. The other passes through it, with the conflict circled.](/assets/robotics/modern-control/v2/candidate-paths-chalk.png "Two candidate paths with the same start and goal. Averaging the left and right detours gives the path through the obstacle.")
 
 </details>
 
@@ -260,7 +260,7 @@ A **vision-language model (VLM)** reads images and text and answers in text. It 
 
 **OpenVLA** (2024) shows the recipe with open weights: two image encoders, a 7-billion-parameter language model, and a de-tokenizer that turns output tokens back into a small move of the gripper.
 
-![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture.png "OpenVLA architecture. Figure from Kim et al., OpenVLA (2024), CC BY 4.0.")
+![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture-chalk.png "OpenVLA architecture. Redrawn from Kim et al., OpenVLA (2024), CC BY 4.0.")
 
 For our block, this means the instruction "put the green block in the tray" now means something to the model, even for a block color it never saw in the robot data. The cost is the action format. With 256 bins per dimension and tokens predicted one at a time, it's coarse and slow for a fast, precise arm.
 
@@ -356,7 +356,7 @@ $$
 
 The VLA keeps the candidates in good regions, and the edits stay small so a wrong critic can't drag the robot far. Then the improvements are trained back into the VLA.
 
-![EXPO-FT diagram. Left: offline pretraining, then online fine-tuning with a replay buffer, a success detector and human interventions. Right: the VLA proposes N action chunks, an edit actor adjusts each, and the chunk with the highest Q is executed.](/assets/robotics/modern-control/v3/expo-ft-architecture.png "EXPO-FT system. Figure 1 from Dong et al., EXPO-FT (2026), CC BY 4.0.")
+![EXPO-FT diagram. Top: offline pretraining, then online fine-tuning with a replay buffer, a success detector and human interventions. Bottom: the VLA proposes N action chunks, an edit actor adjusts each, and the chunk with the highest Q is executed.](/assets/robotics/modern-control/v3/expo-ft-architecture-chalk.png "EXPO-FT system. Redrawn from Figure 2 of Dong et al., EXPO-FT (2026), CC BY 4.0.")
 
 The comparison I care about is controlled: same base model, same tasks, same 30 trials. More copying, even with a person correcting the robot (HG-DAgger), stays around 20 to 22 out of 30, while practice reaches 30 out of 30.
 
@@ -379,7 +379,7 @@ NVIDIA's argument is yes. VLAs are good at semantics ("which object is the tray?
 
 **DreamZero** (February 2026) is the clearest example. It starts from a 14-billion-parameter video model. During training, it adds noise to both the future video frames and the future action chunk, and learns to remove the noise from both together. On the robot, it imagines the next frames and the next actions, executes the actions, and then replaces its imagined frames with the real camera frames, so its errors don't pile up. [DreamZero abstract](https://arxiv.org/abs/2602.15922)
 
-![DreamZero architecture. Training: video and actions are encoded, noised, and denoised jointly by a causal video transformer. Inference: past frames, language and state go in; future frames and a future action chunk come out; real observations replace the imagined frames at each step.](/assets/robotics/modern-control/v3/dreamzero-architecture.png "DreamZero: joint video and action prediction. Figure from Ye et al., World Action Models are Zero-shot Policies (2026), CC BY 4.0.")
+![DreamZero architecture. Training: video and actions are encoded, noised, and denoised jointly by a causal video transformer. Inference: past frames, language and state go in; future frames and a future action chunk come out; real observations replace the imagined frames at each step.](/assets/robotics/modern-control/v3/dreamzero-architecture-chalk.png "DreamZero: joint video and action prediction. Redrawn from Figure 4 of Ye et al., World Action Models are Zero-shot Policies (2026), CC BY 4.0.")
 
 Here's what that looks like on tasks the model never trained on. The top row shows what really happened, and the bottom row shows what the model imagined from the robot's cameras before acting.
 
@@ -427,7 +427,7 @@ Every policy in this post, ACT, π0.5 and most VLAs, decides from the current im
 
 Then there's **Robostral Navigate**, Mistral's first robotics model (July 2026). It's an 8-billion-parameter navigation model, not a manipulation one. It drives a robot through buildings it never saw, from a spoken instruction and **one ordinary camera**, with no map, no depth sensor and no special memory module. It simply keeps every frame of the trip in its input. Trained only in simulation, it's first on the standard R2R-CE benchmark with **77.4%** success, ahead of systems that use depth sensors or several cameras. [Robostral Navigate, §§2.1, 4.1](https://arxiv.org/html/2607.20785v1)
 
-![Robostral Navigate system: a stack of past camera frames and an instruction go to a VLM at 0.5 Hz, which outputs a waypoint such as go to pixel (48, 64) and move 4.5 m forward. A diffusion policy at 10 Hz turns the waypoint and the current frame into a short path, and a motion-tracking controller runs at 100 Hz.](/assets/robotics/modern-control/v3/robostral-architecture.png "Three loops at three rates: the VLM reads all past frames every 2 s, a diffusion policy plans at 10 Hz, a classical tracker runs at 100 Hz. Figure from Bounhar et al., Robostral Navigate (2026), CC BY 4.0.")
+![Robostral Navigate system: a stack of past camera frames and an instruction go to a VLM at 0.5 Hz, which outputs a waypoint such as go to pixel (48, 64) and move 4.5 m forward. A diffusion policy at 10 Hz turns the waypoint and the current frame into a short path, and a motion-tracking controller runs at 100 Hz.](/assets/robotics/modern-control/v3/robostral-architecture-chalk.png "Three loops at three rates: the VLM reads all past frames every 2 s, a diffusion policy plans at 10 Hz, a classical tracker runs at 100 Hz. Redrawn from Figure 1 of Bounhar et al., Robostral Navigate (2026), CC BY 4.0.")
 
 ![Bar chart of R2R-CE success on unseen buildings: StreamVLN 56.9%, Qwen-RobotNav-4B 66.9%, OmniNav with depth 69.5%, Qwen-RobotNav-8B with depth 72.1%, Robostral before RL 73.4%, Robostral after RL 77.4%.](/assets/robotics/modern-control/v3/robostral-r2r.png "My chart of Table 1 of Robostral Navigate. The last two bars show the gain from online RL in simulation.")
 
@@ -442,7 +442,7 @@ I find that striking: the simplest possible memory, "keep everything", wins a be
 
 **MEM** (Physical Intelligence, 2026) splits memory in two, like people do. Recent seconds go through a compact video encoder, so the arm remembers the object it's now hiding. Older events become a short text summary that a higher-level policy rewrites as it goes ("I opened the drawer with the masher"). On recipe setup and kitchen cleanup tasks lasting up to 15 minutes, π0.6 without memory reaches about a third of the task, compared with about 70% with MEM. [MEM abstract](https://arxiv.org/abs/2603.03596)
 
-![MEM architecture: a high-level policy reads the task, recent images and its language memory, then writes an updated memory and a subtask; a low-level policy with a video memory encoder outputs continuous actions for that subtask.](/assets/robotics/modern-control/v3/mem-architecture.png "MEM: text memory for long-term events, video memory for the last seconds. Figure from Torne et al. (2026), CC BY 4.0.")
+![MEM architecture: a high-level policy reads the task, recent images and its language memory, then writes an updated memory and a subtask; a low-level policy with a video memory encoder outputs continuous actions for that subtask.](/assets/robotics/modern-control/v3/mem-architecture-chalk.png "MEM: text memory for long-term events, video memory for the last seconds. Redrawn from Figure 2 of Torne et al. (2026), CC BY 4.0.")
 
 ![Bar chart of task progress on Recipe Set Up and Clean Kitchen: π0.6 without memory about 35% on average, video-only, text-only and naive text plus video memory between about 30% and 37%, π0.6-MEM about 70%.](/assets/robotics/modern-control/v3/mem-results.png "Task progress with and without memory. Only the combination of text and compressed video memory works. Figure from Torne et al. (2026), CC BY 4.0.")
 
@@ -462,7 +462,7 @@ Does the robot need the pixels at all? To choose between the detour and the coll
 
 **V-JEPA 2** (Meta, 2025) predicts the future in **features**, learned numerical summaries of an image, not in pixels. To plan, it tries many candidate action sequences, predicts their final features, and keeps the one whose features are closest to the features of a goal image. Then it executes the first action and plans again. [V-JEPA 2 v1, §3.2](https://www.alphaxiv.org/pdf/2506.09985v1?page=10)
 
-![Original V-JEPA 2 planning diagram showing observations, candidate actions and a goal-image comparison](/assets/robotics/modern-control/vjepa-planning.png "V-JEPA 2 planning in feature space. Figure 7 from Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
+![Redrawn V-JEPA 2 planning diagram showing observations, candidate actions and a goal-image comparison](/assets/robotics/modern-control/vjepa-planning-chalk.png "V-JEPA 2 planning in feature space. Redrawn from Figure 7 of Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
 
 It isn't free either. In the paper, one planning step took 16 seconds on one GPU, with 800 sampled action sequences and ten rounds of refinement. [V-JEPA 2 v1, p. 15](https://www.alphaxiv.org/pdf/2506.09985v1?page=15) The pixels are gone, but the search is expensive.
 

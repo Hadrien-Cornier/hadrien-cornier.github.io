@@ -14,3 +14,5 @@ License: Creative Commons Attribution 4.0 International (CC BY 4.0).
 https://creativecommons.org/licenses/by/4.0/
 
 Changes: cropped from the original PDF page. Original labels are preserved. The surrounding prose and printed caption are outside the crop.
+
+Chalk redraw: vjepa-planning-chalk.png redraws vjepa-planning.png in the site chalk style. The shapes, arrows, action distributions and labels are redrawn with the same words. The single row is split into two rows for phones: the rollout on top, and the goal image branch under it, drawn left to right. The current observation and goal images are pixel crops of the original, scaled and pasted unchanged. Source script: scripts/modern_control_diagrams.py.
