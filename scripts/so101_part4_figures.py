@@ -56,10 +56,10 @@ def network_io():
         draw_box(ax, (0.12, y), 1.6, box_h, label, edge=BLUE, face=PALE)
     text_box(ax, (2.85, 2.55), 1.45, 1.1, "small\nnetwork", RED)
     draw_box(ax, (5.0, 2.82), 1.2, 0.56, "offset", edge=TEAL, face=PALE)
-    ends = [3.45, 3.1, 2.75]
+    ends = [3.45, 3.45, 3.45]
     for y, end in zip(input_ys[:3], ends):
         add_arrow(ax, (1.77, y + box_h / 2), (2.8, end), BLUE, lw=1.8, mutation_scale=14)
-    ax.plot([1.72, 2.1, 2.1], [input_ys[3] + box_h / 2, input_ys[3] + box_h / 2, 2.3],
+    ax.plot([1.72, 2.1, 2.1, 2.55], [input_ys[3] + box_h / 2, input_ys[3] + box_h / 2, 2.3, 2.3],
             color=MUTED, lw=1.8)
     add_arrow(ax, (2.1, 2.3), (2.8, 2.62), MUTED, lw=1.8, mutation_scale=14)
     add_arrow(ax, (4.35, 3.1), (4.95, 3.1), TEAL, lw=2.2)
@@ -148,7 +148,8 @@ def data_curves():
     ax.set_xlabel("real data (minutes, log scale)")
     ax.set_ylabel("offline R200 error (mrad, log scale)")
     ax.set_title("With little data, the physics model\nalone overfits", pad=12)
-    ax.legend(loc="upper right", frameon=True, facecolor=BOARD, edgecolor=GRID, framealpha=1)
+    ax.legend(loc="upper right", frameon=True, facecolor=BOARD, edgecolor=GRID, framealpha=1,
+              borderpad=0.6)
     clean_axis(ax, "both")
     fig.text(0.5, 0.012,
              "Real-arm logs, offline error over 0.2 s, mean of 3 seeds.",
@@ -187,7 +188,8 @@ def residual():
     ax.set_xticks(x, methods)
     ax.set_ylim(0, 6.8)
     ax.set_ylabel("tracking error (mrad)")
-    ax.legend(loc="upper right", frameon=True, facecolor=BOARD, edgecolor=GRID, framealpha=1)
+    ax.legend(loc="upper right", frameon=True, facecolor=BOARD, edgecolor=GRID, framealpha=1,
+              borderpad=0.6)
     clean_axis(ax, "y")
     fig.text(0.5, 0.012, "P0 = servo model + observer.", ha="center", fontsize=14, color=MUTED)
     fig.suptitle("A learned residual improves\nthe combined prediction", x=0.03, y=0.995,

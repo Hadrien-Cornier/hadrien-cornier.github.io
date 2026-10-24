@@ -58,8 +58,8 @@
     function size() { return [Math.max(1, view.clientWidth), Math.max(1, view.clientHeight)]; }
     function viewFor(i, W, H) {
       if (i < 0) return whole;
-      var m = marks[i], vn = m.getAttribute('data-view');
-      return (W < narrowAt && views[vn + '_n']) || (W / H < 1 && views[vn + '_p']) || views[vn] || views[m.getAttribute('data-panel')] || whole;
+      var m = marks[i], vn = m.getAttribute('data-view'), key = vn || m.getAttribute('data-panel');
+      return (W < narrowAt && views[key + '_n']) || (W / H < 1 && views[vn + '_p']) || views[vn] || views[key] || whole;
     }
     /* Step state: the active panel and the attributes that CSS and the widget scripts read. */
     function setState(i) {
@@ -140,7 +140,8 @@
       }
       return heading || m;
     }
-    function figView(i, W) { var m = marks[i], vn = m.getAttribute('data-view'); return (W < narrowAt && views[vn + '_n']) || views[vn] || views[m.getAttribute('data-panel')] || whole; }
+    /* Inline copies use the complete stacked view of a split panel; the pinned desktop uses its wide view. */
+    function figView(i, W) { var m = marks[i], vn = m.getAttribute('data-view'), key = vn || m.getAttribute('data-panel'); return views[key + '_n'] || views[vn] || views[key] || whole; }
     /* A figure is as tall as its view at full width, within limits, and at most three quarters of the screen;
        a step drawn by an HTML widget (the family tree) keeps the live view's height. */
     function figHeight(v, W, minH) {

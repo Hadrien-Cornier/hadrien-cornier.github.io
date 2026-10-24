@@ -161,7 +161,7 @@ def real_arm_joints():
     fig = plt.figure(figsize=(6.4, 7.75))
     ax = _axes(fig, 0.95, 1.2, 5.3, 3.0)
     x = np.arange(len(joints))
-    width = 0.27
+    width = 0.3
     for index, name in enumerate(["pi", "solve", "mpc"]):
         bars = ax.bar(x + (index - 1) * width, values[name], width,
                       color=CONTROLLER[name], label=name)
@@ -169,7 +169,7 @@ def real_arm_joints():
             ax.annotate(f"{bar.get_height():g}",
                         (bar.get_x() + bar.get_width() / 2, bar.get_height()),
                         xytext=(0, 4), textcoords="offset points", ha="center",
-                        va="bottom", fontsize=13.5, bbox=chalk.label_box(pad=0.1),
+                        va="bottom", fontsize=13.5, bbox=chalk.label_box(pad=0.05),
                         zorder=5)
     ax.set_xticks(x, joints, rotation=0)
     ax.set_ylabel("RMS tracking error (mrad)")

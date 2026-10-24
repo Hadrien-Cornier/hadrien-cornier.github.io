@@ -101,6 +101,13 @@ TITLES = {
 }
 
 
+# Very tall stacked figures get a second, side-by-side desktop view. The number is the
+# vertical cut in the original SVG; phones still show the complete stacked figure.
+SPLITS = {
+    "so101-3-choosing-the-goal": {"shake-test": 550.0 / 1100.68},
+    "so101-6-where-the-last-millimeter-goes": {"kalman-intuition": 0.79},
+}
+
 # Part 8 draws its figures by hand in SVG. They become panel files in this folder.
 PART8 = "/assets/robotics/so101-series/part8"
 INLINE = re.compile(r'<figure class="article-figure">\n(<svg class="chalk[^"]*"[^\n]*</svg>)\n<figcaption>(.*)</figcaption>\n</figure>')
@@ -133,7 +140,8 @@ def title_of(text):
 def build(path):
     text = path.read_text()
     path.write_text(canvas.build(text, f"Figures of {title_of(text)}",
-                                 "One blackboard panel for each figure of the article, in reading order."))
+                                 "One blackboard panel for each figure of the article, in reading order.",
+                                 splits=SPLITS.get(path.stem)))
 
 
 def main(argv):

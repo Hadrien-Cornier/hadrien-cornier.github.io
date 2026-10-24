@@ -229,7 +229,7 @@ def constants_dumbbell():
                 ha="right", va="bottom", color=TEAL)
     fig.suptitle("Simulator against my real arm", x=0.02, y=0.995,
                  ha="left", color=YELLOW)
-    fig.subplots_adjust(left=0.27, right=0.96, top=0.925, bottom=0.04, hspace=1.25)
+    fig.subplots_adjust(left=0.32, right=0.96, top=0.925, bottom=0.04, hspace=1.25)
     save_figure(fig, "constants-dumbbell.png")
 
 
@@ -318,7 +318,7 @@ def speed_coupling():
     kp = result["kp"]
     at = result["pan_at_1p1"]
     fig, ax = plt.subplots(figsize=(6.4, 5.4))
-    ax.axvspan(0, 1.1, color=PALE, zorder=0)
+    ax.axvspan(0, 1.1, color=MUTED, alpha=0.25, zorder=0)
     ax.text(0.55, 28, "speeds in my\nreal recordings", ha="center", va="top",
             fontsize=13.5, color=MUTED)
     ax.axhline(sag, color=ORANGE, lw=2.8)

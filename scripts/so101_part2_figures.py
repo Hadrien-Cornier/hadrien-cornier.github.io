@@ -33,7 +33,7 @@ def tick_rounding(card=False, out=None):
     axes[0].set_ylabel("angle (tick)")
     board_legend(axes[0], loc="upper left", handlelength=1.4)
     axes[1].fill_between(time, -1 / np.sqrt(12), 1 / np.sqrt(12), color=YELLOW,
-                         alpha=0.18, lw=0, label=r"$\pm1/\sqrt{12}=\pm0.289$ tick")
+                         alpha=0.18, lw=0, label="±1/√12 = ±0.289 tick")
     axes[1].plot(time, error, color=TEAL, lw=2.2)
     axes[1].axhline(0, color=MUTED, lw=1.0)
     # Extra room above the sawtooth holds the legend and the RMS note.
@@ -171,11 +171,12 @@ def two_observers():
         # From "correct": one line back to "model predict", one arrow down to the estimate.
         ax.plot([5.17, 5.17, 0.88], [y0 + 2.47, y0 + 2.10, y0 + 2.10], color=color, lw=1.8)
         add_arrow(ax, (0.88, y0 + 2.10), (0.88, y0 + 2.47), color, lw=1.8)
-        chalk_box(ax, (0.80, y0 + 0.50), 5.08, 1.15, description, color, face=PALE)
-        add_arrow(ax, (5.17, y0 + 2.47), (5.17, y0 + 1.68), color, lw=1.8)
-        # The reading enters the compare step from above.
-        ax.text(3.075, y0 + 3.95, "reading", ha="center", va="center", color=MUTED)
-        add_arrow(ax, (3.075, y0 + 3.72), (3.075, y0 + 3.35), MUTED, lw=1.6)
+        chalk_box(ax, (0.80, y0 + 0.85), 5.08, 1.15, description, color, face=PALE)
+        add_arrow(ax, (5.17, y0 + 2.47), (5.17, y0 + 2.03), color, lw=1.8)
+        # Keep the original signal flow: the reading crosses the output box and
+        # enters model predict, rather than entering the compare box.
+        ax.text(0.12, y0 + 0.45, "reading", ha="left", va="center", color=MUTED)
+        add_arrow(ax, (0.60, y0 + 0.45), (0.88, y0 + 2.47), MUTED, lw=1.6)
     fig.suptitle("Observers estimate different hidden quantities", x=0.0, y=0.99,
                  ha="left", va="top", color=YELLOW)
     save_figure(fig, "two-observers.png")

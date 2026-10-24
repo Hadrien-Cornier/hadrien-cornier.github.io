@@ -40,11 +40,13 @@ def stacked_axes(count, panel_height, gap, top, bottom, left, right=0.15, **kwar
 def pid_parts():
     fig, axes, height = stacked_axes(3, panel_height=2.15, gap=1.15, top=1.3,
                                      bottom=1.3, left=1.0)
+    # Plain Unicode keeps Greek and the integral portable when the SVG text is
+    # rendered by a phone without the STIX private-use math glyphs.
     panels = [
-        ("p", "P: spring", r"$\tau=13.64(goal-q)$"),
-        ("pd", "P + D: spring in honey", r"$\tau=13.64(goal-q)-v$"),
+        ("p", "P: spring", "τ=13.64(goal−q)"),
+        ("pd", "P + D: spring in honey", "τ=13.64(goal−q)−v"),
         ("pi", "P + I: spring that keeps pushing",
-         r"$\tau=13.64(goal-q)$" + "\n" + r"$+20\int e\,dt$"),
+         "τ=13.64(goal−q)" + "\n" + "+20∫e dt"),
     ]
     for ax, (kind, title, equation) in zip(axes, panels):
         time, q = simulate_joint(kind)
@@ -111,8 +113,11 @@ def two_loops():
     add_arrow(ax, (center[0], 4.9), (center[0], top_y + box_h + 0.02), BLUE,
               mutation_scale=20)
 
-    # Encoder feedback: to the gap box, and along the left edge to the controller.
-    add_arrow(ax, (center[0], low_y + box_h + 0.02), (center[0], top_y - 0.02), PURPLE,
+    # Encoder feedback enters P/D, as in the original diagram, and also returns
+    # along the left edge to the outer controller.
+    ax.plot([cols[0] - 0.02, 0.52, 0.52, center[1], center[1]],
+            [row_2, row_2, 4.14, 4.14, top_y + box_h + 0.02], color=PURPLE, lw=1.8)
+    add_arrow(ax, (center[1], 4.14), (center[1], top_y + box_h + 0.02), PURPLE,
               mutation_scale=20)
     ax.plot([cols[0] - 0.02, 0.42, 0.42, center[1]], [row_2, row_2, 5.38, 5.38],
             color=PURPLE, lw=1.8)
@@ -143,14 +148,15 @@ def servo_inside():
 
     # Row 2: encoder chip reads the magnet; control board reads the chip.
     draw_box(ax, (4.4, 3.0), 1.4, 0.8, "magnetic\nencoder chip", edge=PURPLE)
-    add_arrow(ax, (5.45, 4.64), (5.45, 3.82), PURPLE, mutation_scale=20)
+    add_arrow(ax, (5.75, 4.35), (5.55, 3.82), PURPLE, mutation_scale=20,
+              connectionstyle="arc3,rad=-0.2")
     draw_box(ax, (0.4, 2.95), 2.4, 0.9, "control board\nMCU runs P/D loop", edge=TEAL)
-    ax.plot([4.38, 2.82], [3.4, 3.4], color=TEAL, lw=1.8, ls="--")
+    ax.plot([2.82, 5.45], [3.4, 4.62], color=TEAL, lw=1.8, ls="--")
 
-    # Row 3: serial bus.
-    draw_box(ax, (0.4, 1.2), 2.7, 1.15,
+    # Row 3: the serial bus sits to the right of the control board.
+    draw_box(ax, (3.25, 1.2), 2.7, 1.15,
              "serial bus\ncommands in: goal\nreadings out: position", edge=MUTED)
-    add_arrow(ax, (1.6, 2.93), (1.6, 2.37), TEAL, mutation_scale=20)
+    add_arrow(ax, (2.82, 1.78), (3.23, 1.78), TEAL, mutation_scale=20)
 
     ax.text(3.0, 0.6, "Simplified cutaway of a smart servo", ha="center", va="center",
             color=MUTED)
@@ -225,10 +231,8 @@ def three_delays():
     axes[0].axhline(100, color=MUTED, lw=1.8, ls="--", label="goal")
     axes[0].axvline(dead_time, color=ORANGE, lw=2.0, ls=":")
     axes[0].scatter([dead_time + tau], [63.2], color=TEAL, s=60, zorder=4)
-    axes[0].annotate("dead time\n33 ms", xy=(24, 80), xytext=(55, 80), va="center",
-                     color=INK, linespacing=1.2,
-                     arrowprops={"arrowstyle": "->", "color": ORANGE, "lw": 1.8,
-                                 "shrinkA": 4, "shrinkB": 0, "relpos": (0, 0.5)})
+    axes[0].annotate("dead time\n33 ms", (16, 8), ha="center",
+                     color=INK, linespacing=1.2)
     axes[0].annotate("lag\n95 ms to 63%", (dead_time + tau, 63.2),
                      xytext=(34, -48), textcoords="offset points",
                      arrowprops={"arrowstyle": "->", "color": TEAL, "lw": 1.8},
@@ -251,7 +255,7 @@ def three_delays():
         axes[1].step(updates[valid], held[valid], where="post", color=color,
                      lw=2.2, label=label)
     axes[1].text(0.03, 0.97,
-                 "Average goal age:\n16.7 ms at 30 Hz; 8.3 ms at 60 Hz",
+                 "Average goal age:\n16.7 ms at 30 Hz\n8.3 ms at 60 Hz",
                  transform=axes[1].transAxes, va="top", color=INK, linespacing=1.2,
                  bbox={**chalk.label_box(), "edgecolor": GRID, "boxstyle": "round,pad=0.3"})
     axes[1].set_xlim(0, 300)
@@ -269,11 +273,11 @@ def dead_time_ranges():
     ranges = [(31, 36), (15.6, 26.6), (0, 0)]
     y = np.arange(3)
     fig, (ax,), height = stacked_axes(1, panel_height=3.0, gap=0, top=1.05,
-                                      bottom=0.95, left=1.95, right=0.2)
+                                      bottom=0.95, left=2.25, right=0.2)
     for yi, (lo, hi) in zip(y, ranges):
         if hi == lo:
             ax.scatter([lo], [yi], s=110, color=LIGHT_BLUE, edgecolor=INK, zorder=3)
-            ax.text(lo + 1.3, yi, "about 0", va="center")
+            ax.text(lo + 2.0, yi, "about 0", va="center")
         else:
             ax.hlines(yi, lo, hi, color=TEAL if yi == 1 else BLUE, linewidth=9, zorder=3)
             ax.vlines([lo, hi], yi - 0.16, yi + 0.16,
@@ -331,10 +335,9 @@ def lag_on_path():
     y_annot = np.nanmax(np.rad2deg(target)) + 2.0
     if lag_s > 0:
         ax.annotate("", xy=(delayed_feature_time, y_annot), xytext=(feature_time, y_annot),
-                    arrowprops={"arrowstyle": "|-|,widthA=1.0,widthB=1.0", "color": PURPLE, "lw": 2.0,
-                                "shrinkA": 0, "shrinkB": 0, "mutation_scale": 9})
-        ax.text(feature_time - 0.12, y_annot, f"about {abs(lag_s) * 1000:.0f} ms late",
-                ha="right", va="center", color=PURPLE)
+                    arrowprops={"arrowstyle": "<->", "color": PURPLE, "lw": 2.0})
+        ax.text((feature_time + delayed_feature_time) / 2, y_annot + 2.5,
+                f"about {abs(lag_s) * 1000:.0f} ms late", ha="center", color=PURPLE)
     else:
         ax.text(0.5, 0.88, "Target and joint velocity align in this window",
                 transform=ax.transAxes, color=PURPLE,
