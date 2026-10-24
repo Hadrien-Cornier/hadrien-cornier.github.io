@@ -34,6 +34,18 @@
     "url": "/robotics/rl-gpi/"
   },
   {
+    "title": "Three robot bets: where does the generalization ceiling come from?",
+    "description": "Figure, Generalist and Physical Intelligence each bet on a different source of robot generalization: the body, the data or the mix. A long read with a pinned blackboard.",
+    "tags": [
+      "robotics",
+      "robot-learning",
+      "foundation-models",
+      "humanoids"
+    ],
+    "date": "2026-10-23",
+    "url": "/robotics/three-robot-philosophies/"
+  },
+  {
     "title": "World action models vs VLAs: predict the video, or just the moves",
     "description": "Both look at a camera image, read an instruction and output robot moves. A VLA starts from an image-and-text model and learns the moves. A WAM starts from a video model and also learns the frames that come next. Eight drawings on what that changes.",
     "tags": [
