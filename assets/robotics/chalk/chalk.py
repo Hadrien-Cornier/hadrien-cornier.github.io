@@ -154,6 +154,9 @@ def save(fig, path, grain=True, display_width_px=720, tight=True, photos=True, p
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     dpi = matplotlib.rcParams["savefig.dpi"]
+    # Measure the tight crop at the same dpi used to save it. A crop measured at
+    # the default 100 dpi can clip hand lettering when the figure saves at 220 dpi.
+    fig.set_dpi(dpi)
     has_photos = photos and any(a.get_visible() for a in fig.findobj(matplotlib.image._ImageBase))
     bbox = "tight" if tight else None
     if (has_photos or panel) and tight:

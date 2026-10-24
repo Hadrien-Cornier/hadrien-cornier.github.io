@@ -28,14 +28,10 @@ legend.frameon: False
 axes.prop_cycle: cycler('color', ['93d4ff', 'ff9f88', 'a8e2a0', 'ffe17c', 'ff93b8', 'c9b6ff', 'c3c9bd'])
 
 # Hand lettering. Glyphs that Patrick Hand lacks (Greek, arrows) fall back to DejaVu Sans.
+# DejaVu math writes real Unicode in vector panels; the STIX fallback writes some
+# Greek letters as private-use glyphs that phones without STIX cannot render.
 font.family: Patrick Hand, DejaVu Sans
-mathtext.fontset: custom
-mathtext.rm: Patrick Hand
-mathtext.it: Patrick Hand
-mathtext.bf: Patrick Hand
-mathtext.sf: Patrick Hand
-mathtext.cal: Patrick Hand
-mathtext.fallback: stixsans
+mathtext.fontset: dejavusans
 axes.unicode_minus: True
 axes.titleweight: normal
 figure.titleweight: normal
