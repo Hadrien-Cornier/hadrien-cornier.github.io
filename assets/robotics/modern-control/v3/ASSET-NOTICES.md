@@ -1,13 +1,13 @@
 # Image credits
 
-All figures below are reproduced from arXiv papers under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). They are cropped and resized; labels are unchanged. Each caption in the article names the source.
+All figures below come from arXiv papers under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The reproduced figures are cropped and resized; labels are unchanged. A `-chalk.png` file is a redraw in the site chalk style: it copies every label word for word, and the changes are listed on its line. Each caption in the article names the source.
 
-- `dreamzero-architecture.png`, `dreamzero-real-vs-generated.png`, `dreamzero-failed-plan.png`: Ye et al., World Action Models are Zero-shot Policies, [arXiv 2602.15922](https://arxiv.org/abs/2602.15922).
-- `mem-architecture.png`, `mem-results.png`, `mem-latency.png`: Torne et al., MEM: Multi-Scale Embodied Memory for Vision Language Action Models, [arXiv 2603.03596](https://arxiv.org/abs/2603.03596).
-- `robostral-architecture.png`: Bounhar et al., Robostral Navigate, [arXiv 2607.20785](https://arxiv.org/abs/2607.20785).
-- `expo-ft-architecture.png`: Dong et al., EXPO-FT, [arXiv 2605.25477](https://arxiv.org/abs/2605.25477). The "Figure 1" label and a stray header were cropped out.
+- `dreamzero-architecture.png`, `dreamzero-real-vs-generated.png`, `dreamzero-failed-plan.png`: Ye et al., World Action Models are Zero-shot Policies, [arXiv 2602.15922](https://arxiv.org/abs/2602.15922). `dreamzero-architecture-chalk.png` is a chalk redraw of Figure 4 (`dreamzero-architecture.png`): the boxes, arrows, icons, action plots and labels are redrawn with the same words, and the training part is stacked above the inference part for phones; the video frames, the robot photo and the four noised tiles are pixel crops of the original, scaled and pasted unchanged. Source script: `scripts/modern_control_diagrams.py`.
+- `mem-architecture.png`, `mem-results.png`, `mem-latency.png`: Torne et al., MEM: Multi-Scale Embodied Memory for Vision Language Action Models, [arXiv 2603.03596](https://arxiv.org/abs/2603.03596). `mem-architecture-chalk.png` is a chalk redraw of Figure 2 (`mem-architecture.png`): the boxes, arrows, tokens and labels are redrawn with the same words, and the high-level policy is stacked above the low-level policy for phones; the camera frames are pixel crops of the original, scaled and pasted unchanged. Source script: `scripts/modern_control_diagrams.py`.
+- `robostral-architecture.png`: Bounhar et al., Robostral Navigate, [arXiv 2607.20785](https://arxiv.org/abs/2607.20785), Figure 1. `robostral-architecture-chalk.png` is a chalk redraw of it for the article: the boxes, arrows and labels are redrawn with the same words and re-laid out in rows for phones; the camera frames are pixel crops of the original, enlarged 2x without resampling. Source script: `scripts/modern_control_figures.py`.
+- `expo-ft-architecture.png`: Dong et al., EXPO-FT, [arXiv 2605.25477](https://arxiv.org/abs/2605.25477). The "Figure 1" label and a stray header were cropped out. `expo-ft-architecture-chalk.png` is a chalk redraw of it (Figure 2 of the paper; the "Figure 1" label was baked into the graphic): the boxes, arrows, icons, math and labels are redrawn with the same words, and the "Learning Procedure" part is stacked above the "Policy Architecture" part for phones. The figure has no photos. Source script: `scripts/modern_control_diagrams.py`.
 
-The three bar charts are original charts by Hadrien Cornier, drawn from published tables:
+The three bar charts are original charts by Hadrien Cornier, drawn from published tables (source script with the data: `scripts/modern_control_figures.py`):
 
 - `rl-finetune-results.png`: EXPO-FT Table 2.
 - `robomme-memory.png`: RoboMME main results table, [arXiv 2603.04639](https://arxiv.org/abs/2603.04639) (CC BY 4.0).

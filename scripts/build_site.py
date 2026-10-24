@@ -122,4 +122,3 @@ notes_page = f'''<!doctype html>
 # The Markdown renderer owns the writing homepage and Robotics pages.
 if (ROOT / "content/robotics").is_dir():
     subprocess.run(["node", str(ROOT / "scripts/build_robotics.mjs")], cwd=ROOT, check=True)
-

@@ -1,0 +1,490 @@
+---
+title: 'Do you need a human body to use human data?'
+description: 'Figure AI says a humanoid can learn from human video because it is shaped like us. About 30 papers with measured results say human video also trains grippers and wheeled robots, that mismatch breaks transfer, and that the body decides what a robot can reach. A companion to Three robot bets, with a pinned blackboard.'
+date: '2026-10-23'
+draft: false
+layout: essay
+tags: ['robotics', 'robot-learning', 'humanoids', 'cross-embodiment']
+thumbnail: '/assets/robotics/do-you-need-a-human-body-for-human-data/thumbnail.svg'
+thumbnail_alt: 'Blackboard dot plot: the points that human video added to robot success, one row of dots per robot body (humanoid, dexterous hand, two-finger gripper, wheeled base). Most dots are gains; two gripper results are losses.'
+---
+
+<link rel="stylesheet" href="/assets/robotics/rl/series.css">
+<style>
+/* This page reuses the RL series board. The one-line summary above the panels belongs to the whole-board view only. */
+#rc.is-zoomed .hb-banner, #rc :is(.rc-stage, .rc-fig).is-zoomed .hb-banner { visibility: hidden; }
+</style>
+<svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in"/></filter></svg>
+<div class="rc rls-canvas" id="rc">
+<div class="rc-stage"><div class="rc-bar"><button class="rc-reset" type="button">Whole canvas &#8689;</button><div class="rc-where" aria-live="polite"></div></div><div class="rc-view"><svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 1261" data-whole="0 0 840 1261" data-views='{"gains":[12,100,396,508],"same":[12,616,396,322],"nines":[12,946,396,301],"carries":[432,120,396,533],"fixes":[432,661,396,238],"body":[432,120,396,533]}' role="img" aria-labelledby="hb-title hb-desc"><title id="hb-title">Human video and robot bodies: two blackboard figures</title><desc id="hb-desc">A summary line above two blackboard figures: Human data helped grippers, wheeled bases and humanoids. What breaks transfer is mismatch, not body shape. The body decides what the robot can reach. Figure 1, what human data adds, by robot body: points gained by adding human data, mostly where only the human data showed the scene, object or task; each dot is the success with human data minus the success without it, in points, on an axis from minus 40 to 70. Humanoid, hands: Figure AI, 30 new homes (blog), 8.3 to 56.4, a gain of 48.1; HAT, new setups, 34.7 to 59.4, a gain of 24.7; Human0, pick the named one, 50 to 100, a gain of 50; EgoHumanoid, new scenes, 30.9 to 82.2, a gain of 51.3. Dexterous hand on an arm: DexWild, in the wild, 28.5 to 75.1, a gain of 46.6; ImMimic, two hands, 42.5 to 67.5, a gain of 25. Two-finger gripper arm: Masquerade, edited video, 12 to 74, a gain of 62; What Matters, kitchen video, 12 to 41.7, a gain of 29.7; ImMimic, two grippers, 53.75 to 80, a gain of 26.25; EgoBridge, new grinder, aligned, 7 to 27, a gain of 20; Pi, clearing a table, 53 to 63, a gain of 10; EgoWAM, cup on saucer, 25 to 15, a loss of 10, drawn in red; EgoVerse B, grocery bag, about 42.5 to about 10, a loss of about 32.5, drawn in red. Mobile base: Pi, spice, 32 to 71, a gain of 39; Pi, dresser, 25 to 50, a gain of 25; EMMA, vs equal teleop hours, 52 to 82, a gain of 30, a hollow dot, where the baseline is equal hours of robot teleoperation; Ego-video navigation, 41.7 to 75, a gain of 33.3; LeLaN, find the object, 65 to 89, a gain of 24. No four-legged robot has a with-and-without test. Tasks, labs and scores differ between papers, so compare the spread, not single dots. Same human data, different hands, bars in blue for two-finger grippers and in pink for human-like hands. ImMimic, one arm, same 100 videos, 10 tries per cell, mean success with human video, in percent: Robotiq gripper (gripper) 72.5; Fin Ray gripper (gripper) 87.5; Allegro hand (human-like hand) 60; Ability hand (human-like hand) 75. LUCID, one intent model, 1 h of phone video per task, 2 tasks x 15 tries, successes of 30: LEAP hand (human-like hand) 19 of 30; two-finger gripper (gripper) 19 of 30. EgoVerse, same human data, 3 labs, 20 tries per task and setting, mean gain, new scenes, points: Robot A, grippers (gripper) about 9; Robot B, grippers (gripper) about 20; Robot C, G1 humanoid (human-like hand) about 17. How far the evidence can see: on a success scale with equal steps at 90%, 99% and 99.9% (success rate: each step is 10x fewer failures), the best results sit near the 90% end: HumanEgo, mean of 4 tasks, 92.5%; Phantom, best task, 92%. 10 tries at 50%: the 95% range is about plus or minus 31 points. A perfect 30 of 30 only shows the rate is probably above 90%. To show 99% at 95% confidence: about 300 tries in a row with no failure. Pi, clearing a table: points added to a score of 53. Human video, about plus 10; a UR5 arm's data, about plus 18; the target robot's data, about plus 35. Bar readings; human and UR5 bars overlap within their error. Figure 2, what carries over from human video, by body, one row per skill and one column per body (gripper arm; mobile base; legged; humanoid). Scene and objects: for the gripper arm, measured gain (EgoBridge 7 to 27, aligned); for the mobile base, measured gain (Pi spice 32 to 71); for the legged, not measured; for the humanoid, measured gain (HAT 35 to 59). Task steps: for the gripper arm, measured gain (Pi eggs 57 to 78); for the mobile base, measured gain (Pi spice subtasks); for the legged, not measured; for the humanoid, not measured. Where to go: for the gripper arm, body cannot; for the mobile base, measured gain (LeLaN 65 to 89, EMMA path); for the legged, partial (CityWalker, no ablation); for the humanoid, measured gain (EgoHumanoid, nav 100%). Hand path: for the gripper arm, measured gain (MT-π 0 of 10 to 18 of 20); for the mobile base, partial (Pi, not isolated); for the legged, partial (UMI on Legs, device data); for the humanoid, measured gain (HAT). Grasp and finger contact: for the gripper arm, measured loss or none (EgoWAM 25 to 15); for the mobile base, not measured; for the legged, not measured; for the humanoid, measured gain (EgoScale 2 to 38, on wheels, with robot data). Precision under 1 to 2 cm: for the gripper arm, measured loss or none (EgoZero); for the mobile base, not measured; for the legged, not measured; for the humanoid, partial (EgoHumanoid 15 to 60, co-trained). Leg motion (steps, sitting): for the gripper arm, body cannot; for the mobile base, body cannot; for the legged, not measured; for the humanoid, body can, no test (HumanPlus, VideoMimic). Stairs (the body itself): for the gripper arm, body cannot; for the mobile base, the body cannot (wheels stop); for the legged, body can, no test; for the humanoid, body can, no test (VideoMimic). Fix the mismatch, get the points back, success in percent before and after: record grasps and views the gripper can copy (robot only: 25), EgoWAM, 15 to 35; match the camera's image scale, What Matters, 25 to 51.2; replace the human hand in the image, Phantom, 0 to 92; retarget the walking path for the base, EMMA, 52 to 82.</desc>
+<defs>
+<marker id="hb-a-chalk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-chalk" stroke-width="1.8"/></marker>
+<marker id="hb-a-dim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-dim" stroke-width="1.8"/></marker>
+<marker id="hb-a-pink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-pink" stroke-width="1.8"/></marker>
+<marker id="hb-a-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-blue" stroke-width="1.8"/></marker>
+<marker id="hb-a-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-red" stroke-width="1.8"/></marker>
+<marker id="hb-a-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-green" stroke-width="1.8"/></marker>
+<marker id="hb-a-yellow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-yellow" stroke-width="1.8"/></marker>
+</defs>
+<g font-size="16">
+<g class="rc-panel" data-panel="gains">
+<rect x="12" y="68" width="396" height="1183" rx="6" fill="none" stroke="#b6baaf"/>
+<text x="22" y="94" font-size="16" class="rls-panel-title">1. What human data adds, by robot body</text>
+<text x="20" y="118" class="c-dim" font-size="13">points gained by adding human data, mostly where</text>
+<text x="20" y="134" class="c-dim" font-size="13">only the human data showed the scene, object or task</text>
+<path d="M276.87 143V512" fill="none" class="s-dim" stroke-width="1.3" stroke-dasharray="4 4"/>
+<text x="20" y="153" class="c-pink" font-size="13">humanoid, hands</text>
+<text x="20" y="237" class="c-pink" font-size="13">dexterous hand on an arm</text>
+<text x="20" y="289" class="c-blue" font-size="13">two-finger gripper arm</text>
+<text x="20" y="421" class="c-green" font-size="13">mobile base</text>
+<text x="20" y="170.42" class="c-chalk" font-size="13">Figure AI, 30 new homes (blog)</text>
+<path d="M276.87 166H343.88" fill="none" class="s-pink" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="348.38" cy="166" r="4.5" class="c-pink"/>
+<text x="357.88" y="170.42" class="c-pink" font-size="13">+48</text>
+<text x="20" y="186.42" class="c-chalk" font-size="13">HAT, new setups</text>
+<path d="M276.87 182H309.09" fill="none" class="s-pink" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="313.59" cy="182" r="4.5" class="c-pink"/>
+<text x="323.09" y="186.42" class="c-pink" font-size="13">+25</text>
+<text x="20" y="202.42" class="c-chalk" font-size="13">Human0, pick the named one</text>
+<path d="M276.87 198H346.71" fill="none" class="s-pink" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="351.21" cy="198" r="4.5" class="c-pink"/>
+<text x="360.71" y="202.42" class="c-pink" font-size="13">+50</text>
+<text x="20" y="218.42" class="c-chalk" font-size="13">EgoHumanoid, new scenes</text>
+<path d="M276.87 214H348.64" fill="none" class="s-pink" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="353.14" cy="214" r="4.5" class="c-pink"/>
+<text x="362.64" y="218.42" class="c-pink" font-size="13">+51</text>
+<text x="20" y="254.42" class="c-chalk" font-size="13">DexWild, in the wild</text>
+<path d="M276.87 250H341.65" fill="none" class="s-pink" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="346.15" cy="250" r="4.5" class="c-pink"/>
+<text x="355.65" y="254.42" class="c-pink" font-size="13">+47</text>
+<text x="20" y="270.42" class="c-chalk" font-size="13">ImMimic, two hands</text>
+<path d="M276.87 266H309.54" fill="none" class="s-pink" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="314.04" cy="266" r="4.5" class="c-pink"/>
+<text x="323.54" y="270.42" class="c-pink" font-size="13">+25</text>
+<text x="20" y="306.42" class="c-chalk" font-size="13">Masquerade, edited video</text>
+<path d="M276.87 302H364.55" fill="none" class="s-blue" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="369.05" cy="302" r="4.5" class="c-blue"/>
+<text x="378.55" y="306.42" class="c-blue" font-size="13">+62</text>
+<text x="20" y="322.42" class="c-chalk" font-size="13">What Matters, kitchen video</text>
+<path d="M276.87 318H316.53" fill="none" class="s-blue" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="321.03" cy="318" r="4.5" class="c-blue"/>
+<text x="330.53" y="322.42" class="c-blue" font-size="13">+30</text>
+<text x="20" y="338.42" class="c-chalk" font-size="13">ImMimic, two grippers</text>
+<path d="M276.87 334H311.4" fill="none" class="s-blue" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="315.9" cy="334" r="4.5" class="c-blue"/>
+<text x="325.4" y="338.42" class="c-blue" font-size="13">+26</text>
+<text x="20" y="354.42" class="c-chalk" font-size="13">EgoBridge, new grinder, aligned</text>
+<path d="M276.87 350H302.11" fill="none" class="s-blue" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="306.61" cy="350" r="4.5" class="c-blue"/>
+<text x="316.11" y="354.42" class="c-blue" font-size="13">+20</text>
+<text x="20" y="370.42" class="c-chalk" font-size="13">Pi, clearing a table</text>
+<path d="M276.87 366H287.24" fill="none" class="s-blue" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="291.74" cy="366" r="4.5" class="c-blue"/>
+<text x="301.24" y="370.42" class="c-blue" font-size="13">+10</text>
+<text x="20" y="386.42" class="c-chalk" font-size="13">EgoWAM, cup on saucer</text>
+<path d="M276.87 382H266.5" fill="none" class="s-red" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="262" cy="382" r="4.5" class="c-red"/>
+<text x="252.5" y="386.42" class="c-red" font-size="13" text-anchor="end">−10</text>
+<text x="20" y="402.42" class="c-chalk" font-size="13">EgoVerse B, grocery bag</text>
+<path d="M276.87 398H233.05" fill="none" class="s-red" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="228.55" cy="398" r="4.5" class="c-red"/>
+<text x="219.05" y="402.42" class="c-red" font-size="13" text-anchor="end">~−33</text>
+<text x="20" y="438.42" class="c-chalk" font-size="13">Pi, spice</text>
+<path d="M276.87 434H330.35" fill="none" class="s-green" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="334.85" cy="434" r="4.5" class="c-green"/>
+<text x="344.35" y="438.42" class="c-green" font-size="13">+39</text>
+<text x="20" y="454.42" class="c-chalk" font-size="13">Pi, dresser</text>
+<path d="M276.87 450H309.54" fill="none" class="s-green" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="314.04" cy="450" r="4.5" class="c-green"/>
+<text x="323.54" y="454.42" class="c-green" font-size="13">+25</text>
+<text x="20" y="470.42" class="c-chalk" font-size="13">EMMA, vs equal teleop hours</text>
+<path d="M276.87 466H316.97" fill="none" class="s-green" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="321.47" cy="466" r="3.9" fill="none" class="s-green" stroke-width="1.8"/>
+<text x="330.97" y="470.42" class="c-green" font-size="13">+30<tspan font-size="11" dy="-3">*</tspan></text>
+<text x="20" y="486.42" class="c-chalk" font-size="13">Ego-video navigation</text>
+<path d="M276.87 482H321.88" fill="none" class="s-green" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="326.38" cy="482" r="4.5" class="c-green"/>
+<text x="335.88" y="486.42" class="c-green" font-size="13">+33</text>
+<text x="20" y="502.42" class="c-chalk" font-size="13">LeLaN, find the object</text>
+<path d="M276.87 498H308.05" fill="none" class="s-green" stroke-width="1.3" stroke-linecap="butt"/>
+<circle cx="312.55" cy="498" r="4.5" class="c-green"/>
+<text x="322.05" y="502.42" class="c-green" font-size="13">+24</text>
+<path d="M217.4 512H380.94" fill="none" class="s-dim" stroke-width="1.5"/>
+<path d="M217.4 512V517" fill="none" class="s-dim" stroke-width="1.4"/>
+<text x="217.4" y="531" class="c-dim" font-size="13" text-anchor="middle">−40</text>
+<path d="M247.13 512V517" fill="none" class="s-dim" stroke-width="1.4"/>
+<text x="247.13" y="531" class="c-dim" font-size="13" text-anchor="middle">−20</text>
+<path d="M276.87 512V517" fill="none" class="s-dim" stroke-width="1.4"/>
+<text x="276.87" y="531" class="c-dim" font-size="13" text-anchor="middle">0</text>
+<path d="M306.61 512V517" fill="none" class="s-dim" stroke-width="1.4"/>
+<text x="306.61" y="531" class="c-dim" font-size="13" text-anchor="middle">+20</text>
+<path d="M336.34 512V517" fill="none" class="s-dim" stroke-width="1.4"/>
+<text x="336.34" y="531" class="c-dim" font-size="13" text-anchor="middle">+40</text>
+<path d="M366.08 512V517" fill="none" class="s-dim" stroke-width="1.4"/>
+<text x="366.08" y="531" class="c-dim" font-size="13" text-anchor="middle">+60</text>
+<text x="20" y="550" class="c-dim" font-size="13">* baseline: equal hours of robot teleoperation</text>
+<text x="20" y="569" class="c-chalk" font-size="13">No four-legged robot has a with-and-without test.</text>
+<text x="20" y="584" class="c-chalk" font-size="13">Tasks, labs and scores differ between papers,</text>
+<text x="20" y="599" class="c-chalk" font-size="13">so compare the spread, not single dots.</text>
+<text x="20" y="634" class="c-yellow" font-size="15">Same human data, different hands</text>
+<text x="20" y="652" class="c-dim" font-size="13"><tspan class="c-blue">blue: two-finger gripper</tspan><tspan class="c-pink" dx="12">pink: human-like hand</tspan></text>
+<text x="20" y="673" class="c-dim" font-size="13">ImMimic</text>
+<text x="400" y="673" class="c-dim" font-size="13" text-anchor="end">mean success with human video, %</text>
+<text x="20" y="688" class="c-dim" font-size="13">one arm, same 100 videos, 10 tries per cell</text>
+<text x="20" y="702.92" class="c-chalk" font-size="13">Robotiq gripper</text>
+<rect x="173" y="694.5" width="185.25" height="8" fill="none" class="s-faint" stroke-width="1"/>
+<rect x="173" y="694.5" width="134.31" height="8" class="c-blue" fill-opacity=".85"/>
+<text x="364.25" y="702.92" class="c-blue" font-size="13">72.5</text>
+<text x="20" y="717.92" class="c-chalk" font-size="13">Fin Ray gripper</text>
+<rect x="173" y="709.5" width="185.25" height="8" fill="none" class="s-faint" stroke-width="1"/>
+<rect x="173" y="709.5" width="162.09" height="8" class="c-blue" fill-opacity=".85"/>
+<text x="364.25" y="717.92" class="c-blue" font-size="13">87.5</text>
+<text x="20" y="732.92" class="c-chalk" font-size="13">Allegro hand</text>
+<rect x="173" y="724.5" width="185.25" height="8" fill="none" class="s-faint" stroke-width="1"/>
+<rect x="173" y="724.5" width="111.15" height="8" class="c-pink" fill-opacity=".85"/>
+<text x="364.25" y="732.92" class="c-pink" font-size="13">60</text>
+<text x="20" y="747.92" class="c-chalk" font-size="13">Ability hand</text>
+<rect x="173" y="739.5" width="185.25" height="8" fill="none" class="s-faint" stroke-width="1"/>
+<rect x="173" y="739.5" width="138.94" height="8" class="c-pink" fill-opacity=".85"/>
+<text x="364.25" y="747.92" class="c-pink" font-size="13">75</text>
+<text x="20" y="770" class="c-dim" font-size="13">LUCID</text>
+<text x="400" y="770" class="c-dim" font-size="13" text-anchor="end">successes of 30</text>
+<text x="20" y="785" class="c-dim" font-size="13">one intent model, 1 h of phone video per task,</text>
+<text x="20" y="800" class="c-dim" font-size="13">2 tasks x 15 tries</text>
+<text x="20" y="814.92" class="c-chalk" font-size="13">LEAP hand</text>
+<rect x="173" y="806.5" width="185.25" height="8" fill="none" class="s-faint" stroke-width="1"/>
+<rect x="173" y="806.5" width="117.33" height="8" class="c-pink" fill-opacity=".85"/>
+<text x="364.25" y="814.92" class="c-pink" font-size="13">19/30</text>
+<text x="20" y="829.92" class="c-chalk" font-size="13">two-finger gripper</text>
+<rect x="173" y="821.5" width="185.25" height="8" fill="none" class="s-faint" stroke-width="1"/>
+<rect x="173" y="821.5" width="117.33" height="8" class="c-blue" fill-opacity=".85"/>
+<text x="364.25" y="829.92" class="c-blue" font-size="13">19/30</text>
+<text x="20" y="852" class="c-dim" font-size="13">EgoVerse</text>
+<text x="400" y="852" class="c-dim" font-size="13" text-anchor="end">mean gain, new scenes, points</text>
+<text x="20" y="867" class="c-dim" font-size="13">same human data, 3 labs,</text>
+<text x="20" y="882" class="c-dim" font-size="13">20 tries per task and setting</text>
+<text x="20" y="896.92" class="c-chalk" font-size="13">Robot A, grippers</text>
+<rect x="173" y="888.5" width="66.69" height="8" class="c-blue" fill-opacity=".85"/>
+<text x="364.25" y="896.92" class="c-blue" font-size="13">~9</text>
+<text x="20" y="911.92" class="c-chalk" font-size="13">Robot B, grippers</text>
+<rect x="173" y="903.5" width="148.2" height="8" class="c-blue" fill-opacity=".85"/>
+<text x="364.25" y="911.92" class="c-blue" font-size="13">~20</text>
+<text x="20" y="926.92" class="c-chalk" font-size="13">Robot C, G1 humanoid</text>
+<rect x="173" y="918.5" width="125.97" height="8" class="c-pink" fill-opacity=".85"/>
+<text x="364.25" y="926.92" class="c-pink" font-size="13">~17</text>
+<text x="20" y="964" class="c-yellow" font-size="15">How far the evidence can see</text>
+<path d="M92.82 982V1012" fill="none" class="s-yellow" stroke-width="1.2" stroke-dasharray="2 3" stroke-opacity=".6"/>
+<path d="M88.67 999V1012" fill="none" class="s-yellow" stroke-width="1.2" stroke-dasharray="2 3" stroke-opacity=".6"/>
+<circle cx="92.82" cy="977.5" r="4.5" class="c-yellow"/>
+<text x="103.32" y="981.92" class="c-chalk" font-size="13">HumanEgo, mean of 4 tasks<tspan class="c-yellow" dx="6">92.5%</tspan></text>
+<circle cx="88.67" cy="994.5" r="4.5" class="c-yellow"/>
+<text x="99.17" y="998.92" class="c-chalk" font-size="13">Phantom, best task<tspan class="c-yellow" dx="6">92%</tspan></text>
+<path d="M30 1015H384" fill="none" class="s-dim" stroke-width="1.6" marker-end="url(#hb-a-dim)"/>
+<path d="M92.82 1011V1019" fill="none" class="s-yellow" stroke-width="1.6"/>
+<path d="M88.67 1011V1019" fill="none" class="s-yellow" stroke-width="1.6"/>
+<path d="M74.35 1009V1021" fill="none" class="s-chalk" stroke-width="1.8"/>
+<text x="74.35" y="1036" class="c-chalk" font-size="14" text-anchor="middle">90%</text>
+<path d="M222.17 1009V1021" fill="none" class="s-chalk" stroke-width="1.8"/>
+<text x="222.17" y="1036" class="c-chalk" font-size="14" text-anchor="middle">99%</text>
+<path d="M370 1009V1021" fill="none" class="s-chalk" stroke-width="1.8"/>
+<text x="370" y="1036" class="c-chalk" font-size="14" text-anchor="middle">99.9%</text>
+<text x="20" y="1052" class="c-dim" font-size="13">success rate: each step is 10x fewer failures</text>
+<text x="20" y="1069" class="c-chalk" font-size="13">10 tries at 50%: the 95% range is about +/-31 points</text>
+<text x="20" y="1086" class="c-chalk" font-size="13">a perfect 30 of 30 only shows</text>
+<text x="20" y="1101" class="c-chalk" font-size="13">the rate is probably above 90%</text>
+<text x="20" y="1118" class="c-chalk" font-size="13">to show 99% at 95% confidence:</text>
+<text x="20" y="1133" class="c-chalk" font-size="13">about 300 tries in a row with no failure</text>
+<text x="20" y="1159" class="c-chalk" font-size="13">Pi, clearing a table: points added to a score of 53</text>
+<text x="20" y="1174.92" class="c-chalk" font-size="13">human video</text>
+<rect x="194.45" y="1166.5" width="42.74" height="8" class="c-pink" fill-opacity=".85"/>
+<text x="243.19" y="1174.92" class="c-pink" font-size="13">~+10</text>
+<text x="20" y="1189.92" class="c-chalk" font-size="13">a UR5 arm's data</text>
+<rect x="194.45" y="1181.5" width="76.93" height="8" class="c-blue" fill-opacity=".85"/>
+<text x="277.38" y="1189.92" class="c-blue" font-size="13">~+18</text>
+<text x="20" y="1204.92" class="c-chalk" font-size="13">the target robot's data</text>
+<rect x="194.45" y="1196.5" width="149.58" height="8" class="c-yellow" fill-opacity=".85"/>
+<text x="350.03" y="1204.92" class="c-yellow" font-size="13">~+35</text>
+<path d="M194.45 1163V1208" fill="none" class="s-dim" stroke-width="1.2"/>
+<text x="20" y="1223" class="c-dim" font-size="13">bar readings;</text>
+<text x="20" y="1238" class="c-dim" font-size="13">human and UR5 bars overlap within their error</text>
+</g>
+<g class="rc-panel" data-panel="matrix">
+<rect x="432" y="68" width="396" height="835" rx="6" fill="none" stroke="#b6baaf"/>
+<text x="442" y="94" font-size="16" class="rls-panel-title">2. What carries over from human video,</text>
+<text x="442" y="114" font-size="16" class="rls-panel-title">by body</text>
+<path d="M442.2 131.1L445.4 135.1L452.6 126.3" fill="none" class="s-green" stroke-width="2.08"/>
+<text x="458" y="135" class="c-dim" font-size="13">measured gain</text>
+<path d="M565.55 126.7L574.35 135.5M574.35 126.7L565.55 135.5" fill="none" class="s-red" stroke-width="1.92"/>
+<text x="580.95" y="135" class="c-dim" font-size="13">measured loss or none</text>
+<circle cx="447" cy="147.1" r="5.2" fill="none" class="s-yellow" stroke-width="1.52"/>
+<path d="M447 141.9A5.2 5.2 0 0 0 447 152.3Z" class="c-yellow"/>
+<text x="458" y="151" class="c-dim" font-size="13">partial</text>
+<text x="569.95" y="151.5" class="c-dim" font-size="12.8" text-anchor="middle">?</text>
+<text x="580.95" y="151" class="c-dim" font-size="13">not measured</text>
+<path d="M442.2 163.1H451.8" fill="none" class="s-dim" stroke-width="1.6"/>
+<text x="458" y="167" class="c-dim" font-size="13">body cannot</text>
+<path d="M565.15 163.1L568.35 167.1L575.55 158.3" fill="none" class="s-dim" stroke-width="1.6"/>
+<text x="580.95" y="167" class="c-dim" font-size="13">body can, no test</text>
+<path d="M564.5 179V186M557.5 186H571.5M557.5 186V194L561 198M571.5 186V194L568 198" fill="none" class="s-chalk" stroke-width="1.7"/>
+<circle cx="637.5" cy="189" r="8.5" fill="none" class="s-chalk" stroke-width="1.7"/>
+<circle cx="637.5" cy="189" r="2.4" fill="none" class="s-chalk" stroke-width="1.5"/>
+<path d="M625.5 198.5H649.5" fill="none" class="s-dim" stroke-width="1.3"/>
+<circle cx="707.5" cy="178.5" r="2.6" fill="none" class="s-chalk" stroke-width="1.5"/>
+<path d="M707.5 181L714.5 189L708.5 198H717.5" fill="none" class="s-chalk" stroke-width="1.8"/>
+<circle cx="783.5" cy="184" r="4.6" fill="none" class="s-chalk" stroke-width="1.7"/>
+<path d="M774.5 199C774.5 190 792.5 190 792.5 199" fill="none" class="s-chalk" stroke-width="1.7"/>
+<text x="564.5" y="210" class="c-chalk" font-size="13" text-anchor="middle">gripper</text>
+<text x="564.5" y="224" class="c-chalk" font-size="13" text-anchor="middle">arm</text>
+<text x="637.5" y="210" class="c-chalk" font-size="13" text-anchor="middle">mobile</text>
+<text x="637.5" y="224" class="c-chalk" font-size="13" text-anchor="middle">base</text>
+<text x="710.5" y="210" class="c-chalk" font-size="13" text-anchor="middle">legged</text>
+<text x="783.5" y="210" class="c-chalk" font-size="13" text-anchor="middle">humanoid</text>
+<path d="M440 232H820" fill="none" class="s-dim" stroke-width="1.2"/>
+<text x="440" y="248.42" class="c-chalk" font-size="13">scene and</text>
+<text x="440" y="262.42" class="c-chalk" font-size="13">objects</text>
+<path d="M558.5 244L562.5 249L571.5 238" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="564.5" y="260" class="c-dim" font-size="11" text-anchor="middle">EgoBridge</text>
+<text x="564.5" y="271.5" class="c-dim" font-size="11" text-anchor="middle">7→27,</text>
+<text x="564.5" y="283" class="c-dim" font-size="11" text-anchor="middle">aligned</text>
+<path d="M631.5 244L635.5 249L644.5 238" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="637.5" y="260" class="c-dim" font-size="11" text-anchor="middle">Pi spice</text>
+<text x="637.5" y="271.5" class="c-dim" font-size="11" text-anchor="middle">32→71</text>
+<text x="710.5" y="249.5" class="c-dim" font-size="16" text-anchor="middle">?</text>
+<path d="M777.5 244L781.5 249L790.5 238" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="783.5" y="260" class="c-dim" font-size="11" text-anchor="middle">HAT 35→59</text>
+<path d="M440 289.92H820" fill="none" class="s-faint" stroke-width="1"/>
+<text x="440" y="306.34" class="c-chalk" font-size="13">task steps</text>
+<path d="M558.5 301.92L562.5 306.92L571.5 295.92" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="564.5" y="317.92" class="c-dim" font-size="11" text-anchor="middle">Pi eggs</text>
+<text x="564.5" y="329.42" class="c-dim" font-size="11" text-anchor="middle">57→78</text>
+<path d="M631.5 301.92L635.5 306.92L644.5 295.92" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="637.5" y="317.92" class="c-dim" font-size="11" text-anchor="middle">Pi spice</text>
+<text x="637.5" y="329.42" class="c-dim" font-size="11" text-anchor="middle">subtasks</text>
+<text x="710.5" y="307.42" class="c-dim" font-size="16" text-anchor="middle">?</text>
+<text x="783.5" y="307.42" class="c-dim" font-size="16" text-anchor="middle">?</text>
+<path d="M440 336.34H820" fill="none" class="s-faint" stroke-width="1"/>
+<text x="440" y="352.76" class="c-chalk" font-size="13">where to go</text>
+<path d="M558.5 348.34H570.5" fill="none" class="s-dim" stroke-width="2"/>
+<path d="M631.5 348.34L635.5 353.34L644.5 342.34" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="637.5" y="364.34" class="c-dim" font-size="11" text-anchor="middle">LeLaN 65→89,</text>
+<text x="637.5" y="375.84" class="c-dim" font-size="11" text-anchor="middle">EMMA path</text>
+<circle cx="710.5" cy="348.34" r="6.5" fill="none" class="s-yellow" stroke-width="1.9"/>
+<path d="M710.5 341.84A6.5 6.5 0 0 0 710.5 354.84Z" class="c-yellow"/>
+<text x="710.5" y="364.34" class="c-dim" font-size="11" text-anchor="middle">CityWalker,</text>
+<text x="710.5" y="375.84" class="c-dim" font-size="11" text-anchor="middle">no ablation</text>
+<path d="M777.5 348.34L781.5 353.34L790.5 342.34" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="783.5" y="364.34" class="c-dim" font-size="11" text-anchor="middle">EgoHumanoid,</text>
+<text x="783.5" y="375.84" class="c-dim" font-size="11" text-anchor="middle">nav 100%</text>
+<path d="M440 382.76H820" fill="none" class="s-faint" stroke-width="1"/>
+<text x="440" y="399.18" class="c-chalk" font-size="13">hand path</text>
+<path d="M558.5 394.76L562.5 399.76L571.5 388.76" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="564.5" y="410.76" class="c-dim" font-size="11" text-anchor="middle">MT-π</text>
+<text x="564.5" y="422.26" class="c-dim" font-size="11" text-anchor="middle">0/10→18/20</text>
+<circle cx="637.5" cy="394.76" r="6.5" fill="none" class="s-yellow" stroke-width="1.9"/>
+<path d="M637.5 388.26A6.5 6.5 0 0 0 637.5 401.26Z" class="c-yellow"/>
+<text x="637.5" y="410.76" class="c-dim" font-size="11" text-anchor="middle">Pi,</text>
+<text x="637.5" y="422.26" class="c-dim" font-size="11" text-anchor="middle">not isolated</text>
+<circle cx="710.5" cy="394.76" r="6.5" fill="none" class="s-yellow" stroke-width="1.9"/>
+<path d="M710.5 388.26A6.5 6.5 0 0 0 710.5 401.26Z" class="c-yellow"/>
+<text x="710.5" y="410.76" class="c-dim" font-size="11" text-anchor="middle">UMI on Legs,</text>
+<text x="710.5" y="422.26" class="c-dim" font-size="11" text-anchor="middle">device data</text>
+<path d="M777.5 394.76L781.5 399.76L790.5 388.76" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="783.5" y="410.76" class="c-dim" font-size="11" text-anchor="middle">HAT</text>
+<path d="M440 429.18H820" fill="none" class="s-faint" stroke-width="1"/>
+<text x="440" y="445.6" class="c-chalk" font-size="13">grasp and</text>
+<text x="440" y="459.6" class="c-chalk" font-size="13">finger</text>
+<text x="440" y="473.6" class="c-chalk" font-size="13">contact</text>
+<path d="M559 435.68L570 446.68M570 435.68L559 446.68" fill="none" class="s-red" stroke-width="2.4"/>
+<text x="564.5" y="457.18" class="c-dim" font-size="11" text-anchor="middle">EgoWAM 25→15</text>
+<text x="637.5" y="446.68" class="c-dim" font-size="16" text-anchor="middle">?</text>
+<text x="710.5" y="446.68" class="c-dim" font-size="16" text-anchor="middle">?</text>
+<path d="M777.5 441.18L781.5 446.18L790.5 435.18" fill="none" class="s-green" stroke-width="2.6"/>
+<text x="783.5" y="457.18" class="c-dim" font-size="11" text-anchor="middle">EgoScale</text>
+<text x="783.5" y="468.68" class="c-dim" font-size="11" text-anchor="middle">2→38, on</text>
+<text x="783.5" y="480.18" class="c-dim" font-size="11" text-anchor="middle">wheels, with</text>
+<text x="783.5" y="491.68" class="c-dim" font-size="11" text-anchor="middle">robot data</text>
+<path d="M440 498.6H820" fill="none" class="s-faint" stroke-width="1"/>
+<text x="440" y="515.02" class="c-chalk" font-size="13">precision</text>
+<text x="440" y="529.02" class="c-chalk" font-size="13">under 1-2 cm</text>
+<path d="M559 505.1L570 516.1M570 505.1L559 516.1" fill="none" class="s-red" stroke-width="2.4"/>
+<text x="564.5" y="526.6" class="c-dim" font-size="11" text-anchor="middle">EgoZero</text>
+<text x="637.5" y="516.1" class="c-dim" font-size="16" text-anchor="middle">?</text>
+<text x="710.5" y="516.1" class="c-dim" font-size="16" text-anchor="middle">?</text>
+<circle cx="783.5" cy="510.6" r="6.5" fill="none" class="s-yellow" stroke-width="1.9"/>
+<path d="M783.5 504.1A6.5 6.5 0 0 0 783.5 517.1Z" class="c-yellow"/>
+<text x="783.5" y="526.6" class="c-dim" font-size="11" text-anchor="middle">EgoHumanoid</text>
+<text x="783.5" y="538.1" class="c-dim" font-size="11" text-anchor="middle">15→60,</text>
+<text x="783.5" y="549.6" class="c-dim" font-size="11" text-anchor="middle">co-trained</text>
+<path d="M440 556.52H820" fill="none" class="s-faint" stroke-width="1"/>
+<text x="440" y="572.94" class="c-chalk" font-size="13">leg motion</text>
+<text x="440" y="586.94" class="c-chalk" font-size="13">(steps,</text>
+<text x="440" y="600.94" class="c-chalk" font-size="13">sitting)</text>
+<path d="M558.5 568.52H570.5" fill="none" class="s-dim" stroke-width="2"/>
+<path d="M631.5 568.52H643.5" fill="none" class="s-dim" stroke-width="2"/>
+<text x="710.5" y="574.02" class="c-dim" font-size="16" text-anchor="middle">?</text>
+<path d="M777.5 568.52L781.5 573.52L790.5 562.52" fill="none" class="s-dim" stroke-width="2"/>
+<text x="783.5" y="584.52" class="c-dim" font-size="11" text-anchor="middle">HumanPlus,</text>
+<text x="783.5" y="596.02" class="c-dim" font-size="11" text-anchor="middle">VideoMimic</text>
+<path d="M440 608.3H820" fill="none" class="s-faint" stroke-width="1"/>
+<text x="440" y="624.72" class="c-chalk" font-size="13">stairs (the</text>
+<text x="440" y="638.72" class="c-chalk" font-size="13">body itself)</text>
+<path d="M558.5 620.3H570.5" fill="none" class="s-dim" stroke-width="2"/>
+<path d="M632 614.8L643 625.8M643 614.8L632 625.8" fill="none" class="s-red" stroke-width="2.4"/>
+<text x="637.5" y="636.3" class="c-red" font-size="11" text-anchor="middle">wheels stop</text>
+<path d="M704.5 620.3L708.5 625.3L717.5 614.3" fill="none" class="s-dim" stroke-width="2"/>
+<path d="M777.5 620.3L781.5 625.3L790.5 614.3" fill="none" class="s-dim" stroke-width="2"/>
+<text x="783.5" y="636.3" class="c-dim" font-size="11" text-anchor="middle">VideoMimic</text>
+<path d="M440 646.08H820" fill="none" class="s-dim" stroke-width="1.2"/>
+<text x="440" y="679.08" class="c-yellow" font-size="15">Fix the mismatch, get the points back</text>
+<text x="820" y="701.08" class="c-dim" font-size="14" text-anchor="end">EgoWAM</text>
+<text x="440" y="701.08" class="c-chalk" font-size="14">record grasps and views the</text>
+<text x="440" y="717.08" class="c-chalk" font-size="14">gripper can copy (robot only: 25)</text>
+<path d="M454.7 735.08H481.36" fill="none" class="s-faint" stroke-width="1.2" stroke-dasharray="2 4"/>
+<path d="M604.91 735.08H808.45" fill="none" class="s-faint" stroke-width="1.2" stroke-dasharray="2 4"/>
+<circle cx="507.76" cy="735.08" r="3.2" class="c-dim"/>
+<path d="M507.76 735.08H577.01" fill="none" class="s-green" stroke-width="2.4" marker-end="url(#hb-a-green)"/>
+<text x="500.76" y="739.84" class="c-dim" font-size="14" text-anchor="end">15</text>
+<text x="585.51" y="739.84" class="c-green" font-size="14">35</text>
+<text x="820" y="761.08" class="c-dim" font-size="14" text-anchor="end">What Matters</text>
+<text x="440" y="761.08" class="c-chalk" font-size="14">match the camera's image scale</text>
+<path d="M454.7 779.08H516.74" fill="none" class="s-faint" stroke-width="1.2" stroke-dasharray="2 4"/>
+<path d="M677.62 779.08H808.45" fill="none" class="s-faint" stroke-width="1.2" stroke-dasharray="2 4"/>
+<circle cx="543.14" cy="779.08" r="3.2" class="c-dim"/>
+<path d="M543.14 779.08H634.32" fill="none" class="s-green" stroke-width="2.4" marker-end="url(#hb-a-green)"/>
+<text x="536.14" y="783.84" class="c-dim" font-size="14" text-anchor="end">25</text>
+<text x="642.82" y="783.84" class="c-green" font-size="14">51.2</text>
+<text x="820" y="805.08" class="c-dim" font-size="14" text-anchor="end">Phantom</text>
+<text x="440" y="805.08" class="c-chalk" font-size="14">replace the human hand in the image</text>
+<circle cx="454.7" cy="823.08" r="3.2" class="c-dim"/>
+<path d="M454.7 823.08H778.65" fill="none" class="s-green" stroke-width="2.4" marker-end="url(#hb-a-green)"/>
+<text x="447.7" y="827.84" class="c-dim" font-size="14" text-anchor="end">0</text>
+<text x="787.15" y="827.84" class="c-green" font-size="14">92</text>
+<text x="820" y="849.08" class="c-dim" font-size="14" text-anchor="end">EMMA</text>
+<text x="440" y="849.08" class="c-chalk" font-size="14">retarget the walking path for the base</text>
+<path d="M454.7 867.08H612.25" fill="none" class="s-faint" stroke-width="1.2" stroke-dasharray="2 4"/>
+<path d="M771.18 867.08H808.45" fill="none" class="s-faint" stroke-width="1.2" stroke-dasharray="2 4"/>
+<circle cx="638.65" cy="867.08" r="3.2" class="c-dim"/>
+<path d="M638.65 867.08H743.28" fill="none" class="s-green" stroke-width="2.4" marker-end="url(#hb-a-green)"/>
+<text x="631.65" y="871.84" class="c-dim" font-size="14" text-anchor="end">52</text>
+<text x="751.78" y="871.84" class="c-green" font-size="14">82</text>
+<text x="454.7" y="890.08" class="c-dim" font-size="14" text-anchor="middle">0</text>
+<text x="808.45" y="890.08" class="c-dim" font-size="14" text-anchor="middle">100</text>
+<text x="631.58" y="890.08" class="c-dim" font-size="14" text-anchor="middle">success %, before and after</text>
+</g>
+<g class="hb-banner">
+<text x="420" y="30" class="c-chalk" font-size="18" text-anchor="middle">Human data helped grippers, wheeled bases and humanoids.</text>
+<text x="420" y="54" class="c-yellow" font-size="16" text-anchor="middle">What breaks transfer is mismatch, not body shape. The body decides what the robot can reach.</text>
+</g>
+</g></svg></div></div>
+<div class="rc-body">
+
+Picture a one-floor flat with no stairs. You could send in a humanoid, or a much cheaper robot: a wheeled base with two arms and a torso that lifts, like the mobile robots in the [π0.5 paper](https://arxiv.org/abs/2504.16054) from Physical Intelligence (Pi). Figure AI, which builds humanoids, says the humanoid has an edge the cheap robot can't match. Humanoids "offer a unique structural advantage: their perspectives and kinematics mirror our own, making it possible to transfer knowledge directly from everyday human video" ([Project Go-Big](https://www.figure.ai/news/project-go-big), September 2025). If the shape is what makes that transfer work, the cheap robot is shut out of the biggest data source there is: people filming themselves doing chores. So do you actually need a human body to use human data?
+
+In the main article, [Three robot bets](/robotics/three-robot-philosophies/), this question got one short section. About 30 papers have measured it, and my answer is no. Every kind of body that has been tested gains from human data. When a study keeps the data fixed and swaps the hand or the body, the more human-like one shows no clear advantage. Transfer breaks when the data doesn't match the robot, whatever its shape. The body still matters, but for another reason: it decides where the robot can go and what it can reach, and stairs are the clearest case.
+
+<div class="rc-mark" id="sec-gains" data-panel="gains" data-view="gains" data-title="Human data helps bodies that look nothing like us"></div>
+
+## Human data helps bodies that look nothing like us
+
+Most of these papers follow the same recipe. People do the task while wearing a head camera, often Meta's Aria glasses, so the video is **egocentric**: it sees what the person sees, hands included. Software tracks the hands in 3D. Then the authors **co-train**, which means one robot policy learns from the human video and from some robot demonstrations at the same time. The test that matters puts the robot somewhere only the human data covered, like a new room or a new object, and compares the score with and without the human data. Panel 1 shows 18 of those comparisons, grouped by the robot's body, which papers call its **embodiment**.
+
+The gains show up on every body. In Pi's [human-to-robot paper](https://arxiv.org/abs/2512.22414), a mobile two-arm robot went from 32% to 71% on a spice task in a scene that only the human data showed. [EgoBridge](https://arxiv.org/abs/2509.19626), on fixed gripper arms, went from 1 to 4 successes out of 15 (7% to 27%) with a coffee grinder and a scene that only the human data had. Plain co-training scored 0% there, so the gain came from EgoBridge's method for aligning the human and robot data. [EMMA](https://arxiv.org/abs/2509.04443) put two gripper arms on a wheeled base. Two versions got the same 50 robot demos, recorded with the base standing still. One also got an hour of driving teleoperation and the other an hour of human video, and the human video won, 82% to 52%. On a humanoid with five-finger hands, [HAT](https://arxiv.org/abs/2503.13441) went from 35% to 59% in new setups. The two red dots are losses, both on gripper arms, and we'll come back to them.
+
+The humanoid row does run higher on average. It still overlaps the others, and the biggest single gain, 62 points, is on a gripper arm. Two of its dots need care. In Human0, the baseline picks the right one of two objects about half the time by chance. The other is Figure AI's own [Helix 2.5 test](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization). Pretraining on Index, its human video data, raised success in 30 homes the robot had never seen from 35 to 237 out of 420 tries. Figure AI calls this zero-shot, because no data came from those homes. That's the largest humanoid test here, but it's on Figure AI's blog, not in a paper, and only the humanoid was tested. No four-legged robot in this set has a clean with-and-without test. The tasks, labs and scores also differ from paper to paper, so a higher row can't tell you whether the body caused it.
+
+<div class="rc-mark" id="sec-same" data-panel="gains" data-view="same" data-title="Same human data, different hands"></div>
+
+## Same human data, different hands
+
+Comparing across papers can't isolate the body, because everything else changes too. Three studies do hold the human data fixed and change the body. [ImMimic](https://arxiv.org/abs/2509.10952) used one Franka arm with four end effectors, the gripper or hand at the end of the arm, and the same 100 human videos. Its two grippers ended at 72.5% and 87.5% mean success over four tasks, and its two dexterous hands, the multi-finger kind that look more like ours, at 60% and 75%. With ImMimic's own method, ImMimic-A, the gain from human video was about the same for both groups, 26 and 25 points. With plain co-training the hands gained more, about 16 points to the grippers' 6, a gap that 10 tries per cell can't separate from noise. The authors put it plainly: "More human-mimetic embodiments don't necessarily lead to better transfer." In [LUCID](https://arxiv.org/abs/2606.11628), an hour of phone video per task trained one model of how the objects and the palm should move. It drove both a four-finger LEAP hand and a two-finger gripper, each with its own controller trained in simulation and no robot demos, and both reached 19 of 30. And in [EgoVerse](https://arxiv.org/abs/2604.07607), one shared pool of human data went to two gripper robots and a Unitree G1 humanoid with five-finger hands, in three labs, each lab adding a smaller set it recorded to match its own setup. The humanoid's gain landed between the two gripper robots' gains, both in the trained scenes and in new ones.
+
+These tests are small. ImMimic ran 10 tries per hand and task, and at that size a 25-point gap between two bodies can hide in the noise. They also miss part of Figure AI's claim. ImMimic and LUCID swap the hand on a fixed arm, so they don't test perspective, the head-height view of a person walking around. EgoVerse comes closest with a full humanoid, but its cameras differ from lab to lab and its numbers are bar readings. So nobody has measured a humanoid advantage yet, though a small one could exist. None of the three leans toward the more human-like body, which is about as much as samples this small can say.
+
+<div class="rc-mark" id="sec-carries" data-panel="matrix" data-view="carries" data-title="What carries over, and what doesn't"></div>
+
+## What carries over, and what doesn't
+
+Human video carries several kinds of information at once. Panel 2 gives each kind, or channel, a row and each body a column. The channels that reach non-humanoid robots are scenes and objects (most of the gains in panel 1 are this kind), task steps and their order, where to go, and the path of the hand. Pi's egg task is a good example of a task step. Without human data its model put eggs in the cartons at random, which scored 57% sorting accuracy, and with human data that showed the sorting it reached 78%. For the hand path there's [MT-π](https://arxiv.org/abs/2501.06994): closing a drawer in a direction that only the human video showed went from 0 of 10 to 18 of 20 on a gripper arm. That drawer was a motion the robot already knew, in a new direction. [EgoWAM](https://arxiv.org/abs/2607.08436) draws the line at new skills: "Our gains stay at the context level; learning novel motion primitive / skill from human data ... remains out of reach".
+
+The channels that carry over badly are how to grasp, finger contact and precision below 1 to 2 cm, and video records no force at all. This is where you'd expect human-like hands to help, and with robot data alongside, they do. In [EgoScale](https://arxiv.org/abs/2602.16710), pretraining on human video labeled down to the finger joints raised a 22-joint robot hand from 2% to 38% average success after the same robot training, and labels for the wrist alone did much worse. That robot was a Galaxea R1 Pro, a humanoid upper body on a wheeled base held still, so this channel belongs to the hand, not the legs. Without robot data the hands fail: trained on human data alone, they scored 0% in [MotionTrans](https://arxiv.org/abs/2509.17759) and in [EgoVLA](https://arxiv.org/abs/2507.12440), whose body is a simulated humanoid. [EgoZero](https://arxiv.org/abs/2505.20290) names the precision limit: its action labels from human video "contain 1- 2cm error, preventing the policy from solving high-precision tasks."
+
+The one channel that only a legged body can use is leg motion, like steps and sitting. [HumanPlus](https://arxiv.org/abs/2406.10454) turns human motion into humanoid walking and squatting, and [VideoMimic](https://arxiv.org/abs/2505.03729) into climbing stairs and sitting. That shows the body can use it, but not how much the human data adds. Even a humanoid doesn't copy the way people walk. [EgoHumanoid](https://arxiv.org/abs/2602.10106) turns the person's walk into simple speed and squat commands for the robot's own walking controller. Its gains are in where to go and what to handle, which other bodies can use too. Co-training lifted its score in new scenes from 31 to 82 out of 100, and human data alone got the first walking step of every task right every time.
+
+<div class="rc-mark" id="sec-fixes" data-panel="matrix" data-view="fixes" data-title="What breaks transfer is mismatch"></div>
+
+## What breaks transfer is mismatch
+
+Now back to the two red dots. In EgoWAM, people held a cup from the side and the gripper had to grab it from the front. Plain imitation copied the human grasp, which the gripper can't do, and fell below the robot-only policy, from 25% to 15%. When people recorded the task the way the gripper does it, the same method reached 35%. EgoVerse's second gripper robot fell from a score of about 43 to about 10 on its grocery-bag task, and its authors suspect the same cause: the robot's body "forced robot demonstrations to deviate from the human strategies". The other failures are mismatches too. In [What Matters](https://arxiv.org/abs/2606.06627), co-training with a badly matched camera model scored 25% on picking up a spatula, no better than robot-only, and matching the image scale between human and robot cameras took it to 51%. In [Phantom](https://arxiv.org/abs/2503.00779), a policy trained on raw human video scored 0% on every task, and replacing the human hand with a drawn robot in the frames took the best task to 92%. And when EMMA fed its wheeled base the raw human walking path, instead of retargeting it into a path the base can actually drive, its handover task fell from 82% to 52%, by coincidence the same 52% as the teleoperation run.
+
+Each of these is a gap between the data and the robot. You could say the body caused them, since a gripper can't hold a cup the human way. But every fix changed the data, not the robot, and human-like hands have gaps of their own, like the 0% above. The catch is that recording the robot's way makes the data less like everyday video, and What Matters found that standard recipes give "little to no improvement over robot-only training given our natural motion human data." The [Universal Manipulation Interface (UMI)](https://arxiv.org/abs/2402.10329) closes the gap from the other side: it's a hand-held gripper with the same fingers and camera as the robot's. [RDT2](https://arxiv.org/abs/2602.03310) trained on about 10,000 hours of that kind of data and ran zero-shot, with no robot data, on arms it had never seen, as long as "the same model of camera and gripper are installed." That's the reverse of Figure AI's approach. Figure AI builds the robot to match the person, while UMI, and Generalist with its hand-held grippers, build the recording tool to match the robot.
+
+<div class="rc-mark" id="sec-body" data-panel="matrix" data-view="body" data-title="Wheels in a flat with no stairs"></div>
+
+## Wheels in a flat with no stairs
+
+What does the wheeled robot give up? Read down panel 2 and it loses stairs first. Wheels can't climb them, and no data changes that. It also can't use human leg motion, because it has no legs to put it in. Finger-level human data needs a human-like hand, not legs, and a wheeled robot can carry one, as EgoScale's did. What it keeps are the channels with measured gains on mobile bases: scenes, objects, task steps and routes. Figure AI's answer is that homes are tight. Its Helix 2.5 post says "wheeled robots need enough open floor for their base to fit and turn," and that a humanoid can position its body in spaces "that other form factors can't get into." That's a fair point, though nobody has measured it either. So in a flat with no stairs, I'd bet on the wheeled robot. Mobile bases gain from human video in the same range as the other bodies, the controlled tests show no clear extra gain from a more human-like hand, and the wheeled robot probably costs less. I'm calling it a bet because no study runs the same home task with the same human data on a humanoid and on a wheeled robot.
+
+<div class="rc-mark" id="sec-nines" data-panel="gains" data-view="nines" data-title="Count the nines before you pick the body"></div>
+
+## Count the nines before you pick the body
+
+The main article borrows an idea from Waymo's Dmitri Dolgov: [count the nines](/robotics/three-robot-philosophies/#section-count-your-nines-first) of reliability (90%, 99%, 99.9%) you need before you build, because some approaches stop climbing. So where does human video stop? Pi compared it with more data from the target robot on three tasks. On egg sorting and a dresser task, human data was "nearly as effective" as the robot's own data. On table clearing, which Pi calls bussing, the gap was clear, and Pi also tried a second robot there. From a score of 53%, 3 hours of human data added about 10 points, 7.45 hours from a different robot arm (a UR5) about 18, and data from the target robot itself about 35. The human and UR5 bars overlap within their error. The gain from human data also showed up only after diverse pretraining. In the paper's words, "with no or little pre-training, VLAs cannot benefit from human data co-training", where VLAs (vision-language-action models) are the kind of robot policy Pi builds. So on that task, human video acted like data from one more robot body, and the authors read it the same way: "human data transfer and cross-embodiment robot transfer share similar properties." On bussing, it didn't replace the robot's own data.
+
+The bigger problem is that this evidence can't see nines at all. The best average here is HumanEgo's 92.5% over four tabletop tasks, with no robot data. Even a perfect 30 of 30, like Human0's grasping test, only shows that the true rate is probably above 90%. Most comparisons have 10 to 40 tries per condition, and at 10 tries a 50% result has a 95% range of about plus or minus 31 points. To show 99% with 95% confidence you need about 300 tries in a row with no failure, and no paper here comes close. My answer to the ceiling question has a measured part and a guessed part. Measured: human video helps, it sometimes matches the robot's own data and sometimes falls well short, and fixing a mismatch wins the lost points back. That points to diverse human video plus a little of the robot's own data, with the mismatches fixed, on whatever body fits the job. Guess: at higher nines, contact and force matter more, and those are the channels human video carries worst, the ones that need the robot's own data even on a human-like hand. If that's right, a humanoid doesn't raise the ceiling on human video, because the limit is in the data. What a humanoid adds is reach, and stairs are the clearest case.
+
+<details>
+<summary>How I read the numbers</summary>
+
+- **What counts as a gain.** The score with human data minus the score without it, with the same robot data, in the condition the paper says only the human data covered (a new scene, object, task or start point). Where a paper has no such split, I use its main comparison and mark it "(main comparison)" in the sources drawer. Scores are success rates, task scores or accuracies, each as the paper defines it, so a gain of 20 in one paper isn't the same thing as 20 in another.
+- **Bar readings.** Values marked "~" come from bar charts with no printed numbers: EgoVerse Figure 9 and Pi (Physical Intelligence) Figures 10 and 11. I read them from the rendered PDF pages, and they're good to about 2 points.
+- **My arithmetic.** The ImMimic group means average its Table 1 over four tasks, then over the two grippers or the two hands. With ImMimic-A, the grippers go from 53.75 to 80 and the hands from 42.5 to 67.5. With plain co-training, the grippers go to 60 and the hands to 58.75.
+- **Different baselines.** EMMA's comparison is human video against the same number of hours of mobile robot teleoperation, not against no human data. Figure AI's Helix 2.5 result compares a model pretrained on Index with one trained from scratch on the same task data, on Figure AI's own blog, without peer review.
+- **Confidence.** For 10 tries at 50%, the normal approximation gives a 95% range of 1.96 times the square root of 0.25/10, about 0.31. The rule of three says that with zero failures in $n$ tries, the failure rate is below about $3/n$ with 95% confidence, so showing a failure rate under 1% takes about 300 clean tries.
+- **Left out.** GR00T N1 trains on human video but has no test that isolates it. HumanNet reports a validation loss and no robot runs. π0.7 trains on human video and doesn't report its effect. Project Go-Big reports no success rate.
+
+</details>
+
+<details>
+<summary>Sources for each drawing</summary>
+
+**Panel 1, gains by body.** Each gain is with minus without human data, from the paper's own table or text unless marked.
+
+- Figure AI Helix 2.5 [blog post](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization), Figure 1: pooled 35/420 without Index, 237/420 with it. The post's text says 9%; its chart gives 35/420, about 8%.
+- HAT [2503.13441](https://arxiv.org/abs/2503.13441) Table 2, out-of-distribution total: 59/170 (ACT, robot only) and 101/170 (HAT, co-trained), Unitree H1 with Inspire hands. HAT also changes the state format, so two things change at once.
+- Human0 [2511.15704](https://arxiv.org/abs/2511.15704), multi-object grasping out of distribution: 15/30 without human data, 30/30 with it, Unitree G1. Picking one of two objects at random gives about 50%.
+- EgoHumanoid [2602.10106](https://arxiv.org/abs/2602.10106): average normalized score in new scenes, 30.9 robot only and 82.2 co-trained, 20 trials per setting, Unitree G1.
+- DexWild [2505.07813](https://arxiv.org/abs/2505.07813): in-the-wild score, 28.5 robot only and 75.1 co-trained, a two-task mean with partial credit, xArm with a LEAP hand.
+- ImMimic [2509.10952](https://arxiv.org/abs/2509.10952) Table 1 (main comparison): my four-task means, robot only and ImMimic-A. Grippers 53.75 to 80, hands 42.5 to 67.5.
+- Masquerade [2508.09976](https://arxiv.org/abs/2508.09976), text and Figure 4: three tasks in three new scenes each, 12% for the mean of three baseline encoders (ImageNet, DINOv2 and HRP, which was pretrained on raw human video clips but not co-trained on them) and 74% co-trained with edited human video, 50 robot demos per task. Its dose test on Stack Pots uses 0% to 100% of the edited video set and goes from 2% to 68%, 25 rollouts each.
+- What Matters [2606.06627](https://arxiv.org/abs/2606.06627) Table 2: six tasks at three training environments, 12.0% robot only, 41.7% co-trained.
+- EgoBridge [2509.19626](https://arxiv.org/abs/2509.19626) Table 1: new grinder and scene, 7% (robot-only behavior cloning), 0% (plain co-training) and 27% (EgoBridge's aligned co-training), 15 rollouts.
+- Pi (Physical Intelligence) human-to-robot paper [2512.22414](https://arxiv.org/abs/2512.22414): spice 32 to 71 and dresser 25 to 50 on the mobile ARX robot (success rate), bussing (table clearing, with objects that only the human data showed) 53 to 63 on the table ARX robot (a 9-item score).
+- EgoWAM [2607.08436](https://arxiv.org/abs/2607.08436) Figure 8 (main comparison): cup on saucer, behavior cloning, 25% robot only and 15% with natural human data, 20 rollouts.
+- EgoVerse [2604.07607](https://arxiv.org/abs/2604.07607) Figure 9: Robot B, bag grocery, in distribution (main comparison), about 0.43 to 0.10 (bar reading). The authors hypothesize that Robot B's body forced its demonstrations away from the human strategies.
+- EMMA [2509.04443](https://arxiv.org/abs/2509.04443): handover, 52% with one hour of mobile teleoperation and 82% with one hour of human video in its place, 50 trials each, AgileX TRACER wheeled base.
+- Ego-video navigation [2606.01951](https://arxiv.org/abs/2606.01951) Table II: unseen start points, 5/12 robot only, 9/12 combined, on a CobotMagic ground base.
+- LeLaN [2410.03603](https://arxiv.org/abs/2410.03603) Table 2: 0.65 without YouTube and human walking video, 0.89 with both, 150 trials, wheeled robot.
+
+**Panel 1, same data and different hands.** ImMimic Table 1 (10 rollouts per cell). LUCID [2606.11628](https://arxiv.org/abs/2606.11628) Figure 5B: Push-T and cable routing, 15 trials per body per task, UR5e arm. EgoVerse Figure 9, co-trained on a shared human dataset plus human data each lab recorded for its own setup, mean gain over three tasks in new scenes, my bar readings: Robot A +0.09, Robot B +0.20, Robot C (G1) +0.17.
+
+**Panel 1, the nines.** HumanEgo [2605.24934](https://arxiv.org/abs/2605.24934): 92.5% mean over four tasks, 40 trials each, no robot data. Phantom [2503.00779](https://arxiv.org/abs/2503.00779) Table 1: 0.92 on its best task, 25 rollouts. The ranges are the computations in the drawer above.
+
+**Panel 2, channels by body.**
+
+- Scene and objects: EgoBridge, Physical Intelligence (spice), HAT.
+- Task steps: Pi egg sorting, 57% to 78% accuracy. Pi Figure 11: on spice and dresser, co-training both the subtask model and the action model with human data beat co-training either one alone. Human data in the subtask model alone helped spice (about 0.32 to 0.50) but not dresser (about 0.25 to 0.20), my bar readings. No humanoid test isolates task steps.
+- Where to go: LeLaN. EgoHumanoid Table I: human data alone reaches 100% on the first walking step of all four tasks, where robot data alone scores 0, 65, 100 and 100. EMMA retargets the human walking path into commands its differential-drive base can follow (handover 82% with it, 52% without). CityWalker [2411.17820](https://arxiv.org/abs/2411.17820) trains a Unitree Go1 policy on 2,000 hours of walking and driving video but has no with-and-without test. Figure AI's [Project Go-Big](https://www.figure.ai/news/project-go-big) reports navigation from human video only, with no success rate.
+- Hand path: MT-π [2501.06994](https://arxiv.org/abs/2501.06994) (0/10 to 18/20), HAT. Pi's mobile tasks use human hand paths as actions, but the paper doesn't isolate that channel. UMI on Legs [2407.10353](https://arxiv.org/abs/2407.10353) runs hand-held gripper data on a Go2 quadruped at 85%, which is device data, not video.
+- Grasp and finger contact: EgoWAM. The R1 Pro below sits in the humanoid column, on wheels. EgoScale [2602.16710](https://arxiv.org/abs/2602.16710) Figure 4, on a Galaxea R1 Pro (a wheeled humanoid upper body, base and torso fixed) with 22-DoF Sharpa hands: average success 0.02 with no pretraining, 0.38 with human pretraining, 0.56 with added mid-training on aligned human and robot play data. Figure 8: labels for the wrist alone score lower than full finger-joint labels. On a G1 with a three-finger hand, the gain needed G1 play data in mid-training.
+- Precision: EgoZero [2505.20290](https://arxiv.org/abs/2505.20290) ("1- 2cm error"). EgoHumanoid notes that the gap "disproportionately impacts precision-critical manipulation." On its most precise substep (Cart Stowing s2), human data alone scores 5%, robot data alone 15%, and co-training 60%.
+- Leg motion and stairs: HumanPlus [2406.10454](https://arxiv.org/abs/2406.10454), VideoMimic [2505.03729](https://arxiv.org/abs/2505.03729) (stairs and sitting on a real G1). Neither has a with-and-without test, so these cells show what the body can do. EgoHumanoid turns human lower-body motion into discrete speed steps and a stand or squat command for its own walking controller, so its gains count under where to go and scene and objects.
+
+**Panel 2, the fixes.** EgoWAM Figure 8 (15% to 35% with robot-aligned human demos). What Matters Table 5 (pick spatula: 25.0% with a heavily misaligned camera, 51.2% matched). Phantom Table 1 (raw human video 0.0, hand inpainting with a rendered robot 0.92). EMMA Figure 9 (handover 0.82 with retargeting, 0.52 without).
+
+**Other papers in the text.** MotionTrans [2509.17759](https://arxiv.org/abs/2509.17759), EgoVLA [2507.12440](https://arxiv.org/abs/2507.12440), UMI [2402.10329](https://arxiv.org/abs/2402.10329), RDT2 [2602.03310](https://arxiv.org/abs/2602.03310), π0.5 [2504.16054](https://arxiv.org/abs/2504.16054) (wheeled holonomic base, two 6-DoF arms with parallel jaw grippers, torso lift). Pi Figure 10 (bussing: about 0.53 base, 0.63 with human data, 0.71 with UR5 data, 0.88 with target-robot data, my bar readings) and Figure 2 (gain from human data grows with pretraining diversity). All papers were read on October 23, 2026.
+
+</details>
+
+</div>
+</div>
+<script src="/assets/robotics/rl/canvas.js" defer></script>

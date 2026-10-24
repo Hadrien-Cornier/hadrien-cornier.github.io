@@ -60,7 +60,7 @@ A VLA usually starts from a pretrained VLM and is then trained on robot data, so
 
 [OpenVLA](https://arxiv.org/abs/2406.09246) shows the recipe clearly. Two vision encoders turn the camera image into tokens, a 7-billion-parameter language model reads them with the instruction, and the model's output tokens are decoded back into a small change of the gripper's position, rotation and opening.
 
-![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture.png "OpenVLA architecture. Figure from Kim et al., OpenVLA (2024), CC BY 4.0.")
+![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture-chalk.png "OpenVLA architecture. Redrawn from Kim et al., OpenVLA (2024), CC BY 4.0.")
 
 Figure's [Helix](https://www.figure.ai/news/helix) is the same idea on a humanoid. In the video, two robots run the same model and put away groceries they never saw in training.
 
@@ -182,7 +182,7 @@ For robots, the clearest picture puts the real camera frame next to the imagined
 
 Not every world model draws pixels. Meta's [V-JEPA 2](https://arxiv.org/abs/2506.09985) predicts the *features* of the next frame instead of the frame itself. It first learned from over a million hours of video without action labels, then from less than **62 hours of robot data**, and used its predictions to plan movements. Yann LeCun's company [AMI](https://amilabs.xyz/) is pursuing this direction.
 
-![Diagram of V-JEPA 2-AC: previous video frames pass through a frozen encoder into a predictor that also receives robot actions and poses; the prediction is compared with the frozen encoding of the future frame using an L1 loss.](/assets/robotics/why-robotics/vjepa2-ac.png "V-JEPA 2-AC predicts the next frame's features from past frames and the robot's action. Figure from Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
+![Diagram of V-JEPA 2-AC: previous video frames pass through a frozen encoder into a predictor that also receives robot actions and poses; the prediction is compared with the frozen encoding of the future frame using an L1 loss.](/assets/robotics/why-robotics/vjepa2-ac-chalk.png "V-JEPA 2-AC predicts the next frame's features from past frames and the robot's action. Redrawn from Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
 
 ## Reindustrializing Europe and the United States
 
