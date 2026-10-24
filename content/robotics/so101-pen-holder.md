@@ -4,7 +4,7 @@ description: 'I want to see my SO-101 trajectory errors as ink on paper. For tha
 date: '2026-10-05'
 updated: '2026-10-10'
 draft: false
-series: 'From policy to action: the last mile of robotics control'
+series: 'so101-control'
 part: 5
 track: hardware
 tags: ['so-101', 'hardware', '3d-printing']

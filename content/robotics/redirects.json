@@ -9,5 +9,9 @@
   "rl-2-bootstrapping-codex": "/robotics/rl-2-bootstrapping/",
   "rl-3-function-approximation-codex": "/robotics/rl-3-function-approximation/",
   "rl-4-on-policy-and-off-policy-codex": "/robotics/rl-4-on-policy-and-off-policy/",
-  "rl-5-the-deadly-triad-codex": "/robotics/rl-5-the-deadly-triad/"
+  "rl-5-the-deadly-triad-codex": "/robotics/rl-5-the-deadly-triad/",
+  "/papers/": "/robotics/recent-papers/",
+  "/papers/eigendexplore/": "/robotics/eigendexplore/",
+  "/papers/imprint/": "/robotics/imprint/",
+  "/papers/offline-empowerment/": "/robotics/offline-empowerment/"
 }

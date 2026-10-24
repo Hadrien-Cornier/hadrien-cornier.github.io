@@ -3,7 +3,7 @@ title: 'Where the last millimeter of my drawing arm goes'
 description: 'My SO-101 arm cannot see its own pen tip. A tablet can. Here is what the tablet showed: how much error a learned correction removes, which causes are left, and why the base joint matters most.'
 date: '2026-10-11'
 draft: false
-series: 'From policy to action: the last mile of robotics control'
+series: 'so101-control'
 part: 6
 tags: ['so-101', 'calibration', 'measurement']
 thumbnail: /assets/robotics/thumbnails/so101-6-where-the-last-millimeter-goes.jpg
