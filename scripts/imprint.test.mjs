@@ -111,5 +111,9 @@ test('the questions drawer starts closed and cites the paper and pinned code for
  // The paper is silent on rates in Hz and on real-robot timing; the answer must say so instead of guessing.
  assert.match(QA_ITEMS[1].answer, /doesn't (say|give)|not stated/);
  assert.match(html, /not stated in the paper/);
- for (const value of [QA_TITLE, ...QA_ITEMS.flatMap((item) => [item.question, item.answer])]) assert.doesNotMatch(value, /[—–]/, 'no em or en dashes');
+ // A code finding that the paper does not describe is labeled as such and links the proposed upstream fix.
+ assert.match(QA_ITEMS[1].note, /^Code observation, not stated in the paper: /);
+ assert.match(QA_ITEMS[1].noteLink[1], /^https:\/\/github\.com\/amazon-far\/imprint\/pull\/\d+$/);
+ assert.match(html, /<p class="im-qa-note">Code observation/);
+ for (const value of [QA_TITLE, ...QA_ITEMS.flatMap((item) => [item.question, item.answer, item.note ?? ''])]) assert.doesNotMatch(value, /[—–]/, 'no em or en dashes');
 });
