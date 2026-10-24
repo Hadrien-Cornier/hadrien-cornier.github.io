@@ -160,7 +160,7 @@ def human_robot_tsne_schematic():
         # Titles stay chalk white: yellow is the human points here. Each title line is its own
         # text on a fixed baseline, so the comma in "Large, diverse" cannot lift its line.
         first, second = title.split("\n")
-        for line_text, rise in ((second, 6), (first, 24)):
+        for line_text, rise in ((second, 8), (first, 26)):
             ax.text(0.5, 1.0, line_text, transform=offset_copy(ax.transAxes, fig=fig, y=rise, units="points"),
                     ha="center", va="baseline", color=chalk.CHALK, fontsize=15)
     for text, lx, ly, color in labels:
