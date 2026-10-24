@@ -3,7 +3,7 @@ title: 'One equation, and every way the arm misses it'
 description: 'Start from torque = inertia × acceleration, then add each term a cheap servo arm really has: gravity, friction, a payload, dead time, a dead band. Each term is one way the arm misses its target.'
 date: '2026-10-02'
 draft: false
-series: 'From policy to action: the last mile of robotics control'
+series: 'so101-control'
 part: 1
 tags: ['so-101', 'control', 'hardware']
 thumbnail: /assets/robotics/thumbnails/so101-1-target-and-goal.jpg

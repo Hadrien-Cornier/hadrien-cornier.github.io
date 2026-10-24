@@ -1,5 +1,5 @@
 ---
-title: 'Can you zero-shot robotics with a coding agent?'
+title: 'ASPIRE: Can you zero-shot robotics with a coding agent?'
 description: 'ASPIRE lets a coding agent debug robot programs from execution traces and save each verified fix as a text skill. What the loop does, and what the numbers cover.'
 date: '2026-10-19'
 tags: ['code-as-policy', 'agents', 'skill-learning', 'nvidia']
