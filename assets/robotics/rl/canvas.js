@@ -43,7 +43,8 @@
     var stage = rc.querySelector('.rc-stage'), view = stage.querySelector('.rc-view'), svg = view.querySelector('svg.rc-svg'), body = rc.querySelector('.rc-body');
     var views = JSON.parse(svg.getAttribute('data-views')), whole = svg.getAttribute('data-whole').split(' ').map(Number);
     var narrowAt = +svg.getAttribute('data-narrow') || 0; /* optional: below this width (a phone), prefer the _n views */
-    var marks = [].slice.call(rc.querySelectorAll('.rc-mark')), where = stage.querySelector('.rc-where'), reset = stage.querySelector('.rc-reset');
+    var figMax = +svg.getAttribute('data-fig-max') || 0; /* optional: inline figures keep the shape of a tall view up to this height-to-width ratio */
+    var marks = [].slice.call(rc.querySelectorAll('.rc-mark')), where = stage.querySelector('.rc-where');
     var panels = [].slice.call(svg.querySelectorAll('.rc-panel'));
     var idx = -1, hold = false, holdAt = -1, peekY = null, tick = 0, mode = '', base = 1, home = stage.nextSibling;
     function label(i) { var n = marks[i].getAttribute('data-num'); if (n === null) n = String(i + 1); return (n ? n + '. ' : '') + marks[i].getAttribute('data-title'); }
@@ -57,8 +58,8 @@
     function size() { return [Math.max(1, view.clientWidth), Math.max(1, view.clientHeight)]; }
     function viewFor(i, W, H) {
       if (i < 0) return whole;
-      var m = marks[i], vn = m.getAttribute('data-view');
-      return (W < narrowAt && views[vn + '_n']) || (W / H < 1 && views[vn + '_p']) || views[vn] || views[m.getAttribute('data-panel')] || whole;
+      var m = marks[i], vn = m.getAttribute('data-view'), key = vn || m.getAttribute('data-panel');
+      return (W < narrowAt && views[key + '_n']) || (W / H < 1 && views[vn + '_p']) || views[vn] || views[key] || whole;
     }
     /* Step state: the active panel and the attributes that CSS and the widget scripts read. */
     function setState(i) {
@@ -91,7 +92,8 @@
       else if (docked >= 0) frameDocked();
     }
     function line() { return WIDE.matches ? window.innerHeight * 0.36 : stage.getBoundingClientRect().bottom + nav.offsetHeight + 48; }
-    function current() { var lim = line(), k = -1; for (var i = 0; i < marks.length; i++) { if (marks[i].getBoundingClientRect().top <= lim) k = i; } return k; }
+    /* A mark inside a closed <details> drawer has no box; the reader has not opened that step, so it does not count. */
+    function current() { var lim = line(), k = -1; for (var i = 0; i < marks.length; i++) { if (marks[i].getClientRects().length && marks[i].getBoundingClientRect().top <= lim) k = i; } return k; }
     function onScroll() {
       if (tick || mode !== 'wide') return; tick = requestAnimationFrame(function () {
         tick = 0; var k = current();
@@ -106,6 +108,8 @@
     }
     function go(i) {
       var smooth = reduce.matches ? 'auto' : 'smooth';
+      /* A step in a closed drawer opens the drawer first, so the text can scroll to it. */
+      for (var d = i >= 0 ? marks[i].closest('details') : null; d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
       if (mode !== 'wide') { if (i >= 0) marks[i].scrollIntoView({ behavior: smooth, block: 'start' }); return; }
       hold = false; peekY = null; apply(i, false);
       if (i >= 0) marks[i].scrollIntoView({ behavior: smooth, block: 'start' });
@@ -123,7 +127,7 @@
 
     /* ---- Inline figures ---- */
     var figs = null, snaps = [], pre = [], queue = [], inflight = -1, docked = -1, back = null, io = null, boxes = {}, resnapT = 0;
-    var hasLive = !!stage.querySelector('.rc-bar > :not(.rc-reset):not(.rc-where)');
+    var hasLive = !!stage.querySelector('.rc-bar > :not(.rc-where)');
     /* Widgets (bar controls, HTML drawn over the board) redraw the live board for each step. A board without them is a plain
        drawing: on narrow screens its live copy stays hidden with display: none, so setting a step there costs no layout. */
     var widgets = hasLive || [].some.call(view.children, function (el) { return !/^svg$/i.test(el.tagName); });
@@ -136,10 +140,15 @@
       }
       return heading || m;
     }
-    function figView(i, W) { var m = marks[i], vn = m.getAttribute('data-view'); return (W < narrowAt && views[vn + '_n']) || views[vn] || views[m.getAttribute('data-panel')] || whole; }
+    /* Inline copies use the complete stacked view of a split panel; the pinned desktop uses its wide view. */
+    function figView(i, W) { var m = marks[i], vn = m.getAttribute('data-view'), key = vn || m.getAttribute('data-panel'); return views[key + '_n'] || views[vn] || views[key] || whole; }
     /* A figure is as tall as its view at full width, within limits, and at most three quarters of the screen;
        a step drawn by an HTML widget (the family tree) keeps the live view's height. */
-    function figHeight(v, W, minH) { return Math.round(Math.max(Math.min(Math.max(W * 0.5, Math.min(W * v[3] / v[2], W * 1.25)), window.innerHeight * 0.75), minH || 0)); }
+    function figHeight(v, W, minH) {
+      /* A board of tall plots keeps each view at full width, even past the screen, so its text stays readable. */
+      if (figMax) return Math.round(Math.max(W * 0.5, Math.min(W * v[3] / v[2], W * figMax), minH || 0));
+      return Math.round(Math.max(Math.min(Math.max(W * 0.5, Math.min(W * v[3] / v[2], W * 1.25)), window.innerHeight * 0.75), minH || 0));
+    }
     function minFor(i) { var sn = snaps[i] || figs[i].shown; return sn ? sn.minH : pre[i] || 0; }
     /* The board map: every panel as a small box; done panels filled, the current one bright, later ones dashed. */
     function boardMap(i) {
@@ -231,7 +240,7 @@
       c.setAttribute('aria-hidden', 'true'); c.setAttribute('inert', '');
       var overlay = [].some.call(view.children, function (el) { return !/^svg$/i.test(el.tagName) && getComputedStyle(el).display !== 'none'; });
       return { node: c, minH: overlay ? view.clientHeight : 0, zoomed: stage.classList.contains('is-zoomed'), panel: stage.getAttribute('data-active-panel'), view: stage.getAttribute('data-active-view'),
-        live: hasLive && [].some.call(stage.querySelectorAll('.rc-bar > :not(.rc-reset):not(.rc-where)'), function (el) { return getComputedStyle(el).display !== 'none'; }) };
+        live: hasLive && [].some.call(stage.querySelectorAll('.rc-bar > :not(.rc-where)'), function (el) { return getComputedStyle(el).display !== 'none'; }) };
     }
     function fill(i) {
       var f = figs[i], sn = snaps[i]; if (!f.near || !sn || f.shown === sn) return;
@@ -336,7 +345,6 @@
       if (target) { jump(function () { target.scrollIntoView({ block: 'start' }); }); spot = readingSpot(); } else keepSpot();
       if (m === 'wide') apply(current(), true); else runQueue();
     }
-    reset.addEventListener('click', function () { hold = true; holdAt = current(); peekY = null; apply(-1); });
     sel.addEventListener('change', function () { go(parseInt(sel.value, 10)); });
     prev.addEventListener('click', function () { go(Math.max(-1, (hold ? holdAt : idx) - 1)); });
     next.addEventListener('click', function () { go(Math.min(marks.length - 1, (hold ? holdAt : idx) + 1)); });
