@@ -4,7 +4,10 @@
 Article: content/robotics/so101-pen-holder.md. Base commit of the blog: 3f56632.
 Outputs go to assets/robotics/so101-pen-holder/ and assets/robotics/thumbnails/.
 
-Figures and how each one is made:
+Figures and how each one is made. Each figure is saved with chalk.save(..., panel=True), which also
+writes the vector panel <name>.svg for the long-form canvas, plus one <name>.svg.image<n>.png file for
+each render tile or map in it. chalk.save() keeps those image pixels exactly and then writes a
+full-color PNG.
 
   clamp-section.png    regen. Adapted from so101-pen-holder cad/figure_clamp_section.py
                        (github.com/Hadrien-Cornier/so101-pen-holder, commit 7cfe352). The section
@@ -18,26 +21,34 @@ Figures and how each one is made:
                        (pen 13 mm, 145 mm long, a 1.5 mm ball tip). Jaw: results/checks.json
                        moving_jaw_stop_rad. Pose: inverse kinematics for the tip at x = 240 mm, y = 0,
                        z = 1 mm with the pen vertical (a 3 mm pad, tip 2 mm into it). The floor is a
-                       mid-tone chalk checker, and the black pen gets a thin light rim where it meets
-                       the board. No render script of the old figures exists: the cameras (ARM_CAM,
-                       HIH_*, FIT_STEPS, SLEEVE_*, SCREW_TILE), the floor and the pad were fitted once to
-                       the old renders by silhouette matching (part outlines per color, Nelder-Mead),
-                       and the fitted values are fixed constants below.
-  how-it-holds.png     rerender, same sources and method. The two views are stacked for the phone,
-                       and the callouts are drawn again in chalk with the same words and anchors.
+                       mid-tone chalk checker of 1 cm squares, and the black pen gets a thin light rim
+                       where it meets the board. No render script of the old figures exists: the
+                       cameras were fitted to the old renders by silhouette matching (part outlines per
+                       color, Nelder-Mead), and the fitted values are fixed constants below. ARM_CAM,
+                       ARM_PAD and the floor centre come from one fit of the camera, the pad and the far
+                       floor edge together, with the MuJoCo default fovy of 45° (fit_arm_scene();
+                       `--refit` runs it again). The gripper tile cameras (HIH_*, FIT_STEPS, SLEEVE_*,
+                       SCREW_TILE) come from an earlier fit of the part outlines.
+  how-it-holds-sleeve.png, how-it-holds-pen.png
+                       rerender, same sources and method. The two views of the old how-it-holds.png are
+                       two figures for the phone, and the callouts are drawn again in chalk with the
+                       same words and anchors.
   design5-fit.png      rerender, same sources and method, with the titles drawn again in chalk.
   design1-on-arm.png   old render pixels. No geometry of design 1 exists. The light sky is replaced
                        by the board, the floor and the parts stay as they are.
   design-history.png   old render pixels of each tile (designs 1 to 4 have no geometry), backdrop
-  three-options.png    replaced by the board with a matte connected to the tile edge, a light rim
-  all-layouts.png      around dark parts, and every word, title and line drawn again in chalk.
-                       The reach maps and the color bar strip are the old pixels (no data exists).
+  three-options.png,   replaced by the board with a matte connected to the tile edge, a light rim
+  three-options-parts.png   around the dark parts (in all-layouts only around the pen), and every
+  all-layouts-1.png ... all-layouts-4.png   word, title and line drawn again in chalk. The old
+                       three-options.png and all-layouts.png are cut into these files for the phone.
+                       The reach maps and the color bar strip are the old pixels (no data exists); the
+                       red ring on each map is drawn again in chalk red over the old cell colors.
   thumbnails/so101-pen-holder.jpg   chalk.thumbnail(..., crop=True) of the design5-on-arm render made
                        wider with the same camera, so the card keeps the old vertical framing.
 
 The old figures are read from git: `git -C <blog repo> show 3f56632:<path>`.
 
-Run from the blog repo root, with a Python that has matplotlib >= 3.8, numpy, Pillow, scipy,
+Run from the blog repo root, with Python 3.11 or later and matplotlib >= 3.8, numpy, Pillow, scipy,
 trimesh, manifold3d 3.5.4 and mujoco >= 3.3:
 
     git clone https://github.com/Hadrien-Cornier/so101-pen-holder <pen-holder checkout>
@@ -47,12 +58,14 @@ trimesh, manifold3d 3.5.4 and mujoco >= 3.3:
     MUJOCO_GL=cgl PYTHONDONTWRITEBYTECODE=1 python scripts/so101_pen_holder_figures.py \\
         --source <pen-holder checkout> --menagerie <menagerie>/robotstudio_so101
 
-On Linux, use MUJOCO_GL=egl. `--only lever clamp-section` makes a subset.
+On Linux, use MUJOCO_GL=egl. `--only lever clamp-section` makes a subset. `--refit` prints the fitted
+ARM_CAM, ARM_PAD and ARM_FLOOR again (it needs --menagerie) and makes no figure.
 """
 
 from __future__ import annotations
 
 import argparse
+import contextlib
 import io
 import math
 import subprocess
@@ -92,43 +105,31 @@ def load_build(source: Path):
     return build
 
 
-def save_with_renders(fig, path: Path, render_axes, tight=True) -> Path:
-    """Save a figure that holds render tiles: chalk grain on the drawn layer, render pixels unchanged.
+def save_figure(fig, name: str, **kw) -> Path:
+    """Save a figure with chalk.save(..., panel=True): OUT/<name> and the vector panel OUT/<stem>.svg.
 
-    chalk.save() would also grain the renders and cut them to 256 colors, which bands their shading.
-    Here the figure is saved at the chalk dpi on the board without a tight crop, the grain of
-    chalk.chalk_grain() is applied, and the pixels inside each axes of `render_axes` are put back
-    from the plain image. The PNG is cut to 256 colors with Floyd-Steinberg dithering, which keeps
-    the render shading free of bands at about a third of the full-color file size.
+    chalk.save() keeps the pixels of every imshow and figimage (the render tiles and the reach maps)
+    exactly as they are, without grain, and then writes a full-color PNG. In the panel, matplotlib
+    writes each image to a file <stem>.svg.image<n>.png and puts its path, as given, into the SVG.
+    So the save runs in OUT with a bare file name, and chalk.clean_svg() makes that name a site path.
+    The image files of an earlier run are removed first, so that no stale file stays.
     """
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fig.patch.set_sketch_params(None)
+    for stale in OUT.glob(f"{Path(name).stem}.svg.image*.png"):
+        stale.unlink()
+    with contextlib.chdir(OUT):
+        chalk.save(fig, Path(name), panel=True, **kw)
+    return OUT / name
+
+
+def save_render(rgb, name: str) -> Path:
+    """Save one render as a figure of its own, with no margin: the PNG holds the render pixels as they
+    are, at the same size. The figure is made at the save dpi, so figimage puts one render pixel on
+    one PNG pixel."""
     dpi = matplotlib.rcParams["savefig.dpi"]
-    buf = io.BytesIO()
-    fig.savefig(buf, dpi=dpi, facecolor=chalk.BOARD, edgecolor=chalk.BOARD)
-    fig.canvas.draw()
-    boxes = [ax.get_window_extent() for ax in render_axes]
-    scale = dpi / fig.dpi
-    plt.close(fig)
-    buf.seek(0)
-    plain = np.asarray(Image.open(buf).convert("RGB"))
-    grained = chalk.chalk_grain(plain, scale=plain.shape[1] / 720.0).copy()
-    height = plain.shape[0]
-    for bb in boxes:
-        x0, x1 = int(math.floor(bb.x0 * scale)), int(math.ceil(bb.x1 * scale))
-        y0, y1 = height - int(math.ceil(bb.y1 * scale)), height - int(math.floor(bb.y0 * scale))
-        grained[y0:y1, x0:x1] = plain[y0:y1, x0:x1]
-    if tight:  # crop to the drawn content plus a margin, as chalk.save() does
-        board = np.array(matplotlib.colors.to_rgb(chalk.BOARD)) * 255
-        ink = np.abs(grained.astype(np.float32) - board).max(-1) > 6
-        ys, xs = np.nonzero(ink)
-        pad = int(0.16 * dpi)
-        grained = grained[max(0, ys.min() - pad):ys.max() + pad + 1, max(0, xs.min() - pad):xs.max() + pad + 1]
-    image = Image.fromarray(grained).quantize(colors=256, method=Image.Quantize.MEDIANCUT,
-                                              dither=Image.Dither.FLOYDSTEINBERG)
-    image.save(path, optimize=True)
-    return path
+    height, width = rgb.shape[:2]
+    fig = plt.figure(figsize=((width + 0.25) / dpi, (height + 0.25) / dpi), dpi=dpi)
+    fig.figimage(rgb, xo=0, yo=0, origin="upper")
+    return save_figure(fig, name, tight=False)
 
 
 # ---------------------------------------------------------------------------------------------- clamp section
@@ -177,7 +178,7 @@ def fig_clamp_section(source: Path) -> None:
              "A thinner pen sits deeper in the V: its axis moves √2 × (6.5 mm − r)\n"
              "toward the gripper. Red cross: the axis of a 13 mm pen.",
              ha="center", va="top", fontsize=14, color=chalk.CHALK, linespacing=1.15)
-    chalk.save(fig, OUT / "clamp-section.png")
+    save_figure(fig, "clamp-section.png")
 
 
 # ---------------------------------------------------------------------------------------------- lever
@@ -199,7 +200,6 @@ def fig_lever() -> None:
         slope = -side * c_draw / L
         x_at = lambda y: side * c_draw / 2 + slope * (y - y_lo)  # noqa: E731
         pen, = ax.plot([x_at(0), x_at(pen_top)], [0, pen_top], color=chalk.RED, lw=4, solid_capstyle="butt", zorder=3)
-        pen.set_sketch_params(0.3, 140, 2)  # a straight pen: the tilt across the clearance must read
         for yc in (y_lo, y_hi):  # the label sits beside the pen, not across it
             sgn = -np.sign(x_at(yc))
             ax.text(sgn * 0.7, yc + bh / 2 + 0.8, "bushing", ha="left" if sgn > 0 else "right", va="bottom",
@@ -230,7 +230,7 @@ def fig_lever() -> None:
              "(c = diametral clearance; drawn 250 times larger\n"
              "than a typical c = 0.012 mm)",
              ha="center", va="top", fontsize=15.5, color=chalk.YELLOW, linespacing=1.15)
-    chalk.save(fig, OUT / "lever.png")
+    save_figure(fig, "lever.png")
 
 
 # ---------------------------------------------------------------------------------------------- MuJoCo renders
@@ -385,12 +385,12 @@ def light_rim(rgb, dark, free, width_px, color=None):
 
 
 # The drawing pose of design5-on-arm. The camera (lookat x, y, z in m, distance in m, azimuth,
-# elevation and fovy in degrees), the floor and the pad were fitted to the old render with
-# fit_camera() (python ... --refit design5-on-arm prints them again).
-ARM_CAM = [0.23535, -0.00109, 0.04161, 0.46819, 123.10394, -6.04342, 30.29313]
+# elevation and fovy in degrees), the pad and the floor centre are fitted to the old render with
+# fit_arm_scene(); `--refit` runs the fit again and prints them.
+ARM_CAM = [0.23359, 0.00084, 0.04136, 0.30701, 119.88979, -8.02148, 45.0]
 ARM_TIP = [0.240, 0.0, 0.001]  # 240 mm in front of the base, 2 mm into a 3 mm pad
-ARM_FLOOR = [0.7063, -0.1587, -0.1504]  # half size, centre x, centre y (m), fitted to the far floor edge
-ARM_PAD = [0.2443, -0.0026, 0.0876, 0.0760, 0.0015]  # centre x, y, half sizes x, y, z (m)
+ARM_FLOOR = [0.7063, -0.1949, -0.1056]  # half size, centre x, centre y (m): the centre places the far floor edge
+ARM_PAD = [0.2394, 0.0028, 0.0798, 0.0629, 0.0015]  # centre x, y, half sizes x, y, z (m)
 ARM_SIZE = (1400, 1000)
 
 
@@ -476,7 +476,7 @@ def arm_model(source: Path, menagerie: Path, size=ARM_SIZE):
     return model, data
 
 
-FLOOR_REPEAT = 25.0
+FLOOR_REPEAT = 50.0  # checker squares of 1 cm, as in the old render
 
 
 def _arm_render(source: Path, menagerie: Path, width: int, height: int) -> np.ndarray:
@@ -488,7 +488,86 @@ def _arm_render(source: Path, menagerie: Path, width: int, height: int) -> np.nd
 
 def fig_design5_on_arm(source: Path, menagerie: Path) -> None:
     """Design 5 on the full arm in the drawing pose, on the board."""
-    Image.fromarray(_arm_render(source, menagerie, *ARM_SIZE)).save(OUT / "design5-on-arm.png", optimize=True)
+    save_render(_arm_render(source, menagerie, *ARM_SIZE), "design5-on-arm.png")
+
+
+def _old_classes(old):
+    """Part masks of the old design5-on-arm render, by color: sky, pad, yellow, orange, blue, dark."""
+    from scipy import ndimage
+
+    o = old.astype(int)
+    r, g, b = o[..., 0], o[..., 1], o[..., 2]
+    light = (o.min(-1) > 215) & (np.ptp(o, axis=-1) < 20)
+    lab, _ = ndimage.label(light)
+    return {
+        "sky": np.isin(lab, np.unique(lab[0][lab[0] > 0])),  # the light backdrop, connected to the top edge
+        "pad": (g > r + 25) & (g > b + 20),
+        "yellow": (r - b > 80) & (g > 0.6 * r),
+        "orange": (r - b > 80) & (g <= 0.6 * r) & (g > 0.2 * r),
+        "blue": (b > r + 50) & (b > g),
+        "dark": (o.max(-1) < 50) & (np.ptp(o, axis=-1) < 20),
+    }
+
+
+def fit_arm_scene(source: Path, menagerie: Path) -> None:
+    """Fit ARM_CAM, ARM_PAD and the floor centre to the old design5-on-arm render, and print them.
+
+    Silhouette matching: each part class of the old render (found by color, _old_classes) is compared
+    with the same class in a segmentation render of the scene, and Nelder-Mead minimizes the number of
+    pixels that differ, summed over the classes. The parameters are the camera (lookat, distance,
+    azimuth, elevation), the pad (centre x, y and half sizes x, y) and the floor centre (x, y). The
+    fovy stays at 45°, the MuJoCo default of a free camera. With a free fovy, an earlier fit of the arm
+    alone stopped at 30° and 0.47 m: the arm matched, but the pad and the far floor edge did not. The
+    floor size stays fixed (MuJoCo makes the plane when it compiles the model), so the floor centre
+    places the far floor edge. The fit starts at the constants above and runs at the full size.
+    """
+    import mujoco
+    from scipy.optimize import minimize
+
+    old = _old_classes(np.asarray(old_image("design5-on-arm.png")))
+    names = list(old)
+    width, height = ARM_SIZE
+    model, data = arm_model(source, menagerie, ARM_SIZE)
+    pad, floor = model.geom("pad").id, model.geom("floor").id
+    cls = np.full(model.ngeom + 1, -1)  # geom id -> class index; the last entry is the backdrop
+    for i in range(model.ngeom):
+        mat = model.geom_matid[i]
+        rgba = model.mat_rgba[mat] if mat >= 0 else model.geom_rgba[i]
+        name, shown = model.geom(i).name, model.geom_group[i] == 2
+        kind = ("pad" if i == pad else "blue" if name == "ph_sleeve" else "orange" if "screw" in name
+                else "dark" if name == "ph_pen" or (shown and rgba[0] < 0.2)
+                else "yellow" if shown and rgba[0] > 0.9 and rgba[2] < 0.2 else None)
+        cls[i] = names.index(kind) if kind else -1
+    cls[-1] = names.index("sky")
+    view = mujoco.MjvCamera()
+    renderer = mujoco.Renderer(model, height, width)
+    renderer.enable_segmentation_rendering()
+    model.vis.global_.fovy = 45.0
+
+    def loss(p):
+        view.lookat[:] = p[:3]
+        view.distance, view.azimuth, view.elevation = p[3:6]
+        model.geom_pos[pad][:2] = p[6:8]
+        model.geom_size[pad][:2] = p[8:10]
+        model.geom_pos[floor][:2] = p[10:12]
+        mujoco.mj_kinematics(model, data)
+        renderer.update_scene(data, view)
+        seg = renderer.render()[..., 0]
+        c = cls[np.where(seg < 0, model.ngeom, seg)]
+        return float(sum(((c == k) != old[n]).sum() for k, n in enumerate(names)))
+
+    x = np.r_[ARM_CAM[:6], ARM_PAD[:4], ARM_FLOOR[1:]]
+    steps = np.array([0.002, 0.002, 0.002, 0.005, 0.3, 0.3, 0.003, 0.003, 0.003, 0.003, 0.01, 0.01])
+    print("start: pixels that differ", loss(x))
+    for k in range(3):
+        simplex = np.vstack([x] + [x + np.eye(len(x))[i] * steps[i] / (k + 2) for i in range(len(x))])
+        x = minimize(loss, x, method="Nelder-Mead",
+                     options=dict(initial_simplex=simplex, maxfev=3000, xatol=1e-7, fatol=0.5)).x
+    print("fit: pixels that differ", loss(x))
+    renderer.close()
+    print("ARM_CAM =", [round(float(v), 5) for v in x[:6]] + [45.0])
+    print("ARM_PAD =", [round(float(v), 4) for v in x[6:10]] + [ARM_PAD[4]])
+    print("ARM_FLOOR =", [ARM_FLOOR[0]] + [round(float(v), 4) for v in x[10:12]])
 
 
 def fig_thumbnail(source: Path, menagerie: Path) -> None:
@@ -606,10 +685,13 @@ def _callouts(fig, ax, items, x, ha, gap_in=0.08):
 
     Each box sits at the height of its anchor when it can; boxes that would overlap are pushed down.
     Returns the lowest box bottom in figure fraction.
+    The text position uses fig.transFigure, not "figure fraction": with the crop of chalk.save()
+    (bbox_inches), matplotlib 3.11 measures "figure fraction" in the cropped figure, so the boxes
+    moved right by the left crop width and the right column fell off the edge.
     """
     anns = []
     for text, anchor in items:
-        ann = ax.annotate(text, xy=anchor, xycoords="data", xytext=(x, 0.5), textcoords="figure fraction",
+        ann = ax.annotate(text, xy=anchor, xycoords="data", xytext=(x, 0.5), textcoords=fig.transFigure,
                           ha=ha, va="center", fontsize=13, color=chalk.CHALK, linespacing=0.95,
                           bbox=dict(boxstyle="round,pad=0.3", fc=chalk.BOARD, ec=chalk.DIM, lw=1.1),
                           arrowprops=dict(arrowstyle="-|>", color=chalk.RED, lw=2.0, mutation_scale=14,
@@ -633,19 +715,32 @@ def _callouts(fig, ax, items, x, ha, gap_in=0.08):
     return bottom
 
 
+def _center_title(fig, title) -> None:
+    """Put a figure title at the horizontal centre of the other drawn content.
+
+    chalk.save() crops the figure to its content, so a title at the centre of the full figure
+    sits to one side of the crop when the content is not centred.
+    """
+    title.set_visible(False)
+    fig.canvas.draw()
+    box = fig.get_tightbbox(fig.canvas.get_renderer())  # inches
+    title.set_visible(True)
+    title.set_x((box.x0 + box.x1) / 2 / fig.get_figwidth())
+
+
 def fig_how_it_holds(source: Path, menagerie: Path) -> None:
     """What holds the sleeve (from behind the finger) and what holds the pen (three-quarter view).
 
     The old figure put the two views side by side with callouts on both sides; on a phone its text
-    was about 2 px tall. Here the views are stacked, each render is cropped to its parts, and the
-    callouts sit beside it with the same words. The arrows point at the same render pixels as before.
+    was about 2 px tall. Here each view is a figure of its own (how-it-holds-sleeve.png and
+    how-it-holds-pen.png), each render is cropped to its parts, and the callouts sit beside it with the
+    same words. The arrows point at the same render pixels as before.
     """
     size = tuple(TILE_SCALE * v for v in HIH_LEFT["size"])
     model, data = gripper_model(source, menagerie, size, alpha={"sleeve": 0.45})
     left = render_tile(model, data, HIH_LEFT, rim_px=5)
     right = render_tile(model, data, HIH_RIGHT, rim_px=5)
-    FW, FH = 6.4, 11.5  # the tight crop in save_with_renders trims the unused board below
-    fig = plt.figure(figsize=(FW, FH))
+    FW, FH = 6.4, 6.0  # the tight crop of chalk.save() trims the unused board below
 
     def rect(x, y, w, h):  # inches from the top left -> figure fraction
         return [x / FW, 1 - (y + h) / FH, w / FW, h / FH]
@@ -654,24 +749,28 @@ def fig_how_it_holds(source: Path, menagerie: Path) -> None:
         return (x / FW, 1 - y / FH)
 
     # view 1: behind the finger
-    fig.text(*at(FW / 2, 0.08), "Behind the finger: what holds the sleeve", ha="center", va="top", fontsize=17,
+    fig = plt.figure(figsize=(FW, FH))
+    title = fig.text(*at(FW / 2, 0.08), "Behind the finger: what holds the sleeve", ha="center", va="top", fontsize=17,
              color=chalk.YELLOW)
     crop = (165, 25, 530, 500)
     w = 2.15
     h = w * (crop[3] - crop[1]) / (crop[2] - crop[0])
     x0, y0 = 2.62, 0.55
     axl = _tile_axes(fig, rect(x0, y0, w, h), left, crop)
-    low = _callouts(fig, axl, [
+    _callouts(fig, axl, [
         ("The stock fixed finger,\nunchanged", (309, 297)),
         ("Side thumbscrew: it presses\nthe finger. Friction holds\nthe sleeve DOWN.", (201, 338)),
         ("The finger gets narrower\ntoward its end. The sleeve\nstops on it like a wedge,\n"
          "so it cannot go UP. The paper\npushes the pen up, onto\nthis seat.", (315, 433)),
     ], (x0 - 0.17) / FW, "right")
-    low = min(low, _callouts(fig, axl, [("The pen leans\n20°, so it is\nvertical when\nthe arm draws", (440, 181))],
-                             (x0 + w + 0.12) / FW, "left"))
-    # view 2: three-quarter view, below the lowest item of view 1
-    y1 = max(y0 + h, (1 - low) * FH) + 0.3
-    fig.text(*at(FW / 2, y1), "Three-quarter view: what holds the pen", ha="center", va="top", fontsize=17,
+    _callouts(fig, axl, [("The pen leans\n20°, so it is\nvertical when\nthe arm draws", (440, 181))],
+              (x0 + w + 0.12) / FW, "left")
+    _center_title(fig, title)
+    save_figure(fig, "how-it-holds-sleeve.png")
+    # view 2: three-quarter view
+    fig = plt.figure(figsize=(FW, FH))
+    y1 = 0.08
+    title = fig.text(*at(FW / 2, y1), "Three-quarter view: what holds the pen", ha="center", va="top", fontsize=17,
              color=chalk.YELLOW)
     crop = (155, 0, 480, 480)
     w2 = 2.2
@@ -683,7 +782,8 @@ def fig_how_it_holds(source: Path, menagerie: Path) -> None:
         ("Lower V clamp, 43 mm lower.\nEach clamp: a 90° V and a\nprinted M8 thumbscrew", (268, 425)),
         ("The tip position is known\nfor every pen from 8 to 13 mm", (332, 455)),
     ], (0.15 + w2 + 0.45) / FW, "left")
-    save_with_renders(fig, OUT / "how-it-holds.png", [axl, axr])
+    _center_title(fig, title)
+    save_figure(fig, "how-it-holds-pen.png")
 
 
 def fig_design5_fit(source: Path, menagerie: Path) -> None:
@@ -725,7 +825,7 @@ def fig_design5_fit(source: Path, menagerie: Path) -> None:
     h = w * 0.93
     for k, rgb in enumerate(prints):
         axes.append(_tile_axes(fig, [k / 3, 1 - (y + 0.6 + h) / H, 1 / 3, h / H], rgb, (40, 62, 386, 384)))
-    save_with_renders(fig, OUT / "design5-fit.png", axes)
+    save_figure(fig, "design5-fit.png")
 
 
 # ---------------------------------------------------------------------------------------------- kept render pixels
@@ -738,7 +838,8 @@ def _kp_rgb255(color):
     return np.array(matplotlib.colors.to_rgb(color), np.float32) * 255.0
 
 
-def _kp_matte(tile, mode="edge", tol=8.0, grow=2, rim_px=0.0, rim_dark=45, hole_px=12, rim_stop=None):
+def _kp_matte(tile, mode="edge", tol=8.0, grow=2, rim_px=0.0, rim_dark=45, hole_px=12, rim_stop=None,
+              rim_open=2, rim_parts="dark"):
     """Put a light render backdrop on the board and keep every part pixel.
 
     tile: uint8 [H, W, 3] render on a light vertical-gradient backdrop.
@@ -752,6 +853,11 @@ def _kp_matte(tile, mode="edge", tol=8.0, grow=2, rim_px=0.0, rim_dark=45, hole_
     part (a neutral region darker than rim_dark and at least 5 px thick: the black pen, the black
     motors; not the 1 px dark edge of the floor) meets the board. rim_stop: no rim from this row down
     (the floor horizon, where a cast shadow meets the sky).
+    rim_open: the iterations of the binary opening that removes thin dark lines before the rim. With 2,
+    a dark part must be 5 px thick; with 1, 3 px (the pen tip of a small tile).
+    rim_parts: "dark" puts the rim on every dark part; "pen" only on the pen, the long, thin, upright
+    dark part (at least 30 px tall and at least 5 times as tall as its median row width), so the
+    black motors and the shadows at the arm edges get no rim.
     """
     from scipy import ndimage
 
@@ -788,7 +894,15 @@ def _kp_matte(tile, mode="edge", tol=8.0, grow=2, rim_px=0.0, rim_dark=45, hole_
     if rim_px > 0:
         dark = ~back & (img.max(-1) < rim_dark) & (np.ptp(img, axis=-1) < 15)
         dark = ndimage.binary_closing(dark, iterations=2)  # join the two sides of a pen around its highlight
-        dark = ndimage.binary_opening(dark, iterations=2)
+        dark = ndimage.binary_opening(dark, iterations=rim_open)
+        if rim_parts == "pen":
+            lab, n = ndimage.label(dark)
+            keep = np.zeros(n + 1, bool)
+            for i, sl in enumerate(ndimage.find_objects(lab)):
+                rows = (lab[sl] == i + 1).sum(1)
+                tall = sl[0].stop - sl[0].start
+                keep[i + 1] = tall >= 30 and tall >= 5 * np.median(rows[rows > 0])
+            dark = keep[lab]
         dark = ndimage.binary_dilation(dark, iterations=grow + 1) & ~back
         edge = dark & ndimage.binary_dilation(back, iterations=1)
         if rim_stop is not None:
@@ -829,8 +943,7 @@ def fig_design1_on_arm() -> None:
     rim = 3.0 * old.shape[1] / 1200.0  # about 1 px at 358 px display width
     horizon = int(np.nonzero(old[:, 5].min(-1) < 200)[0][0])  # far edge of the floor at the left side
     new, _ = _kp_matte(old, mode="sky", rim_px=rim, rim_stop=horizon - 20)
-    path = OUT / "design1-on-arm.png"
-    Image.fromarray(new).save(path, optimize=True)
+    save_render(new, "design1-on-arm.png")
 
 
 def fig_design_history() -> None:
@@ -848,7 +961,7 @@ def fig_design_history() -> None:
     tiles = []
     for x0 in x_tiles:
         t = old[222 + crop[1]:222 + crop[3], x0 + crop[0]:x0 + crop[2]]
-        tiles.append(_kp_matte(t, mode="edge", rim_px=2.4)[0])
+        tiles.append(_kp_matte(t, mode="edge", rim_px=2.4, rim_open=1)[0])  # 1: the pen tip of tile 1 is 4 px tall
     fig_h = 5.85
     fig = plt.figure(figsize=(6.4, fig_h))
     fig.text(0.5, 0.995, "Five designs, from the first idea to the sleeve. Same camera,\n"
@@ -875,11 +988,16 @@ def fig_design_history() -> None:
                  color=chalk.GREEN if chosen else chalk.YELLOW)
         fig.text(x + 0.045, y - 0.27 / fig_h, note, ha="left", va="top", fontsize=14, color=chalk.CHALK,
                  linespacing=1.0)
-    save_with_renders(fig, OUT / "design-history.png", render_axes=axes)
+    save_figure(fig, "design-history.png")
 
 
 def fig_three_options() -> None:
-    """The three final options: 3 columns (options) by 3 rows (3/4 view, side view, printed part)."""
+    """The three final options: 3 columns (options) by 3 rows (3/4 view, side view, printed part).
+
+    For the phone the figure is cut in two. three-options.png holds the header, the column titles and
+    the two render rows; three-options-parts.png holds the column titles again, the printed parts and
+    the notes under them. Sizes and gaps are those of the one old figure.
+    """
     old = np.asarray(old_image("three-options.png"))
     col_x = ((39, 57), (496, 515), (954, 973))  # tile origins: render rows, printed-part row
     rows = (  # (tile origin y, crop window in tile px: x0, y0, x1, y1), one window per row (same camera)
@@ -891,36 +1009,52 @@ def fig_three_options() -> None:
     notes = ("The printed part\n27.2 g + 3 screws  |\nspan 43 mm\nno disassembly  |\nheld by a side screw\n(friction)",
              "The printed part\n40.1 g + 2 screws  |\nspan 80 mm\npen lift with the gripper  |\ntip 99 mm from its axis",
              "The printed part\n69.6 g + 2 screws  |\nspan 80 mm\nno slip, no backlash  |\nlargest print")
-    fig_w, fig_h = 6.4, 10.6
+    fig_w = 6.4
+    left, w, gap = 0.05, 0.30, 0.0175  # three columns end at 0.985 of the width
+    title_gap, row_gap = 0.0636, 0.08  # inches: column titles to tiles, and between the tile rows
+
+    def column_titles(fig, fig_h, top):  # top: inches from the figure top to the tile row
+        for j, title in enumerate(titles):
+            fig.text(left + j * (w + gap) + w / 2, 1 - (top - title_gap) / fig_h, title, ha="center",
+                     va="bottom", fontsize=15, color=chalk.YELLOW, linespacing=1.0)
+
+    def tile_row(fig, fig_h, r, top):  # returns the height of the row in inches
+        y0, (cx0, cy0, cx1, cy1) = rows[r]
+        h = w * fig_w * (cy1 - cy0) / (cx1 - cx0)
+        for j in range(3):
+            x0 = col_x[j][1 if r == 2 else 0]
+            tile = old[y0 + cy0:y0 + cy1, x0 + cx0:x0 + cx1]
+            ax = fig.add_axes([left + j * (w + gap), 1 - (top + h) / fig_h, w, h / fig_h])
+            _kp_show(ax, _kp_matte(tile, mode="edge", rim_px=2.0)[0])
+        if r < 2:
+            fig.text(0.025, 1 - (top + h / 2) / fig_h, ("3/4 view", "Side view")[r], rotation=90, ha="center",
+                     va="center", fontsize=14, color=chalk.DIM)
+        return h
+
+    # the header and the two render rows
+    fig_h = 7.0
     fig = plt.figure(figsize=(fig_w, fig_h))
-    fig.text(0.5, 0.997,
+    fig.text(0.5, 1 - 0.0318 / fig_h,
              "SO-101 pen holder: three options. Blue = the part you print;\n"
              "yellow = the parts that stay; orange = printed M8 thumbscrews.\n"
              "Option 1 is design 5 and option 3 is design 4 (all checks pass).\n"
              "Option 2 is a concept (only collision and mass checked).",
              ha="center", va="top", fontsize=15, color=chalk.CHALK, linespacing=1.05)
-    left, w, gap = 0.05, 0.30, 0.0175  # three columns end at 0.985 of the width
-    y = 1 - 1.86 / fig_h
-    for j, title in enumerate(titles):
-        fig.text(left + j * (w + gap) + w / 2, y + 0.006, title, ha="center", va="bottom", fontsize=15,
-                 color=chalk.YELLOW, linespacing=1.0)
-    axes = []
-    for r, (y0, (cx0, cy0, cx1, cy1)) in enumerate(rows):
-        h = w * fig_w / fig_h * (cy1 - cy0) / (cx1 - cx0)
-        for j in range(3):
-            x0 = col_x[j][1 if r == 2 else 0]
-            tile = old[y0 + cy0:y0 + cy1, x0 + cx0:x0 + cx1]
-            ax = fig.add_axes([left + j * (w + gap), y - h, w, h])
-            _kp_show(ax, _kp_matte(tile, mode="edge", rim_px=2.0)[0])
-            axes.append(ax)
-        if r < 2:
-            fig.text(0.025, y - h / 2, ("3/4 view", "Side view")[r], rotation=90, ha="center", va="center",
-                     fontsize=14, color=chalk.DIM)
-        y -= h + 0.08 / fig_h
+    top = 1.86
+    column_titles(fig, fig_h, top)
+    top += tile_row(fig, fig_h, 0, top) + row_gap
+    tile_row(fig, fig_h, 1, top)
+    save_figure(fig, "three-options.png")
+    # the printed parts and their notes
+    fig_h = 4.4
+    fig = plt.figure(figsize=(fig_w, fig_h))
+    top = 0.62
+    column_titles(fig, fig_h, top)
+    top += tile_row(fig, fig_h, 2, top) + row_gap
     for j, note in enumerate(notes):
-        fig.text(left + j * (w + gap) + w / 2, y, note, ha="center", va="top", fontsize=13.5, color=chalk.CHALK,
-                 linespacing=1.0)
-    save_with_renders(fig, OUT / "three-options.png", render_axes=axes)
+        fig.text(left + j * (w + gap) + w / 2, 1 - top / fig_h, note, ha="center", va="top", fontsize=13.5,
+                 color=chalk.CHALK, linespacing=1.0)
+    save_figure(fig, "three-options-parts.png")
 
 
 _KP_LAYOUTS = (  # label, description, then the two text columns of each row of the old figure, words as they are
@@ -966,8 +1100,59 @@ def _kp_map_axes(old, x0, x1, y0, y1):
     return pixels, extent
 
 
+def _kp_unring(pixels, extent):
+    """Take the red ring off an old reach map. Returns (pixels, (x, y, diameter, width)), or (pixels, None).
+
+    The old maps mark the pose of the arm tile with a pure red ring (about 14 px across, 3 px wide).
+    Each pixel with red in it gets back the color of its map cell (the median of the cell pixels
+    outside the ring), so every cell keeps its old color, and the ring is drawn again in chalk red. x, y: the ring
+    centre in data units (mm). diameter, width: the centre line and the line width of the ring in map
+    pixels, from the red share of each ring pixel.
+    """
+    p = pixels.astype(np.float32)
+    core = (p[..., 0] > 200) & (p[..., 1] < 60) & (p[..., 2] < 60)
+    if core.sum() < 20:
+        return pixels, None
+    ys, xs = np.nonzero(core)
+    # the circle through the core pixels: x^2 + y^2 + D x + E y + F = 0 by least squares
+    D, E, F0 = np.linalg.lstsq(np.c_[xs, ys, np.ones(len(xs))], -(xs ** 2 + ys ** 2).astype(float), rcond=None)[0]
+    cx, cy = -D / 2, -E / 2
+    radius = math.sqrt(cx * cx + cy * cy - F0)
+    height, width = pixels.shape[:2]
+    yy, xx = np.mgrid[0:height, 0:width]
+    dist = np.hypot(xx - cx, yy - cy)
+    core_dist = dist[ys, xs]
+    band = (dist > core_dist.min() - 1.0) & (dist < core_dist.max() + 1.0)  # the ring and its antialiased edges
+    left, right, bottom, top = extent
+    col = np.floor((left + (xx + 0.5) / width * (right - left) - 90.0) / 20.0).astype(int)  # 20 mm cells from x = 90
+    row = np.floor((130.0 - (top - (yy + 0.5) / height * (top - bottom))) / 20.0).astype(int)  # and from 130 down
+    cell = row * 100 + col
+    under = p.copy()
+    for c in np.unique(cell[band]):
+        inside = cell == c
+        under[inside] = np.median(p[inside & ~band], axis=0)
+    d = np.array([255.0, 0.0, 0.0]) - under
+    share = np.clip(((p - under) * d).sum(-1) / np.maximum((d * d).sum(-1), 1.0), 0.0, 1.0) * band
+    hit = share > 0.05  # only pixels with red in them: a band pixel past a cell edge keeps its old color
+    out = pixels.copy()
+    out[hit] = np.rint(under[hit]).astype(np.uint8)
+    x = left + (cx + 0.5) / width * (right - left)
+    y = top - (cy + 0.5) / height * (top - bottom)
+    return out, (x, y, 2 * (share * dist).sum() / share.sum(), share.sum() / (2 * math.pi * radius))
+
+
+RING_EDGE = 0.45  # pt: the dark edge on each side of the chalk-red ring, so it reads on yellow and green cells
+
+
 def fig_all_layouts() -> None:
-    """Seven ways to attach the pen: per row a close-up, the arm in the drawing pose, and the reach map."""
+    """Seven ways to attach the pen: per row a close-up, the arm in the drawing pose, and the reach map.
+
+    For the phone the figure is cut in four. all-layouts-1.png holds the title, the color bar, the
+    column heads and layout A; all-layouts-2, 3 and 4 hold two layouts each (B0 and Sy10, Sy20 and Sx20,
+    P60 and H) under the same color bar, so each map can be read alone. Each row keeps the sizes and
+    places of the one old figure. The divider line between two layouts stays inside a file; at a cut
+    there is no line.
+    """
     old = np.asarray(old_image("all-layouts.png"))
     boxes = sorted(_kp_tile_boxes(old), key=lambda b: (b[1], b[0]))
     closeups = [b for b in boxes if b[0] < 500]
@@ -986,72 +1171,87 @@ def fig_all_layouts() -> None:
 
     fig_w, img_h = 6.4, 1.45
     row_h = 3.66
-    head = 2.12
-    fig_h = head + 7 * row_h
-    fig = plt.figure(figsize=(fig_w, fig_h))
-    X = lambda inch: inch / fig_w  # noqa: E731
-    Y = lambda inch: 1 - inch / fig_h  # noqa: E731  (inches from the top)
-    fig.text(0.5, Y(0.03), "Ways to attach the pen to the SO-101 gripper (kinematics; concept shapes)",
-             ha="center", va="top", fontsize=15, color=chalk.CHALK)
-    # the color bar, laid flat under the title: the old strip pixels turned a quarter turn (low values left)
-    cax = fig.add_axes([X(1.7), Y(0.70), X(3.0), 0.16 / fig_h])
-    cax.imshow(np.rot90(strip, k=-1), extent=(v_low, v_high, 0, 1), aspect="auto", interpolation="nearest")
-    cax.set_xlim(v_low, v_high)
-    cax.set_yticks([])
-    cax.set_xticks([0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45])
-    cax.tick_params(axis="x", labelsize=13)
-    for side in ("top", "right"):
-        cax.spines[side].set_visible(True)
-    cax.set_xlabel("tip x error (mm) for 1 mrad on every joint", fontsize=14, labelpad=3)
-    render_axes = [cax]
     col_heads = ("close-up", "arm in the drawing pose\n(red circle on the map)", "where the pen can draw")
     arm_x1 = 992  # the old map y label is drawn over the right end of each arm tile: stop before it
     x_close, x_arm, x_map = 0.0, 1.40, 4.52
     w_close = img_h * 254 / 276
     w_arm = img_h * (arm_x1 - 678) / 276
     w_map = img_h * 297 / 275
-    for xc, text in zip((x_close + w_close / 2, x_arm + w_arm / 2, x_map + w_map / 2), col_heads):
-        fig.text(X(xc), Y(head - 0.12), text, ha="center", va="bottom", fontsize=14, color=chalk.DIM,
-                 linespacing=1.0)
-    for k, (label, desc, left_vals, right_vals) in enumerate(_KP_LAYOUTS):
-        top = head + k * row_h
-        fig.text(X(0.02), Y(top), label, ha="left", va="top", fontsize=18, color=chalk.YELLOW)
-        fig.text(X(0.02 + 0.16 * len(label) + 0.18), Y(top + 0.04), desc, ha="left", va="top", fontsize=15,
-                 color=chalk.CHALK)
-        it = top + 0.36  # top of the images
-        for (x_in, w_in, box) in ((x_close, w_close, closeups[k]), (x_arm, w_arm, arms[k])):
-            bx0, by0, bx1, by1 = box
-            bx1 = min(bx1, arm_x1)
-            ax = fig.add_axes([X(x_in), Y(it + img_h), X(w_in), img_h / fig_h])
-            _kp_show(ax, _kp_matte(old[by0:by1, bx0:bx1], mode="sky", rim_px=3.2)[0])
-            render_axes.append(ax)
-        bx0, by0, bx1, by1 = maps[k]
-        pixels, extent = _kp_map_axes(old, bx0, bx1, by0 - 2, by1 + 2)
-        ax = fig.add_axes([X(x_map), Y(it + img_h), X(w_map), img_h / fig_h])
-        ax.imshow(pixels, extent=extent, aspect="auto", interpolation="nearest")
-        ax.set_xlim(extent[0], extent[1])
-        ax.set_ylim(extent[2], extent[3])
-        ax.set_xticks([100, 150, 200, 250, 300])
-        ax.set_yticks([-100, -50, 0, 50, 100])
-        ax.tick_params(labelsize=13)
+    for n, rows in enumerate(((0,), (1, 2), (3, 4), (5, 6)), 1):
+        first = n == 1
+        head = 2.12 if first else 0.95  # inches from the figure top to the first row (files 2-4: height <= 1.25 x width)
+        bar = 0.70 if first else 0.19  # inches from the figure top to the bottom of the color bar
+        fig_h = head + len(rows) * row_h
+        fig = plt.figure(figsize=(fig_w, fig_h))
+        X = lambda inch: inch / fig_w  # noqa: E731
+        Y = lambda inch, fig_h=fig_h: 1 - inch / fig_h  # noqa: E731  (inches from the top)
+        if first:
+            fig.text(0.5, Y(0.03), "Ways to attach the pen to the SO-101 gripper (kinematics; concept shapes)",
+                     ha="center", va="top", fontsize=15, color=chalk.CHALK)
+        # the color bar, laid flat: the old strip pixels turned a quarter turn (low values left)
+        cax = fig.add_axes([X(1.7), Y(bar), X(3.0), 0.16 / fig_h])
+        cax.imshow(np.rot90(strip, k=-1), extent=(v_low, v_high, 0, 1), aspect="auto", interpolation="nearest")
+        cax.set_xlim(v_low, v_high)
+        cax.set_yticks([])
+        cax.set_xticks([0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45])
+        cax.tick_params(axis="x", labelsize=13)
         for side in ("top", "right"):
-            ax.spines[side].set_visible(True)
-        ax.set_xlabel("reach from the base axis (mm)", fontsize=13, labelpad=2)
-        ax.set_ylabel("paper height above\nthe base plane (mm)", fontsize=13, labelpad=2, linespacing=1.0)
-        render_axes.append(ax)
-        tt = it + img_h + 0.68  # top of the two text columns, below the map x label
-        fig.text(X(0.02), Y(tt),
-                 f"pen tilt from the roll axis: {left_vals[0]}\ntip to the pinch: {left_vals[1]}\n"
-                 f"tip off the roll axis: {left_vals[2]}\npen to wrist (one pose): {left_vals[3]}",
-                 ha="left", va="top", fontsize=14, color=chalk.CHALK, linespacing=0.92)
-        fig.text(X(3.22), Y(tt),
-                 f"x error per mrad on all joints, 240 mm out:\n  paper at base level: {right_vals[0]}\n"
-                 f"  base on 60 mm riser: {right_vals[1]}\nreachable cells: {right_vals[2]} of 144",
-                 ha="left", va="top", fontsize=14, color=chalk.CHALK, linespacing=0.92)
-        if k < 6:
-            fig.add_artist(matplotlib.lines.Line2D([X(0.02), X(6.38)], [Y(top + row_h - 0.07)] * 2,
-                                                   color=chalk.FAINT, lw=1.0))
-    save_with_renders(fig, OUT / "all-layouts.png", render_axes=render_axes)
+            cax.spines[side].set_visible(True)
+        cax.set_xlabel("tip x error (mm) for 1 mrad on every joint", fontsize=14, labelpad=3)
+        if first:
+            for xc, text in zip((x_close + w_close / 2, x_arm + w_arm / 2, x_map + w_map / 2), col_heads):
+                fig.text(X(xc), Y(head - 0.12), text, ha="center", va="bottom", fontsize=14, color=chalk.DIM,
+                         linespacing=1.0)
+        for i, k in enumerate(rows):
+            label, desc, left_vals, right_vals = _KP_LAYOUTS[k]
+            top = head + i * row_h
+            fig.text(X(0.02), Y(top), label, ha="left", va="top", fontsize=18, color=chalk.YELLOW)
+            fig.text(X(0.02 + 0.16 * len(label) + 0.18), Y(top + 0.04), desc, ha="left", va="top", fontsize=15,
+                     color=chalk.CHALK)
+            it = top + 0.36  # top of the images
+            for (x_in, w_in, box) in ((x_close, w_close, closeups[k]), (x_arm, w_arm, arms[k])):
+                bx0, by0, bx1, by1 = box
+                bx1 = min(bx1, arm_x1)
+                ax = fig.add_axes([X(x_in), Y(it + img_h), X(w_in), img_h / fig_h])
+                _kp_show(ax, _kp_matte(old[by0:by1, bx0:bx1], mode="sky", rim_px=3.2, rim_parts="pen")[0])
+            bx0, by0, bx1, by1 = maps[k]
+            pixels, extent = _kp_map_axes(old, bx0, bx1, by0 - 2, by1 + 2)
+            # The old #eee unreachable cells and #d3d3d3 grid are backgrounds, not data colors.
+            # Put them on the board while leaving every viridis data cell and the red pose ring intact.
+            pixels = pixels.copy()
+            for old_gray, new_color in ((238, chalk.BOARD_2), (211, chalk.FAINT)):
+                mask = (pixels == old_gray).all(axis=-1)
+                pixels[mask] = np.rint(np.array(matplotlib.colors.to_rgb(new_color)) * 255)
+            pixels, ring = _kp_unring(pixels, extent)
+            ax = fig.add_axes([X(x_map), Y(it + img_h), X(w_map), img_h / fig_h])
+            ax.imshow(pixels, extent=extent, aspect="auto", interpolation="nearest")
+            if ring is not None:
+                x, y, diameter, width = ring
+                pt = w_map * 72 / pixels.shape[1]  # points per map pixel
+                for color, lw in ((chalk.BOARD, width * pt + 2 * RING_EDGE), (chalk.RED, width * pt)):
+                    ax.plot([x], [y], "o", ms=diameter * pt, mfc="none", mec=color, mew=lw, zorder=3)
+            ax.set_xlim(extent[0], extent[1])
+            ax.set_ylim(extent[2], extent[3])
+            ax.set_xticks([100, 150, 200, 250, 300])
+            ax.set_yticks([-100, -50, 0, 50, 100])
+            ax.tick_params(labelsize=13)
+            for side in ("top", "right"):
+                ax.spines[side].set_visible(True)
+            ax.set_xlabel("reach from the base axis (mm)", fontsize=13, labelpad=2)
+            ax.set_ylabel("paper height above\nthe base plane (mm)", fontsize=13, labelpad=2, linespacing=1.0)
+            tt = it + img_h + 0.68  # top of the two text columns, below the map x label
+            fig.text(X(0.02), Y(tt),
+                     f"pen tilt from the roll axis: {left_vals[0]}\ntip to the pinch: {left_vals[1]}\n"
+                     f"tip off the roll axis: {left_vals[2]}\npen to wrist (one pose): {left_vals[3]}",
+                     ha="left", va="top", fontsize=14, color=chalk.CHALK, linespacing=0.92)
+            fig.text(X(3.22), Y(tt),
+                     f"x error per mrad on all joints, 240 mm out:\n  paper at base level: {right_vals[0]}\n"
+                     f"  base on 60 mm riser: {right_vals[1]}\nreachable cells: {right_vals[2]} of 144",
+                     ha="left", va="top", fontsize=14, color=chalk.CHALK, linespacing=0.92)
+            if i < len(rows) - 1:
+                fig.add_artist(matplotlib.lines.Line2D([X(0.02), X(6.38)], [Y(top + row_h - 0.07)] * 2,
+                                                       color=chalk.FAINT, lw=1.0))
+        save_figure(fig, f"all-layouts-{n}.png")
 
 
 FIGURES = {
@@ -1073,7 +1273,14 @@ def main() -> None:
     parser.add_argument("--source", type=Path, required=True, help="so101-pen-holder checkout")
     parser.add_argument("--menagerie", type=Path, help="MuJoCo Menagerie robotstudio_so101 folder (commit 822c2d8)")
     parser.add_argument("--only", nargs="*", choices=sorted(FIGURES), help="make only these figures")
+    parser.add_argument("--refit", action="store_true",
+                        help="fit the design5-on-arm camera, pad and floor again and print them; make no figure")
     args = parser.parse_args()
+    if args.refit:
+        if args.menagerie is None:
+            parser.error("--menagerie is needed for --refit")
+        fit_arm_scene(args.source, args.menagerie)
+        return
     names = args.only or list(FIGURES)
     rendered = {"design5-on-arm", "how-it-holds", "design5-fit", "thumbnail"}
     if args.menagerie is None and rendered & set(names):
