@@ -8,7 +8,7 @@ thumbnail: /assets/robotics/thumbnails/breaking-bellman.jpg
 thumbnail_alt: 'A casino with ten slot machines. A small robot stands in front of machine 8, which it pulled 995 times, and says: I pick #8! (Wrong.) A crown floats over machine 7.'
 ---
 
-On CartPole, Q-learning with a neural network produces a value estimate of **4.7 million**. The most any policy can earn there is 100, so the estimate is too high by a factor of 47,000. And when the run ends, it's still climbing.
+A neural network running Q-learning on CartPole estimates a value of **4.7 million**. The most any policy can earn there is 100. The estimate is too high by a factor of 47,000, and it is still climbing when the run ends.
 
 I learn more from this kind of failure than from derivations, so I turned these failures into a small game. It's called **Breaking Bellman**. It's free and runs in your browser.
 
@@ -18,7 +18,7 @@ I learn more from this kind of failure than from derivations, so I turned these 
 
 ## How it works
 
-Each level gives you a learner with something broken that you can learn from. You guess what it'll do, then press Run and watch it train in your browser for a few seconds. Its update rule is written as a sentence, and you fix it by changing words. For example, "move the estimate toward *the payout*" becomes "toward *the payout plus the best next estimate*".
+Each level starts with a learner that has something broken. You guess what it will do, press Run, and watch it train in your browser for a few seconds. Then you work on the update rule. It is written as a sentence, so fixing the learner means changing words. For example, "move the estimate toward *the payout*" becomes "toward *the payout plus the best next estimate*".
 
 When your fix works, the game shows you which published method you've rebuilt and links to its paper. In this example, it's Q-learning, from 1989. You got there, just a few decades late.
 
@@ -37,7 +37,7 @@ You can play the 17 levels in any order. They cover slot machines, a cliff, Cart
 | + a frozen copy scores the next move (target network) | 57 | 81 |
 | Both: this is DQN | 144 | 65 |
 
-Replay slowed the explosion down. The frozen copy stopped it.
+Read the value estimates down the table: replay slowed the explosion, while the frozen copy stopped it.
 
 **A bias can be real even when you can't see it in your runs.** I planned to use CartPole to teach Double DQN, because taking the max over noisy estimates should make DQN overestimate. But the estimates in my runs stayed below what the policy actually earned. So I moved the lesson to a tiny world with two doors from Sutton and Barto's book. Behind the left door are ten machines, each paying −0.1 on average. At its worst point, Q-learning chose that door in **82%** of episodes. Double Q-learning peaked at **16%**.
 
@@ -61,7 +61,7 @@ After training, the dog turns toward the stick, sits down, and admires it.
 
 </div>
 
-The dog earned about 2.12 per throw by staring, more than the reward for the stick. I gave it 3 times more training, and it got better at staring without getting better at fetching. Here's the arithmetic:
+Staring earned the dog about 2.12 per throw, more than the reward for the stick. Giving it 3 times more training improved its staring without improving its fetching. Here is the arithmetic behind that choice:
 
 ```so101-widget
 {"type":"fetch-reward","fallback":"Over one throw of 60 steps, with a facing bonus of 0.05 and a cost of 0.01 per step: sitting and staring earns 60 × 0.04 = 2.4. Fetching in 15 steps earns 15 × 0.04 + 1 = 1.6. Sitting wins when the bonus is above 0.01 + 1 / (60 − 15) = 0.032 per step."}

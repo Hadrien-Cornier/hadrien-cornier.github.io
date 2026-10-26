@@ -522,15 +522,15 @@ thumbnail_alt: 'Two blackboard panels: policy iteration on the cliff grid, whose
 </svg><!-- /gpi-canvas --></div></div>
 <div class="rc-body">
 
-Take [Part 1's](/robotics/rl-1-q-learning/#sec-world) 4 by 12 cliff grid. Every move gives −1, and a step into the cliff gives −100 and sends you back to the start S. This time you know all the rules before you move. So can you just work out the best way to the flag G?
+Return to [Part 1's](/robotics/rl-1-q-learning/#sec-world) 4 by 12 cliff grid. Each move gives −1. Step into the cliff and you get −100 and return to the start S. This time, you know every rule before moving. Can you work out the best route to the flag G?
 
-Trying all $4^{37} \approx 1.9 \times 10^{22}$ rules, one move in each of the 37 cells, is hopeless. You'd rather take one rule and improve it, and for that you have to score it first. This side article to my [reinforcement learning series](/robotics/rl-0-overview/) follows Chapter 4 of Sutton and Barto, cited at the end.
+There are $4^{37} \approx 1.9 \times 10^{22}$ rules, one move for each of the 37 cells. Trying all of them is hopeless. We can instead take one rule, score it and use those scores to improve it. This side article to my [reinforcement learning series](/robotics/rl-0-overview/) follows Chapter 4 of Sutton and Barto, cited at the end.
 
 <div class="rc-mark" id="sec-evaluate" data-panel="walker" data-view="walker" data-title="How good is a random walker?"></div>
 
 ## How good is a random walker?
 
-Start with a walker that picks moves at random. A rule like that is a **policy** $\pi$, and a cell's **value** is the discounted sum of rewards you collect from there, on average. Scoring a policy is called **policy evaluation**, and since you know the rules, it comes down to a linear system.
+Start with random moves. The rule for choosing them is a **policy** $\pi$. Each cell has a **value**: the discounted sum of rewards we expect to collect from there. To score the whole rule, we need these values. This is **policy evaluation**, and with the rules known, it is a linear system.
 
 <div class="rc-slot" data-for="sec-evaluate"></div>
 
@@ -549,11 +549,11 @@ For $\gamma < 1$ this converges to $v_\pi$ in the limit.
 
 ## Act greedily on those numbers
 
-What you'd expect from making a move once, then walking randomly again, is its **action value**. Pick the best move in every cell and you get the **greedy** policy $\pi'$, and switching to it is **policy improvement**.
+Take one move, then return to walking randomly. The return you expect is that move's **action value**. Choose the best move in each cell and we have a **greedy** policy $\pi'$. Switching to it is **policy improvement**.
 
 <div class="rc-slot" data-for="sec-improve"></div>
 
-The result looks silly. The walker rated the top-left corner a little above its neighbors, so ten cells now march into that corner and bump the top wall forever. Still, every cell's value beats the walker's.
+The first improvement looks silly. The random walker scored the top-left corner slightly above its neighbors. Ten cells now march toward it and bump the top wall forever. Yet the new policy has a better value in every cell than the random walker.
 
 <div class="rc-mark" id="sec-theorem" data-panel="never-worse" data-view="never-worse" data-title="Why greedy never hurts"></div>
 
@@ -621,7 +621,7 @@ Round 1 breaks ties in the order up, right, down, left, and all 24 orders give t
 
 ## Evaluation can stop early
 
-Policy iteration solves for the values exactly before every greedy step. **Value iteration** stops evaluating after one **sweep**, a single update of every cell from its neighbors' current values, and takes the greedy max inside it.
+So far, each greedy step has waited for an exact evaluation of the policy. **Value iteration** cuts that evaluation to one **sweep**: update each cell once from its neighbors' current values, taking the greedy max inside that update.
 
 <div class="rc-slot" data-for="sec-value-iteration"></div>
 
@@ -641,7 +641,7 @@ The two processes "can be viewed as both competing and cooperating". Once evalua
 
 ## The same loop inside other methods
 
-Without a model, methods estimate values from experience instead. Monte Carlo averages the returns of whole episodes, and temporal-difference (TD) methods move an estimate toward one reward plus the discounted next estimate.
+When the model is unknown, experience supplies the value estimates. Monte Carlo averages returns from complete episodes. Temporal-difference (TD) methods instead move an estimate toward one reward plus the discounted next estimate.
 
 <div class="rc-slot" data-for="sec-family"></div>
 

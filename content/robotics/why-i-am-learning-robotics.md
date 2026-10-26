@@ -27,13 +27,13 @@ Boston Dynamics explained how the parkour worked in [a 2021 post](https://boston
 <figcaption>Boston Dynamics, "Partners in Parkour" (August 2021). This is the routine the 2021 post explains: behaviors designed offline, then adapted by model predictive control on the course. <a href="https://www.youtube.com/watch?v=tF4DML7FIWk">Watch on YouTube</a></figcaption>
 </figure>
 
-That works when the task is fixed. Spot sells for inspection because inspection is easy to specify: walk this route, read these gauges, take this thermal photo. Now suppose you ask it to unload the dishwasher in a kitchen it has never seen. Who writes that behavior? And the next one? Change the cup, the lighting, the table height or the clutter, and the same instruction needs a different movement. The ability to carry a skill into a situation you didn't program for is called **generalization**, and a hand-engineered controller has very little of it.
+A fixed task makes that engineering worthwhile. Spot sells for inspection: walk this route, read these gauges, take this thermal photo. Now ask it to unload a dishwasher in a kitchen it has never seen. Someone has to write that behavior, then the next one. Change the cup, lighting, table height or clutter and the same instruction calls for a different movement. Carrying a skill into a situation you didn't program for is **generalization**. A hand-engineered controller has very little of it.
 
 You can see how hard it was to turn that hardware into a business. Boston Dynamics had three owners in eight years: Google bought it in 2013, SoftBank in 2017 and Hyundai in 2021. The robots were never the weak part.
 
 ## Hardware is not the bottleneck
 
-Here's a simple test for whether a robot's body is good enough for a task. Let a person drive it by remote control, which is called **teleoperation**. Can the operator do the task through the robot? Then the motors, joints and cameras are good enough. What's missing is a program that does what the operator did.
+There is a simple way to separate the body's limits from the software's. Have a person drive the robot by remote control, or **teleoperation**. If the operator can do the task through it, the motors, joints and cameras are good enough. The missing piece is a program that does what the operator did.
 
 Cheap robots pass this test more often than you might expect. The 2023 [ACT paper](https://arxiv.org/abs/2304.13705) asked directly whether learning lets "low-cost and imprecise hardware" do fine manipulation. Its two-arm ALOHA setup threaded cable ties and slotted a battery from about 50 demonstrations per task. A year later, [Mobile ALOHA](https://arxiv.org/abs/2401.02117) put the same arms on a wheeled base and learned to sauté a shrimp, store heavy pots in a cabinet and call an elevator, again from 50 demonstrations per task. A [Unitree G1 humanoid starts at $13,500](https://www.unitree.com/g1/). One SO-101 arm, the one I use, costs [a little over $100 in parts](https://github.com/TheRobotStudio/SO-ARM100).
 
@@ -44,7 +44,7 @@ The two Mobile ALOHA videos below make the teleoperation test visible. On the le
 <div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/HaaZ8ss-HP4" title="Mobile ALOHA autonomous housekeeping" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div><figcaption>Autonomous: the learned policy runs the robot (Zipeng Fu). <a href="https://www.youtube.com/watch?v=HaaZ8ss-HP4">Watch on YouTube</a></figcaption></div>
 </figure>
 
-This doesn't mean hardware is solved. Hands are still fragile, cables wear out, batteries run down, and a robot that breaks every week isn't useful (more on that in the drawers at the end). But compare two gaps. One is between the hardware and the task. The other is between what the hardware does with a human driving it and what it does on its own. The second gap is much bigger, and it's a software gap.
+Hardware still has problems: fragile hands, worn cables, batteries that run down. A robot that breaks every week isn't useful; the drawers at the end return to that. But there are two gaps to compare. How far is the hardware from being able to do the task? And how far is its autonomous performance from what a person can do driving it? The second gap is much larger. That's the software gap.
 
 ## From language models to robot actions
 
@@ -78,9 +78,9 @@ For me, the clearest sign of the shift is what Boston Dynamics itself did. In Au
 
 ## A reset button on classical robotics
 
-The classical robot is a pipeline of separate modules, each written by experts: perception finds the objects, state estimation works out where everything is, a planner chooses a path and a controller follows it. Each module has its own equations and its own decades of research. A VLA replaces most of that pipeline with one network that goes from pixels and words to actions.
+In a classical robot, experts write a separate module for each step: perception finds objects, state estimation locates everything, a planner picks a path, and a controller follows it. Each module brings its own equations and decades of research. A VLA turns most of this pipeline into one network, taking pixels and words in and producing actions.
 
-That's a reset button. A lot of what used to be an equations problem becomes a data problem. Which demonstrations do you collect? How do you cover the situations that matter? How do you know the robot got better? It also means someone who arrives late, like me, isn't decades behind. These questions are new for everybody.
+That presses a reset button on much of the problem. Instead of choosing equations, you have to choose data. Which demonstrations should you collect? Do they cover the situations that matter? How will you tell whether the robot improved? Someone arriving late, like me, isn't decades behind on these questions. They're new for everybody.
 
 It isn't a full reset, though, and this is the part I find most interesting. Underneath every VLA, a motor still runs a classical feedback loop. The network outputs a target angle, and the joint doesn't land exactly on it: gravity pulls it down, friction holds it back and the servo reacts late. That last mile is where my own research sits. I'm testing whether a controller can be more accurate than the classical ones on my SO-101 arm, and the [series that starts with one equation](/robotics/so101-1-target-and-goal/) is what I've learned so far.
 
@@ -114,7 +114,7 @@ Variety matters as much as volume. [DROID](https://arxiv.org/abs/2403.12945) sen
 
 ### Learning from people's point of view
 
-There's a second way around the data problem: record people instead of robots. **Egocentric** data is video filmed from the person's own point of view, usually with a head-mounted camera, so the hands sit in the frame the way a robot's grippers would. People already do every task we care about, in every kind of place. The question is whether a robot can learn from hands that aren't its own.
+You can also collect data without a robot. Put a camera on a person's head and their hands appear in the frame much as a robot's grippers would. Video from this viewpoint is **egocentric** data. People already do every task we care about, in every kind of place. Can a robot learn from those demonstrations when the hands aren't its own?
 
 In February 2026, NVIDIA's [EgoScale](https://arxiv.org/abs/2602.16710) tried it at a large scale. It pre-trained a VLA on **20,854 hours** of egocentric human video, then trained it on a small set of matched human and robot play data (50 hours of human data, 4 hours of robot data), and finally on the target tasks. On a robot with a 22-degree-of-freedom hand, average success went up by **54%** compared with no pre-training.
 
@@ -157,7 +157,7 @@ That third point is also why measurement is so hard. Benchmarks like [LIBERO](ht
 
 One robot already works at scale, and it's worth asking why. Waymo's cars drove more than **270 million** fully autonomous miles through June 2026. Against human drivers in the same cities, [Waymo reports](https://waymo.com/safety/impact/) **82% fewer** injury crashes and **95% fewer** crashes with a serious injury or worse.
 
-So why does driving work before manipulation? My reading is that a car's job is to not touch anything. Every contact is a failure. The car has to predict where everything will be and stay away from it. A kitchen robot is the opposite. Its whole job is contact: push, grasp, squeeze, pour. And contact is exactly where physics gets hard to predict, with friction, slipping and soft objects that change shape.
+My reading of why driving works before manipulation starts with contact. A car succeeds by not touching anything. It predicts where things will be and stays away. A kitchen robot succeeds through contact: pushing, grasping, squeezing, pouring. That is precisely where physics is hard to predict, because friction, slipping and soft objects change what happens.
 
 How did Waymo get the extra nines of reliability? Simulation is a big part of the answer. Waymo runs closed-loop simulation, where the other cars and pedestrians react to what the Waymo does. In its [10 AI lessons](https://waymo.com/blog/2026/08/10ailessons/), it describes an automated Critic that reviews the millions of road miles driven each week "and tens of billions in simulation." The simulator finds rare events before the car meets them on the road. But Waymo is also clear that simulation isn't enough: in the same post, it says a driving system only truly matures when it's solely responsible for the driving. So it's simulation plus hundreds of millions of real driverless miles, not simulation instead of them.
 
@@ -165,7 +165,7 @@ The other thing I find interesting is how much explicit structure Waymo keeps. I
 
 ## World models: imagining the future before acting
 
-A VLA maps what the robot sees to an action. A **world model** answers a different question: given what the robot sees now and an action, what will it see next? With one, a robot can try actions in its head, a company can generate training data, and you can test a policy without a real robot.
+A VLA chooses an action from what the robot sees. A **world model** predicts what it will see next, given the current view and an action. That prediction lets a robot try actions in its head. It also lets a company generate training data or test a policy without a real robot.
 
 Waymo uses one for driving. The [Waymo World Model](https://waymo.com/blog/2026/02/the-waymo-world-model-a-new-frontier-for-autonomous-driving-simulation), built on Google DeepMind's Genie 3, generates both camera and lidar data for scenes that are hard to film for real, like extreme weather or strange objects on the road. You can steer it with driving actions, a scene layout or a text prompt.
 
@@ -192,7 +192,7 @@ Factories in Europe and the US already use a lot of robots. The International Fe
 
 ![Bar chart of industrial robots per 10,000 manufacturing employees in 2024: South Korea 1,220, Singapore 818, Germany 449, Japan 446, United States 307.](/assets/robotics/why-robotics/robot-density.png "Robot density in 2024. My chart from the IFR numbers.")
 
-Now suppose a robot can learn a new task from a few dozen demonstrations in an afternoon. That calculation changes. Small-batch production becomes something a robot can do, and labor cost stops being the reason to build a factory far away. With an aging workforce in Europe and a political push in both regions to bring manufacturing back, general-purpose robots could make reindustrialization economically possible rather than a slogan. Hyundai building a factory for 30,000 robots a year is one company placing that bet.
+Suppose instead that a robot can learn a new task from a few dozen demonstrations in an afternoon. Small-batch production then becomes a possible robot job, and labor cost stops being the reason to put the factory far away. Europe has an aging workforce, and both Europe and the US have a political push to bring manufacturing back. General-purpose robots could make that reindustrialization economically possible. Hyundai's factory for 30,000 robots a year is one company's bet on it.
 
 <figure class="video-embed">
 <div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/rrUHZKlrxms" title="Atlas product features, Boston Dynamics, 2026" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>

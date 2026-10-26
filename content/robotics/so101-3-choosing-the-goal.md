@@ -58,13 +58,13 @@ I built close to twenty controllers during this project, and each one has a shor
 
 ## One formula for the goal
 
-Part 1 gave the ideal goal, if I knew every term of the joint equation exactly:
+Which goal should I send so the joint follows the target? Part 1 gave the ideal answer, provided I knew every term of the joint equation exactly:
 
 $$
 \text{goal}(t) = q^*(t + D) + \frac{M\ddot q^* + G + d\,\dot q^* + f\,\text{sign}(\dot q^*) + C\,\dot q^*}{k_p}
 $$
 
-I don't know the terms exactly, so a real controller uses estimates, written with a hat ($\hat M$, $\hat G$ and so on). It can also correct the goal from the error it measures, and from what it learned on earlier runs. With all of that, one formula covers every controller in this series:
+I don't know those terms exactly. A real controller uses estimates, marked with a hat ($\hat M$, $\hat G$ and so on). It can then add corrections from the measured error and from earlier runs. Put these pieces together, and one formula covers every controller in this series:
 
 $$
 \text{goal}(t) = q^*(t + T) + \frac{\hat M\ddot q^* + \hat C\dot q^* + \hat G(q^*) + \hat d\,\dot q^* + \hat f\,\text{sign}(\dot q^*)}{k_p} + \hat w + K_P\,e + K_I\!\int e\,dt + u_k
@@ -187,7 +187,7 @@ This matrix is the older view of the same information. Each row is a controller 
 <figcaption>Real arm on the same motion with `direct`, `lead` and `inv` at 30 Hz. The error is drawn 10 times larger, and large errors are compressed so the arm stays clear of the table and the base. The gray shape is the target pose. The red line joins the gripper tip to where the tip should be. The plot under each arm gives the true joint error in mrad, with the same scale in every plot. <a class="video-link" href="/assets/robotics/so101-series/sig-inv.mp4">Open video</a></figcaption>
 </figure>
 
-The simplest fixes don't look at the arm at all, only at the target. `lead` just sends the target one step early: $T$ = 33 ms at 30 Hz, and nothing else. `inv` goes further and inverts a simple model of the servo, with the dead time and the lag from the step test on my arm:
+Start with the target alone, without looking at the arm. `lead` sends it one step early: $T$ = 33 ms at 30 Hz, and nothing else. To go further, `inv` inverts a simple servo model using the dead time and lag from the step test on my arm:
 
 $$
 \text{goal}(t) = q^*(t + 33\ \text{ms}) + 0.106\ \text{s}\cdot\dot q^*(t) + 0.0023\ \text{s}^2\cdot\ddot q^*(t)
@@ -264,7 +264,7 @@ I multiplied $k_p$ by 4 and got about 7 mrad. I found the mistake myself after a
 
 With a gain of 4, the arm covers about 0.6 of the error per step, which is stable. With a gain of 100 it would try to cover 15 times the error, so it overshoots, the next error is larger on the other side, and the oscillation keeps growing. A gain of 100 would also turn a single tick of reading noise into a 153 mrad jump of the goal. Add a 33 ms dead time and even a gain of 4 is too much: when I tried the Classical gains (4 and 10) with the dead time of my real arm in the shake test below, the servo spent about 95 % of the time at its torque limit.
 
-The model also helps the feedback. A plain outer PID with no model saturated the servo on 10.9 % of the steps on a stiff simulated robot, while the same feedback on top of a model offset saturated on 0 %. The model does most of the work, so the feedback gains can stay low.
+Supplying the model offset also makes the feedback's job easier. On a stiff simulated robot, a plain outer PID with no model saturated the servo on 10.9 % of the steps. Put the same feedback on top of a model offset, and it saturated on 0 %. The model does most of the work, allowing low feedback gains.
 
 </details>
 
@@ -298,7 +298,7 @@ I didn't push this test hard enough to reach the torque limit, so the second hal
 
 ### Better estimators: adapt and rls
 
-The integral treats every missing force as one constant. The other two controllers in this family estimate more.
+The integral builds one constant to account for every missing force. The other two controllers in this family make more detailed estimates.
 
 `adapt` keeps the plain `inv` goal and subtracts a $\hat w$ from a Kalman filter for each joint. The filter compares the angle that a fixed servo model predicts with the reading, and splits the difference into three parts: a fast load part, a slow sag part and a friction part. Part 2 explains the Kalman filter.
 
@@ -324,7 +324,7 @@ Fitted gets around this by simulating the step in 8 small substeps and solving f
 {"type": "predict", "fallback": "Predict first. Give Classical model + PID the true robot numbers. Its error, averaged over six simulated robots, is 1.312 mrad. The Exact model has the same numbers and gets 0.385 mrad: it simulates the 8 substeps of each 33 ms step. Each controller uses its own tuned gains. A MuJoCo test changed one factor at a time. Which cause of the 3.4 times gap does it support best? (A) Its tanh friction model is wrong. (B) Its physics numbers are wrong. (C) It has no D term, so it cannot damp the arm. (D) Its rule treats the 33 ms goal hold as one instant. Answer: Its rule treats the 33 ms goal hold as one instant.", "id": "C3"}
 ```
 
-So I started to think of it as a ladder. Classical looks at one instant, Fitted simulates one step from the inside, and `solve` and `mpc` look many steps ahead. A trajectory is continuous, and each rung of the ladder sees more of it.
+This gave me a way to organize the methods. Classical looks at one instant. Fitted simulates what happens inside one step. `solve` and `mpc` look many steps ahead. Each sees more of the continuous trajectory than the one before it.
 
 <details>
 <summary>Where I was wrong: does the exact model see the true angle?</summary>
@@ -362,7 +362,7 @@ That last part is called a receding horizon: the plan itself is never executed, 
 {"type": "plan-compare", "fallback": "solve chooses one destination goal and the steps follow a fixed rule toward it. mpc chooses a free goal for each step of the 0.25 s horizon. With a dead band, a constant goal between 90 and 110 mrad does nothing, so the cost is flat there and a gradient method does not move."}
 ```
 
-The two planners differ only in the plans they can choose. `solve` chooses one number per joint, a destination goal on whole encoder ticks, and the goals in between follow a fixed rule toward that destination. So it searches a family of plans with a single knob. `mpc`, model predictive control, chooses one goal for each step of the horizon, 8 goals at 30 Hz, 15 at 60 Hz and 25 at 100 Hz, so its plan can do anything: overshoot, brake early, or hold. Its cost has three parts: the mean squared tracking error, a small cost on goal changes beyond what `inv` would do, and a tiny cost on straying away from `inv`.
+The difference between the planners is the set of plans each can choose. `solve` chooses one number per joint, a destination goal on whole encoder ticks, and the goals in between follow a fixed rule toward that destination. So it searches a family of plans with a single knob. `mpc`, model predictive control, chooses one goal for each step of the horizon, 8 goals at 30 Hz, 15 at 60 Hz and 25 at 100 Hz, so its plan can do anything: overshoot, brake early, or hold. Its cost has three parts: the mean squared tracking error, a small cost on goal changes beyond what `inv` would do, and a tiny cost on straying away from `inv`.
 
 ```so101-widget
 {"type": "predict", "fallback": "Predict first. At each tick, what does solve choose for one joint? Answer: One destination goal per joint, on whole encoder ticks.", "id": "L1"}

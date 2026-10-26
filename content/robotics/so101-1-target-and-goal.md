@@ -52,7 +52,7 @@ layout: essay
 
 I've been trying to find out whether a robot controller can be more accurate than the classical ones. To answer that, I first had to understand how the classical controllers work and which problems each of them fixes, and then test them on my own SO-101 arm and in the Genesis simulator. This series is what I learned along the way.
 
-When I send my arm a smooth path to follow, it doesn't quite follow it. It arrives a little late, it stops a little short, and when it's supposed to hold still it sags slightly below the angle I asked for. With the default LeRobot setup running at 30 Hz, the joints end up 22.5 mrad away from the path on average, which is about 1.3 degrees. That doesn't sound like a lot until you remember the gripper sits 30 cm out at the end of the arm, and that I'd like it to pick up something as small as a screw.
+I send my arm a smooth path, and it arrives a little late and stops a little short. Ask it to hold still, and it sags slightly below the requested angle. With the default LeRobot setup running at 30 Hz, the joints end up 22.5 mrad away from the path on average, about 1.3 degrees. The gripper sits 30 cm out at the end of the arm. Since I'd like it to pick up something as small as a screw, that angle error matters.
 
 <figure class="article-figure">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-series/cat-direct.png" aria-label="The real SO-101 arm following a recorded motion with the default controller, with its joint error plotted under it">
@@ -64,7 +64,7 @@ When I send my arm a smooth path to follow, it doesn't quite follow it. It arriv
 
 I call the default controller `direct`: at each step, it sends the target angle to the servo, unchanged. This is what LeRobot does.
 
-So I wanted to understand why the arm misses. This article writes one joint of the arm as a single equation, starting from the physics everyone knows, torque equals inertia times acceleration. Then it goes through the equation one term at a time. Each term is one way the arm can miss, and for each one I give an example and the size of the error on my arm. [Part 2](/robotics/so101-2-finer-than-the-sensor/) is about the sensor, and [part 3](/robotics/so101-3-choosing-the-goal/) groups the controllers by the term of this equation that they fix.
+Why does the arm miss? I wanted to understand it by writing one joint as a single equation. Start with torque equals inertia times acceleration, then add the other terms one at a time. Each term explains one way the arm can miss. For each, I give an example and the size of the error on my arm. [Part 2](/robotics/so101-2-finer-than-the-sensor/) is about the sensor, and [part 3](/robotics/so101-3-choosing-the-goal/) groups the controllers by the term of this equation that they fix.
 
 ## Target, goal, gap
 
@@ -90,7 +90,7 @@ $$
 
 The units are N·m ÷ (N·m/rad) = rad, so a torque divided by a stiffness gives you an angle. On the simulated shoulder at the example hold pose, gravity is 0.391 N·m and the servo stiffness is 13.64 N·m/rad, which gives a sag of 28.7 mrad.
 
-The same reasoning works for every other force on the joint: friction, a tool in the gripper, the force needed to speed the joint up, the damping that resists motion. Each of them needs a bit more gap, and if the goal stays on the target, all of that extra gap shows up as error.
+Now add the other forces: friction, a tool in the gripper, the force needed to speed the joint up, and the damping that resists motion. The same reasoning applies to each. Each needs a bit more gap to supply its torque. Keep the goal on the target, and all of that extra gap becomes tracking error.
 
 So the problem I kept coming back to was really just this one: where should I put the goal? Every controller in the series is a different answer to that question.
 
@@ -177,7 +177,7 @@ Something that took me a while to accept is that I can't actually drive the moto
 
 <div class="rc-mark" id="fig-two-loops" data-panel="two-loops" data-title="Two nested loops"></div>
 
-So there are really two loops stacked on top of each other. The inner loop runs fast inside the servo and drives the motor. The outer loop runs on my computer at 30 or 60 Hz, reads the joint angles and sends new goals.
+That gives two loops. Inside the servo, a fast inner loop drives the motor. On my computer, the outer loop reads the joint angles and sends new goals at 30 or 60 Hz.
 
 <div class="rc-slot" data-for="fig-two-loops" data-src="/assets/robotics/so101-series/two-loops.svg" data-caption="The outer loop on my computer only sends goals. The inner loop inside the servo turns the gap into motor power."><span class="rc-sr">Two nested loops. On the computer, at 30 or 60 Hz: target, controller, goal. In the servo firmware: gap equals goal minus encoder, P/D, motor power, motor and gearbox, joint. The encoder feeds both loops.</span></div>
 
@@ -240,7 +240,7 @@ In this widget, `inv` is a controller that sends the target one dead time ahead;
 
 ### Goal hold
 
-My controller sends a new goal once per step, every 33.3 ms at 30 Hz. Between two steps the goal stays still while the target keeps moving, so on average the goal I'm following is half a step old, about 16.7 ms. This one does shrink with a faster loop.
+At 30 Hz, my controller sends a new goal every 33.3 ms. The target keeps moving between updates, but the goal stays still. On average, the goal I'm following is therefore half a step old, about 16.7 ms. A faster loop shrinks this part of the delay.
 
 <details>
 <summary>Am I limited to 33 ms?</summary>
@@ -407,7 +407,7 @@ Without friction, the arm sags the full 45 mrad. With hard friction, it stops at
 
 ### Why the simulator creeps
 
-The creep comes from how the simulator solves friction. Exact dry friction is awkward for a solver. When the joint is stuck, the friction force isn't given by a formula, only by a limit: any value between $-f$ and $+f$. The solver has to decide, at every step and for every joint and contact, which ones stick and which ones slip. That is a switching problem with no smooth solution, and it gets slow and fragile with many contacts.
+To see where the creep comes from, consider what the simulator must solve. At a stuck joint, exact dry friction supplies a limit rather than a single force: any value between $-f$ and $+f$. At every step, the solver must decide which joints and contacts stick and which slip. This switching problem has no smooth solution. With many contacts it becomes slow and fragile, which makes exact dry friction awkward for a solver.
 
 MuJoCo, which made this clip, avoids the switching. It makes friction a soft constraint: instead of forcing the speed of a stuck joint to be exactly zero, it lets friction grow very steeply with a tiny speed, like a very stiff damper (its time constant here is `solref` = 0.02 s). Each step then becomes a smooth optimization with one answer, which is fast and stable. The price is that a joint that friction holds against a load always slides a little, so it creeps. Genesis uses the same kind of soft constraint, which is where my first creep numbers came from.
 
@@ -510,7 +510,7 @@ The parts add up to 115.3 mrad, against 115.2 measured, and the biggest one is d
 
 Once I saw that the gap is the torque divided by $k_p$, my first thought was to just make $k_p$ huge so the gap, and the error with it, would go to zero. It seemed too easy, so I checked it against the simulation. One of the simulated robots, which I called stiff_servo, has a $k_p$ 1.62 times higher than normal. If all of the error scaled with $1/k_p$, the error should have dropped from 37.2 to 23 mrad, but it only dropped to 24.8.
 
-The reason is that only part of the error depends on the stiffness. You can write the error roughly as
+Only part of the error depends on stiffness. To separate it from the part that doesn't, write the error roughly as
 
 $$
 e \approx \frac{G + d\,v + f + J\,a}{k_p} + \frac{v\,\Delta t}{2}

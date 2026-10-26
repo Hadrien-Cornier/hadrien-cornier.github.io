@@ -9,9 +9,9 @@ thumbnail: /assets/robotics/thumbnails/how-robot-control-is-changing.jpg
 thumbnail_alt: 'Before a cube moves, the robot gripper surrounds it. After it moves, the same grasp closes at the old position.'
 ---
 
-Ask a robot arm to pick up a small green block and put it in a tray. The camera sees the block, and the arm starts reaching. Then someone moves the block a few centimetres to the right.
+Ask a robot arm to put a small green block in a tray. The camera finds the block and the arm starts reaching. Now move the block a few centimetres to the right.
 
-The motors can follow their commands perfectly and still miss, so something has to notice the change and choose a different movement. The real question of robot control isn't "how do I make the motor follow?" anymore. It's **how does the robot choose its next movement?**
+The motors could follow every command perfectly and the arm would still miss. Something has to see the change and choose a new movement. That is where the question of robot control has moved: from "how do I make the motor follow?" to **how does the robot choose its next movement?**
 
 <figure class="article-figure">
 <video autoplay loop controls muted playsinline preload="metadata" poster="/assets/robotics/modern-control/v4/observe-again.png" aria-label="Two simulated SO-101 arms reach for a green block that slides about 9 cm while they move. The left arm, which planned once, closes on empty air. The right arm, which looks again every 0.1 s, turns toward the block and puts it in the tray.">
@@ -176,7 +176,7 @@ What's still missing is **memory** and a **cheap way to imagine**. The timeline 
 
 ## Before 2023: plan, then track
 
-The classical answer splits the choice into separate programs. **Perception** finds the block and the obstacles, and **state estimation** says where the block is relative to the arm. A **task planner** picks the step ("pick up the block"), a **motion planner** finds a path that doesn't hit the table, and a **controller** makes the joints follow that path. When the camera sees the block move, the estimate changes and the planner plans again.
+The classical answer gives each part of that choice its own program. First, **perception** finds the block and obstacles. **State estimation** locates the block relative to the arm. A **task planner** chooses the step, "pick up the block", and a **motion planner** finds a path clear of the table. Finally, a **controller** makes the joints follow it. If the camera sees the block move, the estimate changes and the planner runs again.
 
 This works, and it's still how most factory robots run. The trouble is that every piece is written by hand for a known world. Who writes the rule for a block that's half hidden, or slippery, or a sock instead of a block? Each new object asks for new code. That's the wall learning tries to get through.
 
@@ -207,7 +207,7 @@ The method that came with it, **Action Chunking with Transformers (ACT)**, predi
 <figcaption>One action chunk, played at 0.4× speed. The spheres are the 10 targets the policy predicts, 0.05 s apart. The robot executes the 2 dark ones, takes a new image and predicts a new chunk. After the block moves, the chunks bend toward it within one tick. Simulated SO-101 in Genesis, scripted motion. <a class="video-link" href="/assets/robotics/modern-control/v4/action-chunks.mp4">Open video</a></figcaption>
 </figure>
 
-Why a chunk and not one action at a time? Copying one step at a time compounds errors: a small mistake puts the arm somewhere the person never was, and the next prediction is worse. Predicting a whole chunk keeps the motion coherent. ACT then predicts a new chunk at every step and averages the overlapping predictions for the same moment, which it calls **temporal ensembling**. [ACT, §IV-A, p. 5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=5)
+Why predict a chunk? A policy that copies one step at a time compounds its errors. One small mistake puts the arm in a state the person never visited, making the next prediction worse. A whole chunk keeps the motion coherent. ACT still predicts a fresh chunk at every step, then averages the overlapping predictions for each moment. This is **temporal ensembling**. [ACT, §IV-A, p. 5](https://www.roboticsproceedings.org/rss19/p016.pdf#page=5)
 
 A chunk's length doesn't set how fast the robot reacts. Say a chunk holds $H$ targets sent at $f$ targets per second, and the robot executes $k$ of them before it looks again:
 
@@ -236,7 +236,7 @@ The limit shows up as soon as you change the task. An ACT policy knows one task,
 <details>
 <summary>Side path: when two routes are both right (Diffusion Policy)</summary>
 
-Put an obstacle between the gripper and the block. A person goes around it on the left half the time and on the right half the time. A network trained to predict the average path goes straight through the obstacle.
+Now put an obstacle between the gripper and the block. In the demonstrations, the person goes left half the time and right the other half. Averaging those paths sends the arm straight through the obstacle.
 
 **Diffusion Policy** (2023) learns the whole distribution of action sequences instead of their average. At run time it starts from random numbers and refines them, step by step, into one coherent route, left or right, never the average. [Diffusion Policy, §§II-C, IV-A, pp. 3–4](https://www.roboticsproceedings.org/rss19/p026.pdf#page=3) The π models below use a close relative, **flow matching**, for the same reason. It matters again in the RL section: this kind of policy has no simple formula for the probability of an action, which breaks some classic RL methods.
 
@@ -262,7 +262,7 @@ A **vision-language model (VLM)** reads images and text and answers in text. It 
 
 ![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture-chalk.png "OpenVLA architecture. Redrawn from Kim et al., OpenVLA (2024), CC BY 4.0.")
 
-For our block, this means the instruction "put the green block in the tray" now means something to the model, even for a block color it never saw in the robot data. The cost is the action format. With 256 bins per dimension and tokens predicted one at a time, it's coarse and slow for a fast, precise arm.
+Back at our block, the instruction "put the green block in the tray" can now mean something even if the robot data never contained that block color. But the action format imposes a cost. There are 256 bins per dimension, and the model predicts tokens one at a time. For a fast, precise arm, that is coarse and slow.
 
 ## Generalist models: one policy for many robots
 
@@ -286,7 +286,7 @@ What does the generalist actually send to the robot? Still targets. In π*0.6, t
 
 A generalist that succeeds 80% of the time is impressive in a video. In a home, it's a broken glass every few days. In [Towards Universal Post-Training for Robotics](https://pd-perry.github.io/posts/post-training.html) (September 2026), Perry Dong and Chelsea Finn compare today's robot models to language models around GPT-2 and GPT-3: they can give capable demos, but you can't trust them yet. Language models closed that gap through **post-training**, more training after the big pretraining, with a standard recipe of instruction tuning followed by reinforcement learning from feedback. Dong and Finn argue that robots need the same thing.
 
-Why not just collect more demonstrations? Copying has a ceiling: the demonstrations never show how to recover from the robot's own mistakes, and the robot can't get better than the people who demonstrated. **Reinforcement learning (RL)** learns from the robot's own attempts and a score of how they went.
+Would collecting more demonstrations close the gap? Copying has a ceiling. Demonstrations don't show recovery from the robot's own mistakes, and they can't teach it to surpass the people demonstrating. **Reinforcement learning (RL)** instead uses the robot's own attempts and a score of how they went.
 
 ### Why RL is hard on a robot
 
@@ -309,7 +309,7 @@ In a game with four buttons, you score the four buttons and pick the best. That'
 {"type": "continuous-action", "fallback": "Interactive: the value Q of each action for a one-number action, with two hills: a wide one on the left (value 0.67) and a narrow, higher one on the right (value 1.00). Discretizing with 6 bins picks an action on the left hill at 65% of the best value. An actor that climbs the slope from a = -0.6 stops on the left hill. Sampling 16 actions from the base policy, editing each slightly uphill, and picking the best finds the right hill."}
 ```
 
-Classic continuous-control RL answers this with an **actor-critic**. A second network, the actor, follows the slope of $Q$ to learn to output an action the critic scores high. DDPG, TD3 and **SAC** (soft actor-critic) all work this way. Play with the widget and you'll see the actor climb the nearest hill. It's fast, but it can get stuck on a lower one.
+An **actor-critic** avoids enumerating those actions. The critic scores them, and a second network, the actor, follows the slope of $Q$ to learn to output a high-scoring action. This is how DDPG, TD3 and **SAC** (soft actor-critic) work in classic continuous-control RL. The widget lets you watch the actor climb the nearest hill. It gets there fast, but that hill may be lower than another one.
 
 ```so101-widget
 {"type": "predict", "id": "RC2", "fallback": "Predict first. A DQN-style agent picks the action with the highest Q by scoring every action. The arm has 7 joints. You cut each joint range into 20 bins. How many Q scores per control step? (A) 140. (B) 1.28 billion, 20^7. (C) 7^20. (D) 20. Answer: 20^7 = 1.28 billion. The choices multiply across joints."}
@@ -450,7 +450,7 @@ I find that striking: the simplest possible memory, "keep everything", wins a be
 {"type": "predict", "id": "RC4", "fallback": "Predict first. A VLA without a video encoder needs about 0.35 s for 4 frames and about 3.5 s for 16 frames; the real-time limit is 0.3 s. A kitchen task lasts 15 minutes, at one frame per second. Can the policy keep every frame? Answer: No. 15 x 60 = 900 frames, far beyond the 16 that already take 3.5 s. The memory must be compressed: video for recent frames, text for old events."}
 ```
 
-Memory has its own failure mode, and it's the one I'd test first. Suppose the gripper closes beside the block: the command finished, but the pickup failed. If the text memory now says "block put away", every later decision builds on a false record. A memory that can't tell "I tried" from "it worked" is worse than no memory.
+There is a memory failure I'd test first. Suppose the gripper closes beside the block. The command has finished; the pickup has failed. If the text memory nevertheless records "block put away", later decisions all start from that false record. Memory has to distinguish "I tried" from "it worked", or it is worse than no memory.
 
 ### World models without all the pixels
 
@@ -458,7 +458,7 @@ DreamZero imagines every pixel of the next frames, which makes it slow and big. 
 
 ![Two tasks where the video prediction failed. Draw a line on the whiteboard: the generated video does not show the drawing, and the robot does not draw. Bake the croissant: the generated video drifts, and the robot follows the failed plan.](/assets/robotics/modern-control/v3/dreamzero-failed-plan.png "Imagined video (top) and execution (bottom) when the imagination fails. Figure from Ye et al. (2026), CC BY 4.0.")
 
-Does the robot need the pixels at all? To choose between the detour and the collision, it needs to know where the gripper and the block will be, not the texture of the table.
+For the choice between a detour and a collision, what must the robot predict? Where the gripper and block will be. The table's texture doesn't settle that choice. Does it need to predict pixels at all?
 
 **V-JEPA 2** (Meta, 2025) predicts the future in **features**, learned numerical summaries of an image, not in pixels. To plan, it tries many candidate action sequences, predicts their final features, and keeps the one whose features are closest to the features of a goal image. Then it executes the first action and plans again. [V-JEPA 2 v1, §3.2](https://www.alphaxiv.org/pdf/2506.09985v1?page=10)
 

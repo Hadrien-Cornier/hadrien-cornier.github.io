@@ -51,7 +51,7 @@ layout: essay
 <figcaption>The real arm drawing a kitten on the Wacom tablet. Overhead camera, 11 Oct 2026. This is 88 s of drawing sped up 4 times, so it plays in 22 s. The black rectangle is the tablet, and the arm is the white machine at the top right.</figcaption>
 </figure>
 
-The question of the whole series was whether a controller can be more accurate than the classical ones. My answer at the end of this part: a network alone wasn't the way, but a network that only learns what the physics model misses is promising, and the research of 2026 goes the same way.
+Can a controller be more accurate than the classical ones? That was the question behind this series. By the end of this part, my answer is that a network alone wasn't the way. Letting a network learn only what the physics model misses looks promising, and the research of 2026 points in the same direction.
 
 This part uses these controller names. Each one sends a position goal to the servo at each tick.
 
@@ -99,7 +99,7 @@ where $\text{step}^*$ is the move the controller wants this step: the target mov
 
 <div class="rc-slot" data-for="fig-network-io" data-src="/assets/robotics/so101-series/network-io.svg" data-caption="The network only learns an offset on top of a simple rule."><span class="rc-sr">Block diagram: the reading q, the targets r_k and r_k+1 and the past goal go into a small network, which outputs an offset. The goal is q plus step star plus the offset plus 3 I.</span></div>
 
-Its label comes from hindsight. Suppose a logged step where the reading was 100, the goal sent was 150 and the next reading was 110. The joint moved 10, and the goal sat 40 past where it ended up, so the label is 40. In words, the row teaches the network that from this state, to move 10, the goal has to go 40 past the end point.
+To build a label, look back at a logged step: the reading was 100, the goal sent was 150, and the next reading was 110. The joint moved 10. The goal was 40 past its end point, so the label is 40. This row teaches the network that, from this state, moving 10 requires a goal 40 past the end point.
 
 <details>
 <summary>The network has the same shape as Classical</summary>
@@ -112,7 +112,7 @@ In the simulation study the network got 0.446 mrad, against 1.117 for Classical.
 
 ## Offline against closed loop
 
-This is the result that changed how I test everything. There are two ways to test a network. Offline, you feed it recorded data and compare its output with the label, and its outputs never move anything. In closed loop, you let it drive the arm, so its goals move the arm and its next inputs come from that motion, including its own past goals.
+The next result changed how I test everything. Feed a network recorded inputs and compare its output with a label: that is an offline test, and its outputs never move anything. Let it drive the arm, and the test becomes closed loop. Its goals now move the arm, and that motion supplies the next inputs, including the network's own past goals.
 
 ```so101-widget
 {"type": "predict", "fallback": "Predict first. Two ways to test a network. Offline: feed it recorded data and compare its output with the label; its outputs never move the arm. Closed loop: let it drive the simulated arm; its goals move the arm, and its next inputs come from that motion, including its own past goals. Nominal = the default robot, with no change. An earlier network got 4 past readings and 4 past goals as extra inputs. It trained on smooth wiggle data only. Its offline label error fell from 6.19 to 3.03 mrad. In closed loop on nominal validation paths, the same network with no history had 0.552x the tracking error of Classical model + PID. Predict the closed-loop error of the network with history on nominal, as a multiple of the error of Classical model + PID. Answer: About 80x: 81.3x Classical model + PID, with 77% of steps saturated.", "id": "N3"}
@@ -164,7 +164,7 @@ Real overfitting did show up once, with a physics model fitted on too little dat
 
 ## A network that learns only what the physics misses
 
-The network above learns the whole force term from data. The physics model of part 3 computes it from equations. A residual model does both: the physics computes what it can, and a network learns only the rest, the residual. In the joint equation of part 1, the residual $r$ is one more torque:
+So far, the network learns the whole force term from data, while the physics model of part 3 computes it from equations. We can combine them: let physics compute what it can, then train a network on the part left over. This is the residual. In the joint equation of part 1, the residual $r$ enters as one more torque:
 
 $$
 M(q)\ddot q + C(q,\dot q)\dot q + G(q) + d\,\dot q + f\,\text{sign}(\dot q) = k_p\big(\text{goal}(t-D) - \hat q\big) + \hat d + r_\theta(\text{history})
@@ -199,7 +199,7 @@ The two also work together. In PhysR, the filter keeps estimating $\hat d$ durin
 <details>
 <summary>What a position loss can't tell apart</summary>
 
-My encoders measure angles, not torques. So the network learns its torque through the plant: the training compares the predicted angle with the measured angle, and the gradient goes back through the physics equations.
+The encoders give me angles, so I cannot train against a measured torque. Instead, I compare the predicted angle with the measured angle. The gradient passes back through the physics equations, letting the network learn its torque through the plant.
 
 That has a trap. Take one joint at rest, with an inertia of 0.1 kg·m², and predict 0.1 s of motion under a constant torque. The angle changes by $\Delta t^2 \tau / 2I = 0.05\,\tau$. The controller sends 0.6 N·m, and the joint moves only 0.02 rad. A missing torque of −0.2 N·m explains this: $0.05 \times 0.4 = 0.02$. A larger inertia of 0.15 kg·m² explains it too: $0.01 / 0.3 \times 0.6 = 0.02$. The data can't tell the two apart.
 
@@ -268,7 +268,7 @@ The Kalman filter of part 2 is the third kind. A recurrent residual is the first
 
 ### How far each result goes
 
-A result can support five claims, and each claim asks more than the one before it.
+How much has a result established? There are five possible claims here, each asking more than the one before it.
 
 1. Prediction: the model reproduces held-out recorded motion.
 2. Command choice: the model ranks alternative commands correctly.

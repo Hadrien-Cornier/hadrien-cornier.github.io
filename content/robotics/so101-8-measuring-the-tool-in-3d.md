@@ -48,7 +48,7 @@ layout: essay
 
 How do I get the precise x, y, and z coordinates of the tip of my robot's gripper?
 
-I use an SO-101, a small robot arm, to build a smooth, precise controller: the program that turns a desired path into motor commands. I call it the drawing arm project, but drawing is only one showcase. The controller should also work in space, so I want to move beyond the XY plane. Right now the gripper holds a pen, and a Wacom drawing tablet measures the pen's tip, called the nib. The tablet is a flat sensor that reports where the pen touches it, giving me x and y along its surface. What I'm missing is z, the height above that plane.
+My SO-101 is a small robot arm whose gripper currently holds a pen. A Wacom drawing tablet reports where the pen's tip, the nib, touches its surface. That gives me x and y. What I'm missing is z, the height above the plane. I use this setup to build a smooth, precise controller, the program that turns a desired path into motor commands. Drawing is one showcase of the drawing arm project, but the controller should also work in space. That is why I want to move beyond the XY plane.
 
 <div class="rc-mark" id="fig-plane" data-panel="plane" data-title="The tablet sees only its plane"></div>
 
@@ -68,7 +68,7 @@ The tablet is also the best deal in my setup. It cost about US$40 and reports th
 
 Tracking the tip's path lets me see how a change to the controller affects the motion. On the tablet, that tells me how well the arm draws. But the arm should also carry a tool above the table, so I want to measure its motion in free space and see whether corrections learned while drawing still help there. Those measurements also give me data to build a model of how the arm moves.
 
-The arm already tells me something about its own pose through its encoders, the sensors that read each joint angle. The catch is that the arm can bend between a joint and the tip, changing the path. So I want an outside reference that measures the result of the whole chain, including the tool holder.
+The encoders already tell me each joint angle, giving me some information about the arm's pose. But bending between a joint and the tip can change the path. An outside reference would measure the result of the whole chain, including the tool holder.
 
 ## Three ways to measure in space
 
@@ -108,7 +108,7 @@ Infrared motion capture works differently. Cameras observe reflective markers an
 
 A tracker can look stable while stationary and still have substantially larger errors when it moves. In the SteamVR study, the four-station setup reached [0.574 mm aggregate RMSE at 12.5 mm/s, rising to 4.237 mm at 50 mm/s](https://doi.org/10.3390/s23020725). RMSE stands for root mean square error and gives large misses more weight than small ones. Since I want to track a moving tool, the dynamic result matters.
 
-Where I put the markers determines which part of the mechanical chain the measurement includes. Markers near the tool measure its motion, while markers on separate arm links can also reveal where bending occurs.
+Marker placement determines what the measurement includes. Put markers near the tool to measure its motion. Put them on separate arm links too, and they can also reveal where the chain bends.
 
 ### A laser tracker
 
@@ -124,7 +124,7 @@ This is industrial dimensional measurement equipment, providing an independent m
 
 <div class="rc-mark" id="fig-accuracy" data-panel="accuracy" data-title="Accuracy on one log axis"></div>
 
-The figures describe different properties, so comparing the systems takes some care. Rate counts samples per second, while latency measures the time from a physical motion to a usable sample in the program. Mean absolute error (MAE) averages the size of the errors, and RMSE gives large misses more weight. A tolerance or maximum permissible error states a bound under specified conditions. The two charts show the spread, and the table below them keeps each figure with its source link.
+Before comparing the systems, separate the properties their figures describe. Rate counts samples per second. Latency is the time from a physical motion to a sample the program can use. Mean absolute error (MAE) averages the size of the errors, and RMSE gives large misses more weight. A tolerance or maximum permissible error states a bound under specified conditions. The two charts show the spread, and the table below them keeps each figure with its source link.
 
 <div class="rc-slot" data-for="fig-accuracy" data-src="/assets/robotics/so101-series/part8/accuracy.svg" data-caption="The accuracy figures from the table on one axis. Each row uses its own error metric and test setup, so compare the position within a row, not the gap between rows. The Leica range is the datasheet formula evaluated at 1 m and 10 m."><span class="rc-sr">Accuracy figures on one log axis. A horizontal log-scale chart of the published accuracy figure for each system. Values range from 0.021 millimeters for a laser tracker at 1 meter to 2.164 millimeters for moving SteamVR trackers.</span></div>
 
@@ -163,7 +163,7 @@ $$
 p_{\text{nib}} = t + Rr.
 $$
 
-An error in the estimated orientation rotates that offset and shifts the estimated nib position, so keeping the target close to the nib reduces this lever arm. Timing matters too: a delayed sample describes where the tool was, so speed turns the delay into apparent path error.
+Now consider an orientation error. It rotates the offset and shifts the estimated nib position. Keeping the target close to the nib reduces that lever arm. A delayed sample creates another error: it describes where the tool was, and speed turns the delay into apparent path error.
 
 ## Limits
 

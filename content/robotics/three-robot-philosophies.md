@@ -571,9 +571,9 @@ thumbnail_alt: 'Blackboard drawing: three bets on where robot generalization com
 </g></svg></div></div>
 <div class="rc-body">
 
-Suppose you want a robot that can tidy a stranger's kitchen, one it has never seen. Robot people call that **generalization**, and three of the best-funded robot companies, [Figure](https://www.figure.ai), [Generalist](https://generalistai.com) and [Physical Intelligence](https://www.pi.website) (Pi), all say it's the whole game. They disagree about where it comes from.
+Suppose you want a robot to tidy a stranger's kitchen. It has never seen the room, but it still has to get the job done. That is **generalization**, and three of the best-funded robot companies, [Figure](https://www.figure.ai), [Generalist](https://generalistai.com) and [Physical Intelligence](https://www.pi.website) (Pi), all say it's the whole game. Where they disagree is how to get it.
 
-Figure builds a humanoid and pays people to film themselves doing chores. Generalist hands people a cheap two-finger gripper and records them using it. Pi trains one model on many different robots, then lets it practice on the job. Each is a bet on where the **generalization ceiling** is: the point where more data and money stop making the robot better in places it hasn't seen. Underneath sits one question: do you need a human-shaped robot to learn from human data? Figure says yes. If the answer is no, a simpler robot on wheels might be enough for a lot of homes.
+Look at what each company collects. Figure builds a humanoid and pays people to film themselves doing chores. Generalist gives people a cheap two-finger gripper and records them using it. Pi trains one model on many different robots, then lets it practice on the job. Each approach makes a different bet on the **generalization ceiling**: the point where more data and money stop helping in places the robot hasn't seen. This brings us to the question underneath all three bets: do you need a human-shaped robot to learn from human data? Figure says yes. If the answer is no, a simpler robot on wheels might be enough for a lot of homes.
 
 <div class="rc-mark" id="sec-nines" data-panel="nines" data-view="nines" data-title="Count your nines first"></div>
 
@@ -585,7 +585,7 @@ The idea of a ceiling comes from a talk by Dmitri Dolgov, Waymo's co-CEO, at Y C
 
 Every technology has a curve that starts steep and then flattens, and the classic mistake is "picking the tech that gives you the fastest early ramp". Cameras alone are "a very reasonable way to go" for a car that only has to drive like a person, but for superhuman driving "weak sensing just leads to a safety curve that flattens out way too early." In a dust storm his camera sees very little and the lidar shows a pedestrian by the road. More camera data can't fix that, because the pedestrian isn't in the pixels. His second example is learning: plain end-to-end imitation "will give you very rapid progress", but for a superhuman product "just doing kind of that basic vanilla end-to-end is not enough." I'll call that the imitation plateau.
 
-So how many nines does a home robot need? Let's do a back-of-the-napkin calculation. Say it does 50 small tasks a day. At 99% per task it gets something wrong every two days. To fail less than once a month it needs about 99.93%. That's three nines at least, in homes nobody tested in.
+What does that mean for a home robot? Let's do a back-of-the-napkin calculation. Suppose it does 50 small tasks a day. At 99% success per task, it gets something wrong every two days. Fewer than one failure a month requires about 99.93%. So the target is at least three nines, in homes nobody tested in.
 
 <div class="rc-mark" id="sec-bets" data-panel="bets" data-view="bets" data-title="Three bets on the ceiling"></div>
 
@@ -618,9 +618,9 @@ He names no one, but the left road matches what Generalist does. Then he turns t
 
 > "And let me be clear, if you collect millions of hours on a table, you will generalize to a table and you'll pick up balls and do other stuff. [...] You have to generalize to that over there on the right. And then when you start generalizing to that, you're going to have to re-architect everything here on the left. I've been there. We've been on a table before, and we hit a wall."
 
-He doesn't say table data is useless once the robot walks. He says leaving the table means rebuilding everything, and for Figure that meant a year of re-architecting Helix, its robot model, to send commands "to every joint". So the wall was partly in Figure's own model.
+The claim isn't that table data becomes useless when a robot walks. It's that leaving the table means rebuilding everything. For Figure, that took a year of re-architecting Helix, its robot model, to send commands "to every joint". Part of the wall was in Figure's own model.
 
-Is the humanoid the only way to win, then? Adcock says yes. Two claims are folded into that. One is that raw human data has a higher ceiling than data from robot-shaped tools. The other is that only a human-shaped robot can use human data, and that's the one that makes the humanoid necessary. So what has Figure tested?
+Does that make the humanoid the only way to win? Adcock says yes, but getting there takes two claims. First, raw human data has a higher ceiling than data from robot-shaped tools. Second, only a human-shaped robot can use that human data. The second claim is what makes the humanoid necessary. What has Figure tested?
 
 <div class="rc-mark" id="sec-homes" data-panel="homes" data-view="homes" data-title="Figure's test: 30 homes it never saw"></div>
 
@@ -635,7 +635,7 @@ Then Figure ran a controlled comparison: the same task data, model and test, wit
 <figcaption>Figure's Helix 2.5 robots at work in rented homes they had never seen (Figure, September 2026). <a href="https://www.youtube.com/watch?v=lJpM_2a1zrE">Watch on YouTube</a></figcaption>
 </figure>
 
-That's the strongest public result from any of the three that human video makes a robot better in new places. But no robot without a human shape was in the comparison. It shows that human video helps Figure's humanoid, not that another body couldn't get the same lift.
+This is the strongest public result from any of the three that human video helps a robot in new places. The comparison contains no robot without a human shape, though. It measures the benefit to Figure's humanoid. Whether another body could get the same lift remains untested.
 
 <div class="rc-mark" id="sec-device" data-panel="device" data-view="device" data-title="Generalist: robot-shaped data from human hands"></div>
 
@@ -684,7 +684,7 @@ Humanoids gain too: [HAT](https://arxiv.org/abs/2503.13441) +25 points, [EgoHuma
 
 What hurts is misalignment. In the [What Matters](https://arxiv.org/abs/2606.06627) study, human video doubled success on one task, 26.2% to 51.2%, once the human camera's image scale matched the robot's, and added nothing with a badly mismatched camera. Scenes, objects, task order, routes and rough hand paths carry over to a gripper on wheels. Grasp style, finger contact and whole-body motion carry over poorly, and fine precision suffers because hand tracking is off by 1 to 2 cm ([EgoZero](https://arxiv.org/abs/2505.20290)). Whole-body motion is the one part only a humanoid can use.
 
-One question stays open. These papers mix a few hours of human data into robot training, and Pi found that this helps only on top of varied robot pretraining. Figure pretrains on human video alone, at a far larger scale, and nobody has run that recipe on a robot without a human shape. Generalist comes closest: it pretrains a gripper robot with no robot data, but on hand-held grippers, not bare hands. Most of these tests also run 10 to 50 trials per condition, which can miss a 30-point gap between two bodies. The paper-by-paper evidence is in a companion article: [Do you need a human body to use human data?](/robotics/do-you-need-a-human-body-for-human-data/)
+There is still a gap in the evidence. These papers mix a few hours of human data into robot training, and Pi found that this helps only after varied robot pretraining. Figure instead pretrains on human video alone, at a far larger scale. Nobody has run that recipe on a robot without a human shape. Generalist comes closest: its gripper robot pretrains with no robot data, but the people use hand-held grippers rather than bare hands. Most of these tests also run only 10 to 50 trials per condition, enough to miss a 30-point gap between two bodies. The paper-by-paper evidence is in a companion article: [Do you need a human body to use human data?](/robotics/do-you-need-a-human-body-for-human-data/)
 
 <div class="rc-mark" id="sec-wheels" data-panel="wheels" data-view="wheels" data-title="Legs, wheels and the flat with no stairs"></div>
 
@@ -696,7 +696,7 @@ Dolgov's frame gives both sides a point. A wheel at a stair is a ceiling of his 
 
 That's the Roomba argument, and I think it holds. A Roomba doesn't climb stairs either, and it sold because it was cheap and good enough on one floor. On cost, Levine says each arm on Pi's robots costs about $3,000 ([interview](https://www.youtube.com/watch?v=48pxVdmkMIE)). Figure publishes no price, and Adcock describes Figure's next hand as having "more actuators than an entire robot".
 
-So Figure's two claims get different answers. The body sets a hard ceiling on what a robot can reach, and legs raise it. That the body also limits how much a robot learns from human data is the claim nobody has shown.
+We can now separate Figure's two claims. The body puts a hard limit on what the robot can reach, and legs raise that limit. Whether the body also caps how much it can learn from human data is still unshown.
 
 <div class="rc-mark" id="sec-ceilings" data-panel="ceilings" data-view="ceilings" data-title="Four ceilings, and who attacks which"></div>
 

@@ -89,7 +89,7 @@ thumbnail_alt: 'Two blackboard panels: reward-to-go gives each action only the r
 </g></svg></div></div>
 <div class="rc-body">
 
-Suppose you're training a robot arm to place a block on a shelf. Instead of learning a value table and acting greedily, as in the earlier parts, you adjust the probabilities of its actions directly, so actions from attempts that went well become more likely and actions from attempts that went badly become less likely. That's a **policy-gradient** method. The idea is simple, but the score that decides how hard to push each action can go wrong in four ways, and each fix has a cost.
+Suppose you're training a robot arm to place a block on a shelf. The earlier parts learned values and acted greedily on them. Here we adjust action probabilities directly: make actions from good attempts more likely and actions from bad attempts less likely. This is a **policy-gradient** method. To make the update, we need a score for how hard to push each action. That score can go wrong in four ways, and each fix has a cost.
 
 **Part 6.** [Previously: the deadly triad](/robotics/rl-5-the-deadly-triad/). In the [failure map](/robotics/rl-0-overview/#sec-failures), these belong to "too little signal", "credit in the wrong place" and "updates that overshoot".
 
@@ -101,13 +101,13 @@ Let $\pi_\theta(a\mid s)$ be the policy's probability of action $a$ in state $s$
 
 $$\Delta\theta\;\propto\;\sum_{t=0}^{T-1}\nabla_\theta\log\pi_\theta(A_t\mid S_t)\,G.$$
 
-So everything depends on that score: which rewards it counts, what it's compared with, and how far one batch of attempts is allowed to push.
+The score now carries three choices: which rewards to count, what to compare them with, and how far one batch of attempts is allowed to push the policy.
 
 <div class="rc-mark" id="sec-past-credit" data-panel="credit" data-view="credit" data-title="Credit only for what follows"></div>
 
 ## Credit only for what follows
 
-Take one attempt with three actions. The arm reaches toward the block and bumps the shelf on the way (reward −2), carries the block (reward 0), and places it (reward +10). The whole return is 8, so every action gets a score of 8, including the place action, which had nothing to do with the bump.
+Watch one attempt with three actions. The arm reaches for the block, bumping the shelf on the way (reward −2). It carries the block (reward 0), then places it (reward +10). The total is 8. Using that whole return gives every action a score of 8, even the place action, which had nothing to do with the earlier bump.
 
 A fairer score for action $t$ is the **reward-to-go**, the rewards from that action onward: $G_t=\sum_{k\ge t}R_{k+1}$, with no discount to keep the numbers simple. The reach still gets 8, the carry and the place get 10 each, and only the reach is charged for the bump. This is the return REINFORCE uses in [Sutton and Barto, Section 13.3](http://incompleteideas.net/book/RLbook2020.pdf).
 
@@ -142,7 +142,7 @@ So a fixed number times this term also averages to zero. In any single attempt, 
 
 ## Compare with the usual result
 
-Reward-to-go fixes the timing, but here every score is still positive. Say the arm makes four attempts from the same starting position. Three place the block and score 10, and one drops it and scores 0. With raw returns, the three good attempts are pushed up by 10 and the failed one by 0. Nothing gets pushed down, so the failure is only less encouraged, and the difference has to come out of many noisy updates.
+Reward-to-go assigns rewards to the right part of the attempt, but the scores here remain positive. Start the arm in the same position four times. Three attempts place the block and score 10; one drops it and scores 0. Raw returns push the three successes up by 10 and the failure by 0. The failure is only less encouraged. Nothing is pushed down, so many noisy updates must reveal the difference.
 
 Subtract a **baseline** $b(s)$, a number that depends on the state but not on the action. A natural choice is the usual return from that state, here the average of the four attempts, $b=7.5$. Now the placements score +2.5 and the drop scores −7.5, so the drop is pushed down and the placements up.
 
@@ -165,7 +165,7 @@ Robot attempts are slow, so you'd like to take several gradient steps on each ba
 
 **Proximal Policy Optimization (PPO)**, from the same paper, clips the ratio, with the paper's setting to the interval from 0.8 to 1.2. In the left plot of the drawing, an action with advantage +2 whose ratio already reached 1.3 sits on the flat part, so nothing pushes it up any further. In the right plot, an action with advantage −2 whose ratio drifted up to 1.3 is still on the slope, so it gets pulled back down. At ratio 0.7 the two cases swap. Clipping removes the incentive to keep moving in the direction the advantage wants, and it keeps the full correction in the other direction.
 
-That isn't a hard limit, though. Several passes over the data and shared weights can still push the ratio out of the interval, so PPO implementations also control the step size and the number of passes. Many also stop a batch early when the **KL divergence**, a measure of how far the new policy has drifted from the old one, grows too large.
+The interval doesn't impose a hard limit on the policy. Shared weights and repeated passes over the batch can still move a ratio outside it. PPO implementations therefore also control the step size and number of passes. Many stop a batch early if the **KL divergence**, which measures how far the new policy has drifted from the old one, gets too large.
 
 My game [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) has a CartPole level that shows the difference. With 10 passes over each batch at step size 0.03, the plain update moved the policy by a KL divergence of about 1.5 per update, and at the end of training the pole stayed up for 158 steps on average. With clipping at the same settings, the KL was 0.008 per update and the average was about 395 steps, out of a 500-step limit (simulation, 3 seeds). The step size matters as much as the clip here: at step size 0.001, the plain update with 10 passes also stayed at a KL of 0.008 and averaged about 379 steps.
 
@@ -238,7 +238,7 @@ The two cases mean different things. All successes on an easy start is mostly ha
 
 ## Four fixes, four costs
 
-Each fix repairs one part of the score, and none of them is free. Reward-to-go gets the timing right, but each score is still one noisy sample. A baseline adds the comparison, as long as you have a good value estimate or several attempts from the same start. The PPO clip makes batch reuse safer, but it's not a hard bound, so the step size, the number of passes and the KL still matter. Filtering identical groups brings the signal back at the price of extra attempts, a different number each batch.
+Each fix changes a different part of the score. Reward-to-go gets the timing right, while leaving each score as one noisy sample. A baseline supplies a comparison, provided we have a good value estimate or several attempts from the same start. PPO clipping makes batch reuse safer, while leaving step size, number of passes and KL important because the clip is not a hard bound. Filtering identical groups restores a signal by spending extra attempts, with a different number needed for each batch.
 
 <details>
 <summary>The same summary as a table</summary>

@@ -10,7 +10,7 @@ thumbnail: '/assets/robotics/faster-wam-in-lerobot/thumbnail.png'
 thumbnail_alt: 'The race widget: Fast-WAM is at denoising step 5 of 10 with 131 of 300 cache reads, while Faster-WAM is done at 169.5 ms after 10 reads of one fused cache.'
 ---
 
-A world action model, or WAM, is usually a robot policy built on a video model. [Fast-WAM](https://arxiv.org/abs/2603.16666) (March 2026) is fast compared to the WAMs that generate future frames before they act. It learns to predict video in training, but when the robot acts it runs the 30-layer Wan2.2 video model once on the current frame and caches every layer's keys and values. Then a 30-layer action expert denoises the next chunk of 32 actions in 10 steps, and at every step action layer $j$ reads only video layer $j$'s cache. [Faster-WAM](https://arxiv.org/abs/2608.02365v2) (August 2026) asks if that expert needs to be deep. Its answer is no: one action layer that reads a mix of all 30 caches stays competitive.
+A world action model, or WAM, is usually a robot policy built on a video model. Consider the work its action expert does. [Fast-WAM](https://arxiv.org/abs/2603.16666) (March 2026) is already fast compared to WAMs that generate future frames before acting. It learns video prediction in training, but on the robot it runs the 30-layer Wan2.2 video model just once on the current frame, caching the keys and values from every layer. A separate 30-layer action expert then denoises a chunk of 32 actions over 10 steps. At each step, action layer $j$ reads video layer $j$'s cache. Does that expert need all its layers? [Faster-WAM](https://arxiv.org/abs/2608.02365v2) (August 2026) finds that one action layer, reading a mix of all 30 caches, stays competitive.
 
 $$\begin{aligned}\text{Fast-WAM:}\quad & 30 \times 10 = 300 \text{ cache reads}\\ \text{Faster-WAM:}\quad & 1 \times 10 = 10 \text{ cache reads}\end{aligned}$$
 
@@ -21,7 +21,7 @@ $$\begin{aligned}\text{Fast-WAM:}\quad & 30 \times 10 = 300 \text{ cache reads}\
 
 ## Three changes
 
-The paper's ablation (Figure 3) cuts Fast-WAM to one action layer that reads only the last video layer, then adds three changes one at a time. LIBERO is a simulated tabletop benchmark, and LIBERO-Plus perturbs the same scenes.
+To isolate the changes, the paper's ablation (Figure 3) first reduces Fast-WAM to one action layer reading only the last video layer. It then adds three changes, one at a time. LIBERO is a simulated tabletop benchmark; LIBERO-Plus perturbs those same scenes.
 
 | | LIBERO | LIBERO-Plus |
 | --- | ---: | ---: |
@@ -35,7 +35,7 @@ The paper copies Fast-WAM's rates from earlier papers, and only the last row is 
 
 ### Lite KV-Fusion
 
-Faster-WAM mixes all 30 caches into one, once per chunk, with a learned weight per layer and head:
+The first change is to combine the 30 caches. Once per chunk, Faster-WAM mixes them into one cache using a learned weight for each layer and head:
 
 $$\beta_{h\ell}=\frac{e^{\alpha_{h\ell}}}{\sum_{\ell'=1}^{30} e^{\alpha_{h\ell'}}}$$
 
@@ -43,7 +43,7 @@ $$\widehat K_h=\sum_{\ell=1}^{30}\beta_{h\ell}\,K_{h\ell}, \qquad \widehat V_h=\
 
 Here $\ell$ is the video layer, $h$ is one of 24 heads, the $\alpha_{h\ell}$ are 720 learned numbers, and $K_{h\ell}$ and $V_{h\ell}$ are the cached keys and values. The $\alpha$ start at zero, so every $\beta$ starts at $1/30$, and in the paper's Figure 4 (LIBERO) they stay within about 10% of it, read by eye. The authors still call the mix non-uniform, with different heads leaning on different depths.
 
-So how does the action expert use that cache? At every denoising step, the 32 action tokens, one per action in the chunk, attend to the fused cache and to each other in one softmax per head:
+That fused cache is ready before denoising starts. At each denoising step, the 32 action tokens, one for each action in the chunk, attend both to the cache and to each other. Each head uses one softmax:
 
 $$O_h=\operatorname{softmax}\!\left(\frac{Q_h\,[\widehat K_h;\,K^{a}_h]^{\top}}{\sqrt{D}}\right)[\widehat V_h;\,V^{a}_h]$$
 
@@ -51,7 +51,7 @@ $Q_h$, $K^{a}_h$ and $V^{a}_h$ are the queries, keys and values the action layer
 
 ### World-model-only conditioning
 
-Text and robot state go into the video model only, whose layers already attend to them. The action layer drops its own cross-attention to them and gets them through the fused cache.
+The video model already attends to text and robot state. Faster-WAM therefore sends both into that model only, removing the action layer's separate cross-attention to them. The action layer receives that information through the fused cache.
 
 ### Retracted 1D RoPE
 
@@ -82,11 +82,11 @@ You can start from a Fast-WAM checkpoint but have to fine-tune it, since the one
 | Mine, A100, float32 | 802.2 | 319.5 |
 | Mine, A100, bfloat16 | 938.0 | 175.6 |
 
-My runs use random video and action weights with the real image encoder (VAE) and text encoder, so they measure speed only: about 2.5x in float32 and 5.3x in bfloat16, end to end.
+These are speed measurements only. My runs use random video and action weights, alongside the real image encoder (VAE) and text encoder. End to end, the speedup is about 2.5x in float32 and 5.3x in bfloat16.
 
 bfloat16 gains more for two measured reasons. The encoders and the video prefill, the one video pass that fills the cache, run about twice as fast as in float32, while Fast-WAM's eager denoiser gets slower, from 493 to 797 ms, with 29,020 GPU kernel launches per chunk against Faster-WAM's 770. So the 5.3x is mostly an eager-execution ratio on this host, not a ratio of arithmetic. My Fast-WAM loop is also about 5x slower than the paper's (797 against about 150 ms, both eager bfloat16), which is most of why my 5.3x is bigger than the paper's 3.8x.
 
-My take: the action expert was the expensive part, and it doesn't need to be deep. In bfloat16 the denoising loop fell from 797.3 to 23.7 ms, so the text encoder (about 42 ms) and the video prefill (about 88 ms) now each take longer than the whole loop. The next speedup has to come from there, or from compiling the pipeline.
+My take is that the expensive action expert doesn't need its depth. In bfloat16, reducing the denoising loop from 797.3 to 23.7 ms moves the bottleneck: the text encoder (about 42 ms) and video prefill (about 88 ms) each now take longer than the entire loop. The next speedup has to come from those stages, or from compiling the pipeline.
 
 <details>
 <summary>How I timed it</summary>
