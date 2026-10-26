@@ -1,6 +1,6 @@
 ---
-title: 'Where humanoids go first: Persona AI bets on skilled trades'
-description: 'Every humanoid company picks a first job, and the pick decides the business. Persona AI, run by a former Figure CTO, picked welding in shipyards and steel shops: skilled tool use, leased as labor, learned from expert teleoperation. How that bet differs from Agility, 1X, Apptronik and Tesla, with a pinned blackboard.'
+title: 'Persona AI bets its humanoid on welding'
+description: 'Persona AI is building a humanoid for skilled industrial work. Welding gives it a customer with a labor bottleneck and a way to collect expert demonstrations. Its first job separates it from Agility, 1X, Apptronik and Tesla.'
 date: '2026-10-26'
 draft: false
 layout: essay
@@ -18,7 +18,18 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 </style>
 <svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in"/></filter></svg>
 <div class="rc rls-canvas" id="rc">
-<div class="rc-stage"><div class="rc-bar"><div class="rc-where" aria-live="polite"></div></div><div class="rc-view"><svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 1742" data-whole="0 0 840 1742" data-views='{"map":[12,88,396,288],"labor":[432,88,396,288],"weld":[12,418,396,288],"july":[432,418,396,288],"legs":[12,748,396,288],"loop":[432,748,396,288],"lease":[12,1078,396,288],"queue":[432,1078,396,288],"score":[12,1408,396,288],"decide":[432,1408,396,288]}' role="img" aria-labelledby="rp-title rp-desc"><title id="rp-title">Where humanoids go first: ten blackboard panels</title><desc id="rp-desc">Ten blackboard panels on Persona AI's humanoid bet and how it differs from Agility, 1X, Apptronik, Tesla and Figure. 1, the first job each company picks: Persona welds seams in shipyards, Agility moves totes in warehouses, 1X does chores in homes, Apptronik takes dull, dirty, dangerous factory work, Tesla builds a Bots business on its current operations, Figure aims at homes and factories. 2, the gap in skilled trades: 82,500 US welding jobs to fill every year to 2029, five welders retiring for every two who arrive, 2.1 million US manufacturing jobs unfilled by 2030, about 40,000 skilled workers short in North American and Korean shipbuilding, average age 48.3 on the Ulsan production floor and 55 for a US welder. 3, what a weld asks of a robot: the melt rate caps the speed at centimeters per second, the motion is millimeter-scale repetition, one ship holds hundreds of kilometers of linear welds, done with the crew's own torch. 4, the July 2026 weld at ARC Specialties in Houston: a humanoid squats, strikes an arc, runs the weld, stands and walks away, teleoperated from VR and motion capture, no gantry and no tether, balancing itself. 5, why legs: shipyard work is on the ground, overhead and through portholes, a wheeled base is blocked at a spar and the site would have to change, legs take the route a welder takes. 6, teleoperation is the data path: the operator sends intent and judgment, the robot keeps balance, footing and vision, every session is expert demonstration data, and training adds one skill at a time. 7, the deal: Persona keeps the robot and leases the labor with AI platform updates, tooling modules and fleet training, paid for work the customer cannot staff, with funding chips of 10 million dollars pre-seed in February 2025, 42 million dollars by December 2025 per press, 65.4 million dollars sold of a 142 million dollar SEC offering in September 2026, and 2 million dollars from POSCO DX. 8, who is standing in line: HD Hyundai on shipyard welding, POSCO on steel-site logistics and an investor, SSE Steel Fabrication on fillet welding in Louisiana, ABS on class standards, Under Armour on robot workwear research. 9, the scoreboard: shown in public are a teleoperated weld in a live shop, deals with HD Hyundai, POSCO, SSE and ABS, Gen 3 units on the ground, and 65.4 million dollars sold toward a 142 million dollar offering; not shown yet are an autonomous weld, a robot working a whole shift, hundreds of units at one site, and a price or a profit. 10, what decides the bet: the paying first job needs labor nobody can hire, a tool in the hand, and a customer buying output rather than savings, and the fork is the robot welding alone, which pays, against a pilot forever, which is a demo with extra steps.</desc>
+<noscript>
+<style>
+#rc { display: block; width: auto; left: auto; transform: none; }
+#rc > .rc-stage { position: relative; top: auto; height: min(75vh, 900px); border: 1px solid var(--line); }
+#rc .rc-bar { display: none; }
+#rc .rc-view { overflow: auto; }
+#rc .rc-stage svg.rc-svg { position: static; width: 840px; height: 1742px; max-width: none; }
+</style>
+<p>Scroll inside the blackboard to read all ten panels. The full article follows below.</p>
+</noscript>
+
+<div class="rc-stage"><div class="rc-bar"><div class="rc-where" aria-live="polite"></div></div><div class="rc-view" tabindex="0" role="region" aria-label="Humanoid company comparison blackboard"><svg class="rc-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 1742" data-whole="0 0 840 1742" data-views='{"map":[12,88,396,288],"labor":[432,88,396,288],"weld":[12,418,396,288],"july":[432,418,396,288],"legs":[12,748,396,288],"loop":[432,748,396,288],"lease":[12,1078,396,288],"queue":[432,1078,396,288],"score":[12,1408,396,288],"decide":[432,1408,396,288]}' role="img" aria-labelledby="rp-title rp-desc"><title id="rp-title">Where humanoids go first: ten blackboard panels</title><desc id="rp-desc">Ten blackboard panels on Persona AI's humanoid bet and how it differs from Agility, 1X, Apptronik, Tesla and Figure. 1, the first job each company picks: Persona welds seams in shipyards, Agility moves totes in warehouses, 1X does chores in homes, Apptronik takes dull, dirty, dangerous factory work, Tesla builds a Bots business on its current operations, Figure aims at homes and factories. 2, the gap in skilled trades: 82,500 US welding jobs to fill every year to 2029, five welders retiring for every two who arrive, 2.1 million US manufacturing jobs unfilled by 2030, about 40,000 skilled workers short in North American and Korean shipbuilding, average age 48.3 on the Ulsan production floor and 55 for a US welder. 3, what a weld asks of a robot: the melt rate caps the speed at centimeters per second, the motion is millimeter-scale repetition, one ship holds hundreds of kilometers of linear welds, done with the crew's own torch. 4, the July 2026 weld at ARC Specialties in Houston: a humanoid squats, strikes an arc, runs the weld, stands and walks away, teleoperated from VR and motion capture, no gantry and no tether, balancing itself. 5, why legs: shipyard work is on the ground, overhead and through portholes, a wheeled base is blocked at a spar and the site would have to change, legs take the route a welder takes. 6, teleoperation is the data path: the operator sends intent and judgment, the robot keeps balance, footing and vision, every session is expert demonstration data, and training adds one skill at a time. 7, the deal: Persona keeps the robot and leases the labor with AI platform updates, tooling modules and fleet training, paid for work the customer cannot staff, with funding chips of 10 million dollars pre-seed in February 2025, 42 million dollars by December 2025 per press, 65.4 million dollars sold of a 142 million dollar SEC offering in September 2026, and 2 million dollars from POSCO DX. 8, who is standing in line: HD Hyundai on shipyard welding, POSCO on steel-site logistics and an investor, SSE Steel Fabrication on fillet welding in Louisiana, ABS on class standards, Under Armour on robot workwear research. 9, the scoreboard: shown in public are a teleoperated weld in a live shop, deals with HD Hyundai, POSCO, SSE and ABS, Gen 3 units on the ground, and 65.4 million dollars sold toward a 142 million dollar offering; not shown yet are an autonomous weld, a robot working a whole shift, hundreds of units at one site, and a price or a profit. 10, what decides the bet: the paying first job needs labor nobody can hire, a tool in the hand, and a customer buying output rather than savings, and the fork is the robot welding alone, followed by a test of its economics, against a pilot forever, which is a demo with extra steps.</desc>
 <defs>
 <marker id="rp-a-chalk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-chalk" stroke-width="1.8"/></marker>
 <marker id="rp-a-dim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" class="s-dim" stroke-width="1.8"/></marker>
@@ -92,7 +103,7 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 </g></g>
 <g class="rc-panel" data-panel="labor">
 <rect x="430" y="56" width="400" height="320" rx="6" fill="none" stroke="#b6baaf"/>
-<text class="rls-panel-title" x="444" y="84">2. Why the trades: a gap, not a price</text>
+<text class="rls-panel-title" x="444" y="84">2. Skilled trades face a labor gap</text>
 <g transform="translate(438 92)">
 <rect x="0" y="4" width="186" height="66" rx="6" fill="none" class="s-dim" stroke-width="1.4"/>
 <text x="10" y="34" class="c-yellow" font-size="22">82,500</text>
@@ -118,7 +129,7 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 <text x="208" y="182" class="c-yellow" font-size="22">55</text>
 <text x="208" y="198" class="c-chalk" font-size="11.5">average age of a</text>
 <text x="208" y="211" class="c-chalk" font-size="11.5">US welder</text>
-<text x="0" y="238" class="c-red" font-size="15">moving boxes: a solved problem.</text>
+<text x="0" y="238" class="c-red" font-size="15">moving boxes: established automation.</text>
 <text x="0" y="258" class="c-yellow" font-size="15">welding: nobody to hire, and the hull waits.</text>
 <text x="0" y="278" class="c-dim" font-size="11.5">AWS and Deloitte/Manufacturing Institute via Biz New Orleans; Persona AI to Seoul Economic Daily.</text>
 </g></g>
@@ -146,8 +157,8 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 <text x="120" y="122" class="c-dim" font-size="12.5">the torch travels centimeters per second</text>
 <text x="30" y="182" class="c-yellow" font-size="12.5">the seam: long, straight, and everywhere</text>
 <text x="0" y="214" class="c-chalk" font-size="15">slow, repeated, checkable: a robot-friendly job.</text>
-<text x="0" y="234" class="c-chalk" font-size="15">people tire and drift at the twentieth seam.</text>
-<text x="0" y="254" class="c-yellow" font-size="15">not the hardest weld. the most common one.</text>
+<text x="0" y="234" class="c-chalk" font-size="15">20th seam: an illustration of fatigue.</text>
+<text x="0" y="254" class="c-yellow" font-size="15">start with common linear welds.</text>
 <text x="0" y="276" class="c-dim" font-size="11.5">Radford and Pratt to IEEE Spectrum, August 2026.</text>
 </g></g>
 <g class="rc-panel" data-panel="july">
@@ -231,7 +242,7 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 </g></g>
 <g class="rc-panel" data-panel="lease">
 <rect x="10" y="1046" width="400" height="320" rx="6" fill="none" stroke="#b6baaf"/>
-<text class="rls-panel-title" x="24" y="1074">7. Lease the labor, not the robot</text>
+<text class="rls-panel-title" x="24" y="1074">7. Selling skilled labor</text>
 <g transform="translate(18 1082)">
 <rect x="0" y="26" width="150" height="118" rx="6" fill="none" class="s-yellow" stroke-width="1.8"/>
 <text x="10" y="50" class="c-yellow" font-size="14">Persona AI keeps it</text>
@@ -249,8 +260,8 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 <text x="238" y="92" class="c-chalk" font-size="12">construction, energy</text>
 <text x="238" y="110" class="c-chalk" font-size="12">welding, fabrication,</text>
 <text x="238" y="128" class="c-chalk" font-size="12">inspection</text>
-<text x="0" y="170" class="c-yellow" font-size="14">value: top line, not bottom line.</text>
-<text x="0" y="188" class="c-chalk" font-size="12.5">even above a person's wage, it unlocks</text>
+<text x="0" y="170" class="c-yellow" font-size="14">value: additional output and revenue.</text>
+<text x="0" y="188" class="c-chalk" font-size="12.5">even above a person's wage, it could unlock</text>
 <text x="0" y="204" class="c-chalk" font-size="12.5">work the yard cannot otherwise staff.</text>
 <rect x="0" y="216" width="92" height="54" rx="6" fill="none" class="s-dim" stroke-width="1.4"/>
 <text x="10" y="242" class="c-yellow" font-size="16">$10M+</text>
@@ -281,7 +292,7 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 <text x="0" y="114" class="c-chalk" font-size="15">SSE Steel Fabrication</text>
 <text x="0" y="131" class="c-dim" font-size="12">fillet welding in a Louisiana shop</text>
 <rect x="278" y="98" width="106" height="22" rx="11" fill="none" class="s-green" stroke-width="1.5"/>
-<text x="331" y="114" class="c-green" font-size="11.5" text-anchor="middle">unit this year</text>
+<text x="331" y="114" class="c-green" font-size="11.5" text-anchor="middle">pilot this year</text>
 <text x="0" y="158" class="c-chalk" font-size="15">ABS</text>
 <text x="0" y="175" class="c-dim" font-size="12">class and safety standards</text>
 <rect x="278" y="142" width="106" height="22" rx="11" fill="none" class="s-dim" stroke-width="1.5"/>
@@ -291,12 +302,12 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 <rect x="278" y="186" width="106" height="22" rx="11" fill="none" class="s-dim" stroke-width="1.5"/>
 <text x="331" y="202" class="c-dim" font-size="11.5" text-anchor="middle">R&amp;D only</text>
 <text x="0" y="246" class="c-dim" font-size="12.5">founded June 2024 · Houston · Gen 3 units on the ground</text>
-<text x="0" y="264" class="c-yellow" font-size="13">every one of them is short of people.</text>
+<text x="0" y="264" class="c-yellow" font-size="13">each partner adds a worksite requirement.</text>
 <text x="0" y="280" class="c-dim" font-size="10.5">Persona AI; Korea Times (Yonhap); Biz New Orleans; Seoul Economic Daily.</text>
 </g></g>
 <g class="rc-panel" data-panel="score">
 <rect x="10" y="1376" width="400" height="320" rx="6" fill="none" stroke="#b6baaf"/>
-<text class="rls-panel-title" x="24" y="1404">9. The scoreboard: shown and not shown</text>
+<text class="rls-panel-title" x="24" y="1404">9. The production milestones</text>
 <g transform="translate(18 1412)">
 <text x="0" y="16" class="c-green" font-size="14">✓ shown in public</text>
 <text x="200" y="16" class="c-red" font-size="14">✗ not shown yet</text>
@@ -341,17 +352,17 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 <text x="140" y="84" class="c-chalk" font-size="12.5">the hand</text>
 <rect x="260" y="44" width="124" height="52" rx="6" fill="none" class="s-dim" stroke-width="1.4"/>
 <text x="270" y="68" class="c-chalk" font-size="12.5">a customer buying</text>
-<text x="270" y="84" class="c-chalk" font-size="12.5">output, not savings</text>
+<text x="270" y="84" class="c-chalk" font-size="12.5">additional output</text>
 <path d="M192 104 C192 132 116 128 92 146" fill="none" class="s-green" stroke-width="1.8" marker-end="url(#rp-a-green)"/>
 <path d="M192 104 C192 132 268 128 292 146" fill="none" class="s-red" stroke-width="1.8" marker-end="url(#rp-a-red)"/>
 <rect x="0" y="150" width="176" height="72" rx="6" fill="none" class="s-green" stroke-width="1.8"/>
 <text x="10" y="180" class="c-green" font-size="14">the robot welds alone:</text>
-<text x="10" y="202" class="c-chalk" font-size="12.5">then the bet pays</text>
+<text x="10" y="202" class="c-chalk" font-size="12.5">then test the economics</text>
 <rect x="208" y="150" width="176" height="72" rx="6" fill="none" class="s-red" stroke-width="1.8"/>
 <text x="218" y="180" class="c-red" font-size="14">a pilot forever is</text>
 <text x="218" y="202" class="c-chalk" font-size="12.5">a demo with extra steps</text>
 <text x="0" y="252" class="c-yellow" font-size="15">my pick: the sharpest first job in humanoids.</text>
-<text x="0" y="272" class="c-chalk" font-size="13">the proof is still one weld deep.</text>
+<text x="0" y="272" class="c-chalk" font-size="13">the public example is still one weld.</text>
 </g></g>
 <g class="rp-banner">
 <text x="420" y="30" class="c-chalk" font-size="19" text-anchor="middle">Every humanoid company picks a first job.</text>
@@ -360,118 +371,116 @@ thumbnail_alt: 'Blackboard drawing: five humanoid companies and the first job ea
 </g></svg></div></div>
 <div class="rc-body">
 
-Suppose you buy robots for a shipyard. The demos all look alike now: a humanoid walks, folds something, lifts a box. What you need is one seam welded before lunch, every shift, in a shop where the last three welders you hired did not stay. So the question is not which robot looks smartest on video. It is which company has picked a first job that pays.
+Suppose you run a shipyard and have more orders than your welders can finish. You can buy another machine, but someone still has to carry the torch to the seam and do the work. What would a humanoid have to do to let you build another ship?
 
-Every humanoid company has picked one. Agility Robotics picked moving totes in warehouses. 1X picked chores in homes. Apptronik picked dull, dirty, dangerous work in factories. Tesla is building a general-purpose "Bot" on top of its car business and has not named a first job at all. Persona AI, a two-year-old company in Houston, picked welding in shipyards and steel shops.
+Persona AI has built its strategy around that customer. The Houston company wants its robot to perform skilled industrial work with the tools people already use. Welding in shipyards and steel shops is the first job. Expert welders would operate the robots while Persona collects the demonstrations needed to automate their skills, and customers would lease the labor.
 
-Here is the difference in one paragraph. Most of the field aims at unskilled work: carry, sort, fetch, for wages the robot tries to undercut. Persona aims at skilled work nobody can staff, with a tool in the hand, at prices the robot does not have to win on. And it rents the work instead of selling the machine. So the bet has three unusual parts: the job (welding, using the same torch the crew uses), the money (paid out of the customer's top line, because the customer cannot fill its order book), and the learning (expert welders teleoperating the robot at real worksites, not internet video). Agility's robots have moved over 100,000 totes at GXO. 1X takes $200 deposits for a home robot. Apptronik's Apollo works factory and warehouse tasks with brains from Google DeepMind. Tesla's own annual report says it has "yet to commercialize" a Bot. Persona's humanoid has run one weld in a live welding shop, with a person driving it. I think Persona's bet is the sharpest of the five, and the video that proves it is also the honest part: today, the weld is a person wearing a robot.
+I would take this starting point over the other humanoid bets compared here. The job gives Persona a customer who can explain what the robot's work is worth. It also gives the learning team a specific skill to acquire. The hard part is turning that connection into a machine that can weld through a shift.
 
-<div class="rc-mark" id="sec-map" data-panel="map" data-view="map" data-title="Where each company sends its humanoid first"></div>
+<div class="rc-mark" id="sec-map" data-num="1" data-panel="map" data-view="map" data-title="Where each company sends its humanoid first"></div>
 
-## Where the humanoids go first
+## The first job shapes the company
 
-This is not a survey of every humanoid company. The field is too big for that and most of it is repeating itself. I picked companies whose published bet is different in kind from Persona's, and left out the ones whose bet is a variant of these. One name is deliberately thin here: [Figure](https://www.figure.ai). Figure's bet is that the robot's body decides what it can learn, and that argument deserves its own treatment: [Three robot bets](/robotics/three-robot-philosophies/), which also covers Generalist and Physical Intelligence. This article asks a different question. Not "where does generalization come from", but "what is this robot for".
+Agility Robotics has chosen material handling. Its [October 26, 2026 update](https://agilityrobotics.com/content/agility-robotics-highlights-commercial-momentum-and-growing-enterprise-demand-for-digit-humanoid-robot) reports over 100,000 totes moved at GXO under an agreement that began in June 2024. Digit works in warehouses and factories, supported by fleet software. Agility also reports more than $300 million in committed multi-year orders for Digit 5, whose value depends on contractual milestones and product features and specifications. The operating record gives buyers a concrete unit to evaluate, a tote moved in their workflow.
 
-Persona's answer was not obvious at the start. Radford, who led NASA's Valkyrie program and founded Nauticus Robotics, told IEEE Spectrum that in 2024 "we were all over the place. Warehousing, automotive, we probably even mentioned the home." Those are the same first jobs everyone else picked. Then the company formed a different thesis, "around skilled trades and tool usage". Radford calls the position "last-mover advantage": "We've seen everything that everybody's doing, and we've decided that there's a different way."
+[1X](https://www.1x.tech/about) wants NEO to live and learn alongside people in their homes. Its published timeline describes early-access homes in 2025 and 2026, and its [NEO page](https://www.1x.tech/neo) takes a $200 deposit. Everyday chores supply the work and the learning environment. The buyer is a household deciding how much help a robot brings to daily life.
 
-The team is part of why I take this seriously. The CTO, Jerry Pratt, led IHMC's DARPA Robotics Challenge team and then spent a couple of years as CTO of Figure. If anyone in this industry knows what the general-purpose humanoid crowd is doing and why it is hard, it is the person who helped build one of those companies and then left to weld.
+Apptronik's Apollo targets [dull, dirty and dangerous work](https://apptronik.com/company/our-mission) in manufacturing and warehousing. Its [programs](https://apptronik.com/company/press-releases) include Mercedes-Benz and GXO pilots, manufacturing partners and a Google DeepMind partnership. Fleets of Apollo robots collect data at Robot Park. Apptronik is developing a platform for a broad industrial role; Persona has selected a particular industrial skill to sell first.
 
-<div class="rc-mark" id="sec-labor" data-panel="labor" data-view="labor" data-title="Why the trades: a gap, not a price"></div>
+Tesla describes Optimus in its [FY2025 Form 10-K](https://www.sec.gov/Archives/edgar/data/1318605/000162828026003952/tsla-20251231.htm) as a general-purpose autonomous humanoid robot in development. The filing says, "we have yet to commercialize Bots", and explains that Tesla intends to leverage its current operations. The bet connects self-driving AI and car-scale manufacturing to a robot business. A first job remains unspecified in that filing.
 
-## Why the trades
+These choices lead to different customers and different ways to measure progress. Persona wants to put a human tool in the robot's hand and charge for skilled work that its customer struggles to staff. [Figure](https://www.figure.ai) also appears on the board, with homes and factories as its destinations. Its body-and-learning argument belongs to [Three robot bets](/robotics/three-robot-philosophies/), alongside Generalist and Physical Intelligence. The comparison here follows the first job and the business it supports.
 
-Start with the customer. Moving boxes is a solved problem with cheap solutions: arms, conveyors, wheeled robots. Welding is the opposite. The workers are scarce, the skill is real, and the shortage holds production back. As Persona puts it, a shipyard "cannot hire its way out of the problem, and every unwelded seam holds up a hull worth millions."
+<div class="rc-mark" id="sec-labor" data-num="2" data-panel="labor" data-view="labor" data-title="Skilled trades face a labor gap"></div>
 
-The numbers behind that are second-hand but consistent across the interviews and trade press. The American Welding Society expects about 82,500 welding positions to fill every year through 2029. The average working welder in the US is about 55, and for every five who retire roughly two arrive. Deloitte and the Manufacturing Institute put the manufacturing shortfall at up to 3.8 million workers by 2033. North American and Korean shipbuilding together are short something like 40,000 skilled workers, and the average age of a production worker at the Ulsan yards has reached 48.3.
+## Missing welders hold back revenue
 
-Now the money, which is the part I find most convincing. Radford says their partnerships "are running at a significant backlog, and they're labor-constrained. So we want to help our customers' top line, not necessarily their bottom line." In plain terms: these buyers are not trying to make ships cheaper. They are trying to build more of them than their headcount allows. "Even if our robot was more expensive than a human, that would still be valuable to these companies, because it could unlock additional revenue."
+A shipyard with a backlog can earn more by completing more work. If the bottleneck is welding labor, another capable welder can unlock that output. This is why Persona's choice interests me. A tote-moving robot enters a workflow already served by conveyors, arms and wheeled robots. A home robot has to earn a place in the household budget. Persona is looking for industrial buyers whose unfilled jobs constrain sales. Its skilled-trades account describes each unwelded seam as holding up a hull worth millions.
 
-That inverts the usual robot economics. The Roomba wins when the job is optional and the machine must be cheap. Here the job is a bottleneck, and the buyer pays for output. Price competition follows the strategy, and Pratt says so: "We're now in an industry where the value added by our robot can be high enough that we don't have to cut corners on quality and features in order to reduce the price. With a robot for the home, for example, there would be a lot of competition and a ton of price pressure." That is a real insight about where humanoids should start, and it works for any company that finds a labor-critical skilled task, not just for welders.
+Radford describes that problem in his [IEEE Spectrum interview](https://spectrum.ieee.org/persona-ai-humanoid-robot-welding). The partners have significant backlogs and are labor-constrained, he says. The company wants to help their "top line, not necessarily their bottom line". His hypothetical allows the robot to cost more than a human because the additional work could unlock revenue. The price the customer can justify depends on the production that extra labor makes possible.
 
-<div class="rc-mark" id="sec-weld" data-panel="weld" data-view="weld" data-title="What a weld asks of a robot"></div>
+The estimates show why the customer would look for another source of labor. [Biz New Orleans](https://bizneworleans.com/a-groundbreaking-humanoid-robot-pilot-program-is-underway/) relays an American Welding Society projection of about 82,500 US welding positions to fill each year through 2029. It puts the average working welder at roughly 55 years old, with about two entrants for every five retirees. Its account of the Deloitte and Manufacturing Institute study projects up to 3.8 million new manufacturing workers needed by 2033, with about 1.9 million positions potentially unfilled.
 
-## What a weld asks for
+Persona cites roughly 40,000 missing skilled workers in North American and Korean shipbuilding. Its [Korea account](https://persona.ai/news/korea-with-its-strong-manufacturing-base-is-the-benchmark-for-humanoid-commercialization/) puts the average age on the Ulsan production floor at 48.3 and cites 2.1 million US manufacturing jobs projected to be unfilled by 2030. The research behind this article reaches those labor estimates through company accounts and trade press; the underlying AWS and Deloitte reports remain unverified here.
 
-The task is friendlier to a robot than it first looks. You can only weld as fast as metal melts, so the top speed is a manageable centimeter per second. A good weld is millimeter-scale repeated motion over a long path, which is exactly what machines are good at and what people get tired or bored doing. And shipbuilding needs enormous amounts of the simple version: "This is not the hardest style of weld," Radford says, "but in shipbuilding you need a lot of them, hundreds of kilometers of linear welds per ship."
+Pratt connects this scarcity to product design. A robot that adds enough value gives Persona room to spend on quality and features. He expects a home robot to face much stronger competition and price pressure. That changes the engineering budget available for the first job. Persona can pursue the machine needed to complete valuable work for an industrial buyer.
 
-The hard part is the tool. "Tool use is pretty difficult," Pratt says, "and we want to use the same tools that humans do, which makes it more difficult." That choice is deliberate. A robot that welds with the crew's torch, grinder and plasma cutter walks into a shop that already exists. A robot that needs its own special welding cell is a machine the shop has to build around.
+<div class="rc-mark" id="sec-lease" data-num="7" data-panel="lease" data-view="lease" data-title="Selling skilled labor"></div>
 
-<div class="rc-mark" id="sec-july" data-panel="july" data-view="july" data-title="The July weld: what the video shows"></div>
+## Persona keeps the robot and leases its work
 
-## The July weld
+The proposed transaction follows that logic. Radford told [InnovationMap in February 2025](https://houston.innovationmap.com/personal-ai-robot-funding-2671093712.html) that Persona would retain ownership of its robots and sell their labor. The current [lease program](https://info.persona.ai/lease-a-humanoid) bundles the machine with AI platform updates, custom tooling modules and fleet management training. Persona calls itself "the labor platform for skilled industrial work". Keeping the robot puts continuing responsibility for its usefulness inside the company.
 
-In July 2026, at ARC Specialties, a welding automation shop in Houston, a Persona humanoid walked up to a workstation, squatted, struck an arc, ran a weld, stood up under its own power and walked away. No gantry, no safety tether, no fixture holding the torch. The sequence is on camera and the shot is continuous.
+This focus emerged after the founders considered warehousing, automotive and the home in 2024. Radford calls the skilled-trades and tool-use thesis "last-mover advantage", learning from the field before choosing an entry point. He had led NASA's Valkyrie program and founded Nauticus Robotics. CTO Jerry Pratt had led IHMC's DARPA Robotics Challenge team and spent a couple of years as CTO of Figure. The company has also hired a [manufacturing head](https://persona.ai/news/persona-ai-announces-brian-davis-as-head-of-global-manufacturing/) with Amazon Robotics and Dell experience and a [commercial strategy head](https://persona.ai/news/persona-ai-announces-michael-perry-as-head-of-commercial-strategy/) from Boston Dynamics and DJI.
+
+The financing gives the two-year-old company room to pursue the plan. By February 2025, Radford reported more than $10 million in pre-seed funding from investors in the US, London and Singapore. Press reported $42 million around the December 2025 Gen 1 unveiling, and POSCO DX's $2 million investment that month was also reported in the press. Persona's September 2026 [Form D](https://www.sec.gov/Archives/edgar/data/2107493/000210749326000002/primary_doc.xml) records a $141,964,814 offering with $65,363,626 sold. The filing provides the exact amount sold in that offering; the earlier press figures describe the funding history.
+
+Gen 1 was unveiled in December 2025 with a tendon-driven hand. A Persona humanoid welded in July 2026, and the company reports Gen 3 units on the ground with a presentation planned for this fall. The July unit is called Gen 1 in one company post and Gen 2 in another. Radford wants customers with capacity for hundreds of robots at a location, which sets the scale he is designing the business to serve.
+
+<div class="rc-mark" id="sec-queue" data-num="8" data-panel="queue" data-view="queue" data-title="Who is already standing in line"></div>
+
+## Industrial partners define the work
+
+HD Hyundai gives the shipyard strategy a place to develop. A May 2025 memorandum of understanding led to a March 2026 agreement involving Persona, HD Korea Shipbuilding and Offshore Engineering, and HD Hyundai Robotics. The shipbuilder would contribute training data and the robotics affiliate would handle deployment. Persona's [Korea update](https://persona.ai/news/korea-with-its-strong-manufacturing-base-is-the-benchmark-for-humanoid-commercialization/) describes the joint development and confirms POSCO's investment. POSCO, one of the largest steel producers in the world, is also working with Persona on steel-site logistics. These are development relationships.
+
+SSE Steel Fabrication provides a smaller shop in which to work through the problem. The Louisiana business does bespoke structural steel with about 75 people. Persona's [pilot summary](https://persona.ai/news/biz-new-orleans-persona-ai-humanoid-in-steel-facility/) anticipates a robot arriving this year for fillet welding on a live production floor. Cameras have been collecting shop-floor footage for months to build a digital twin before the machine attempts the job. A separate account expects gradual introduction and a working robot on the floor "within a couple of years". Those are the planned pilot arrival and the longer path to useful operation.
+
+ABS is involved with class and safety standards. The [Under Armour collaboration](https://persona.ai/news/persona-ai-collaborates-with-under-armour-to-explore-performance-materials-for-humanoid-robotics/) researches performance materials and workwear for robots exposed to the punishment of industrial work. Each partner gives Persona a requirement to address, whether that concerns the weld or the protection around the machine.
+
+Industrial buyers also need equipment they can support. In its [account of the July 2026 FCC mobile-robot restriction](https://persona.ai/news/ieee-spectrum-features-persona-ai-amid-fcc-mobile-robot-ruling/), Persona relays Radford's comments about auditability, quick support and resilient supply chains. The company describes a restriction on new foreign-built mobile robots; its regulatory details remain unverified here. For a Houston supplier working with Korean and American heavy industry, the ability to audit and service the system is part of the commercial proposition.
+
+<div class="rc-mark" id="sec-weld" data-num="3" data-panel="weld" data-view="weld" data-title="What a weld asks of a robot"></div>
+
+## Common linear welds give the robot a bounded task
+
+The first skill is more constrained than the phrase "skilled labor" suggests. In the IEEE account, welding speed is limited by how fast the metal melts, roughly a centimeter per second for the task being discussed. The torch makes millimeter-scale motions along the path. Shipbuilding needs hundreds of kilometers of linear welds per ship, according to Radford.
+
+That gives the robot a slow motion to repeat precisely over a long distance. People get tired and bored doing that work. The twentieth seam on the board illustrates this fatigue argument. Persona is starting with common, relatively uncomplicated welds, where reliable repetition would be valuable to the customer.
+
+Using the crew's tools makes manipulation harder. Pratt says Persona deliberately wants to use the same tools people do. The ambition extends from the welding torch to grinders and plasma cutters. A machine that can hold those tools can enter a shop equipped for human workers. A special welding cell asks the shop to build around it, so tool use connects the learning problem directly to installation effort.
+
+<div class="rc-mark" id="sec-legs" data-num="5" data-panel="legs" data-view="legs" data-title="Why legs in a shipyard"></div>
+
+## Legs bring the tool to shipyard work
+
+Before the robot can repeat the weld, it has to reach it. Radford describes open-air yards a couple hundred meters long, with horizontal and vertical spars interrupting the route. Work takes place on the ground, overhead and through portholes. A wheeled base needs a suitable path. Persona wants its robot to follow the welder over the obstacles and toward the next seam.
+
+Adapting a yard around the machine can cost more than the machine itself. That makes legs commercially useful when they give the robot access to paid work in the existing site. The ladder or spar is part of the route to the job. In [Three robot bets](/robotics/three-robot-philosophies/), I argue against legs for a flat without stairs. The shipyard puts a different value on the same body shape.
+
+Crews already work around cranes, arc light and falling steel. Their experience with industrial hazards helps explain the setting Persona chose. Introducing a biped adds integration and safety work, including the class and standards questions its partners are helping address.
+
+<div class="rc-mark" id="sec-july" data-num="4" data-panel="july" data-view="july" data-title="The July weld: what the video shows"></div>
+
+## The July demonstration combines movement and tool use
+
+Persona's [First Spark](https://persona.ai/news/robot-welding-in-a-real-industrial-environment/) post, published July 8, 2026, shows a humanoid at ARC Specialties, a welding automation shop in Houston. The robot walks to the workstation, squats, strikes an arc, runs a weld, stands under its own power and walks away. It works free of a gantry, safety tether or fixture holding the torch. Persona describes the continuous wide shot as unmodified, saying "what you see is what happened".
 
 <figure class="video-embed">
 <div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/lDNrnmCj2DM" title="First Spark: a Persona AI humanoid welds untethered" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
 <figcaption>First Spark: the humanoid squats, welds and stands back up at ARC Specialties in Houston (Persona AI, July 2026). <a href="https://youtu.be/lDNrnmCj2DM">Watch on YouTube</a></figcaption>
 </figure>
 
-The weld was teleoperated, and Persona says that out loud, which I respect. A person in VR and motion capture supplied the intent and the judgment. What the robot did itself was everything else: balance, footing, locomotion, perception. Their teleoperation lead puts the division plainly: "the human supplied intent and judgment; the robot supplied the physical intelligence."
+A person operates the weld through VR and motion capture. According to Persona's [teleoperation lead](https://persona.ai/teleoperation-preceeds-automony/), the operator supplies intent and judgment while the machine handles balance, footing, locomotion and machine-learning perception. The robot is coordinating its body well enough for a person to work through it in a live shop. That is the platform on which Persona intends to collect expert demonstrations.
 
-She also gives the standard that matters more than the video: "Succeeding once on camera says nothing about doing the job on the two-hundredth task of a shift. We optimize for the opposite: repeatability and usability." That is the right scoreboard, and right now Persona's honest number is one weld.
+<div class="rc-mark" id="sec-loop" data-num="6" data-panel="loop" data-view="loop" data-title="Teleoperation is the data path"></div>
 
-<div class="rc-mark" id="sec-legs" data-panel="legs" data-view="legs" data-title="Why legs in a shipyard"></div>
+## Expert demonstrations teach the skill Persona wants to sell
 
-## Why legs
+Teleoperation connects the current machine to the proposed autonomous worker. An expert performs the job through the robot, producing demonstrations on its actual hardware. The recordings contain the tool motions and the shop conditions that the learned skill will encounter, including arc light, smoke and uneven floors. Persona plans to advance autonomy one task at a time. The IEEE account anticipates tens of thousands of hours of expert demonstrations, alongside high-fidelity simulation and real-world testing.
 
-This is where the humanoid form earns its keep without hand-waving. Shipyards were built around people. "These open-air shipyards are a couple hundred meters long, with horizontal and vertical spars that you have to step over all the time," Radford says. "You've got to work on the ground, overhead, and through portholes." A wheeled base needs open floor and adapted routes. Legs take the route the welder takes, and Persona's argument is commercial, not aesthetic: adapting a yard around a machine is usually more expensive than the machine.
+I like how directly that data connects to the paid job. Figure pretrains on human video. Generalist records people using hand-held grippers. Physical Intelligence trains across robots and adds practice. Those learning paths are developed in [Three robot bets](/robotics/three-robot-philosophies/). Apptronik collects Apollo fleet data at Robot Park with Google DeepMind; Agility operates in live logistics, where totes moved provide a scoreboard; 1X wants NEO learning in homes. Persona wants expert welders teaching the machine at the worksite.
 
-It is worth comparing with the home argument. Figure also wants legs because homes are built for people, and in [Three robot bets](/robotics/three-robot-philosophies/) I come down against legs for a flat with no stairs. The difference here is the customer. In a shipyard, the ladder and the spar are on the path to paid work, and the yard is not going to be redesigned for a robot. Same shape, different economics.
+The conversion from expert driving to autonomous welding remains the technical risk. Persona says general humanoid autonomy is "further off than the headlines suggest". If each weld continues to require an expert driver, the business stays a teleoperation service. The learning system has to capture enough of the expert's skill for the robot to complete the work on its own.
 
-There is a second, quieter advantage. Shipyard crews already work around cranes, arc light and falling steel. A bipedal robot is not the strangest hazard on that floor.
+<div class="rc-mark" id="sec-score" data-num="9" data-panel="score" data-view="score" data-title="The production milestones"></div>
 
-<div class="rc-mark" id="sec-loop" data-panel="loop" data-view="loop" data-title="Teleoperation is the data path"></div>
+## A production shift is the next useful standard
 
-## How it learns
+The public record described here reaches a teleoperated weld, industrial development agreements, reported Gen 3 hardware and $65.4 million sold toward an approximately $142 million offering. Autonomous welding, full-shift operation, hundreds of units at one site, pricing and margins remain unpublished in these sources.
 
-Most humanoid companies treat a human in the loop as an embarrassment. Persona treats it as the data pipeline. Every hour an experienced welder drives the robot is expert demonstration data on the real platform, in the real shop, with arc light and smoke and uneven floors. "We are not betting on a grand general policy that wakes up one day and does everything," their teleoperation lead writes. "We advance autonomy one real task at a time, with teleoperation generating the on-platform data that earns each step."
+Persona's teleoperation lead says the team optimizes for repeatability and usability, including the two-hundredth task of a shift. A customer needs the robot to return to the job and do it again as the day goes on. Industrial development becomes a business when that repeated work earns enough to support the machine and its service.
 
-This is a genuinely different data bet from the rest of the field. Figure pretrains on large amounts of human video before the robot touches a home (see [Three robot bets](/robotics/three-robot-philosophies/)). Generalist records people using hand-held grippers. Physical Intelligence trains on many robots and lets the model practice. Apptronik runs fleets of Apollo robots in its "Robot Park" to collect data with Google DeepMind. Agility learns from live logistics work, where the scoreboard is totes moved. 1X wants robots living in homes. Persona wants expert welders on the job, and by the company's own account it will need "tens of thousands of hours" of that before autonomy follows.
-
-I like this pipeline because the data is exactly the skill being sold. Nothing in it is a proxy. The risk is just as clear: teleoperation data teaches the robot while a person is driving. Whether it becomes autonomy is a claim, not a result, and Persona is honest about the timeline. General humanoid autonomy, they write, "is further off than the headlines suggest".
-
-<div class="rc-mark" id="sec-lease" data-panel="lease" data-view="lease" data-title="Lease the labor, not the robot"></div>
-
-## The deal
-
-Persona planned from the start to keep its robots and sell what they do. In February 2025, with "more than $10 million" in pre-seed funding, Radford described the model to InnovationMap: the company retains ownership of the robots and sells the labor they supply. The leasing page today sells the same bundle: the robot, AI platform updates, custom tooling modules and fleet management training. The pitch line is "the labor platform for skilled industrial work".
-
-The money story is simple to date. The pre-seed was eight figures by February 2025, from investors in the US, London and Singapore. Press reported $42 million raised around the Gen 1 unveiling in December 2025, and POSCO's industrial technology arm put in $2 million that month. In September 2026 the company filed with the SEC: an offering of up to $141,964,814, with $65,363,626 sold as of the filing. That is a real war chest, and it matches the hiring: a head of global manufacturing from Amazon Robotics and Dell, and a commercial strategy head from Boston Dynamics and DJI.
-
-The hardware moved fast for a two-year-old company. Gen 1, with a tendon-driven hand, was shown in December 2025. A unit welded at ARC Specialties in July 2026. Gen 3 is on the ground and due to be presented this fall. The pace is one of the more credible things about the company, and the CEO puts a number on the strategy: they want customers "who can support hundreds of robots per location".
-
-<div class="rc-mark" id="sec-queue" data-panel="queue" data-view="queue" data-title="Who is already standing in line"></div>
-
-## Who is standing in line
-
-The customer list is the strongest signal that the bet is real, because every name on it has the same problem: more skilled work than people.
-
-HD Hyundai is the anchor. A memorandum of understanding in May 2025 became a partnership agreement in March 2026 between Persona, HD Korea Shipbuilding and Offshore Engineering, and HD Hyundai Robotics: robot welding for shipyards, with the shipbuilder's data feeding the training and the robotics affiliate handling deployment. POSCO, one of the largest steel producers in the world, is working with Persona on steel-site logistics and is also an investor. In Louisiana, SSE Steel Fabrication, a shop of about 75 people doing bespoke structural steel, is taking a unit for fillet welding on a live production floor. Cameras have been running on that floor for months, feeding a digital twin of the shop before any robot attempts the work. ABS is in the loop on class and safety standards, and Under Armour is researching what robot workwear should even be, since a humanoid next to an arc takes the same punishment a welder does. "This is research, not a product," Persona says about that one, and I believe them.
-
-Add one more angle that matters to industrial buyers: after the FCC restricted new foreign-built mobile robots in July 2026, Radford's point to IEEE Spectrum was that serious buyers were already asking to audit the technology, get support quickly, and avoid a fragile overseas supply chain. A Houston company selling into Korean and American heavy industry is well placed for that conversation.
-
-<div class="rc-mark" id="sec-score" data-panel="score" data-view="score" data-title="The scoreboard: shown and not shown"></div>
-
-## The scoreboard
-
-Time for the unromantic part. What Persona has shown is a teleoperated weld in a real shop, partnership agreements with major industrial buyers, Gen 3 hardware, and $65.4 million sold toward a $142 million offering. What it has not shown is an autonomous weld, a robot working a full shift, hundreds of units at one site, a price, or a margin.
-
-That gap is normal at this stage. What I like is that Persona's own framing measures the right thing: repeatability over a shift, not a demo reel. And the company is not overselling the market either. The International Federation of Robotics counted roughly 7,000 humanoids for industrial and professional service sold worldwide in 2025, mostly in pilots. Persona's own summary of the situation: "useful is not the same as ready", and at their first shop the expectation is a robot on the floor "within a couple of years", introduced gradually.
-
-<div class="rc-mark" id="sec-decide" data-panel="decide" data-view="decide" data-title="What decides this bet"></div>
-
-## What decides this bet
-
-So what makes Persona's humanoid bet different? It is not the robot. Pratt is right that "a lot of the technical problems are the same no matter whether you're in a house or a shipyard." The difference is the job. Everyone else picked a job where the robot competes on cost with available labor, or no labor market exists at all yet. Persona picked a job where the labor does not exist, the tool is already in the room, and the customer buys output rather than savings.
-
-Three conditions make that work, and a company hunting for its own version of this bet should check all three: a skill nobody can staff, a human tool the robot can hold, and a customer whose revenue is capped by headcount. Welding in shipyards and steel shops has all three. Chores in homes have none. Moving totes has the customer but not the scarcity. General-purpose factory work has the scarcity in places but keeps the tool generic.
-
-The risk is exactly what the July video shows. Today the weld is a person wearing a robot. If teleoperation data turns into autonomous welding, this is the best-positioned company in humanoids: a real skill, real sites, real customers, and a lease model that scales with trust. If it does not, Persona is a very well-funded teleoperation service. That is the fork, and the honest way to watch it is simple: wait for the first published autonomous weld with trial counts, then wait for a shift.
-
-I would take this bet over the alternatives. Radford says the industry told him "we're not thinking big enough", and Pratt answers the generalization worry better than any pitch deck: "Everybody's got a great team and smart people, and we're all knocking these problems out together." Being the last mover is not thinking small. It is choosing the first job where a robot is worth more than a person, and then doing what it takes to hold the torch.
-
-Here is the comparison in one place.
+The wider market is still dominated by pilots. The reporting in the source notes attributes roughly 7,000 industrial and professional-service humanoids sold worldwide in 2025 to the International Federation of Robotics, mostly in pilots. That estimate remains second-hand here. The comparison below keeps the companies' deposits, orders, pilots and demonstrated work in their own terms.
 
 | Company | First job | The bet | What is shown today |
 | --- | --- | --- | --- |
@@ -482,8 +491,18 @@ Here is the comparison in one place.
 | **Tesla (Optimus)** | none named; a Bots business "leveraging our current operations" | self-driving AI and car-scale manufacturing turned into a robot product | a robot "in development"; "we have yet to commercialize Bots" (FY2025 Form 10-K) |
 | **Figure** | homes and factories | the body decides what a robot can learn | see [Three robot bets](/robotics/three-robot-philosophies/) |
 
+<div class="rc-mark" id="sec-decide" data-num="10" data-panel="decide" data-view="decide" data-title="What decides this bet"></div>
+
+## Welding gives Persona a customer and a learning target
+
+Persona has chosen a skill whose scarcity holds back industrial output. The customer already knows what another welder would accomplish, and the robot would reach the work through a site built for people using the tools already there. The same job gives Persona expert demonstrations with which to train the machine. This is why I prefer its first job to the other starting points in this comparison.
+
+Radford says the company has been told it should think bigger. Pratt points out that many technical problems are shared across houses and shipyards, and says, "Everybody's got a great team and smart people, and we're all knocking these problems out together." Persona has given those problems a specific customer. Its first job makes progress legible to that buyer.
+
+Watch for a published autonomous weld with trial counts, then for a shift of repeated work. That is how to judge whether Persona is turning expert demonstrations into the additional welding capacity its customers need.
+
 <details>
-<summary>Sources and what isn't verified</summary>
+<summary>Source notes</summary>
 
 **Persona AI, the company.** [Home](https://persona.ai/) (the "labor platform for skilled industrial work", industries, modular platform), [About](https://persona.ai/why-persona/) (Houston, founded 2024, the three co-founders), [First Spark](https://persona.ai/news/robot-welding-in-a-real-industrial-environment/) (July 8, 2026: the ARC Specialties weld; their claim that "what you see is what happened"), [teleoperation](https://persona.ai/teleoperation-preceeds-automony/) (August 6, 2026: the human and robot division of labor, repeatability over demos, "one real task at a time"), [skilled trades](https://persona.ai/news/why-skilled-industrial-labor-is-the-future-of-heavy-industrial-humanoids/) (their summary of the IEEE feature: HD Hyundai, ABS, POSCO, SSE, the 40,000 figure), [Korea](https://persona.ai/news/korea-with-its-strong-manufacturing-base-is-the-benchmark-for-humanoid-commercialization/) (the HD joint development agreement, POSCO invested, Gen 3 on the ground, Ulsan age), [Under Armour](https://persona.ai/news/persona-ai-collaborates-with-under-armour-to-explore-performance-materials-for-humanoid-robotics/) ("this is research, not a product"), [manufacturing hire](https://persona.ai/news/persona-ai-announces-brian-davis-as-head-of-global-manufacturing/) (Amazon Robotics and Dell), [commercial strategy hire](https://persona.ai/news/persona-ai-announces-michael-perry-as-head-of-commercial-strategy/) (Boston Dynamics and DJI), [FCC](https://persona.ai/news/ieee-spectrum-features-persona-ai-amid-fcc-mobile-robot-ruling/) (Radford on auditability and supply chains), [simulations](https://persona.ai/news/simulations-digital-twins-the-commercial-engine-for-physical-ai/) (digital twins of customer sites), [the lease program](https://info.persona.ai/lease-a-humanoid), and the company's [summary of the Biz New Orleans pilot](https://persona.ai/news/biz-new-orleans-persona-ai-humanoid-in-steel-facility/) (SSE: fillet welding, a 5 ft 8 in robot with two arms and two legs that walks stairs and uses the crew's tools, cameras feeding simulation).
 
@@ -491,7 +510,7 @@ Here is the comparison in one place.
 
 **Founders.** Radford (NASA Valkyrie program, founder of Nauticus Robotics) and Pratt (IHMC's DARPA Robotics Challenge team, "a couple of years as CTO of Figure") per the IEEE Spectrum feature; the third co-founder is the COO. InnovationMap confirms the roles and the Valkyrie and Nauticus history.
 
-**Funding.** InnovationMap, [February 5, 2025](https://houston.innovationmap.com/personal-ai-robot-funding-2671093712.html) (a Radford interview: "more than $10 million" pre-seed, eight figures, robotics-as-a-service, founded June 2024, delivery in 18 to 24 months). [SEC Form D, Persona AI Inc.](https://www.sec.gov/Archives/edgar/data/2107493/000210749326000002/primary_doc.xml) filed September 14, 2026: offering of $141,964,814, sold $65,363,626, remaining $76,601,188, first sale August 28, 2026, incorporated 2024 in Houston. RoboHorizon, [December 31, 2025](https://robohorizon.com/en-us/news/2025/12/persona-ai-unveils-humanoid-bot-with-42m-to-weld-in-shipyards) (Gen 1 unveiling, tendon-driven hand, "$42 million in pre-seed funding", office in Pensacola). Asia Business Daily, [December 23, 2025](https://www.asiae.co.kr/en/article/2025122316104579854) (POSCO DX invested $2 million).
+**Funding.** InnovationMap, [February 5, 2025](https://houston.innovationmap.com/personal-ai-robot-funding-2671093712.html) (a Radford interview: "more than $10 million" pre-seed, eight figures, robotics-as-a-service, founded June 2024, delivery in 18 to 24 months). [SEC Form D, Persona AI Inc.](https://www.sec.gov/Archives/edgar/data/2107493/000210749326000002/primary_doc.xml) filed September 14, 2026: offering of $141,964,814, sold $65,363,626, remaining $76,601,188, first sale August 28, 2026, incorporated in Delaware in 2024; based in Houston. RoboHorizon, [December 31, 2025](https://robohorizon.com/en-us/news/2025/12/persona-ai-unveils-humanoid-bot-with-42m-to-weld-in-shipyards) (Gen 1 unveiling, tendon-driven hand, "$42 million in pre-seed funding", office in Pensacola). Asia Business Daily, [December 23, 2025](https://www.asiae.co.kr/en/article/2025122316104579854) (POSCO DX invested $2 million).
 
 **Korea.** Korea Times/Yonhap, [March 23, 2026](https://www.koreatimes.co.kr/amp/business/companies/20260323/hd-hyundai-affiliates-partner-to-develop-ai-powered-welding-robots-for-shipyards) (the agreement with HD KSOE and HD Hyundai Robotics, following a May 2025 MoU). Seoul Economic Daily, [September 22, 2026](https://en.sedaily.com/technology/2026/09/22/persona-ai-eyes-energy-construction-after-shipbuilding) (proofs of concept with HD Hyundai and POSCO DX, the $2 million investment, over 330,000 welders short by 2028, 2.1 million unfilled by 2030, Gen 3 this fall, "robots will be commercialized on manufacturing floors two years from now", about 7,000 industrial humanoids sold in 2025 per the IFR). Maekyung, [2026](https://www.mk.co.kr/news/it/12005205) (their summary: Ulsan average age 48.3, yards turning down orders).
 
