@@ -1,5 +1,17 @@
 [
   {
+    "title": "Persona AI wants to put a welder where the work is",
+    "description": "Persona's welding-first approach connects scarce industrial labor, human tools and expert demonstrations to the job of building a useful humanoid service.",
+    "tags": [
+      "robotics",
+      "humanoids",
+      "industry",
+      "robot-learning"
+    ],
+    "date": "2026-10-26",
+    "url": "/robotics/persona-ai-skilled-trades/"
+  },
+  {
     "title": "Do you need a human body to use human data?",
     "description": "Figure AI says a humanoid can learn from human video because it is shaped like us. About 30 papers with measured results say human video also trains grippers and wheeled robots, that mismatch breaks transfer, and that the body decides what a robot can reach. A companion to Three robot bets, with a pinned blackboard.",
     "tags": [
