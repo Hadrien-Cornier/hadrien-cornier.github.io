@@ -26,9 +26,9 @@ thumbnail_alt: 'The Q table drawn on the cliff grid: four score triangles per ce
 
 <div class="rc-mark" id="sec-tree" data-panel="tree" data-num="1" data-view="world" data-title="A value-based family tree"></div>
 
-The drawing starts with one branch of reinforcement learning, the value-based methods that learn a score for each choice, from the trial-and-error idea in 1898 to DQN in 2015. Each later method fixes something an earlier one does badly. Then we'll follow Q-learning on a small grid, where you can replay a real run one update at a time.
+Why does one reinforcement learning method lead to another? The drawing follows one branch: value-based methods, which learn a score for each choice, from the trial-and-error idea in 1898 to DQN in 2015. Each later method fixes something an earlier one does badly. Then we'll follow Q-learning on a small grid and replay a real run one update at a time.
 
-A **value** predicts future reward. A state value tells you what to expect from a situation, while an **action value**, written $Q(s,a)$, tells you what to expect after action $a$ in state $s$. A **policy** chooses actions.
+To read the tree, we need three terms. A **value** predicts future reward. A state value tells you what to expect from a situation; an **action value**, written $Q(s,a)$, tells you what to expect after action $a$ in state $s$. A **policy** chooses actions.
 
 <link rel="stylesheet" href="/assets/robotics/rl/series.css">
 <svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in"/></filter></svg>
@@ -66,7 +66,7 @@ Is this all of classical RL? No. Most of these nine are the table methods in the
 
 ## Q-learning on a grid
 
-Q-learning keeps one score for every cell and move: an estimate of all the reward still to come after that move, with later rewards counting a little less. It nudges one score after every step ([Sutton and Barto, §6.5](http://incompleteideas.net/book/RLbook2020.pdf)). The drawing lays that table out on the grid itself, so where a number sits tells you its cell and its move.
+On the grid, Q-learning stores one score for every cell and move. That score estimates all the reward still to come after the move, with later rewards counting a little less. After every step, it nudges one score ([Sutton and Barto, §6.5](http://incompleteideas.net/book/RLbook2020.pdf)). The drawing puts the table on the grid itself: a number's position tells you both its cell and its move.
 
 The grid has 4 rows and 12 columns. You start at the bottom left, the flag sits at the bottom right, and the ten cells between them are cliff. Every move costs −1, a step into the cliff costs −100 and sends you back to the start, and a move into the outer wall leaves you in place. Every score starts at 0, so the grid in the drawing is empty for now.
 
@@ -131,7 +131,7 @@ The Bellman equation splits the future into one reward and the next state's valu
 
 $$\begin{aligned} Q(s,a) \leftarrow Q(s,a) + \alpha\,\Big[\,&\underbrace{r + \gamma \max_{a'} Q(s',a')}_{\text{target}} \\ &- Q(s,a)\Big] \end{aligned}$$
 
-The target uses one observed move in place of the Bellman equation's average, and the current $Q$ stands in for the future. Learning from that estimate is **bootstrapping**. The bracket, target minus old score, is the **TD error**: how far one step's outcome missed the table's prediction.
+We don't have the Bellman equation's average in hand. The target uses one observed move instead, and the current $Q$ supplies the estimate of the future. Learning from that estimate is **bootstrapping**. The bracket subtracts the old score from the target. This is the **TD error**, how far one step's outcome missed the table's prediction.
 
 Here the drawing jumps to update 6 and works it by hand. In the start cell the robot tries left, bumps the wall and stays put, for a reward of −1. The yellow triangle is the score that changes, and the blue one is the best score it borrows from where it landed, the start cell again, at −0.5. So the target is $-1+0.99(-0.5)=-1.495$ and the TD error is $-1.495-(-0.5)=-0.995$, worse than predicted. With a step size of 0.5 the old −0.5 moves halfway, to −0.9975. The −50 in that cell came from update 5, a step off the cliff. Step the bar and the board redraws for any of the first 400 updates.
 
@@ -214,7 +214,7 @@ Q_{\text{new}}(\text{neighbor},\text{left}) &= 0 + 0.5(-1.495 - 0) \\
 
 <p class="qm-jump"><button type="button" data-qm-frame="19">Show update 19 on the map</button> <button type="button" data-qm-frame="24">Show update 24 on the map</button></p>
 
-Before update 19 that same move would have borrowed 0, and its target would have been −1. The extra −0.495 is a cost seen after arriving, passed back one cell. Repeat that thousands of times and the costs of later moves reach earlier choices.
+Before update 19, the same move would have borrowed 0 and produced a target of −1. The extra −0.495 therefore comes from a cost seen after arriving, now passed back one cell. Repeat this thousands of times, and costs from later moves reach earlier choices.
 
 <details>
 <summary>Compare with the settled route</summary>
@@ -352,7 +352,7 @@ A small table lets you inspect every prediction, as we did here. Each weakness b
 
 You first choose between two doors. Right ends the episode with reward 0. Left pays 0 now, then offers a choice among ten noisy machines; each pays −0.1 on average and ends the episode. So right is better.
 
-Q-learning backs up the largest machine estimate into the left-door value. One lucky machine estimate can make that door look profitable, even though every machine's true mean is negative.
+The left-door target reads the largest machine estimate. If one machine gets a lucky estimate, that maximum can make the door look profitable even though every machine's true mean is negative.
 
 <div class="ct">
 
@@ -403,7 +403,7 @@ The late left share remains above the random-choice baseline, so the worse door 
 <details id="sec-bandit">
 <summary>A one-state example: exploration at the slot machines</summary>
 
-The grid adds consequences that unfold over time. A bandit isolates the exploration problem: every pull returns to the same situation. Its one-row table estimates the immediate payout, so we can see the effect of trying other actions without a later-state target.
+The grid mixes exploration with consequences that unfold over time. A bandit lets us isolate exploration: every pull returns to the same situation, and a one-row table estimates the immediate payout. We can then see what trying other actions changes without involving a later-state target.
 
 ### Explore or exploit: the bandit
 

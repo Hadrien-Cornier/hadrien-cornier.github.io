@@ -89,7 +89,7 @@ thumbnail_alt: 'Two blackboard panels: two safe routes around a box whose point-
 </g></svg></div></div>
 <div class="rc-body">
 
-Suppose you teleoperate a robot arm to reach a cup that sits behind a box. Half the time you go around the left side and half the time around the right, and both are good demonstrations. Train a policy that predicts one action to be as close as possible to every demonstration, and it can learn the average, straight through the box. This is **mode averaging**, and it doesn't come from a bad reward or a wrong value estimate. It comes from asking one answer to stand in for two different good answers.
+Teleoperate a robot arm toward a cup behind a box. Go left half the time and right half the time. Both routes make good demonstrations. Now train a policy to output one action as close as possible to all of them. It can learn to go straight through the box. This is **mode averaging**: asking one answer to represent two different good answers. The failure comes from that choice of output, without a bad reward or a wrong value estimate.
 
 **Part 8.** [Previously: learning from a fixed dataset](/robotics/rl-7-learning-from-fixed-data/). The [failure map in part 0](/robotics/rl-0-overview/#sec-failures) puts this problem under "copying the wrong thing", next to copying bad demonstrations from part 7.
 
@@ -97,7 +97,7 @@ Suppose you teleoperate a robot arm to reach a cup that sits behind a box. Half 
 
 ## Two safe routes, one bad average
 
-Seen from above, each route is a safe plan on its own. Each dot is one waypoint of a five-step plan. Average the left plan and the right plan point by point and you get five waypoints on the center line, and the straight segment between them crosses the box. The space of safe plans isn't convex, so the midpoint of two safe plans doesn't have to be safe.
+Viewed from above, each route is a safe five-step plan, with one dot per waypoint. Average the two plans point by point and all five waypoints land on the center line. The straight segment between them crosses the box. Safe plans don't form a convex space: the midpoint of two safe plans need not be safe.
 
 A **mode** is a distinct cluster of good actions or plans for the same situation. Here there are two, the left route and the right route, and the demonstrations are split evenly between them.
 
@@ -111,7 +111,7 @@ Now train a policy $f(o)$ that outputs one number for the observation $o$, using
 
 $$\frac{1}{N}\sum_{i=1}^{N}\big(f(o)-y_i\big)^2.$$
 
-The minimizer of a squared error is the mean, and with half the demonstrations at $-1$ and half at $+1$, that mean is $0$, the center of the box. More data only makes the estimate of the mean more precise, and the mean is the wrong summary of these demonstrations.
+Squared error is minimized by the mean. Half the demonstrations are $-1$ and half are $+1$, so the mean is $0$, right in the box. More data estimates that mean more precisely. It doesn't make the mean a good summary of two routes.
 
 A single bell curve doesn't fix it either. Fit a Gaussian with a learned mean and spread to the same data by maximum likelihood, and you get mean $0$ and standard deviation $1$. It still peaks at the box, and if you sample from it once and commit, about 38% of samples fall inside $|y|<0.5$. A single bell curve has one peak, so it can't put its weight on $-1$ and $+1$ while leaving the middle empty.
 
@@ -136,7 +136,7 @@ The game's log notes that the gap depends on the training budget, since with 10,
 
 </details>
 
-Chunks don't cause the problem by themselves. If the policy can sample a whole chunk from one mode, all five waypoints come from the left route or all from the right. The trouble is a chunk produced by a model that can only express the average.
+A chunk can still follow one route. Sample a whole chunk from one mode and all five waypoints come from the left route or all from the right. The problem is producing that chunk with a model that can express only the average.
 
 <div class="rc-mark" id="sec-modes" data-panel="modes" data-view="modes" data-title="Models that can hold two answers"></div>
 
@@ -155,11 +155,11 @@ What we need is a policy that, given the same observation, can output $-1$ on on
 
 ## A flow turns noise into one plan
 
-A flow policy doesn't output an action directly. It outputs a direction to move in. Let $x$ be a candidate action chunk, $\tau$ a number from 0 to 1 that we'll call **integration time**, and $o$ the observation. A network $v_\theta$ with weights $\theta$ predicts a velocity, and the candidate follows it:
+Instead of predicting an action directly, a flow policy predicts how to move a candidate action chunk. Write the candidate as $x$, **integration time** as $\tau$, a number from 0 to 1, and the observation as $o$. A network $v_\theta$ with weights $\theta$ gives the velocity that the candidate follows:
 
 $$\frac{dx}{d\tau}=v_\theta(x,\tau,o).$$
 
-Start with $x$ drawn from random noise at $\tau=0$ and follow the velocity until $\tau=1$, which π0 does in ten small steps. The end point is the action chunk the robot executes.
+Draw the initial $x$ from random noise at $\tau=0$. Follow the predicted velocity to $\tau=1$, using ten small steps as π0 does. The resulting end point is the action chunk the robot executes.
 
 **Integration time is not robot time.** All ten of those steps happen inside the computer, before the robot moves at all, and the intermediate values of $x$ are not positions the gripper visits. In π0 a chunk holds 50 future actions. On its 50 Hz robots, the authors execute 25 of them, half a second, and then run the model again.
 

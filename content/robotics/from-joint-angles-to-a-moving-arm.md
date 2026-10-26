@@ -9,7 +9,7 @@ thumbnail: /assets/robotics/thumbnails/from-joint-angles-to-a-moving-arm.jpg
 thumbnail_alt: 'Franka arm with human-readable joint names and colored rotation arrows'
 ---
 
-I own an SO-101 arm. I wanted to understand how a number sent from my laptop becomes a movement, and how joint angles determine where the gripper ends up. [Why I'm learning robotics](/robotics/why-i-am-learning-robotics/) is a separate post.
+I own an SO-101 arm and wanted to understand what happens when a number sent from my laptop becomes a movement. How does that number move the arm? And how do the joint angles determine where the gripper ends up? [Why I'm learning robotics](/robotics/why-i-am-learning-robotics/) is a separate post.
 
 ## How do we describe the arm?
 
@@ -17,7 +17,7 @@ Here is the Franka Panda used in my ManiSkill experiment. Its seven arm joints r
 
 ![Franka arm with human-readable joint names and colored rotation arrows](/assets/robotics/arm-control/v3/franka_joint_names.png)
 
-We could record the Cartesian position of every joint. But those coordinates are constrained by the rigid links, and joint-center positions alone miss rotation about a link's axis. A simpler description is the vector of **joint angles**, $q=(q_1,\ldots,q_7)$. Given the robot's geometry, these determine the positions and orientations of its arm links.
+We could start by recording the Cartesian position of every joint. The rigid links constrain those coordinates, though, and joint-center positions alone miss rotation about a link's axis. Instead, we can describe the arm with a vector of **joint angles**, $q=(q_1,\ldots,q_7)$. Given the robot's geometry, these determine the positions and orientations of its arm links.
 
 My SO-101 has five arm joints and a gripper actuator. An **encoder** inside each smart servo measures its angle. The arm's angles are its *configuration*. Its mechanical state also includes joint velocities, $(q,\dot q)$.
 
@@ -46,13 +46,13 @@ $$
 X=A\cos\theta,\qquad Y=A\sin\theta.
 $$
 
-Here $A$ is the signal amplitude and $\theta$ is the shaft angle. The two signals act like perpendicular coordinates. The rotating magnetic field supplies the sine and cosine signals. The chip's job is to recover the angle.
+Here $A$ is the signal amplitude and $\theta$ is the shaft angle. The rotating magnetic field has supplied a pair of sine and cosine signals, which act like perpendicular coordinates. Now the chip has to work backward from those coordinates to the angle.
 
 One signal leaves an ambiguity: 30° and 150° have the same sine. Their cosine signs differ, so the pair distinguishes them. The calculation is $\theta=\operatorname{atan2}(Y,X)$, which keeps both signs to identify the quadrant. [TI's encoder guide](https://www.ti.com/lit/ug/tiduc07/tiduc07.pdf) explains this signal pair.
 
 ![The unit-circle positions at 30 and 150 degrees share Y equals 0.5, while X has opposite signs](/assets/robotics/arm-control/v4/equal_sine_opposite_cosine.png)
 
-An analog-to-digital converter turns the voltages into numbers. How does a tiny chip recover the angle? Does it evaluate a Taylor expansion? That sounds like a lot of calculations.
+An analog-to-digital converter turns the voltages into numbers. We still need to recover the angle. Does a tiny chip do this by evaluating a Taylor expansion? That sounds like a lot of calculations.
 
 **CORDIC**, short for *Coordinate Rotation Digital Computer*, does it with additions, subtractions, bit shifts, and a small lookup table. The AS5600 has a hardwired CORDIC block.
 
@@ -65,7 +65,7 @@ Imagine the measured vector is $(X,Y)=(0.866,0.5)$, pointing at roughly 30°. CO
 | Clockwise by 14.036° | 32.471° |
 | Back by 7.125° | 25.346° |
 
-Smaller corrections bring the estimate toward 30°. These are rotations of numbers in registers; the magnet supplies the original measurement.
+As the corrections get smaller, the estimate approaches 30°. What rotates here is a pair of numbers in registers. The magnet supplied the original measurement.
 
 #### Why do additions and shifts rotate a vector?
 
@@ -200,7 +200,7 @@ Each method receives the same coordinate pairs, rounded to 30 fractional bits. T
 
 ## How does a motor follow an angle?
 
-Sending “30°” does not tell a bare motor how long to turn. A **servo**, short for servomechanism, is an actuator with feedback: it compares a measured quantity with a target and corrects the error. In the SO-101, the smart servo packages the motor, encoder, driver, gears, and controller together.
+We have an angle measurement. Now suppose we send “30°” to the motor. That number alone does not tell a bare motor how long to turn. An actuator with feedback can compare the measurement with the target and correct the error: this is a **servo**, short for servomechanism. In the SO-101, the smart servo packages the motor, encoder, driver, gears, and controller together.
 
 ![Laptop commands pass through the USB adapter to a local controller and encoder loop inside each servo](/assets/robotics/arm-control/so101_servo_feedback.png)
 
@@ -221,7 +221,7 @@ Here $u$ is the requested motor drive. The three gains $K_P,K_I,K_D$ set the str
 
 ![The proportional term reads error, the integral accumulates its area, and the derivative reads its slope](/assets/robotics/arm-control/03_pid_terms.png)
 
-Why keep past error? Imagine the arm stops a little below its target under a steady load. The proportional correction balances the load, so the arm stays still. But the error is still positive. The integral keeps growing, adds more torque, and lifts the arm closer to the target. Once the error reaches zero, the integral stops growing. Its stored value supplies the torque that holds the load.
+Why keep past error? Imagine the arm has stopped a little below its target under a steady load. The proportional correction balances that load, which explains why the arm stays still. It does not explain how to close the remaining gap. The error is still positive, so the integral keeps growing. It adds more torque and lifts the arm closer to the target. When the error reaches zero, the integral stops growing, but its stored value still supplies the torque needed to hold the load.
 
 [PID control under a load](https://modernrobotics.northwestern.edu/nu-gm-book-resource/11-4-motion-control-with-torque-or-force-inputs-part-2-of-3/).
 
@@ -304,7 +304,7 @@ Changing the load or arm configuration changes the response even with the same c
 
 ## Joint angles or a gripper target?
 
-The servo accepts a joint target. But I usually care about the gripper: “put it at this point above the cup.” These are two descriptions of the task.
+So far, the command has been a joint target, which the servo accepts. But I usually care about the gripper: “put it at this point above the cup.” We need to connect these two descriptions of the task.
 
 **Joint space** contains configurations $q$. **Task space** contains the quantity we want to control: here, the gripper position $p=(x,y,z)$. Later we'll add orientation.
 
@@ -336,7 +336,7 @@ On the left, the animation alternates between two valid solutions. On the right,
 
 ## How do we describe gripper position mathematically?
 
-Seven joints make the geometry look complicated. Let's start with a simpler arm: a fixed base and links that all bend in one plane.
+To write down the geometry, we can start with something simpler than seven joints: a fixed base and links that all bend in one plane.
 
 Start with one link of length $L_1$ at angle $\theta_1$. Its endpoint is $(L_1\cos\theta_1,L_1\sin\theta_1)$. Then add a second link, then a third:
 
@@ -388,7 +388,7 @@ J(q)=\begin{bmatrix}
 \end{bmatrix}.
 $$
 
-For example, $\partial x/\partial q_2$ is the change in gripper X per small change in joint 2, with other angles fixed. Repeat for every coordinate and joint. Column 2 gives the resulting 3D velocity per unit joint velocity.
+Read one entry first. $\partial x/\partial q_2$ is the change in gripper X per small change in joint 2, with other angles fixed. Repeating this for every coordinate and joint fills the matrix. Column 2 then gives the resulting 3D velocity per unit joint velocity.
 
 ![The same shoulder turn produces large and small gripper motion in extended and folded configurations](/assets/robotics/arm-control/v3/jacobian_extended_folded.png)
 
@@ -437,7 +437,7 @@ Sampling gives a partial picture of the workspace; blank regions may still conta
 
 ## Reaching the stem is not enough
 
-Suppose I want to grasp a wine glass by its stem. Reaching the stem's position is only part of the problem: the gripper must approach in a useful orientation, with room for its fingers.
+Suppose I want to grasp a wine glass by its stem. A reachable position only answers part of that request. The gripper also has to approach in a useful orientation, with room for its fingers.
 
 ![A gripper reaches a schematic wine-glass stem with different orientations at the same target](/assets/robotics/arm-control/v3/franka_wine_orientation_comparison.png)
 
@@ -478,7 +478,7 @@ The **pose workspace** contains reachable position-orientation pairs. The **dext
 
 ## Who chooses the next target?
 
-We can now work backward from the motor. In the SO-101 position-control setup, the servo needs a joint-angle target. It cannot interpret “grasp the cup.” Something above it must turn that goal into commands.
+We can now work backward from the motor to the goal. In the SO-101 position-control setup, the servo needs a joint-angle target. To execute “grasp the cup,” something above the servo has to turn that goal into commands the servo can interpret.
 
 ![A question tree branches between planning, learned joint targets, and learned hand targets, then joins at the servo feedback loop](/assets/robotics/arm-control/v3/command_questions.png)
 

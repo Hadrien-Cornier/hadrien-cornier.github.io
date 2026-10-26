@@ -10,13 +10,13 @@ draft: false
 layout: essay
 ---
 
-**Do I need an answer that changes less, or an answer that shares fewer of my errors?** The answer helps decide what scores a learning target. The [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) combinations table measured these choices. Here are the recipes I use, with a number to illustrate each one.
+**Do I need an answer that changes less, or an answer that shares fewer of my errors?** These are two different reasons to change the estimate that scores a learning target. The [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) combinations table measured these choices. Here are the recipes I use, with a number to illustrate each one.
 
 <figure class="article-figure target-recipes-drawing"><a class="figure-link" href="/assets/robotics/rl/learning-target-recipes.svg" aria-label="Open the full learning-target drawing"><img src="/assets/robotics/rl/learning-target-recipes.svg" width="1080" height="760" alt="Four target scorers, their scores for the same action, and a GAE credit calculation." style="display:block;width:100%;height:auto"></a><figcaption>A frozen copy slows change; a second estimate separates errors. GAE blends credit across return lengths.</figcaption></figure>
 
 ## Two dials
 
-A **target** is the reference value an update moves toward. There are two dials for the estimate that scores it: **how fast it changes**, and **how much it shares the selector's errors**. Here is where the game's four scorers sit:
+An update needs a reference value to move toward: its **target**. For the estimate that scores it, we can turn two dials: **how fast it changes**, and **how much it shares the selector's errors**. The game's four scorers make different choices:
 
 | `scored by` | Changes | Shares the selector's errors |
 |---|---|---|
@@ -31,11 +31,11 @@ A frozen copy addresses change over time, while a second estimate addresses shar
 
 ### Freeze when the target changes too fast
 
-A frozen copy changes only when it is refreshed. If the live guess rises from 10 to 14, the stored copy still scores 10 until the next refresh.
+Suppose the live guess rises from 10 to 14. A stored copy still scores 10 until it is refreshed. Freezing the copy makes that the only time it changes.
 
 ### Take a second estimate when over-estimates win
 
-If the learner keeps trusting actions because of over-estimates, a frozen copy preserves the error it froze. A second estimate can escape that error. In this example, the true values are 10 and 10.
+Now suppose the learner keeps trusting actions because their values are over-estimated. Freezing an estimate also freezes its error. A second estimate can escape that error. Here is an example where the true values are 10 and 10.
 
 | Estimate | Left | Right |
 |---|---:|---:|
@@ -51,7 +51,7 @@ Taking the smaller of live and second gives the lower number, so live 14 and sec
 
 ### Blend the return lengths instead of picking one
 
-These recipes choose who scores the target, but there is also a choice about how far its return looks. A one-step target uses the value estimate just after the move, while a full-return target waits for every reward in the episode. That is the tradeoff between short and long returns: a short return leans on a guess that can be biased, and a long return carries every reward and the noise with it.
+We have chosen who scores the target. We still have to choose how far its return looks. A one-step target uses the value estimate just after the move. A full-return target waits for every reward in the episode. Short returns lean on a guess that can be biased; long returns carry every reward and the noise with it.
 
 **Generalized advantage estimation (GAE)** handles that choice by mixing the errors from many return lengths to estimate how much credit one action earned. Each error is `reward + gamma V(next) - V(now)`, the gap a reward opens in the value estimate. GAE adds them as `delta + gamma lambda delta_next + ...`, so each later error carries one more factor of `gamma lambda`. This estimates action credit. PPO's clip has a different job: it limits the incentive to change the policy, without imposing a hard step bound.
 

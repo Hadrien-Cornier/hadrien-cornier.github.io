@@ -63,7 +63,7 @@ The "servo constants" are a file with the dead time, the lag, the dead band, the
 
 ## Ticks: the reading is rounded
 
-The encoder doesn't give a continuous angle, it gives whole ticks, 4096 per turn, so one tick is 1.534 mrad. If the true angle is anywhere inside a tick, the reading is the same, which means there's a reading error underneath everything else the controller does.
+The joint moves through continuous angles, but the encoder reports whole ticks: 4096 per turn, or 1.534 mrad per tick. Move the true angle anywhere inside one tick and the reading stays the same. That rounding leaves a reading error underneath everything else the controller does.
 
 <div class="rc-mark" id="fig-tick-rounding" data-panel="tick-rounding" data-title="Rounding error of one tick"></div>
 
@@ -120,7 +120,7 @@ Partly. The model-based controllers avoid it, because `inv`, `solve` and `mpc` t
 
 There's another way to amplify noise, and this one shows up in almost all of my controllers. A one-step inverse asks which goal will put the joint on the target at the next step. The difficulty is that the servo responds slowly. In the simulator, moving the goal by one tick moves the joint by only 0.14 to 0.17 tick in one 33 ms step. The reason is that one goal tick only adds 13.64 × 0.001534 = 0.021 N·m of torque, and that torque first has to accelerate the arm against the damping, with a servo time constant of 78 ms, longer than two steps.
 
-So to move the joint by one tick in one step, the inverse has to move the goal by about 1/0.15, roughly 7 ticks. Whatever the inverse sees gets multiplied by about 7, including the reading noise and any error in the model.
+Now ask the inverse to move the joint by one tick in one step. It must move the goal by about 1/0.15, roughly 7 ticks. Whatever the inverse sees is multiplied by about 7, including reading noise and model error.
 
 ```so101-widget
 {"type": "predict", "fallback": "Predict first. Facts for this question. One goal tick is 1.534 mrad, so it adds 13.64 x 0.001534 = 0.021 N m of servo torque. That torque must first accelerate the arm, and the damping slows it: the servo time constant is d / kp = 1.058 / 13.64 = 78 ms, longer than one 33 ms step. In the MuJoCo copy, with the arm at 0.3 rad/s, a goal 1 tick higher puts the joint only 0.14 to 0.17 tick higher at the end of the step. The Fitted servo model chooses the goal that puts the joint on the next target at the end of ONE step. Now one reading jumps by +1 tick only because of rounding. The model then moves its next goal by about 5.6 ticks. Why so much? Answer: The one-step gain from goal to landing point is only about 0.14, so the solve multiplies any apparent error by about 1 / 0.14.", "id": "F2"}
@@ -141,7 +141,7 @@ The loop goes like this:
 3. **Correct:** move the estimate by a fraction α of the innovation.
 4. **Repeat** at the next step.
 
-This is called an observer. The simplest one is the alpha-beta filter, which estimates the position and the speed, and where you choose the fraction α by hand.
+This loop is an observer. The simplest one, the alpha-beta filter, estimates position and speed. You choose its correction fraction α by hand.
 
 ```so101-widget
 {"type": "observer", "fallback": "An alpha-beta observer on tick readings. With α = 0.4 the estimate follows the true angle more closely than the rounded reading. A model error makes the estimate drift when α is small, because the observer trusts its model too much.", "mode": "alpha-beta"}
@@ -159,7 +159,7 @@ The obvious question is how to choose α, and that's where the Kalman filter com
 
 ### Two guesses are better than one
 
-At each tick I have two guesses of the angle. The model predicts $q^-$, and its error has a variance $P$. The encoder reads $q_\text{read}$, and its error has a variance $R$. Neither is exact. So take a blend: start from the prediction and move a fraction $K$ of the way toward the reading.
+At each tick, I have two imperfect guesses of the angle. The model predicts $q^-$ with error variance $P$. The encoder reads $q_\text{read}$ with error variance $R$. To combine them, start at the prediction and move a fraction $K$ of the way toward the reading:
 
 $$
 \hat q = q^- + K\,(q_\text{read} - q^-) = (1-K)\,q^- + K\,q_\text{read}
@@ -179,7 +179,7 @@ Here is a number for my encoder. The rounding error is spread evenly over one ti
 
 ### The loop, with the gain in it
 
-The Kalman filter is that blend, done at every tick, plus a rule for how $P$ changes. Between two ticks the prediction gets less certain, because the model isn't perfect: it adds a model noise $Q$. After each reading it gets more certain, because the blend is better than either guess. For one joint and the angle alone, the four lines are:
+Repeat that blend at every tick and track how $P$ changes: that is the Kalman filter. Between two readings, the imperfect model adds noise $Q$, making the prediction less certain. A new reading makes the estimate more certain, because the blend is better than either guess. For one joint and the angle alone, the four lines are:
 
 $$
 \begin{aligned}
@@ -222,7 +222,7 @@ $$
 J\,\dot w = \tau_\text{servo} - (\text{the forces the model knows}) + d, \qquad d_{k+1} = d_k + \text{a small random step}
 $$
 
-The encoder never sees $d$. The filter can still learn it, for the same reason as the speed: $d$ changes the speed, and the speed changes the angle. So when the joint lands lower than the prediction at tick after tick, the innovation keeps the same sign, and $d$ moves a little in the same direction at each tick until the prediction matches the readings again. The gain of $d$ is the slope of that link, how much $d$ is probably wrong when the angle is wrong by one radian. Nothing in the filter knows the cause: $d$ takes any steady torque the model misses.
+How can the filter learn $d$ when the encoder never sees it? Through the same link that lets it learn speed: $d$ changes the speed, and the speed changes the angle. So when the joint lands lower than the prediction at tick after tick, the innovation keeps the same sign, and $d$ moves a little in the same direction at each tick until the prediction matches the readings again. The gain of $d$ is the slope of that link, how much $d$ is probably wrong when the angle is wrong by one radian. Nothing in the filter knows the cause: $d$ takes any steady torque the model misses.
 
 My `solve` and `mpc` controllers already keep a simple disturbance observer called $\hat w$. At each step the model predicts the next reading, the prediction error tells the controller that something is missing, and $\hat w$ moves a small part of the way toward explaining it, dt / 0.3 s of the way each step. `mpca` replaces that with a Kalman filter that has a fast part for a load and a slow part for sag. I go through both in [part 3](/robotics/so101-3-choosing-the-goal/#section-family-4-estimate-what-you-don-t-know).
 

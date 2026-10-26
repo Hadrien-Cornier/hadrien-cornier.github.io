@@ -9,7 +9,7 @@ thumbnail: /assets/robotics/thumbnails/robot-brains-robot-bodies.jpg
 thumbnail_alt: 'Cycle time and reliability: shorter decisions and fewer task failures.'
 ---
 
-I find it useful to think about robotics through what is happening with language models. A capability that once required a research team can become something another company buys and adapts to build a business around. As that capability becomes easier to obtain, the advantage moves toward whatever remains difficult.
+A capability that once required a research team can become something another company buys and adapts to build a business around. This is what I find useful about looking at robotics through language models: as a capability becomes easier to obtain, the advantage moves toward whatever remains difficult.
 
 Something similar could happen with robots, though the analogy only goes so far. Software can be copied almost instantly. A robot needs a body, a place to work, and someone to repair it.
 
@@ -31,13 +31,13 @@ I would change this prediction if frontier models kept a large advantage in tota
 
 ## Reliability will decide the economics
 
-There is a limit to how much faster thinking alone can make a physical task.
+Consider what happens to a physical task when only the thinking gets faster. There is a limit to how much time that can save.
 
-Imagine a robot spends 90 seconds moving and 10 seconds deciding what to do. If decision time falls to zero while everything else stays fixed, the cycle falls from 100 seconds to 90. That improves throughput by about 11%.
+Imagine a robot that spends 90 seconds moving and 10 seconds deciding what to do. Remove all the decision time and hold everything else fixed: the cycle falls from 100 seconds to 90. Throughput improves by about 11%.
 
 Better intelligence can also choose shorter movements, avoid mistakes, or reorganize the work, and those benefits could be much larger. But once a particular task is being done well, another improvement in general reasoning may have little effect on its economics.
 
-Moving from 99% success to 99.9% has a different effect: it cuts the failure rate tenfold. Across 1,000 comparable attempts, that means an expected ten failures becoming one. Whether this matters depends on what a failure costs: a retry, a technician visit, damaged inventory, or an unsafe event.
+Now change reliability instead. Moving from 99% success to 99.9% cuts the failure rate tenfold. Over 1,000 comparable attempts, the expected number of failures falls from ten to one. The value of that change depends on what a failure costs: a retry, a technician visit, damaged inventory, or an unsafe event.
 
 <figure class="rf-figure" aria-labelledby="rf-arithmetic-title">
   <p class="rf-kicker">Illustrative assumptions</p>
@@ -87,7 +87,7 @@ Another possibility is that large robotics businesses emerge around owning and o
 
 Neoclouds provide a useful comparison: they acquire GPU infrastructure, make it usable, and sell access to capacity. Their business depends on financing, utilization, reliability, and customer demand. [CoreWeave’s infrastructure-backed financing](https://investors.coreweave.com/news/news-details/2026/CoreWeave-Closes-Landmark-8-5-Billion-Financing-Facility-Achieving-First-Investment-Grade-Rated-GPU-backed-Financing/default.aspx) shows how closely this model connects technology to capital.
 
-A robotics operator could buy machines, license models, deploy them at customer sites, and charge for useful work. Customers would avoid managing equipment and coordinating several suppliers, while the operator would take responsibility for keeping the service running.
+For robotics, the service could work like this: an operator buys machines, licenses models, deploys them at customer sites, and charges for useful work. The customer avoids managing equipment and coordinating several suppliers. The operator takes responsibility for keeping the service running.
 
 Part of this business could resemble real estate: commit capital up front, secure demand, keep assets productive, and earn a return over time. Robots would add substantial maintenance and obsolescence risk.
 
@@ -129,7 +129,7 @@ If models become accessible, a large fleet’s data may seem like the obvious re
 
 Simulation offers another way to acquire experience. Research such as [DeXtreme](https://arxiv.org/abs/2210.13702) has demonstrated transfer from simulated training to real dexterous manipulation on a bounded task. If that transfer becomes broader and more reliable, competitors may reproduce useful training experience without owning an equally large fleet.
 
-Field experience could still matter enormously. Someone has to find what the simulation misses: worn components, unexpected contact, unusual objects, and failures that only appear after prolonged use. I expect the advantage to shift toward identifying those gaps, calibrating the system, and verifying that a fix works elsewhere.
+That still leaves the question of what simulation misses: worn components, unexpected contact, unusual objects, and failures that only appear after prolonged use. Finding those gaps could make field experience enormously valuable. I expect the advantage to shift toward identifying them, calibrating the system, and verifying that a fix works elsewhere.
 
 A fleet becomes more valuable when its experience makes the next deployment more reliable. A growing archive of recordings is weaker evidence.
 

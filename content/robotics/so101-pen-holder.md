@@ -53,9 +53,9 @@ layout: essay
 
 This is the hardware part of the series. [Parts 1 to 4](/robotics/so101-1-target-and-goal/) measure the arm's error in joint angles. This part builds the tool that will show the same error as ink on paper.
 
-I want to make my SO-101 arm follow a path more accurately. For that, I need a way to see whether a change makes the path better or worse. Joint logs give me numbers, but numbers are easy to fool myself with. So I had an idea: put a pen on the arm and let it draw. When the arm leaves the path, the drawing goes wrong, and anyone can see it.
+How do I see whether a change makes my SO-101 follow a path more accurately? Joint logs give me numbers, but those are easy to fool myself with. My idea was to put a pen on the arm and let it draw. A departure from the path then becomes a mistake in the drawing, where anyone can see it.
 
-Today the pen is strapped into the gripper with tape. The gripper is taped shut, and its motor is off. It draws, but it raises a problem: the drawing shows the error of the arm plus the error of the strap. When the paper pulls on the tip, the pen moves in the strap. And I do not know exactly where the tip is. My best fit puts it about 110 mm from the gripper, with a 3.0 mm residual. That is larger than the error I want to see.
+Today I strap the pen into the gripper with tape, tape the gripper shut, and leave its motor off. It draws. But when the paper pulls on the tip, the pen moves in the strap, so the drawing combines arm error with strap error. I also do not know exactly where the tip is: my best fit puts it about 110 mm from the gripper with a 3.0 mm residual. That residual is larger than the error I want to see.
 
 <figure class="article-figure">
 <video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-drawing-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm drawing a kitten with a pen on the black Wacom tablet. The arm sweeps the pen along the outline of the drawing.">
@@ -134,7 +134,7 @@ The pen hung in a carriage that slid on two steel shafts through bronze bushings
 <details>
 <summary>The lever rule for the slide</summary>
 
-A bushing must be a little larger than its shaft, or the carriage cannot slide. That small gap is the clearance, c. When the paper drag pushes the tip to the right, the carriage moves across the clearance and tilts. When the drag reverses, it tilts the other way.
+For the carriage to slide, each bushing must be a little larger than its shaft. Call that small gap the clearance, c. Paper drag pushes the tip to the right, moving the carriage across the clearance and tilting it. Reverse the drag, and the carriage tilts the other way.
 
 <div class="rc-slot" data-for="fig-lever" data-src="/assets/robotics/so101-pen-holder/lever.svg" data-caption="The carriage touches opposite walls at the two bushings. The clearance is drawn 250 times larger than it is."><span class="rc-sr">How the bushing span sets the tip play</span></div>
 
@@ -144,7 +144,7 @@ $$
 \Delta_{tip} = c \left(1 + \frac{2d}{L}\right)
 $$
 
-So the span must be long, the overhang short, and the clearance small. With 3 mm ground shafts and sized bushings, c is 0.004 to 0.020 mm, and the tip moves 0.016 to 0.049 mm. The same rule is the reason why the later designs hold the pen at two points far apart.
+The formula gives three ways to reduce tip motion: lengthen the span, shorten the overhang, and shrink the clearance. With 3 mm ground shafts and sized bushings, c is 0.004 to 0.020 mm, giving 0.016 to 0.049 mm of tip motion. This is also why the later designs hold the pen at two widely separated points.
 
 </details>
 
@@ -203,7 +203,7 @@ I chose Sy20. It reaches the largest area of paper, it needs no riser, and its t
 
 Design 2 put the slide of design 1 in the Sy20 layout. It passed its checks after two fixes: I moved the guide 6 mm out of the jaws, because the carriage hit the fingertips, and I made the spine thicker, because one section was only 41.6 mm².
 
-It worked on paper, but it was not a design that anybody else would build. With the bracket, the carriage, the sleeves, two ground shafts, four bushings, the bolts and the glue, it had about 20 parts. The two holds on the pen were only 31 mm apart, and the bushings still left 0.016 to 0.049 mm of play.
+On paper, it worked. To build it, though, somebody would need the bracket, carriage, sleeves, two ground shafts, four bushings, bolts and glue: about 20 parts. It was not a design anybody else would build. The pen was held at two points only 31 mm apart, and the bushings still left 0.016 to 0.049 mm of play.
 
 ## Design 3: two V clamps on one part
 
@@ -267,7 +267,7 @@ It holds in three directions:
 
 <div class="rc-mark" id="fig-how-it-holds-pen" data-panel="how-it-holds-pen" data-title="What holds the pen"></div>
 
-The finger is short, so the two clamps are 43 mm apart instead of 80 mm. The clamps have no play, but a shorter span makes the pen less stiff against tilt. I have not calculated that bending yet.
+The short finger limits the clamp spacing to 43 mm instead of 80 mm. The clamps have no play, but the shorter span makes the pen less stiff against tilt. That bending remains to be calculated.
 
 <div class="rc-slot" data-for="fig-how-it-holds-pen" data-src="/assets/robotics/so101-pen-holder/how-it-holds-pen.svg" data-caption="The two pen clamps."><span class="rc-sr">What holds the pen</span></div>
 

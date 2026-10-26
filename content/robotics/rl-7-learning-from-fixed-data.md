@@ -77,7 +77,7 @@ thumbnail_alt: 'Two blackboard panels: a sweep that nobody tried has an unchecke
 </g></svg></div></div>
 <div class="rc-body">
 
-Suppose you've recorded a few hundred teleoperated attempts at picking up a mug with a robot arm. Some operators were experienced and some were new, and you can't collect more data right now. Two different things can go wrong when you learn from that log. A learner that tries to improve on it asks about actions nobody tried, which is called **extrapolation error**, and a learner that copies it copies the mistakes too, the problem of **mixed-quality data**. They sit next to each other, but they are different problems with different fixes.
+Suppose you have a few hundred teleoperated attempts at picking up a mug with a robot arm. Some operators were experienced, some were new, and you can't collect more data right now. What can the learner do with this log? If it tries to improve on the demonstrations, it can ask about actions nobody tried: **extrapolation error**. If it copies the demonstrations, it copies their mistakes too: **mixed-quality data**. These are two different problems, and they need different fixes.
 
 **Part 7.** [Previously: policy gradients](/robotics/rl-6-credit-and-careful-updates/). This part extends [data coverage in part 4](/robotics/rl-4-on-policy-and-off-policy/#sec-coverage) to a log you can't add to. In the [failure map](/robotics/rl-0-overview/#sec-failures), extrapolation error belongs to "value estimates that answer the wrong question", next to the deadly triad.
 
@@ -85,7 +85,7 @@ Suppose you've recorded a few hundred teleoperated attempts at picking up a mug 
 
 ## A hole: an action nobody tried
 
-Take one moment in the log: the gripper is just above the mug. Operators either lowered it slowly (60 times) or fast (40 times). Nobody swept the gripper sideways, because that knocks the mug over. Train a Q-function on this log, the same kind of action-value estimate as in [part 1](/robotics/rl-1-q-learning/), and real outcomes keep correcting its estimates for the two recorded actions. The sweep's estimate is whatever the network happens to produce there, say 9, while its true value is −5.
+Look at the moment just above the mug. Operators lowered the gripper slowly 60 times and fast 40 times. Nobody swept sideways, because that knocks the mug over. A Q-function trained on the log, the kind of action-value estimate from [part 1](/robotics/rl-1-q-learning/), keeps receiving real outcomes that correct the two recorded actions. For the sweep, it has only whatever the network happens to predict. Say that estimate is 9 while the true value is −5.
 
 Q-learning's target for the move that brought the gripper above the mug takes the largest next-action estimate. With reward 0 for that move and discount $\gamma=0.9$, that's $0.9\times9=8.1$, against $0.9\times4=3.6$ if you only count recorded actions. The earlier state now inherits a value that came from an action nobody took, and the policy that reads it chooses the sweep. A robot that could act would try the sweep, see the mug fall and correct the estimate. With a fixed log nothing ever corrects it, and the next target built from the inflated value carries the error further back. It's the same feedback as in [the deadly triad](/robotics/rl-5-the-deadly-triad/), with the missing correction coming from a dataset that can't grow.
 
@@ -119,7 +119,7 @@ These estimates are made up to show the mechanism.
 
 The fixes share one idea: limit how far the learner can move from what the data supports. **Behavior cloning (BC)** copies the recorded actions and never asks a Q-function anything, so it has no extrapolation error, but it can't improve on the data either. It can still drift into states the log never covered, which is a different problem. **Batch-Constrained Q-learning (BCQ)**, from the 2019 paper above, only considers actions that a learned model finds likely, so the max above the mug runs over the two recorded actions and the target is 3.6 instead of 8.1. **Implicit Q-Learning (IQL)** ([Kostrikov, Nair and Levine, 2021](https://arxiv.org/abs/2110.06169)) never evaluates an unrecorded action at all, so its next-state value comes out about 3.93 here, and never 9. **Conservative Q-Learning (CQL)** ([Kumar et al., 2020](https://arxiv.org/abs/2006.04779)) pushes the sweep's estimate down until it stops attracting the policy. **TD3+BC** ([Fujimoto and Gu, 2021](https://arxiv.org/abs/2106.06860)) adds a term that pulls the policy back toward the recorded action.
 
-Each one gives something up. BCQ and IQL can only find the best of what was recorded. CQL's pessimism can also hold back good actions with few examples. And TD3+BC's pull toward the data is a pull toward whatever was recorded in that state.
+These restrictions have costs. BCQ and IQL can find only the best of what was recorded. CQL can be pessimistic about good actions with few examples too. TD3+BC pulls toward whatever action was recorded in that state.
 
 <details>
 <summary>How each method sets its limit, and the game's version with good data</summary>
@@ -159,7 +159,7 @@ The Q-function then learns from $r+\gamma V(s')$, so the target never touches th
 
 ## Mistakes: bad actions in the log
 
-Now change the log. Say 70 attempts came from experienced operators and 30 from a new operator. At the moment the gripper reaches the mug handle, the experienced operators rotate the wrist first and then grasp, while the new operator grasps straight in, which often knocks the mug. Both actions are in the data, and both are labeled correctly: the log shows exactly what happened.
+For the second problem, change who supplied the log. Experienced operators recorded 70 attempts; a new operator recorded 30. At the mug handle, the experienced operators rotate the wrist before grasping. The new operator grasps straight in and often knocks the mug. Both actions are present, with correct labels. The log tells the truth about what happened.
 
 Behavior cloning makes every recorded action likely, so an expressive policy reproduces the straight grasp in about 30% of visits to that state. A policy that outputs one action can end up between the two, which is [mode averaging](/robotics/rl-8-mode-averaging/) again. This has nothing to do with extrapolation error. There's no unrecorded action and no inflated estimate, just content you didn't want in the data. And a method built for the first problem can make this one worse, because BCQ and TD3+BC deliberately keep the policy close to the recorded actions, mistakes included.
 
@@ -215,7 +215,7 @@ TD3+BC's $Q$ term also uses the reward, by tilting the copy toward actions with 
 
 ## What the reward-aware fixes need
 
-All of them work by trusting a number attached to each recorded action. So they need rewards that separate good from bad, value estimates that are right on the data, good actions in the states that matter, and true records. With a binary success reward, for example, a hesitant attempt that still succeeds scores the same as a clean one unless a discount or a cost per step tells them apart. And weighting only chooses among recorded actions, so if every recorded attempt fumbles one particular step, no weighting produces a clean version of it.
+These reward-aware fixes all trust a number attached to a recorded action. They need rewards that distinguish good from bad, values that are right on the data, good actions in the important states, and truthful records. A hesitant success and a clean success receive the same binary reward unless a discount or step cost distinguishes them. Weighting also chooses among recorded actions. If every attempt fumbles a particular step, weighting cannot produce a clean example of it.
 
 None of this is guaranteed by a method's name. In the game's version of the problem, the log mixes 50 episodes of a good controller with 50 episodes of random commands. IQL ended 0.22 m from the target, and AWR ended at 0.57 m, no better than a Gaussian copy of everything at 0.56 m (3 seeds, simulation). Both weight actions by an advantage, so in this toy how the advantage was estimated mattered more than the idea of weighting.
 
@@ -243,7 +243,7 @@ On the game's mixed log, the other methods ended at 0.33 m (CQL), 0.35 m (copyin
 
 ## Bad behavior or bad records?
 
-Everything above assumed the log tells the truth. The new operator's straight grasp really happened, in the recorded state, with the recorded result. That's **poor behavior**, bad actions with correct labels, and reward-aware reuse can handle it under the conditions above.
+So far, we have assumed the log is truthful. The new operator really made the straight grasp in the recorded state and got the recorded result. That is **poor behavior**: bad actions with correct labels. Under the conditions above, reward-aware reuse can handle it.
 
 **Corrupted data** is different, because the record itself is false. On a robot that can look like camera frames and arm commands logged with a clock offset, a command the arm couldn't follow stored as if it had happened, or a failed grasp marked as a success. A reward-aware method takes every record at face value, so a false success gets a large weight from AWR and a positive tag from advantage conditioning. Off-policy learning can't repair it either, since it can reuse a transition from another policy only if that transition is real. These fixes belong to the data pipeline: synchronize the clocks, record the executed action next to the command, audit success labels, and drop episodes that fail consistency checks.
 

@@ -504,7 +504,7 @@ thumbnail_alt: 'Blackboard drawing: a camera image and an instruction go into tw
 </g></svg></div></div>
 <div class="rc-body">
 
-VLA and WAM are the two names you keep hearing in robot learning this year. Both are robot policies: they look at a camera image, read an instruction like "put the bowl on the plate," and output the robot's next moves. So what's different? Mostly the model they start from and what they practice predicting.
+Give a robot the camera image and the instruction "put the bowl on the plate." Both a VLA and a WAM can turn that request into the robot's next moves. These are the two names that keep coming up in robot learning this year. If both are robot policies doing the same job, what separates them? Mostly their starting model and what they practice predicting.
 
 <div class="rc-mark" id="sec-job" data-panel="job" data-view="job" data-title="Same job, different start"></div>
 
@@ -518,7 +518,7 @@ $$a_{t:t+H} \sim \pi_\theta(\,\cdot \mid o_t,\ \ell\,)$$
 
 ## WAMs learn one extra target
 
-Take one demonstration: the frame now, the frames the camera saw next, and the moves the robot made. A VLA learns the moves, and some VLAs also keep training on image-text tasks. A WAM learns the moves and the next frames $o'$ together:
+Look at one demonstration. It contains the current frame, the frames that followed, and the moves the robot made between them. A VLA learns to predict the moves; some VLAs also continue training on image-text tasks. A WAM learns the moves together with the next frames $o'$:
 
 $$\text{VLA: } p_\theta(a \mid o, \ell) \qquad\qquad \text{WAM: } p_\theta(o', a \mid o, \ell)$$
 
@@ -528,7 +528,7 @@ In Fast-WAM that's one loss for each part, $\mathcal L = \mathcal L_{\text{act}}
 
 ## Many WAMs imagine, then act
 
-Many WAMs, early and recent, draw the future while the robot runs. Some denoise video and moves together. Others generate the video first, then read the moves off it with an inverse dynamics model, which infers the action between two frames. Either way, each chunk runs a big video network many times:
+For many WAMs, both early and recent, that future video is also generated while the robot runs. Some denoise video and moves together. Others first generate the video, then use an inverse dynamics model to infer the moves between its frames. Both routes run a big video network many times for every action chunk:
 
 $$T_{\text{chunk}} \approx S_v\,c_{\text{video}} + S_a\,c_{\text{act}}$$
 
@@ -548,7 +548,7 @@ On the authors' towel-folding robot, with one RTX 5090D GPU, that's 190 ms per c
 
 ## What the video loss buys
 
-Did dropping the imagined frames cost anything? The same paper trains four versions on one backbone. Taking away the video loss costs 4.1 points on LIBERO and 8.0 on RoboTwin. The two imagining versions land within 1.2 points of Fast-WAM, a bit above it on LIBERO and below it on RoboTwin. So on these two simulated benchmarks, the video loss in training matters much more than drawing frames on the robot. Each bar is one run, so gaps near one point can be noise. All four keep the video-pretrained trunk, so this test doesn't measure what the trunk itself adds.
+We can separate the training benefit from the cost of drawing frames on the robot. The paper trains four versions on one backbone. Removing the video loss costs 4.1 points on LIBERO and 8.0 on RoboTwin. Keeping it but imagining at run time puts the two imagining versions within 1.2 points of Fast-WAM, slightly above on LIBERO and below on RoboTwin. On these two simulated benchmarks, the video loss in training matters much more than drawing frames at run time. Each bar is only one run, so gaps near one point can be noise. And because every version retains the video-pretrained trunk, the comparison doesn't measure what that trunk adds.
 
 Under distribution shift, the gap gets much bigger. The [other Faster-WAM paper](https://arxiv.org/abs/2608.04404) trains Fast-WAM and a version that denoises frames and moves together with the same backbone, data and recipe. On LIBERO-Plus, Fast-WAM scores 49.1% and the joint version 66.3%. On a real robot with new backgrounds, lighting and distractors, Fast-WAM gets 45.6% and the joint version 55.6%. But the Faster-WAM in the next section reaches 78.3% on LIBERO-Plus without any test-time frames, so why Fast-WAM drops is still an open question.
 
@@ -558,7 +558,7 @@ Under distribution shift, the gap gets much bigger. The [other Faster-WAM paper]
 
 Here are both families on one chart, from the RoboTwin 2.0 table in the [Faster-WAM paper](https://arxiv.org/abs/2608.02365v2). Motus and LingBot-VA, which imagine on the robot, score 87.8% and 92.2% but take 1.4 and 7.4 seconds per chunk. The VLAs π0 and π0.5 answer in 65 and 71 ms with 62.2% and 79.8%. Fast-WAM keeps the WAM score at about 200 ms, and Faster-WAM gets to 53 ms at 90.5% with a one-layer action expert that reads from every video layer. [Faster-WAM in LeRobot](/robotics/faster-wam-in-lerobot/) shows how.
 
-It isn't a clean race, though. The four baselines were pretrained on robot data, and Fast-WAM and Faster-WAM weren't. π0 and π0.5 predict 50 moves per chunk and Faster-WAM 32, so per move π0.5 is slightly faster. And on LIBERO-Plus, which perturbs the camera, lighting, language and more, π0.5 leads with 85.7% against 78.3% for Faster-WAM.
+Before calling a winner, look at what differs. The four baselines were pretrained on robot data; Fast-WAM and Faster-WAM weren't. Chunk sizes differ too: π0 and π0.5 predict 50 moves, while Faster-WAM predicts 32. Measured per move, π0.5 is slightly faster. On LIBERO-Plus, with perturbations to camera, lighting, language and more, π0.5 also leads in success, 85.7% against Faster-WAM's 78.3%.
 
 <div class="rc-mark" id="sec-tree" data-panel="tree" data-view="tree" data-title="Three WAM branches, not one line"></div>
 
@@ -566,7 +566,7 @@ It isn't a clean race, though. The four baselines were pretrained on robot data,
 
 It's tempting to read this as one line from slow WAMs to fast ones, but it isn't. [VPP](https://arxiv.org/abs/2412.14803) (2024) and [UVA](https://arxiv.org/abs/2503.00200) (2025) already acted from video-model features without drawing frames, and [GR-1](https://arxiv.org/abs/2312.13139) learned future images and actions together in 2023. The lanes follow the Fast-WAM paper's grouping, and GR-1's place follows the June survey. The Faster-WAM paper sorts by whether video and actions share one network, so LingBot-VA lands somewhere else.
 
-Two August 2026 papers are called Faster-WAM. [arXiv 2608.02365](https://arxiv.org/abs/2608.02365v2) builds on Fast-WAM and cuts the action expert to one layer. [arXiv 2608.04404](https://arxiv.org/abs/2608.04404) keeps a future representation, computes it once, and reuses it while it denoises the actions.
+The name adds another wrinkle: two August 2026 papers are called Faster-WAM. [arXiv 2608.02365](https://arxiv.org/abs/2608.02365v2) reduces Fast-WAM's action expert to one layer. [arXiv 2608.04404](https://arxiv.org/abs/2608.04404) instead keeps a future representation, computing it once and reusing it through action denoising.
 
 <div class="rc-mark" id="sec-trend" data-panel="trend" data-view="trend" data-title="A label that took off"></div>
 
@@ -578,7 +578,7 @@ On arXiv, papers with "world action model" in the title or abstract went from 12
 
 ## So where is the line?
 
-On the robot, Fast-WAM and Faster-WAM look just like a VLA: image and instruction in, moves out. What makes them WAMs is the video trunk and the video loss that trained it. The June survey asks whether the predicted future helps produce, score or train the actions inside one model, and it counts Fast-WAM because its action path "still uses a representation shaped by future prediction." It also excludes "a direct VLA with an auxiliary future loss", so part of the line is a matter of definition.
+Return to the input and output. Fast-WAM and Faster-WAM take an image and instruction and return moves, just as a VLA does. Their WAM identity comes from the video trunk and the video loss used to train it. The June survey asks whether a predicted future helps produce, score or train actions inside one model. Fast-WAM qualifies because the action path "still uses a representation shaped by future prediction." Yet the survey excludes "a direct VLA with an auxiliary future loss". Part of this boundary is a matter of definition.
 
 | | VLA | WAM |
 | --- | --- | --- |

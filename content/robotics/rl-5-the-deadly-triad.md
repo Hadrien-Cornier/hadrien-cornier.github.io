@@ -20,7 +20,7 @@ thumbnail_alt: 'Two blackboard panels: six methods checked against shared weight
 
 How can value estimates grow forever when every reward is zero?
 
-**Part 5.** Three ideas make RL practical on big problems. Function approximation, or shared weights, lets one set of weights cover states you've never seen, bootstrapping lets you learn from a guess before an episode ends, and off-policy learning lets you reuse old data. Every method on the first board uses the first idea, but only the deep Q-network (DQN) and soft actor-critic (SAC) use all three, and they stand for a family of off-policy value learners that includes TD3. Shared weights and bootstrapping let a prediction feed its own target, and off-policy data can remove the correction that would pull it back down. Sutton and Barto call the combination the **deadly triad**: it names a risk, not a rule that every combination diverges.
+**Part 5.** Three ideas help RL handle big problems. Shared weights, or function approximation, let one set of weights cover states you've never seen. Bootstrapping lets you learn from a guess before the episode ends. Off-policy learning lets you reuse old data. Every method on the first board uses shared weights; only the deep Q-network (DQN) and soft actor-critic (SAC) use all three. They represent a family of off-policy value learners that also includes TD3. Put shared weights and bootstrapping together and a prediction can feed its own target. Off-policy data can remove the correction that would pull it back down. Sutton and Barto call this combination the **deadly triad**. It describes a risk, not a rule that every combination diverges.
 
 <div class="rc-mark" id="sec-methods" data-panel="methods" data-view="methods" data-title="Who keeps all three?"></div>
 
@@ -58,7 +58,7 @@ The table follows the variant in each primary paper. All six share weights: a Q-
 
 ## Three pressures, one loop
 
-Read the loop on the board clockwise. Raising one prediction also raises a successor prediction that shares its weights. That successor supplies the next target, so the next update raises the first prediction again. If no update ever trains the successor, nothing pulls it back down. [Van Hasselt et al., §2](https://arxiv.org/abs/1812.02648).
+Follow the board clockwise. An update raises one prediction. Because the weights are shared, it also raises a successor prediction. That successor goes into the next target, which raises the first prediction again. If updates never train the successor itself, nothing pulls it back down. [Van Hasselt et al., §2](https://arxiv.org/abs/1812.02648).
 
 <div class="rc-mark" id="sec-two-state" data-panel="two-state" data-view="two-state" data-title="Two states, one weight"></div>
 
@@ -81,7 +81,7 @@ With $\gamma=0.9$ and $\alpha=0.1$, the multiplier is $1.08$. Starting from $w_0
 | 1 | 1.08 | 1.08 | 2.16 |
 | 2 | 1.1664 | 1.1664 | 2.3328 |
 
-No reward ever arrives. The growth comes only from the shared weight feeding its own target. The mismatch is in which states get updated: the policy ends up at $s_2$, but replay never starts there. So this example breaks state coverage, and it isn't a counterexample to the stable pairs below. The example goes back to Tsitsiklis and Van Roy (1996, 1997), as presented in [van Hasselt et al., §2](https://arxiv.org/abs/1812.02648).
+The weight grows without a single reward. Its growth comes entirely from feeding the shared prediction back into the target. Look at which states receive updates: the policy ends up at $s_2$, but replay never starts there. This breaks state coverage, so it doesn't contradict the stable pairs below. The example goes back to Tsitsiklis and Van Roy (1996, 1997), as presented in [van Hasselt et al., §2](https://arxiv.org/abs/1812.02648).
 
 <details><summary>Notation used in this article</summary>
 
@@ -89,7 +89,7 @@ $S_t$ and $A_t$ are the state and action at step $t$, and $R_{t+1}$ is the rewar
 
 </details>
 
-Remove any one ingredient and there is a setting where learning is stable. Each of the next three panels keeps two ingredients and shows what it restores. Each result needs its own assumptions; none of them says a pair is always safe.
+What happens if we remove one ingredient? For each choice, there is a stable setting. The next three panels keep two ingredients and show what stability depends on. Each result has its own assumptions; a pair is not always safe.
 
 <div class="rc-mark" id="sec-linear-pair" data-panel="linear-pair" data-view="linear-pair" data-title="Drop off-policy data"></div>
 
@@ -113,7 +113,7 @@ Keep bootstrapping and off-policy data, but give every state-action pair its own
 
 ## Slow the target feedback
 
-DQN keeps all three ingredients, so it slows the loop instead of removing it. It trains on transitions sampled from a replay buffer, which breaks up runs of nearly identical states, and it computes targets with a frozen copy of the network that it refreshes every $C$ updates. Replay doesn't make the data on-policy, and a frozen target delays the feedback without guaranteeing convergence. SAC also slows its targets, with a moving average of the weights. [Mnih et al., Methods](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf); [van Hasselt et al.](https://arxiv.org/abs/1812.02648).
+DQN keeps all three ingredients and slows the feedback. A replay buffer supplies saved transitions, breaking up runs of nearly identical states. A frozen network copy supplies the targets and is refreshed every $C$ updates. Replay leaves the data off-policy. Freezing delays the feedback and gives no convergence guarantee. SAC slows its targets too, using a moving average of the weights. [Mnih et al., Methods](https://web.stanford.edu/class/psych209/Readings/MnihEtAlHassibis15NatureControlDeepRL.pdf); [van Hasselt et al.](https://arxiv.org/abs/1812.02648).
 
 <details><summary>The DQN target and training loop</summary>
 
@@ -142,7 +142,7 @@ The published DQN samples minibatches of 32, uses RMSProp and clips the error to
 
 ## Check estimates beside rewards
 
-A good task score tells you how the policy acts, not whether its values are right, so check the values against what is possible. If every reward has magnitude at most $R_{\max}$, the discounted return $G_t$ can't be larger than a geometric sum:
+A policy can act well while its values are wrong. Check those predictions against the returns the task permits. If every reward has magnitude at most $R_{\max}$, the discounted return $G_t$ is bounded by a geometric sum:
 
 $$|G_t|\leq\frac{R_{\max}}{1-\gamma}.$$
 

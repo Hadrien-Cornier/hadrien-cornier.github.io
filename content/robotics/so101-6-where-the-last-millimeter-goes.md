@@ -59,7 +59,7 @@ This is part 6 of a series about the last mile of robot control: how a goal reac
 - [Part 4](/robotics/so101-4-learning-what-physics-misses/) asks where a neural network fits: a network that learns only what the physics model gets wrong.
 - [Part 5](/robotics/so101-pen-holder/) builds a pen holder, so that the arm's error shows up as ink.
 
-Those parts measured the arm in joint angles. Here I measure it at the pen tip, where it matters, starting with what the joint sensors cannot tell me.
+Those parts measured joint angles. Now I measure where the pen tip actually goes. The starting point is what the joint sensors cannot tell me.
 
 <figure class="article-figure">
 <video controls muted playsinline preload="metadata" poster="/assets/robotics/so101-controllers/kitty-overhead-v6c-poster.jpg" aria-label="Overhead view of the SO-101 arm drawing the kitten on the tablet. The arm holds the pen against the black tablet and moves it along the drawing.">
@@ -137,7 +137,7 @@ These clips do not show the lift shaking, but they do not contradict the Offline
 
 ### So I need an outside judge
 
-What the encoders miss is mostly slow: the lag, the offset, and the position error of the pen. To measure that, I need a second opinion on where the pen tip is. A tablet gives one.
+The missing information is mostly slow: the pen's lag, offset, and position error. Measuring it requires an outside reading of where the tip actually is. A tablet supplies that reading.
 
 ## Why a tablet?
 
@@ -205,7 +205,7 @@ Before I had the tablet, I measured the pen with an overhead camera. This clip i
 
 <div class="rc-mark" id="fig-system" data-panel="system" data-title="Where each error part enters"></div>
 
-The system takes a drawing, a path in tablet millimeters, and moves the pen along it. The output is where the pen tip really goes. The diagram shows the parts in between and the three places where a correction can happen. The tablet is used only in the lab.
+Start with a drawing: a path in tablet millimeters. The system moves the pen along it, and the output is where the tip really goes. Between that input and output are the parts in the diagram, with three places to add a correction. The tablet is used only in the lab.
 
 <div class="rc-slot" data-for="fig-system" data-src="/assets/robotics/so101-controllers/system.svg" data-caption="The three letters mark the error parts: c is the correction, tr is servo lag, u is what the encoders cannot see."><span class="rc-sr">Block diagram. A reference drawing goes through inverse kinematics to a joint path. A correction head adds joint offsets at a plus node. The physics controller sends goals to the servo, which drives the arm and pen. Encoder readings go back to the controller. The tablet reads the pen tip. Its error against the reference gives the score, and an online head learns from it.</span></div>
 
@@ -249,7 +249,7 @@ The head learns with recursive least squares (RLS): after each tick, it nudges i
 
 ## What the physics misses
 
-To find the causes, I remove one cause at a time and measure what is left. The **error budget** starts by splitting the error $e$ into three parts marked on the system diagram:
+To find a cause's contribution, I remove that cause and measure what remains, one cause at a time. This **error budget** starts by splitting the error $e$ into the three parts marked on the system diagram:
 
 $$
 e = u + tr + c
@@ -375,7 +375,7 @@ Models fit on the search motions and scored once on four held-out motions (Offli
 | Linear hysteresis model | 1.0341 | 1.0285 |
 | Kernel model | 0.9852 | 1.0077 |
 
-A kernel model builds many curved features through a similarity function and fits a linear map on top. It adds only 0.02 mm over the linear model on the held-out motions, so the gain comes from the features, not from the model class. These are candidates: none has been tested on the arm.
+The kernel model uses a similarity function to build many curved features, then fits a linear map on top. On held-out motions, this adds only 0.02 mm over the linear model. The features account for the gain rather than the model class. All of these remain candidates; none has been tested on the arm.
 
 </details>
 
@@ -409,7 +409,7 @@ A reviewer would ask whether this correction is circular: the head learns from t
 
 I also use a simulator, though its value is unclear to me because every candidate ends up on the real arm anyway. It cannot rank learned models: a simulator built from my model of the arm favors the planner that uses the same model. Its real uses are a dry run before the arm moves, and ideas that need many runs.
 
-The simulator shares the flaws described above under the limits of the encoders. The defect atlas below is the way to fix it.
+Because it uses the same model, the simulator inherits the flaws described above under the limits of the encoders. The defect atlas below is the way to fix it.
 
 ## What comes next
 

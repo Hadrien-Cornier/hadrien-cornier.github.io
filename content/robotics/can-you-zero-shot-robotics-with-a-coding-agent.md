@@ -8,11 +8,11 @@ thumbnail: /assets/robotics/thumbnails/can-you-zero-shot-robotics-with-a-coding-
 thumbnail_alt: 'The ASPIRE loop: write a robot program, run it, inspect the trace, repair and verify it, and keep the skill.'
 ---
 
-A simulated robot has to pick up a red radio. It finds the radio, 1.91 m away, and starts to drive over. Then `navigate_to_pose` returns `PLANNING_ERROR`. It does it again, and again.
+A simulated robot sets out to pick up a red radio. It locates it 1.91 m away and tries to drive over. The call to `navigate_to_pose` returns `PLANNING_ERROR`. Another try gives the same error. So does the next.
 
-The camera works and the grasp code works. The problem is the goal. Every spot the program picked lies within about 20 cm of the table edge, inside the planner's collision buffer, so the planner rejects all of them. The fix is small: approach the radio from other sides of it, and keep the first side that works. ([ASPIRE paper](https://research.nvidia.com/labs/gear/aspire/assets/Aspire.pdf), Fig. 2)
+Nothing is wrong with the camera or the grasp code. Every chosen goal is within about 20 cm of the table edge, inside the planner's collision buffer. The planner therefore rejects them all. A small change fixes it: try approaching the radio from different sides and keep the first side that works. ([ASPIRE paper](https://research.nvidia.com/labs/gear/aspire/assets/Aspire.pdf), Fig. 2)
 
-Normally that fix lives in one program for one task. The next task starts cold. NVIDIA's [ASPIRE](https://arxiv.org/abs/2607.00272) asks a different question: **what if the robot kept the fix, in a form the next task can read?**
+Usually, that repair stays inside one program for one task. The next task starts cold. NVIDIA's [ASPIRE](https://arxiv.org/abs/2607.00272) asks: **what if the robot kept the fix, in a form the next task can read?**
 
 <figure class="article-figure">
 <video autoplay muted loop playsinline controls preload="metadata" aria-label="ASPIRE discovering skills across simulation and real-robot tasks.">
@@ -26,7 +26,7 @@ Normally that fix lives in one program for one task. The next task starts cold. 
 
 A coding agent can now program a robot to do new tasks, and it gets better each time a better model arrives.
 
-Coding agents already changed how software gets written: the agent writes code, runs it, reads the failure and tries again. Other knowledge work followed, with agents zero-shotting problems that used to need a specialist. ASPIRE puts a robot at the end of that loop. It works on a long list of simulated tasks and on a few real ones.
+The software loop is already familiar: a coding agent writes code, runs it, reads the failure and tries again. It changed software development, then spread to other knowledge work, where agents zero-shot problems that used to need a specialist. ASPIRE puts a robot at the end of the same loop. It works on a long list of simulated tasks and a few real ones.
 
 - **No robot policy gets trained.** The behavior is a Python program that a coding agent wrote and debugged. The language model is pretrained and ASPIRE leaves it frozen, so "no RL" means no policy trained for these tasks, not no learning anywhere.
 - **The trained baselines trail it.** In the paper's LIBERO-Pro runs, π0.5, a trained vision-language-action policy, scores 0% to 38% across six conditions. ASPIRE with Claude Opus 4.6 scores 45% to 98% (Table 5).
@@ -105,7 +105,7 @@ repair:
     if navigate_to_pose(goal): break
 ```
 
-The note is not a radio-pickup program. It is a recovery pattern that a bottle or a soda can can reuse.
+What transfers to a bottle or soda can is the recovery pattern. The note records how to get past this kind of failure, rather than a complete radio-pickup program.
 
 In the released repo the library is plain markdown in [`.claude/skills/iterative-debugging/skills/`](https://github.com/NVlabs/ASPIRE/tree/fa00f0ef2bc1d91d594b9aa502c22133c9f538f7/.claude/skills/iterative-debugging/skills): `grasp.md`, `localize.md`, `transport.md`, `manipulation.md`. This entry comes from [`grasp.md`](https://github.com/NVlabs/ASPIRE/blob/fa00f0ef2bc1d91d594b9aa502c22133c9f538f7/.claude/skills/iterative-debugging/skills/grasp.md), with the markdown removed and the lines rewrapped:
 
@@ -154,7 +154,7 @@ Symbols in the pseudocode:
 - `top3(history)` returns the three best programs so far with their traces. `library` is the set of skill notes.
 - `K` is the number of programs the agent proposes per round.
 
-The held-out seeds appear in the last line only. That is how the paper keeps the reported success rate honest. Every LIBERO-Pro number below is a macro-average:
+Notice where the held-out seeds enter: only in the last line. That separation is how the paper keeps its reported success rate honest. Each LIBERO-Pro number below is a macro-average:
 
 $$\bar{s} = \frac{1}{T}\sum_{t=1}^{T}\frac{1}{S}\sum_{s=1}^{S}\mathbf{1}\big[\text{task } t \text{ succeeds on held-out seed } s\big]$$
 
@@ -215,7 +215,7 @@ The same Opus 4.6 agent solves LIBERO-Pro Long at 4.7% with an empty library. Se
 </table>
 </div>
 
-The average rises smoothly. Single tasks don't. In the paper's per-task table (Table 9), "Cream cheese + butter" under position perturbation goes 0%, 0%, 6%, 94% as the library grows. "Soup + tomato sauce" under the same perturbation goes 0%, 14%, 20%, 0%. A bigger library helped one task a lot and removed the gain on another.
+That smooth rise in the average hides very different tasks. In Table 9, "Cream cheese + butter" under position perturbation goes 0%, 0%, 6%, 94% as the library grows. "Soup + tomato sauce" under the same perturbation goes 0%, 14%, 20%, 0%. Growing the library gave one task a large lift and erased the other's gain.
 
 ### The model decides most of it
 
@@ -310,7 +310,7 @@ Each episode had a different number of turns, so the per-turn drop is a trend wi
 
 ## Drawbacks
 
-ASPIRE is slow, and it has not been shown on tasks that need fast reflexes. It works when the model is strong and the API covers the task.
+The loop takes time. ASPIRE is slow, and the authors haven't shown it on tasks requiring fast reflexes. It works when the model is strong and the API covers the task.
 
 - **Building a program is slow.** The agent spends 31 to 139 minutes per task on the debugging loop, depending on the model (chart below). The paper also lists the search as compute-intensive, with many LLM calls and rollouts per task.
 - **Real-robot sessions are slow too.** The Rubik's Cube episodes took 50 min 54 s unsolved, then 39 min and 77 min 10 s.
@@ -348,7 +348,7 @@ This section is my inference, not a paper result. My view: the missing piece is 
 - **The Bitter Lesson applies, with a floor.** The model swap moves the numbers more than the harness, which is Sutton's pattern. The fixed API and the verifier are the human-built parts that remain.
 - **The model is the lever.** With everything else fixed, success goes from 15% to 99% by swapping the language model. The paper's library-size curve uses Opus 4.6. I did not find the same curve for the newer models, so I can't say how much the library adds when the model is already strong.
 
-What I like most is the format. A fix you can read, diff and revert is easier to trust than a change buried in weights. It is also exactly why the model and the API are the ceiling.
+The format is what I like most. I can read a fix, diff it and revert it, which makes it easier to trust than a change buried in weights. The same format also makes the ceiling clear: what the model can write and what the API can express.
 
 <details>
 <summary>Sources and versions</summary>

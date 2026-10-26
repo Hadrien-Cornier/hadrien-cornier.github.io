@@ -40,7 +40,7 @@ layout: essay
 
 ## Where the series stands
 
-My drawing arm needs to learn as it changes. It also needs to react to errors that change within a stroke. Those are different jobs. A correction learned from past drawings handles the repeatable part. Feedback handles what the arm does differently this time.
+My drawing arm changes, so its correction needs to keep learning. Within a single stroke, it also needs to react to changing errors. A correction learned from past drawings handles the repeatable part; feedback handles what the arm does differently this time. These are two different jobs.
 
 <figure class="article-figure">
 <video autoplay muted loop playsinline controls preload="metadata" poster="/assets/robotics/so101-series/arm-drawing-overhead-poster.jpg" aria-label="Overhead view of the real SO-101 arm drawing a kitten with a pen on the black Wacom tablet. The arm sweeps the pen along the outline of the drawing.">
@@ -58,7 +58,7 @@ The main result is a clearer error budget. **The encoders explain about 70% of t
 
 ## What the one-millimeter numbers mean
 
-I need to separate error against the target from variation between runs. An arm can draw the same wrong line every time. It can also draw a different line each time, with an average close to the target.
+Suppose the arm draws the same wrong line every time. Its runs agree, but they miss the target. It could also draw a different line on each run while averaging close to the target. That is why I need separate measures for target error and variation between runs.
 
 | Quantity | Result | What it measures |
 |---|---|---|
@@ -71,7 +71,7 @@ The board calls the pairwise result a **repeat floor**. It describes variation i
 
 The per-run estimate and the separate repeat-mean result put variation at about **0.67 to 0.72 mm RMS (Offline)** in those cohorts. This range combines different analyses. It is not a confidence interval.
 
-A fixed correction can remove a repeatable bias. It cannot know which way the next run will deviate. That is why the distinction changes the next experiment: teach the average error between runs, and use feedback to respond during the run.
+A fixed correction can learn away a repeatable bias, but it cannot know which way the next run will deviate. This distinction sets up the next experiment: learn the average error between runs, then use feedback to respond during a run.
 
 ## Direct drive: taking over the motor command
 
@@ -100,7 +100,7 @@ That result made the next step clear: update the correction as more practice dat
 
 The Test drawings choose controllers. They do not train the correction. Validation drawings do neither.
 
-Online learning means that the deployed learner keeps updating from new practice. Its useful score is the error it maintains over time, as friction, temperature and the nib change. A low point early in a run does not establish that long-run performance.
+If the deployed learner keeps updating from new practice, it is learning online. The useful score is then the error it maintains as friction, temperature and the nib change over time. An early low point in a run cannot establish that long-run performance.
 
 ### Timing and drawing error need separate scores
 
@@ -134,13 +134,13 @@ This corrects an early statement in the explainer. The encoders do not miss most
 
 Delay determines how much of that signal a controller can use. With a **100 ms prediction delay**, encoder history explained **27% of the variance**, corresponding to a reduction from **0.71 to 0.61 mm RMS in the stroke-only analysis (Offline)**. That is a prediction bound from recordings. The next arm test must establish what a closed loop can remove.
 
-The two forms of learning now have distinct roles. Between drawings, update the correction for the repeatable error and slow changes. During a stroke, use recent joint readings to respond to the current deviation. The latter must use only readings that have already arrived.
+This gives the two forms of learning distinct roles. Between drawings, update the correction for repeatable error and slow changes. During a stroke, respond to the current deviation using recent joint readings. Those readings must already have arrived when the correction is made.
 
 ## The twin must match the error at the right time
 
 The twin is a software copy of the arm. It runs the controller against a model of the joints and a virtual tablet. It includes pen contact, friction and compliance, which lets the pen trail as it bends under drag. A learned residual can add the part that the physics model misses.
 
-A useful twin must reproduce where the real arm misses. Drawing a line with the right overall RMS is insufficient: the twin could miss on the opposite side of the target.
+For the twin to be useful, it must reproduce where the real arm misses. Matching overall RMS is insufficient. The twin could get that number right while missing on the opposite side of the target.
 
 <div class="rc-mark" id="fig-twin-across-days" data-panel="twin-across-days" data-title="The twin across days"></div>
 
