@@ -1,0 +1,384 @@
+ 
+ CS234: Reinforcement Learning Winter 2026 
+ CS234: Reinforcement Learning Winter 2026
+ Course Schedule
+ Lecture Materials 
+ Assignments
+ Course Project
+ Calendar
+ https://edstem.org/us/dashboard">-->
+ Forum
+ SCPD
+ FAQ
+ Course Description & Logistics 
+ To realize the dreams and impact of AI requires autonomous systems that learn to make good decisions.
+ Reinforcement learning is one powerful paradigm for doing so, and it is relevant to an enormous range
+ of tasks, including robotics, game playing, consumer modeling and healthcare. This class will provide
+ a solid introduction to the field of reinforcement learning and students will learn about the core
+ challenges and approaches, including generalization and exploration. Through a combination of lectures,
+ and written and coding assignments, students will become well versed in key ideas and techniques for RL.
+ Assignments will include the basics of reinforcement learning as well as deep reinforcement learning and the basics of RL 
+ from human feedback training. 
+ Communication: We will use a forum (to be added in week 1). For urgent questions before then, please use 
+ cs234-win2526-staff@lists.stanford.edu . 
+ Ed discussion forums. We encourage all students to use Ed for the fastest response to your questions. -->
+ Lectures will be live every Monday and Wednesday 3-4:20pm. Videos of the lecture content will also be made available to enrolled students through canvas. -->
+ Office hours: Will be announced in the first week of class
+ Platforms: 
+ All assignments and quizzes will be handled through Gradescope, where you will also find your
+ grades. We will send out links and access codes to enrolled students through Canvas.
+ -->
+ Spring 2024 materials here. -->
+ Course Instructor 
+ Emma Brunskill 
+ Course Assistants 
+ David Chen 
+ James Cheng 
+ Matthew Jörke 
+ Ishani Karmarkar 
+ Mallika Parulekar 
+ Shiny Weng 
+ Rahul Chand 
+ Jingyun Yang 
+ Rohan Garg 
+ Arthur Deng 
+ Daniel Shin 
+ Prerequisites for This Class 
+ Proficiency in Python 
+ All class assignments will be in Python.
+ There is a tutorial here for
+ those who aren't as familiar with Python. If you have a lot of programming experience but
+ in a different language (e.g. C/ C++/ Matlab/ Javascript) you will probably be fine.
+ College Calculus, Linear Algebra (e.g. MATH 51, CME 100) 
+ You should be comfortable taking derivatives and understanding matrix vector operations and
+ notation.
+ Basic Probability and Statistics (e.g. CS 109 or other stats course) 
+ You should know basics of probabilities, Gaussian distributions, mean, standard deviation, etc.
+ Foundations of Machine Learning 
+ We will be formulating cost functions, taking derivatives and performing optimization with
+ gradient descent. Either CS 221 or CS 229 cover this background. Some optimization tricks will be
+ more intuitive with some knowledge of convex optimization.
+ Learning Outcomes 
+ By the end of the class students should be able to: 
+ Define the key features of reinforcement learning that distinguishes it from AI
+ and non-interactive machine learning (as assessed by the exam).
+ Given an application problem (e.g. from computer vision, robotics, etc), decide
+ if it should be formulated as a RL problem; if yes be able to define it formally
+ (in terms of the state space, action space, dynamics and reward model), state what
+ algorithm (from class) is best suited for addressing it and justify your answer
+ (as assessed by the exam).
+ Implement in code common RL algorithms (as assessed by the assignments).
+ Describe (list and define) multiple criteria for analyzing RL algorithms and evaluate
+ algorithms on these metrics: e.g. regret, sample complexity, computational complexity,
+ empirical performance, convergence, etc (as assessed by assignments and the exam).
+ Describe the exploration vs exploitation challenge and compare and contrast at least
+ two approaches for addressing this challenge (in terms of performance, scalability,
+ complexity of implementation, and theoretical guarantees) (as assessed by an assignment
+ and the exam).
+ Course Lecture Materials (Videos and Slides) 
+ See the Lecture Materials page.
+ Draft Course Schedule 
+ Monday 
+ Tuesday 
+ Wednesday 
+ Thursday 
+ Friday 
+ Saturday 
+ Sunday 
+ Week 1 
+ Jan 5 
+ Jan 6 
+ Jan 7 
+ Jan 8 
+ Jan 9 
+ Jan 10 
+ Jan 11 
+ Lecture Materials 
+ Introduction to RL 
+ Tabular MDP Planning 
+ [Assignment 1 Released]
+ Week 2 
+ Jan 12 
+ Jan 13 
+ Jan 14 
+ Jan 15 
+ Jan 16 
+ Jan 17 
+ Jan 18 
+ Lecture Materials 
+ Policy Evaluation 
+ Q-learning and function approximation
+ Assignment 1 Due at 6pm 
+ [Assignment 2 Released]
+ Week 3 
+ Jan 19 
+ Jan 20 
+ Jan 21 
+ Jan 22 
+ Jan 23 
+ Jan 24 
+ Jan 25 
+ Lecture Materials 
+ Holiday 
+ Policy Search
+ Week 4 
+ Jan 26 
+ Jan 27 
+ Jan 28 
+ Jan 29 
+ Jan 30 
+ Jan 31 
+ Feb 1 
+ Lecture Materials 
+ Policy Search 
+ Offline RL, Imitation Learning
+ Assignment 2 Due at 6pm
+ Week 5 
+ Feb 2 
+ Feb 3 
+ Feb 4 
+ Feb 5 
+ Feb 6 
+ Feb 7 
+ Feb 8 
+ Lecture Materials 
+ Offline RL, RLHF 
+ Midterm (in class) 
+ [Assignment 3 Released] 
+ Project Proposal Due 
+ Week 6 
+ Feb 9 
+ Feb 10 
+ Feb 11 
+ Feb 12 
+ Feb 13 
+ Feb 14 
+ Feb 15 
+ Lecture Materials 
+ Offline RL / Bandits 
+ Strategic data gathering / Exploration
+ Week 7 
+ Feb 16 
+ Feb 17 
+ Feb 18 
+ Feb 19 
+ Feb 20 
+ Feb 21 
+ Feb 22 
+ Lecture Materials 
+ Holiday 
+ Exploration
+ Assignment 3 Due at 6pm 
+ Week 8 
+ Feb 23 
+ Feb 24 
+ Feb 25 
+ Feb 26 
+ Feb 27 
+ Feb 28 
+ Mar 1 
+ Lecture Materials 
+ Exploration 
+ RL and MCTS 
+ Project Milestone Due 
+ Week 9 
+ Mar 2 
+ Mar 3 
+ Mar 4 
+ Mar 5 
+ Mar 6 
+ Mar 7 
+ Mar 8 
+ Lecture Materials 
+ Guest Lecture 
+ In Class Quiz 
+ Week 10 
+ Mar 9 
+ Mar 10 
+ Mar 11 
+ Mar 12 
+ Mar 13 
+ Mar 14 
+ Mar 15 
+ Lecture Materials 
+ Alignment, Impacts 
+ Poster Session 
+ Week 11 
+ Mar 16 
+ Mar 17 
+ Mar 18 
+ Mar 19 
+ Mar 20 
+ Mar 21 
+ Mar 22 
+ Lecture Materials 
+ Final Project Writeup Due at 6pm
+ Textbooks 
+ There is no official textbook for the class but a number of the supporting readings will come from:
+ Reinforcement Learning: An Introduction, Sutton and Barto, 2nd Edition. This is available for
+ free here and references will
+ refer to the final pdf version available here .
+ Some other additional references that may be useful are listed below:
+ Reinforcement Learning: State-of-the-Art, Marco Wiering and Martijn van Otterlo, Eds.
+ [ link ] 
+ Artificial Intelligence: A Modern Approach, Stuart J. Russell and Peter Norvig.[ link ] 
+ Deep Learning, Ian Goodfellow, Yoshua Bengio, and Aaron Courville. [ link ] 
+ David Silver's course on Reinforcement Learning [ link ] 
+ Grade Breakdown (Will be Updated First Week of Class) 
+ For on campus students, tutorials are mandatory 
+ Assignment 1: 7% 
+ Assignment 2: 7% 
+ Assignment 3: 7% 
+ Tutorials: 24% (Top 6 of 8 counted) 
+ Participate (familiar with lecture materials and homework and try new material):4/4 
+ Unprepared / attend but don't participate: 1/4 
+ No attendance: 0/4 
+ For off campus students, there will not be tutorials 
+ Assignment 1: 15% 
+ Assignment 2: 15% 
+ Assignment 3: 15% 
+ Midterm: 25% 
+ Quiz: 5%
+ Course Project: 25% 
+ Proposal: 1% 
+ Milestone: 2% 
+ Poster Presentation: 5% 
+ Paper: 17% 
+ -->
+ If you choose to do the default project/4th assignment, your breakdown will instead be 
+ Poster presentation: 5%
+ Paper/assignment write up: 19% 
+ -->
+ TBD bonus for participating [answering lecture polls for 80% of the days we have lecture with polls. You may participate in these remotely as well but you must participate within 24 hours of the class day (so for a class on Monday, you must participate by Tuesday at 12:50pm Pacific) for your participation to count.] -->
+ Late Day Policy 
+ You can use 5 late days total.
+ A late day extends the deadline by 24 hours.
+ You are allowed up to 2 late days for assignments 1, 2, 3, project proposal, and project milestone, not to exceed 5 late days total. You may not use any late days for the project poster presentation and final project paper. For group submissions such as the project proposal and milestone, all group members must have the corresponding number of late days used on the assignment, and if one or more members do not have a sufficient amount of late days, all group members will incur a grade penalty of 50% within 24 hours and 100% after 24 hours, as explained below. 
+ If you use two late days and hand an assignment in after 48 hours, it will be worth at most 50%. If you do not have enough late days left, handing the assignment within 1 day after it was due (adjusting for the late days used) will be worth at most 50%. No credit will be given to assignments handed in after 24 hours they were due (adjusting for any late days. E.g. if you use 2 late days, then after this policy applies 24 hours after your 2 late days, e.g. after 72 hours). Please contact us if you think you have an extremely rare circumstance for which we should make an exception. This policy is to ensure that feedback can be given in a timely manner. 
+ Exams 
+ There will be one midterm and one quiz. See the schedule for the dates.
+ Exams will be held in class for on-campus students. 
+ Conflicts : If you are not able to attend the in class 
+ midterm and quizzes with an official reason, please email us at
+ cs234-win2526-staff@lists.stanford.edu , as soon as you can 
+ so that an accommodation can be scheduled. (Historically this is either to ask you 
+ to take the exam remotely at the same time, or to schedule an alternate exam time).
+ Notes for the exams : You are welcome to bring a 1-sided 1 
+ (letter sized) page of handwritten notes to the midterm. For the quiz you 
+ are welcome to bring a double sided (letter sized) page of handwritten notes. No calculators, laptops, cell phones, tablets or other resources will 
+ be allowed. 
+ Assignments and Submission Process 
+ Assignments : See Assignments page 
+ where all the assignments will be posted.
+ Computing Resources : We will have some cloud resources available for later assignments. 
+ Submission Process : The submission instructions for the assignments
+ can also be found on the Assignments page .
+ Office Hours 
+ There will be two types of office hours:
+ Individual 1:1 15 minute office hours that you can sign up 
+ here . See our calendar for detailed schedules.
+ Video conference links will be provided during sign up. 
+ Group Office Hours are 5PM-8PM on Wed, Thu, and Fri and will be held on 
+ Nooks . We will have small tables where students can work
+ on particular problems together. 
+ Instructions for installing Zoom:
+ Linux 
+ Go to the Zoom Client for Linux page and download the
+ correct Linux package for your Linux
+ distribution type, OS architecture and version.
+ Follow the linux installation instructions here .
+ Mac 
+ Download Zoom installer here .
+ Installation instructions can be found here .
+ Windows 
+ Go to Stanford Zoom and select 'Launch Zoom'. 
+ Click 'Host a Meeting'; nothing will launch but this will give a link to 'download & run Zoom'. 
+ Click on 'download & run Zoom' to obtain and download 'Zoom_launcher.exe'. 
+ Run 'Zoom_launcher.exe' to install. 
+ -->
+ Attendance 
+ Attendance is not required but is encouraged. Sometimes we may do in class exercises or discussions and these are harder to do and benefit 
+ from by yourself. However, if you are not able to attend class, the class is recorded. It has previously been shown that watching lecture 
+ videos in small groups with one person pausing to facilitate discussion can yield student performance as high as attending lectures live. 
+ In prior years, some students have watched videos in small groups, so we encourage you to consider this if you are unable to attend a particular lecture or if you’re participating in the class as a SCPD student. I am always 
+ excited to hear about new ways students find to effectively learn the material, so sharing such tips is always appreciated.
+ -->
+ -->
+ Communication 
+ We believe students often learn an enormous amount from each other as well as from us, the course staff.
+ Therefore
+ to facilitate
+ discussion and peer learning, we request that you please use Ed for all questions related to lectures and
+ assignments.
+ For SCPD students, if you have generic SCPD specific questions, please email scpdsupport@stanford.edu 
+ or call 650-741-1542. In case you have specific questions related to being a SCPD student for this particular
+ class, please contact
+ us at cs234-win2526-staff@lists.stanford.edu .
+ For exceptional circumstances that require us to make special arrangements, please email us at
+ cs234-win2526-staff@lists.stanford.edu . For example,
+ such a situation may arise if a
+ student requires extra days
+ to submit a homework due to a medical emergency, or if a student needs to schedule an alternative midterm date
+ due
+ to events such as
+ conference travel etc. They will be considered and approved on a case by case basis.
+ -->
+ Announcements 
+ See Piazza . NOTE: If you enrolled in this class on Axess, you should be added to the 
+ Piazza group automatically within a few hours. You can also register independently — there is no access code required to join the group.
+ -->
+ Regrading Requests 
+ If you think that the course staff made a quantifiable error in grading your assignment
+ or exam, then you are welcome to submit a regrade request. Regrade requests should be made on gradescope and will be accepted
+ for three days after assignments or exams are returned.
+ Note that while doing a regrade we may review your entire assigment, not just the part you
+ bring to our attention (i.e. we may find errors in your work that we missed before).
+ Academic Collaboration, AI Tools Usage and Misconduct 
+ I care about academic collaboration and misconduct because it is important both that we are able to evaluate
+ your own work (independent of your peer’s)
+ and because not claiming others’ work as your own is an important part of integrity in your future career. I
+ understand that different
+ institutions and locations can have different definitions of what forms of collaborative behavior is
+ considered
+ acceptable. In this class,
+ for written homework problems, you are welcome to discuss ideas with others, but you are expected to write up
+ your own solutions
+ independently (without referring to another’s solutions). For coding, you may only share the input-output behavior
+ of your programs. This encourages you to work separately but share ideas
+ on how to test your implementation. 
+Please remember that if you share your solution with another student, even
+ if you did not copy from
+ another, you are still violating the honor code.
+Consistent with this, it is also considered an honor code violation if you make your assignment solutions publicly available, such as posting them online or in a 
+public git repo.
+ We may run similarity-detection software over all submitted student programs, including programs from
+ past quarters and any
+ solutions found online on public websites. Anyone violating the Stanford University
+ Honor Code will be referred to the
+ Office of Judicial Affairs.
+ If you think you made a mistake (it can happen, especially under stress or when time is short!), please reach
+ out to Emma or the head CA;
+ the consequences will be much less severe than if we approach you.
+ We expect all students to submit their own solutions to CS234 homeworks, exams and quizzes, and 
+ for projects. You are permitted to use generative AI tools such as Gemini, GPT-4 and Co-Pilot 
+ in the same way that human collaboration is considered acceptable: you are not allowed to directly 
+ ask for solutions or copy code, and you should indicate if you have used generative AI tools. 
+ Similar to human collaboration help, you are ultimately responsible and accountable for your own work.
+ We may check students' homework, exams and projects to 
+ enforce this policy. 
+ Note that it is not acceptable to list a LLM as a collaborator on the project 
+ milestone or final report: as things stand, generative AI cannot accept 
+ fault or responsibility, and thus cannot be a collaborator in a final project. 
+ -->
+ Academic Accommodation 
+ If you need an academic accommodation based on the impact of a disability, please share your Office of Accessible Education letter with us via an email to our course staff list cs234-win2526-staff@lists.stanford.edu as soon as it is convenient for you. This helps us ensure 
+the course materials and staff support can comply with your needs.
+ The OAS is located at 563 Salvatierra Walk
+ (650-723-1066, http://studentaffairs.stanford.edu/oae ).
+ -->
+ Credit/No Credit Enrollment 
+ If you're enrolled in the class on credit/no credit status, you will be graded on work as usual
+ per standard Stanford rules. The only distinction with those taking the class for letter grade is that you
+ must obtain a C- (C minus) grade or higher in the class, for you to be marked as CR. 
+ In past years, the threshold for obtaining a C- is typically 70%. 
+ Webdesign by Andrej Karpathy 

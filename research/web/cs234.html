@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>CS234: Reinforcement Learning Winter 2026</title>
+
+	<link rel="stylesheet" href="./style/bootstrap.min.css">
+	<link rel="stylesheet" href="./style/bootstrap-theme.min.css">
+
+	<link href="./style/css" rel="stylesheet" type="text/css">
+
+	<script async="" src="./scripts/analytics.js"></script>
+	<script>
+		(function (i, s, o, g, r, a, m) {
+			i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+				(i[r].q = i[r].q || []).push(arguments)
+			}, i[r].l = 1 * new Date(); a = s.createElement(o),
+				m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+		})(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+		ga('create', 'UA-60458624-1', 'auto');
+		ga('send', 'pageview');
+	</script>
+
+	<link rel="stylesheet" type="text/css" href="./style/style.css">
+</head>
+
+<body>
+
+	<div id="header">
+		<a href="http://ai.stanford.edu/">
+			<img src="./images/AI.jpg" style="height:50px; float: left; margin-left: 20px;">
+		</a>
+		<h1>
+			CS234: Reinforcement Learning Winter 2026
+		</h1>
+		<div style="clear:both;"></div>
+	</div>
+
+
+<div id="teaser">
+  <img src="./images/RL.png">
+</div>
+
+	<div style="text-align:center; padding:40px 0px 40px 0px;">
+		<a href="#course_schedule">
+			<button type="button" class="btn btn-success btn-lg">
+				Course Schedule
+			</button>
+		</a>
+
+		<a href="modules.html">
+			<button type="button" class="btn btn-warning btn-lg">
+				Lecture Materials 
+			</button>
+		</a>
+
+		<a href="assignments.html">
+			<button type="button" class="btn btn-primary btn-lg">
+				Assignments
+			</button>
+		</a>
+
+		<a href="project.html">
+			<button type="button" class="btn btn-warning btn-lg">
+			Course Project
+			</button>
+		</a>
+		
+
+		<a href="https://canvas.stanford.edu/calendar">
+			<button type="button" class="btn btn-danger btn-lg">
+				Calendar
+			</button>
+		</a>
+
+		<a href=""><!--</a>https://edstem.org/us/dashboard">-->
+			<button type="button" class="btn btn-info btn-lg">
+				Forum
+			</button>
+		</a>
+
+		<a href="scpd.html">
+    <button type="button" class="btn btn-default btn-lg">
+	  SCPD
+	</button>
+  </a>
+
+		<a href="faq.html">
+			<button type="button" class="btn btn-default btn-lg">
+				FAQ
+			</button>
+		</a>
+	</div>
+
+
+	<div class="sechighlight">
+		<div class="container sec">
+			<h2>Course Description & Logistics</h2>
+
+			<div id="coursedesc">
+
+				To realize the dreams and impact of AI requires autonomous systems that learn to make good decisions.
+				Reinforcement learning is one powerful paradigm for doing so, and it is relevant to an enormous range
+				of tasks, including robotics, game playing, consumer modeling and healthcare. This class will provide
+				a solid introduction to the field of reinforcement learning and students will learn about the core
+				challenges and approaches, including generalization and exploration. Through a combination of lectures,
+				and written and coding assignments, students will become well versed in key ideas and techniques for RL.
+				Assignments will include the basics of reinforcement learning as well as deep reinforcement learning and the basics of RL 
+				from human feedback training. 
+				<br><br>
+
+				<b>Communication:</b> We will use a forum (to be added in week 1). For urgent questions before then, please use 
+				<a href="mailto:cs234-win2526-staff@lists.stanford.edu">cs234-win2526-staff@lists.stanford.edu</a>.  
+				<!-- <a href="https://edstem.org/us/courses/57574/discussion/">Ed</a> discussion forums. We encourage all students to use Ed for the fastest response to your questions. -->
+				<br><br>
+
+
+				<ul>
+					<li>Lectures will be live every Monday and Wednesday 3-4:20pm. <!--:</b> Videos of the lecture content will also be made available to enrolled students through canvas. -->
+					</li>
+					<li>Office hours: Will be announced in the first week of class
+						</li>
+				</ul>
+				<br>
+				<!--
+				<b>Platforms:</b> 
+				All assignments and quizzes will be handled through Gradescope, where you will also find your
+				grades. We will send out links and access codes to enrolled students through Canvas.
+				-->
+				<br><br>
+               <!-- You can find <a href="CS234Spr2024/index.html">Spring 2024</a> materials here. -->
+				<ul>
+			</div>
+
+		</div>
+
+		<div class="container sec">
+			<div class="row">
+
+				<div class="col-md-4">
+					<h2>Course Instructor</h2>
+					<div class="instructor">
+						<a href="http://cs.stanford.edu/people/ebrun/">
+							<div class="instructorphoto"><img src="./images/ebrunskill_zoom.png"></div>
+							<div>Emma Brunskill</div>
+						</a>
+					</div>
+				</div>
+				<div class="col-md-8">
+					<h2>Course Assistants</h2>
+					<div class="instructor">
+						<a href="https://davidjgchen.github.io/">
+							<div class="instructorphoto"><img src="./images/david.jpg"></div>
+							<div>David Chen</div>
+						</a>
+					</div>
+					<div class="instructor">
+						<a href="https://jameszcheng.github.io/">
+							<div class="instructorphoto"><img src="./images/james.jpg"></div>
+							<div>James Cheng</div>
+						</a>
+					</div>
+					<div class="instructor">
+						<a href="https://matthewjoerke.com">
+							<div class="instructorphoto"><img src="./images/matthew.jpg"></div>
+							<div>Matthew Jörke</div>
+						</a>
+					</div>
+					<div class="instructor">
+						<a href="https://ishanikarmarkar.github.io/">
+							<div class="instructorphoto"><img src="./images/ishani.jpg"></div>
+							<div>Ishani Karmarkar</div>
+						</a>
+					</div>
+					<div class="instructor">
+						<a href="https://mallikaparulekar.github.io/">
+							<div class="instructorphoto"><img src="./images/mallika.jpg"></div>
+							<div>Mallika Parulekar</div>
+						</a>
+					</div>
+					<div class="instructor">
+						<a href="https://www.linkedin.com/in/shinyweng/">
+							<div class="instructorphoto"><img src="./images/shiny.jpg"></div>
+							<div>Shiny Weng</div>
+						</a>
+					</div>
+
+					<div class="instructor">
+						<a href="https://rahulschand.github.io/">
+							<div class="instructorphoto"><img src="./images/rahul.jpg"></div>
+							<div>Rahul Chand</div>
+						</a>
+					</div>
+
+					<div class="instructor">
+						<a href="https://yjy0625.github.io/">
+							<div class="instructorphoto"><img src="./images/jingyun.jpg"></div>
+							<div>Jingyun Yang</div>
+						</a>
+					</div>
+
+					<div class="instructor">
+						<a href="https://www.linkedin.com/in/rohan-garg-26467318b/">
+							<div class="instructorphoto"><img src="./images/rohan.jpg"></div>
+							<div>Rohan Garg</div>
+						</a>
+					</div>
+
+					<div class="instructor">
+						<a href="http://www.linkedin.com/in/arthur-deng-709a91156/">
+							<div class="instructorphoto"><img src="./images/arthur.jpg"></div>
+							<div>Arthur Deng</div>
+						</a>
+					</div>
+
+					<div class="instructor">
+						<a href="https://danielshin1.github.io/">
+							<div class="instructorphoto"><img src="./images/daniel.png"></div>
+							<div>Daniel Shin</div>
+						</a>
+					</div>
+
+					
+					
+					
+
+				</div>
+				</div>
+
+			</div>
+		</div>
+
+
+		<div class="sechighlight">
+			<div class="container sec">
+				<h2>Prerequisites for This Class</h2>
+				<ul>
+					<li>
+						<span class="spanh">Proficiency in Python</span><br>
+						All class assignments will be in Python.
+						There is a tutorial <a href="http://cs231n.github.io/python-numpy-tutorial/">here</a> for
+						those who aren't as familiar with Python. If you have a lot of programming experience but
+						in a different language (e.g. C/ C++/ Matlab/ Javascript) you will probably be fine.
+					</li>
+					<li>
+						<span class="spanh">College Calculus, Linear Algebra</span> (e.g. MATH 51, CME 100)<br>
+						You should be comfortable taking derivatives and understanding matrix vector operations and
+						notation.
+					</li>
+					<li>
+						<span class="spanh">Basic Probability and Statistics</span> (e.g. CS 109 or other stats course)<br>
+						You should know basics of probabilities, Gaussian distributions, mean, standard deviation, etc.
+					</li>
+					<li>
+						<span class="spanh">Foundations of Machine Learning</span><br>
+						We will be formulating cost functions, taking derivatives and performing optimization with
+						gradient descent. Either CS 221 or CS 229 cover this background. Some optimization tricks will be
+						more intuitive with some knowledge of convex optimization.
+					</li>
+				</ul>
+
+			</div>
+		</div>
+
+		<div class="container sec">
+			<h2>Learning Outcomes</h2>
+			<div id="learningobjectives">
+				By the end of the class students should be able to:<br><br>
+				<ul>
+					<li>
+						Define the key features of reinforcement learning that distinguishes it from AI
+						and non-interactive machine learning (as assessed by the exam).
+					<li>
+						Given an application problem (e.g. from computer vision, robotics, etc), decide
+						if it should be formulated as a RL problem; if yes be able to define it formally
+						(in terms of the state space, action space, dynamics and reward model), state what
+						algorithm (from class) is best suited for addressing it and justify your answer
+						(as assessed by the exam).
+					<li>
+						Implement in code common RL algorithms (as assessed by the assignments).
+					<li>
+						Describe (list and define) multiple criteria for analyzing RL algorithms and evaluate
+						algorithms on these metrics: e.g. regret, sample complexity, computational complexity,
+						empirical performance, convergence, etc (as assessed by assignments and the exam).
+					<li>
+						Describe the exploration vs exploitation challenge and compare and contrast at least
+						two approaches for addressing this challenge (in terms of performance, scalability,
+						complexity of implementation, and theoretical guarantees) (as assessed by an assignment
+						and the exam).
+				</ul>
+			</div>
+		</div>
+
+		<div class="container sec">
+			<h2>Course Lecture Materials  (Videos and Slides)</h2>
+			See the <a href="modules.html">Lecture Materials </a> page.
+		</div>
+
+		<div class="sechighlight">
+			<div class="container sec">
+				<a name="course_schedule"></a>
+
+				<h2>Draft Course Schedule</h2><br>
+				<div class="schedule">
+					<table class="table">
+    <colgroup>
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 10%;">
+        <col span="1" style="width: 15%;">
+        <col span="1" style="width: 10%;">
+        <col span="1" style="width: 10%;">
+        <col span="1" style="width: 5%;">
+        <col span="1" style="width: 10%;">
+    </colgroup>
+    <tbody>
+        <tr class="highlightOnHover">
+            <th></th>
+            <th>Monday</th>
+            <th>Tuesday</th>
+            <th>Wednesday</th>
+            <th>Thursday</th>
+            <th>Friday</th>
+            <th>Saturday</th>
+            <th>Sunday</th>
+        </tr>
+
+        <tr>
+            <td>Week 1</td>
+            <td>Jan 5</td>
+            <td>Jan 6</td>
+            <td>Jan 7</td>
+            <td>Jan 8</td>
+            <td>Jan 9</td>
+            <td>Jan 10</td>
+            <td>Jan 11</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>
+                Lecture Materials <br>
+            </td>
+            <td>Introduction to RL</td>
+            <td></td>
+            <td>
+                Tabular MDP Planning <br>
+                [Assignment 1 Released]
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>Week 2</td>
+            <td>Jan 12</td>
+            <td>Jan 13</td>
+            <td>Jan 14</td>
+            <td>Jan 15</td>
+            <td>Jan 16</td>
+            <td>Jan 17</td>
+            <td>Jan 18</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>
+                Lecture Materials <br>
+            </td>
+            <td>Policy Evaluation</td>
+            <td></td>
+            <td>
+                Q-learning and function approximation
+            </td>
+            <td></td>
+            <td>
+		   Assignment 1 Due at 6pm<br> 
+		   [Assignment 2 Released]
+            </td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>Week 3</td>
+            <td>Jan 19</td>
+            <td>Jan 20</td>
+            <td>Jan 21</td>
+            <td>Jan 22</td>
+            <td>Jan 23</td>
+            <td>Jan 24</td>
+            <td>Jan 25</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>
+                Lecture Materials <br>
+            </td>
+            <td><b>Holiday</b></td>
+            <td></td>
+            <td>
+                Policy Search
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>Week 4</td>
+            <td>Jan 26</td>
+            <td>Jan 27</td>
+            <td>Jan 28</td>
+            <td>Jan 29</td>
+            <td>Jan 30</td>
+            <td>Jan 31</td>
+            <td>Feb 1</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>
+                Lecture Materials <br>
+            </td>
+            <td>Policy Search</td>
+            <td></td>
+            <td>
+                Offline RL, Imitation Learning
+            </td>
+            <td></td>
+            <td>
+            	
+		</td>
+            <td></td>
+            <td>
+				Assignment 2 Due at 6pm
+			</td>
+        </tr>
+
+        <tr>
+            <td>Week 5</td>
+            <td>Feb 2</td>
+            <td>Feb 3</td>
+            <td>Feb 4</td>
+            <td>Feb 5</td>
+            <td>Feb 6</td>
+            <td>Feb 7</td>
+            <td>Feb 8</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>Lecture Materials</td>
+            <td>Offline RL, RLHF</td>
+            <td></td>
+            <td>
+                <b>Midterm (in class)</b>
+            </td>
+            <td></td>
+            <td>[Assignment 3 Released]</td>
+            <td></td>
+            <td><b>Project Proposal Due</b></td>
+        </tr>
+
+        <tr>
+            <td>Week 6</td>
+            <td>Feb 9</td>
+            <td>Feb 10</td>
+            <td>Feb 11</td>
+            <td>Feb 12</td>
+            <td>Feb 13</td>
+            <td>Feb 14</td>
+            <td>Feb 15</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>Lecture Materials</td>
+            <td>Offline RL / Bandits</td>
+            <td></td>
+            <td>
+                Strategic data gathering / Exploration
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>Week 7</td>
+            <td>Feb 16</td>
+            <td>Feb 17</td>
+            <td>Feb 18</td>
+            <td>Feb 19</td>
+            <td>Feb 20</td>
+            <td>Feb 21</td>
+            <td>Feb 22</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>Lecture Materials</td>
+            <td><b>Holiday</b></td>
+            <td></td>
+            <td>
+                Exploration
+            </td>
+            <td></td>
+            <td>Assignment 3 Due at 6pm</td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>Week 8</td>
+            <td>Feb 23</td>
+            <td>Feb 24</td>
+            <td>Feb 25</td>
+            <td>Feb 26</td>
+            <td>Feb 27</td>
+            <td>Feb 28</td>
+            <td>Mar 1</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>Lecture Materials</td>
+            <td>Exploration</td>
+            <td></td>
+            <td>
+                RL and MCTS<br>
+                <b>Project Milestone Due</b>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>Week 9</td>
+            <td>Mar 2</td>
+            <td>Mar 3</td>
+            <td>Mar 4</td>
+            <td>Mar 5</td>
+            <td>Mar 6</td>
+            <td>Mar 7</td>
+            <td>Mar 8</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>Lecture Materials</td>
+            <td>Guest Lecture</td>
+            <td></td>
+            <td>
+                <b>In Class Quiz</b>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>Week 10</td>
+            <td>Mar 9</td>
+            <td>Mar 10</td>
+            <td>Mar 11</td>
+            <td>Mar 12</td>
+            <td>Mar 13</td>
+            <td>Mar 14</td>
+            <td>Mar 15</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>Lecture Materials</td>
+            <td>Alignment, Impacts</td>
+            <td></td>
+            <td>
+            	<b>Poster Session</b>
+		</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>Week 11</td>
+            <td>Mar 16</td>
+            <td>Mar 17</td>
+            <td>Mar 18</td>
+            <td>Mar 19</td>
+            <td>Mar 20</td>
+            <td>Mar 21</td>
+            <td>Mar 22</td>
+        </tr>
+        <tr class="highlightOnHover">
+            <td>Lecture Materials</td>
+            <td></td>
+            <td>
+		Final Project Writeup Due at 6pm
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+    </tbody>
+</table>
+				</div>
+			</div>
+		</div>
+
+		<div class="container sec">
+			<h2>Textbooks</h2>
+			There is no official textbook for the class but a number of the supporting readings will come from:
+			<ul>
+				<li>
+					Reinforcement Learning: An Introduction, Sutton and Barto, 2nd Edition. This is available for
+					free <a href="http://incompleteideas.net/book/the-book-2nd.html">here</a> and references will
+					refer to the final pdf version available <a href="http://incompleteideas.net/book/RLbook2018.pdf">here</a>.
+				</li>
+			</ul>
+			Some other additional references that may be useful are listed below:
+			<ul>
+				<li> Reinforcement Learning: State-of-the-Art, Marco Wiering and Martijn van Otterlo, Eds.
+					[<a href="https://link.springer.com/book/10.1007%2F978-3-642-27645-3">link</a>]</li>
+				<li> Artificial Intelligence: A Modern Approach, Stuart J. Russell and Peter Norvig.[<a
+						href="http://aima.cs.berkeley.edu/">link</a>]</li>
+				<li> Deep Learning, Ian Goodfellow, Yoshua Bengio, and Aaron Courville. [<a
+						href="http://www.deeplearningbook.org/">link</a>]</li>
+				<li> David Silver's course on Reinforcement Learning [<a
+						href="http://www0.cs.ucl.ac.uk/staff/D.Silver/web/Teaching.html">link</a>]</li>
+			</ul>
+		</div>
+
+		<div class="sechighlight">
+			<div class="container sec">
+				<a name="grading"></a>
+				<h2>Grade Breakdown (Will be Updated First Week of Class)</h2>
+			 
+					<ul>
+						<li>For on campus students, tutorials are mandatory</li>
+<ul>						<li>Assignment 1: 7%</li>
+					<li>Assignment 2: 7%</li>
+					<li>Assignment 3: 7%</li>
+					<li>Tutorials: 24% (Top 6 of 8 counted)</li>
+					<ul>
+						<li>Participate (familiar with lecture materials and homework and try new material):4/4</li>
+						<li>Unprepared / attend but don't participate: 1/4</li>
+						<li>No attendance: 0/4</li>
+						
+
+					</ul>
+</ul>
+	<li>For off campus students, there will not be tutorials </li>
+<ul>						<li>Assignment 1: 15%</li>
+					<li>Assignment 2: 15%</li>
+					<li>Assignment 3: 15%</li>
+</ul>
+
+					
+					<li>Midterm: 25%</li>
+					<li>Quiz: 5%
+					<li>Course Project: 25%</li>
+					<ul>
+					  <li>Proposal: 1%</li>
+					  <li>Milestone: 2%</li>
+					  <li>Poster Presentation: 5% </li>
+					  <li>Paper: 17%</li>
+					-->
+
+				<!-- <li><b>If you choose to do the default project/4th assignment, your breakdown will instead be</b>
+					   <ul>
+							   <li>Poster presentation: 5%
+							   <li>Paper/assignment write up: 19% 
+							</ul> -->
+					</ul>
+				  </ul>
+							  <!-- <li>TBD bonus for participating [answering lecture polls for 80% of the days we have lecture with polls. You may participate in these remotely as well but you must participate within 24 hours of the class day (so for a class on Monday, you must participate by Tuesday at 12:50pm Pacific) for your participation to count.] -->
+				</ul>
+			</div>
+		</div>
+
+		<div class="container sec">
+			<a name="lateday"></a>
+			<h2>Late Day Policy</h2>
+			<ul>
+				<li>
+					You can use 5 late days total.
+				</li>
+				<li>
+					A late day extends the deadline by 24 hours.
+				</li>
+				<li>
+					You are allowed up to 2 late days for assignments 1, 2, 3, project proposal, and project milestone,  not to exceed 5 late days total. You may not use any late days for the project poster presentation and final project paper. For group submissions such as the project proposal and milestone, all group members must have the corresponding number of late days used on the assignment, and if one or more members do not have a sufficient amount of late days, all group members will incur a grade penalty of 50% within 24 hours and 100% after 24 hours, as explained below. </li>
+
+				
+                <li>If you use two late days and hand an assignment in after 48 hours, it will be worth at most 50%. If you do not have enough late days left, handing the assignment within 1 day after it was due (adjusting for the late days used) will be worth at most 50%. No credit will be given to assignments handed in after 24 hours they were due (adjusting for any late days. E.g. if you use 2 late days, then after this policy applies 24 hours after your 2 late days, e.g. after 72 hours). Please contact us if you think you have an extremely rare circumstance for which we should make an exception. This policy is to ensure that feedback can be given in a timely manner.</li>
+
+				
+				</li>
+			</ul>
+		</div>
+	</div>
+		<div class="sechighlight">
+			<div class="container sec">
+				<h2>Exams</h2>
+				<ul>
+					<li>There will be one midterm and one quiz. See the <a href=#course_schedule>schedule</a> for the dates.
+					</li>
+					<li>Exams will be held in class for on-campus students. 
+					
+					</li>
+					<br>
+  <li>
+    <span class="spanh">Conflicts</span>: If you are not able to attend the in class 
+	midterm and quizzes with an official reason, please email us at
+	<a href="mailto:cs234-win2526-staff@lists.stanford.edu">cs234-win2526-staff@lists.stanford.edu</a>, as soon as you can 
+	so that an accommodation can be scheduled. (Historically this is either to ask you 
+	to take the exam remotely at the same time, or to schedule an alternate exam time).
+  </li> 
+					<br>
+					 <li>
+    <span class="spanh">Notes for the exams</span>: You are welcome to bring a 1-sided 1 
+	(letter sized) page of handwritten notes to the midterm. For the quiz you 
+	are welcome to bring a double sided (letter sized) page of handwritten notes. No calculators, laptops, cell phones, tablets or other resources will 
+	be allowed. 
+  </li> 
+				</ul>
+			</div>
+		</div>
+
+
+		<div class="container sec">
+			<h2>Assignments and Submission Process</h2>
+			<br>
+			<ul>
+				<li>
+					<span class="spanh">Assignments</span>: See <a href="assignments.html">Assignments page</a>
+					where all the assignments will be posted.
+				</li>
+				<br>
+				<li>
+					<span class="spanh">Computing Resources</span>: We will have some cloud resources available for later assignments. 
+				</li>
+				<br>
+				<li>
+					<span class="spanh">Submission Process</span>: The submission instructions for the assignments
+					can also be found on the <a href="assignments.html">Assignments page</a>.
+				</li>
+			</ul>
+		</div>
+
+		<!-- <div class="sechighlight">
+			<div class="container sec">
+				<h2>Office Hours</h2>
+				
+				There will be two types of office hours:
+				<ul>
+				<li>
+					Individual 1:1 15 minute office hours that you can sign up 
+					<a href="https://calendly.com/cs234-winter2021/general-cs234-1-1-office-hour">here</a>. See our calendar for detailed schedules.
+					Video conference links will be provided during sign up. 
+				</li>
+				<li>Group Office Hours are 5PM-8PM on Wed, Thu, and Fri and will be held on 
+				<a href="https://app.nooks.in/goto/55oyDgKGFsUhifqX?pwd=48miLi">Nooks</a>. We will have small tables where students can work
+				on particular problems together.</li>
+				</ul>
+				<br>
+				Instructions for installing Zoom:
+				<ul>
+					<li>
+						<span class="spanh">Linux</span>
+						<ul>
+							<li>
+								Go to the <a href="https://zoom.us/download?os=linux">Zoom Client for Linux</a> page and download the
+								correct Linux package for your Linux
+								distribution type, OS architecture and version.
+							</li>
+							<li>
+								Follow the linux installation instructions <a
+									href="https://support.zoom.us/hc/en-us/articles/204206269-Linux-Installation">here</a>.
+							</li>
+						</ul>
+					</li>
+					<li>
+						<span class="spanh">Mac</span>
+						<ul>
+							<li>
+								Download Zoom installer <a href="https://stanford.zoom.us/download">here</a>.
+							</li>
+							<li>
+								Installation instructions can be found <a
+									href="https://support.zoom.us/hc/en-us/articles/203020795-How-To-Install-on-Mac">here</a>.
+							</li>
+						</ul>
+					</li>
+					<li>
+						<span class="spanh">Windows</span>
+						<ul>
+							<li>Go to <a href="https://uit.stanford.edu/service/zoom">Stanford Zoom</a> and select 'Launch Zoom'.</li>
+							<li>Click 'Host a Meeting'; nothing will launch but this will give a link to 'download & run Zoom'.</li>
+							<li>Click on 'download & run Zoom' to obtain and download 'Zoom_launcher.exe'.</li>
+							<li>Run 'Zoom_launcher.exe' to install.</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div> -->
+
+		<!-- <div class="container sec">
+  <h2>Attendance</h2>
+  Attendance is not required but is encouraged. Sometimes we may do in class exercises or discussions and these are harder to do and benefit 
+  from by yourself. However, if you are not able to attend class, the class is recorded. It has previously been shown that watching lecture 
+  videos in small groups with one person pausing to facilitate discussion can yield student performance as high as attending lectures live. 
+  In prior years, some students have watched videos in small groups, so we encourage you to  consider this if you are unable to attend a particular lecture or if you’re participating in the class as a SCPD student. I am always 
+  excited to hear about new ways students find to effectively learn the material, so sharing such tips is always appreciated.
+</div> -->
+
+		<!-- <div class="sechighlight"> -->
+		<div class="container sec">
+			<a name="communiction"></a>
+			<h2>Communication</h2>
+
+			<div>
+				We believe students often learn an enormous amount from each other as well as from us, the course staff.
+				Therefore
+				to facilitate
+				discussion and peer learning, we request that you please use <a
+					href="https://edstem.org/us/courses/71452/admin/general">Ed</a> for all questions related to lectures and
+				assignments.
+				<br><br>
+				For SCPD students, if you have generic SCPD specific questions, please email <a
+					href="mailto:scpdsupport@stanford.edu">scpdsupport@stanford.edu</a>
+				or call 650-741-1542. In case you have specific questions related to being a SCPD student for this particular
+				class, please contact
+				us at <a href="mailto:cs234-win2526-staff@lists.stanford.edu">cs234-win2526-staff@lists.stanford.edu</a>.
+				<br><br>
+				For exceptional circumstances that require us to make special arrangements, please email us at
+				<a href="mailto:cs234-win2526-staff@lists.stanford.edu">cs234-win2526-staff@lists.stanford.edu</a>. For example,
+				such a situation may arise if a
+				student requires extra days
+				to submit a homework due to a medical emergency, or if a student needs to schedule an alternative midterm date
+				due
+				to events such as
+				conference travel etc. They will be considered and approved on a case by case basis.
+				<br><br>
+			</div>
+
+		</div>
+		<!-- </div> -->
+
+		<!-- <div class="container sec">
+		<h2>Announcements</h2>
+		See <a href="https://piazza.com/class/k4tab550cjp7a2">Piazza</a>. NOTE: If you enrolled in this class on Axess, you should be added to the 
+		Piazza group automatically within a few hours. You can also register independently &mdash; there is no access code required to join the group.
+		</div> -->
+
+                 <div class="sechighlight">
+  <div class="container sec">
+    <a name="regrade"></a>
+    <h2>Regrading Requests</h2>
+    <ul>
+      <li>
+            If you think that the course staff made a quantifiable error in grading your assignment
+                or exam, then you are welcome to submit a regrade request. Regrade requests should be made on gradescope and will be accepted
+            for three days after assignments or exams are returned.
+
+      </li>
+      <li>
+            Note that while doing a regrade  we may review your entire assigment, not just the part you
+                bring to our attention (i.e. we may find errors in your work that we missed before).
+      </li>
+    </ul>
+  </div>
+</div>
+
+
+		<div class="sechighlight">
+			<div class="container sec">
+				<a name="conduct"></a>
+				<h2>Academic Collaboration, AI Tools Usage and Misconduct</h2>
+
+				<div>
+					I care about academic collaboration and misconduct because it is important both that we are able to evaluate
+					your own work (independent of your peer’s)
+					and because not claiming others’ work as your own is an important part of integrity in your future career. I
+					understand that different
+					institutions and locations can have different definitions of what forms of collaborative behavior is
+					considered
+					acceptable. In this class,
+					for written homework problems, you are welcome to discuss ideas with others, but you are expected to write up
+					your own solutions
+					independently (without referring to another’s solutions). For coding, you may only share the input-output behavior
+					of your programs. This encourages you to work separately but share ideas
+					on how to test your implementation. 
+				
+
+Please remember that if you share your solution with another student, even
+					if you did not copy from
+					another, you are still violating the honor code.
+
+Consistent with this, it is also considered an honor code violation if you make your assignment solutions publicly available, such as posting them online or in a 
+public git repo.
+
+
+					<!-- In terms of the final project, you are welcome to combine this project with another class
+				assuming that the project is relevant to both classes, given that you take prior permission of the class
+				instructors. If your project is an extension of a previous class project, you are expected to make significant additional contributions to the
+				project. -->
+					<br></br>
+					We may run similarity-detection software over all submitted student programs, including programs from
+					past quarters and any
+					solutions found online on public websites. Anyone violating the Stanford University
+					<a href="https://ed.stanford.edu/academics/masters-handbook/honor-code">Honor Code</a> will be referred to the
+					Office of Judicial Affairs.
+					If you think you made a mistake (it can happen, especially under stress or when time is short!), please reach
+					out to Emma or the head CA;
+					the consequences will be much less severe than if we approach you.
+
+					We expect all students to submit their own solutions to CS234 homeworks, exams and quizzes, and 
+					for projects. You are permitted to use generative AI tools such as Gemini, GPT-4 and Co-Pilot 
+					in the same way that human collaboration is considered acceptable: you are not allowed to directly 
+					ask for solutions or copy code, and you should indicate if you have used generative AI tools. 
+					Similar to human collaboration help, you are ultimately responsible and accountable for your own work.
+					We may check students' homework, exams and projects to 
+				enforce this policy. 
+				<br><br>Note that it is not acceptable to list a LLM as a collaborator on the project 
+					milestone or final report: as things stand, generative AI cannot accept 
+					fault or responsibility, and thus cannot be a collaborator in a final project. 
+
+
+				</div>
+
+			</div>
+		</div>
+
+		<!-- <div class="sechighlight"> -->
+		<div class="container sec">
+			<h2>Academic Accommodation</h2>
+			If you need an academic accommodation based on the impact of a disability, please share your  Office of Accessible Education letter with us via an email to our course staff list <a href="mailto:cs234-win2526-staff@lists.stanford.edu">cs234-win2526-staff@lists.stanford.edu</a> as soon as it is convenient for you. This helps us ensure 
+the course materials and staff support can comply with your needs.
+			The OAS is located at 563 Salvatierra Walk
+			(650-723-1066, <a href="http://studentaffairs.stanford.edu/oae">http://studentaffairs.stanford.edu/oae</a>).
+		</div>
+		<!-- </div> -->
+
+		<div class="sechighlight">
+			<div class="container sec">
+				<h2>Credit/No Credit Enrollment</h2>
+				If you're enrolled in the class on credit/no credit status, you will be graded on work as usual
+				per standard Stanford rules. The only distinction with those taking the class for letter grade is that you
+				must obtain a C- (C minus) grade or higher in the class, for you to be marked as CR. 
+			In past years, the threshold for obtaining a C- is typically 70%.</div>
+		</div>
+
+
+
+		<div id="footer">
+			<div id="classicons">
+				Webdesign by Andrej Karpathy<br>
+				
+			</div>
+		</div>
+
+		<!-- jQuery and Boostrap -->
+		<script src="./scripts/jquery.min.js"></script>
+		<script src="./scripts/bootstrap.min.js"></script>
+
+</body>
+
+</html>

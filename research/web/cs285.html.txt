@@ -1,0 +1,253 @@
+
+ CS 185/285 
+ CS 185/285 
+ Calendar 
+ Resources 
+ Syllabus 
+ Staff 
+ Menu
+ Calendar 
+ Resources 
+ Menu
+ Resources 
+ Menu
+ Calendar 
+ Resources 
+ Previous Offerings 
+ Courses 
+ Relevant Textbooks 
+ Misc Links 
+ Syllabus 
+ Prerequisites 
+ Technology 
+ Materials 
+ Collaboration 
+ Late Policy 
+ Grading 
+ Meta 
+ Staff 
+ CS 185/285 at UC Berkeley 
+ Deep Reinforcement Learning 
+ Lectures: 9 - 10 am on Wednesdays and 8 - 10 am on Fridays, both in Hearst Annex A1 
+ The lectures will be streamed and recorded . The course is not being offered as an online course, and the videos are provided only for your personal informational and entertainment purposes. They are not part of any course requirement or degree-bearing university program. 
+ -->
+ IMPORTANT : If you are an undergraduate or 5th year MS student, or a non-EECS graduate student, please fill out this form to apply for enrollment into the Fall 2023 version of the course. Do not email the course instructors about enrollment -- all students who fill out the form will be reviewed. We will enroll off of this form during the first week of class. We will not be using the official CalCentral wait list, just this form.
+ -->
+ NOTE : Please use the Ed link here instead of in the slides.
+ Announcement : The default final project options are now available: Offline-to-Online RL Default Final Project and LLM RL Default Final Project .
+ Announcement : The final project outline has been released.
+ -->
+ Looking for deep RL course materials from past years? 
+ Recordings of lectures from Fall 2023 are here , and materials from previous offerings are here .
+ Email all staff (preferred): cs285-staff-sp2026@lists.eecs.berkeley.edu
+ Instructor
+ Sergey Levine 
+ svlevine@eecs.berkeley.edu 
+ Office Hours: Wednesdays 8 - 9 AM in Hearst Annex A1 
+ Head GSI
+ Seohong Park 
+ seohong@berkeley.edu 
+ Office Hours: Fri 1:15p-2:15p in Berkeley Way West 1204 
+ GSI
+ Vivek Myers 
+ vmyers@berkeley.edu 
+ Office Hours: Tue 4p-5p in Berkeley Way West 1204 
+ GSI
+ Kevin Black 
+ kvablack@berkeley.edu 
+ Office Hours: Tue 9a-10a in Berkeley Way West 1212 
+ GSI
+ Pranav Atreya 
+ pranavatreya@berkeley.edu 
+ Office Hours: Mon 5p-6p in Berkeley Way West 1216 
+ GSI
+ Mitsuhiko Nakamoto 
+ nakamoto@eecs.berkeley.edu 
+ Office Hours: Thursday 4p-5p Berkeley Way West 1204 
+ GSI
+ Catherine Glossop 
+ catherine_glossop@berkeley.edu 
+ Office Hours: Thu 10a-11a in Berkeley Way West 1211 
+ Week 1
+ Overview 
+ Course Intro & Imitation Learning 
+ Monday, January 19 – Friday, January 23 
+ Homework 1: Imitation Learning 
+ Lecture 1: Introduction 
+ Lecture 2: Behavioral Cloning 
+ Week 2
+ Overview 
+ Imitation Learning & RL Basics 
+ Monday, January 26 – Friday, January 30 
+ Homework 1: Imitation Learning 
+ Section 1: PyTorch Tutorial 
+ Lecture 3: Behavioral Cloning Part 2 
+ Lecture 4: RL Basics 
+ Week 3
+ Overview 
+ Policy Gradients & Actor Critic 
+ Monday, February 2 – Friday, February 6 
+ Homework 1: Imitation Learning 
+ Homework 2: Policy Gradients 
+ Section 2 Part 1: Probability Review 
+ Section 2 Part 2: BC Distributional Shift 
+ Lecture 5: Policy Gradients 
+ Lecture 6: Actor Critic 
+ Week 4
+ Overview 
+ Value-Based RL 
+ Monday, February 9 – Friday, February 13 
+ Homework 1: Imitation Learning 
+ Homework 2: Policy Gradients 
+ Section 3: Policy Gradients and Actor Critic 
+ Lecture 7: Value-Based RL 
+ Lecture 8: Q-learning in Practice 
+ Week 5
+ Overview 
+ Advanced Policy Gradients 
+ Monday, February 16 – Friday, February 20 
+ Homework 2: Policy Gradients 
+ Homework 3: Q-Learning and Actor Critic 
+ Section 4: DQN and SAC 
+ Lecture 9: Advanced Policy Gradients Part 1 
+ Lecture 10: Advanced Policy Gradients Part 2 
+ Week 6
+ Overview 
+ Variational Inference 
+ Monday, February 23 – Friday, February 27 
+ Homework 2: Policy Gradients 
+ Homework 3: Q-Learning and Actor Critic 
+ Section 5: Advanced Policy Gradients 
+ Lecture 11: Variational Inference 
+ Lecture 12: VI in RL 
+ Week 7
+ Overview 
+ Finishing VI & LLM RL 
+ Monday, March 2 – Friday, March 6 
+ Homework 3: Q-Learning and Actor Critic 
+ Homework 4: LLM RL 
+ Section 6: Variational Inference 
+ Lecture 13: Control as Inference 
+ Lecture 14: LLM RL 
+ Week 8
+ Overview 
+ Model-Based RL 
+ Monday, March 9 – Friday, March 13 
+ Homework 3: Q-Learning and Actor Critic 
+ Homework 4: LLM RL 
+ Section 7: IRL and LLM RL 
+ Lecture 15: Model-Based RL Part 1 
+ Lecture 16: Model-Based RL Part 2 
+ Week 9
+ Overview 
+ Offline Reinforcement Learning 
+ Monday, March 16 – Friday, March 20 
+ Homework 4: LLM RL 
+ Homework 5: Offline RL 
+ Section 8: Model-Based RL 
+ Lecture 17: Offline RL Part 1 
+ Lecture 18: Offline RL Part 2 
+ Week 10
+ Overview 
+ Exploration & RL Theory 
+ Monday, March 23 – Friday, March 27 
+ Homework 4: LLM RL 
+ Homework 5: Offline RL 
+ Section 9: Offline RL 
+ Lecture 19: Exploration 
+ Lecture 20: RL Theory 
+ Week 11
+ Overview 
+ Midterm Review 
+ Monday, April 6 – Friday, April 10 
+ Homework 5: Offline RL 
+ Lecture 21: Midterm Review Part 1 
+ Lecture 22: Midterm Review Part 2 
+ Week 12
+ Overview 
+ Exploration & Multi-task RL 
+ Monday, April 13 – Friday, April 17 
+ Homework 5: Offline RL 
+ Lecture 23: Advanced Exploration 
+ Lecture 24: Multi-task RL 
+ Week 13
+ Overview 
+ Open Problems & Guest Lecture 
+ Monday, April 20 – Friday, April 24 
+ Lecture 25: Challenges and Open Problems 
+ Week 14
+ Overview 
+ Final Guest Lecture 
+ Monday, April 27 – Friday, May 1 
+ Final Project Information 
+ Default Project Options 
+ Offline-to-Online RL Default Final Project 
+ LLM RL Default Final Project 
+ Project Outline 
+ Final Project Outline 
+ Homeworks 
+ See Syllabus for more information. 
+ We are grateful for generous compute support from Modal for students enrolled in the course. 
+ Homework 1: Imitation Learning 
+ Homework 2: Policy Gradients 
+ Homework 3: Q-Learning and Actor Critic 
+ Homework 4: LLM RL 
+ Homework 5: Offline RL 
+ Project -->
+ Expand -->
+ Lecture Slides 
+ See Syllabus for more information. 
+ Lecture 1: Introduction 
+ Lecture 2: Behavioral Cloning 
+ Lecture 3: Behavioral Cloning Part 2 
+ Lecture 4: RL Basics 
+ Lecture 5: Policy Gradients 
+ Lecture 6: Actor Critic 
+ Lecture 7: Value-Based RL 
+ Lecture 8: Q-learning in Practice 
+ Lecture 9: Advanced Policy Gradients Part 1 
+ Lecture 10: Advanced Policy Gradients Part 2 
+ Lecture 11: Variational Inference 
+ Lecture 12: VI in RL 
+ Lecture 13: Control as Inference 
+ Lecture 14: LLM RL 
+ Lecture 15: Model-Based RL Part 1 
+ Lecture 16: Model-Based RL Part 2 
+ Lecture 17: Offline RL Part 1 
+ Lecture 18: Offline RL Part 2 
+ Lecture 19: Exploration 
+ Lecture 20: RL Theory 
+ Lecture 21: Midterm Review Part 1 
+ Lecture 22: Midterm Review Part 2 
+ Lecture 23: Advanced Exploration 
+ Lecture 24: Multi-task RL 
+ Lecture 25: Challenges and Open Problems 
+ Expand -->
+ Discussion Section Slides 
+ See Syllabus for more information. 
+ Section 1: PyTorch Tutorial 
+ Section 2 Part 1: Probability Review 
+ Section 2 Part 2: BC Distributional Shift 
+ Section 3: Policy Gradients and Actor Critic 
+ Section 4: DQN and SAC 
+ Section 5: Advanced Policy Gradients 
+ Section 6: Variational Inference 
+ Section 7: IRL and LLM RL 
+ Section 8: Model-Based RL 
+ Section 9: Offline RL 
+ Calendar 
+ Resources 
+ Previous Offerings 
+ Courses 
+ Relevant Textbooks 
+ Misc Links 
+ Syllabus 
+ Prerequisites 
+ Technology 
+ Materials 
+ Collaboration 
+ Late Policy 
+ Grading 
+ Meta 
+ Staff 
+ 
