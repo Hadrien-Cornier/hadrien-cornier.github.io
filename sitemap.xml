@@ -29,12 +29,17 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/</loc>
-    <lastmod>2026-10-23</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/recent-papers/</loc>
     <lastmod>2026-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/persona-ai-skilled-trades/</loc>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -209,7 +214,7 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/</loc>
-    <lastmod>2026-10-23</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -279,7 +284,7 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/humanoids/</loc>
-    <lastmod>2026-10-23</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -289,7 +294,7 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/industry/</loc>
-    <lastmod>2026-10-08</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -334,7 +339,7 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/robot-learning/</loc>
-    <lastmod>2026-10-23</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -344,7 +349,7 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/robotics/</loc>
-    <lastmod>2026-10-23</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
