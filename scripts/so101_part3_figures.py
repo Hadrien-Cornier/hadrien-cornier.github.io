@@ -206,11 +206,13 @@ def sim_five():
     y = np.arange(len(labels))
     fig = plt.figure(figsize=(6.4, 5.45))
     ax = _axes(fig, 2.2, 0.85, 4.05, 3.15)
-    ax.barh(y, values, color=colors, height=0.62, zorder=3)
+    # Bars start at the log axis so a bar from zero does not become a huge negative SVG coordinate that makes the chalk filter paint nothing.
+    xmin = 0.25
+    ax.barh(y, [value - xmin for value in values], left=xmin, color=colors, height=0.62, zorder=3)
     ax.set_yticks(y, labels)
     ax.invert_yaxis()
     ax.set_xscale("log")
-    ax.set_xlim(0.25, 70)
+    ax.set_xlim(xmin, 70)
     ax.set_ylim(5.0, -0.55)
     ax.axvline(0.443, color=ORANGE, ls="--", lw=2.2, label="one-reading rounding RMS")
     for yi, value in zip(y, values):
