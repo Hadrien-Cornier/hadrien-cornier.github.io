@@ -337,17 +337,25 @@ function eyebrowLink(article) {
 function postMeta(article) {
   return `<p class="post-meta"><time datetime="${article.date}">${displayDate(article.date)}</time><span>${article.readingMinutes} min read</span>${article.updated !== article.date ? `<span>Updated <time datetime="${article.updated}">${displayDate(article.updated)}</time></span>` : ''}</p>`;
 }
+// A chalk filter that points at a missing id paints nothing in WebKit 18. The pages that already define bb-chalk keep that definition.
+const CHALK_DEFS = '<svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.32 1.16" result="mask"/><feComposite in="SourceGraphic" in2="mask" operator="in"/></filter></svg>';
+function withChalk(body) {
+  if (/id=["']bb-chalk["']/.test(body)) return body;
+  const board = /class=["'][^"']*\b(?:rc-svg|ft-graph|ft-failure|rls-figure)\b/.test(body)
+    || /class=["'](?:bb|[^"']*\sbb)(?:["']|\s)/.test(body);
+  return board ? CHALK_DEFS + body : body;
+}
 function shortPage(article, root) {
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
 <header class="robotics-header post-header post-header-short">${eyebrowLink(article)}<h1>${escape(article.title)}</h1>${paperSource(article.paper)}<p class="post-description">${escape(article.description)}</p>${postMeta(article)}${tagLinks(article.tags)}</header>
-${seriesBox(article)}<article class="short-body" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article>`});
+${seriesBox(article)}<article class="short-body" aria-label="${escape(article.title)}">${withChalk(article.body)}<p class="series-return"><a href="/#writing">← All writing</a></p></article>`});
 }
 function articlePage(article, root) {
   if (article.layout === 'short') return shortPage(article, root);
   const toc = article.components.market || article.layout === 'essay' ? '' : article.headings.map(({id,title,level}) => `<li class="toc-${level}"><a href="#${id}">${escape(title)}</a></li>`).join('');
   return shell({title:article.title, description:article.description, pathname:`/robotics/${article.slug}/`, article, root, content:`
 <header class="robotics-header post-header${article.layout === 'essay' ? ' post-header-essay' : ''}">${eyebrowLink(article)}<h1>${escape(article.title)}</h1>${paperSource(article.paper)}<p class="post-description">${escape(article.description)}</p>${postMeta(article)}${tagLinks(article.tags)}</header>
-${seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${article.body}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
+${seriesBox(article)}<div class="post-layout${article.layout === 'essay' ? ' post-layout-essay' : ''}${article.components.market ? ' post-layout-with-market' : ''}${toc ? '' : ' post-layout-without-toc'}">${toc ? `<aside class="article-toc"><details open><summary>In this essay</summary><nav aria-label="Table of contents"><ol>${toc}</ol></nav></details></aside>` : ''}<article class="article-body${article.components.market ? ' article-body-with-market' : ''}${article.components.timeline ? ' article-body-with-timeline' : ''}" aria-label="${escape(article.title)}">${withChalk(article.body)}<p class="series-return"><a href="/#writing">← All writing</a></p></article></div>`});
 }
 // Articles arrive newest first. A series takes one place in that order, at the date of its newest part.
 function articleUnits(articles) {
