@@ -59,7 +59,7 @@ The route through the article follows the three sentences above:
 
 <div class="rc-mark" id="sec-map" data-panel="tree" data-view="tree" data-title="Four families of robot RL"></div>
 
-The board on the side follows along as you scroll. Its first panel is the map: four families of policy improvement, from REINFORCE in 1992 to $\pi_{0.7}$, GVC and QF3 in 2026. The first two families are the classics, and we'll derive both from the product rule. The other two are what people built after flow matching broke the classics.
+The board on the side follows along as you scroll. Its first panel is the map: four families of policy improvement, from REINFORCE in 1992 to $\pi_{0.7}$, GVC and QF3 in 2026.
 
 <div class="rc-mark" id="sec-cliff" data-panel="cliff" data-view="cliff" data-title="The cliff paradox"></div>
 
@@ -174,13 +174,13 @@ Each family asks the policy for one thing:
 - **Family 1 needs $\log \pi_\theta(a \mid s)$.** The gradient is $A \cdot \nabla_\theta \log \pi_\theta$, so you have to be able to compute the exact log-probability of the action you sampled, and differentiate it.
 - **Family 2 needs a short differentiable path from $\theta$ to $a$.** The gradient is $\nabla_a Q_\phi \cdot \nabla_\theta a_\theta$, so the critic's slope has to flow back through the policy into its weights.
 
-The two families also differ in data. Here they are side by side:
+The algorithms we met also differ in the data they can use. Here they are side by side:
 
 | | Family 1: score-function | Family 2: pathwise |
 |---|---|---|
 | Gradient | $A \cdot \nabla_\theta \log \pi_\theta$ | $\nabla_a Q_\phi \cdot \nabla_\theta a_\theta$ |
 | Needs | an exact $\log \pi_\theta(a \mid s)$ | a short differentiable path from $\theta$ to $a$ |
-| Data | fresh, on-policy | any replay buffer |
+| Data | PPO: fresh, on-policy | DDPG, TD3, SAC: any replay buffer |
 | Replay problem | PPO's clip silences stale samples | the actor climbs critic mirages |
 
 A robot wants the right column, because it learns from any replay buffer, but without the mirages. The panel already shows the bad news. A flow policy, the kind a robot needs for reasons we'll see next, fails both "Needs" entries, and only a third family that needs neither is left.
@@ -229,7 +229,7 @@ $$\mathcal{L}_{\text{CFM}}(\theta) = \mathbb{E}_{t, a_0, a_1}\Big[\big\| v_\thet
 The training step and the sampler fit in a few lines:
 
 ```python
-# train: one step on a batch of recorded chunks
+# train: one step on a batch of B recorded chunks
 a1 = buffer.sample_chunks()          # (B, 50, 29)
 a0 = randn_like(a1)                  # noise
 t  = rand(B, 1, 1)                   # a time in [0, 1] per sample
