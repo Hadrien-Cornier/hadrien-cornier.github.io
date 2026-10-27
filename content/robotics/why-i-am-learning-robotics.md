@@ -56,7 +56,7 @@ Language models closed this kind of gap for text. A **large language model**, or
 | Vision-language model (VLM) | Images and text | Text |
 | Vision-language-action model (VLA) | Camera images, a text instruction, the robot's joint state | Robot actions |
 
-A VLA usually starts from a pretrained VLM and is then trained on robot data, so the robot inherits what the VLM learned from the web. [RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/) showed in 2023 that this transfer is real: on scenarios with unseen objects, backgrounds and environments, success rose from RT-1's **32% to 62%**. Systems like [Gemini Robotics 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/) add a reasoning model on top that breaks "put the groceries away" into steps and hands each one to the VLA.
+A VLA usually starts from a pretrained vision-language model (VLM), then trains on robot data, inheriting the VLM’s web knowledge. [RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/) showed in 2023 that this transfer is real: on scenarios with unseen objects, backgrounds and environments, success rose from RT-1's **32% to 62%**. Systems like [Gemini Robotics 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/) add a reasoning model on top that breaks "put the groceries away" into steps and hands each one to the VLA.
 
 [OpenVLA](https://arxiv.org/abs/2406.09246) shows the recipe clearly. Two vision encoders turn the camera image into tokens, a 7-billion-parameter language model reads them with the instruction, and the model's output tokens are decoded back into a small change of the gripper's position, rotation and opening.
 
@@ -132,7 +132,7 @@ Without robot pre-training, human and robot inputs form two separate clouds: the
 
 ### Where the analogy breaks
 
-The parallel isn't perfect, and I want to be honest about where it breaks.
+Here's where the analogy breaks.
 
 1. **The data wasn't free.** GPT-2 trained on text that already existed on the internet. Nobody wrote down what a robot saw, commanded and felt while opening a drawer. Every hour of robot data has to be produced, usually by a person.
 2. **The scaling law is only starting to appear.** In 2020, language models got a curve that predicts how much better a model gets with more data and compute. That turned a bet into an investment plan. Robotics is just getting its first curves. EgoScale found that the validation loss falls in a straight line against the log of the hours of human video, and robot success rose with it, from 0.30 at 1,000 hours to 0.71 at 20,000 hours (average task completion). That's one recipe, one robot and five points, not a general law. So it's still possible we're really in 2017, not 2019.
