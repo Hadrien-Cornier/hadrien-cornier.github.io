@@ -132,13 +132,26 @@ function articleSlugs() {
 }
 
 async function boardShot(page, locator) {
-  if (!(await locator.count())) return null;
-  if (!(await locator.isVisible().catch(() => false))) return null;
-  // Screenshot the visible board container. Screenshotting the first .rc-panel makes Playwright
-  // scroll that panel into view, and the sticky board listener never settles, so the shot times out.
+  // Crop the part of the board that is on screen. An element screenshot of the first .rc-panel
+  // scrolls that panel against the sticky listener and never settles, and a full-element shot of
+  // a multi-thousand-pixel svg is the buffer WebKit already fails to paint.
+  const box = await locator.evaluate((el) => {
+    const style = getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') return null;
+    const rect = el.getBoundingClientRect();
+    const top = Math.max(rect.top, 0);
+    const left = Math.max(rect.left, 0);
+    const right = Math.min(rect.right, window.innerWidth);
+    const bottom = Math.min(rect.bottom, window.innerHeight);
+    const width = Math.max(0, right - left);
+    const height = Math.max(0, bottom - top);
+    if (width < 20 || height < 20) return null;
+    return {x: left, y: top, width, height};
+  }, null, {timeout: 5_000}).catch(() => null);
+  if (!box) return null;
   let buffer;
   try {
-    buffer = await locator.screenshot({type: 'png', animations: 'disabled', timeout: 8_000});
+    buffer = await page.screenshot({type: 'png', animations: 'disabled', timeout: 8_000, clip: box});
   } catch {
     return null;
   }
@@ -148,12 +161,16 @@ async function boardShot(page, locator) {
 async function reveal(page, selector, index) {
   await page.evaluate(({selector, index}) => {
     const el = document.querySelectorAll(selector)[index];
-    if (el) el.scrollIntoView({block: 'center'});
+    if (!el) return;
+    // A whole-canvas phone figure is taller than the screen and draws its panel at the top.
+    // Centering it photographs the empty board below that panel.
+    const block = el.getBoundingClientRect().height > window.innerHeight + 40 ? 'start' : 'center';
+    el.scrollIntoView({block});
   }, {selector, index});
   await page.waitForTimeout(350);
 }
 
-test('every robotics board paints in WebKit', {timeout: 900_000}, async () => {
+test('every robotics board paints in WebKit', {timeout: 720_000}, async () => {
   const slugs = articleSlugs();
   assert.ok(slugs.length >= 30, `expected at least 30 built articles, found ${slugs.length}`);
   const server = await startServer();
@@ -173,7 +190,7 @@ test('every robotics board paints in WebKit', {timeout: 900_000}, async () => {
       // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
       await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
       for (const slug of slugs) {
-        await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 60_000});
+        await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 30_000});
         await page.waitForTimeout(300);
         const boards = page.locator(mode.boards);
         const count = await boards.count();
