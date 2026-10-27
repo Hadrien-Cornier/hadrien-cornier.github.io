@@ -115,7 +115,7 @@ The minimizer of a squared error is the mean, and with half the demonstrations a
 
 A single bell curve doesn't fix it either. Fit a Gaussian with a learned mean and spread to the same data by maximum likelihood, and you get mean $0$ and standard deviation $1$. It still peaks at the box, and if you sample from it once and commit, about 38% of samples fall inside $|y|<0.5$. A single bell curve has one peak, so it can't put its weight on $-1$ and $+1$ while leaving the middle empty.
 
-These are teaching numbers on idealized data. They don't say that every policy of this kind hits the obstacle on a real robot, and the next section shows why the outcome depends a lot on how often the robot gets to look again.
+These are teaching numbers on idealized data. The next section shows why the outcome depends on how often the robot gets to look again.
 
 <div class="rc-mark" id="sec-chunks" data-panel="chunks" data-view="chunks" data-title="Chunks remove the chance to correct"></div>
 
@@ -125,7 +125,7 @@ Suppose the robot picks one small command, moves a little, looks again and picks
 
 Now let the policy output several future commands at once and execute them before it asks again. That's an **action chunk**. Chunks are useful: they make motion smoother, they reduce how often a large model has to run, and [ACT (Zhao et al., 2023)](https://arxiv.org/abs/2304.13705) uses them to cut the number of decisions in a task. But within a chunk, the robot can't use feedback to break the tie, and the longer the chunk, the more of the motion is decided by that midpoint before anyone looks again.
 
-My game [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) has a level with two ways around an obstacle. It trains three copies of the same demonstrations: a Gaussian copy, a **deterministic copy** that outputs one action trained with squared error, and a flow copy. With one command per decision, all three reached the goal in every test. With 10 commands per decision played without looking, they reached it 33%, 67% and 85% of the time. That's one toy, not a ranking of methods.
+My game [Breaking Bellman](https://hadrien-cornier.github.io/breaking-bellman/) has a level with two ways around an obstacle. It trains three copies of the same demonstrations: a Gaussian copy, a **deterministic copy** that outputs one action trained with squared error, and a flow copy. With one command per decision, all three reached the goal in every test. With 10 commands per decision played without looking, they reached it 33%, 67% and 85% of the time.
 
 <details>
 <summary>What the game measured, and what it doesn't show</summary>
@@ -218,7 +218,7 @@ Being able to represent two modes is not the same as learning both of them.
 - **Chunks still run open loop.** One consistent chunk fixes averaging inside the chunk, but the robot can't react to something that changes during those 25 commands. π0's authors report that temporal ensembling, which averages overlapping chunks, hurt performance, so they execute chunks without blending.
 - **It costs computation.** Every chunk needs 10 network evaluations of the action part of the model instead of one.
 
-So the failure and the remedy are different things. Mode averaging is what happens when a model that can only express one answer is trained on demonstrations with two. A flow policy is one way to express both answers: it chooses between them using random noise, and the training data decides how much of the noise goes to each.
+
 
 <details>
 <summary>Policy outputs compared on the two-route example</summary>

@@ -33,6 +33,8 @@
 <style>
 /* This page reuses the RL series board. The one-line summary above the panels belongs to the whole-board view only. */
 #rc.is-zoomed .hb-banner, #rc :is(.rc-stage, .rc-fig).is-zoomed .hb-banner { visibility: hidden; }
+/* On a phone the live board is only the source of the figures. visibility:hidden leaves WebKit with an empty snapshot, a flat field of a few colors. Keep the source painted behind the text. */
+#rc.rc-inline > .rc-stage { visibility: visible; }
 </style>
 <svg class="bb-defs" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><filter id="bb-chalk" x="-1%" y="-1%" width="102%" height="102%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="1" seed="7" result="wobble"/><feDisplacementMap in="SourceGraphic" in2="wobble" scale="3.2" xChannelSelector="R" yChannelSelector="G" result="drawn"/><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" seed="3" result="grain"/><feColorMatrix in="grain" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.4 1.14" result="mask"/><feComposite in="drawn" in2="mask" operator="in"/></filter></svg>
 <div class="rc rls-canvas" id="rc">
@@ -473,6 +475,73 @@
 </div>
 </div>
 <script src="/assets/robotics/rl/canvas.js" defer></script>
+<script>
+/* Phone figures start as empty boxes and only later receive a copy of the board.
+   A snapshot taken in that gap is a flat field. Draw every figure on the first frame. */
+document.addEventListener('DOMContentLoaded', function () {
+  requestAnimationFrame(function () {
+    var rc = document.getElementById('rc');
+    if (!rc || rc.getAttribute('data-mode') !== 'inline') return;
+    var stage = rc.querySelector('.rc-stage');
+    var srcView = stage.querySelector('.rc-view');
+    var src = srcView.querySelector('svg.rc-svg');
+    var views = JSON.parse(src.getAttribute('data-views'));
+    stage.setAttribute('aria-hidden', 'true');
+    stage.setAttribute('inert', '');
+    function fit(v, W, H) {
+      var A = W / H, x = v[0], y = v[1], w = v[2], h = v[3];
+      if (w / h < A) { var nw = h * A; x -= (nw - w) / 2; w = nw; }
+      else { var nh = w / A; y -= (nh - h) * 0.3; h = nh; }
+      return [x, y, w, h];
+    }
+    function vb(v) { return v.map(function (n) { return Math.round(n * 10) / 10; }).join(' '); }
+    function uniqueIds(root, suffix) {
+      var ids = {};
+      [].forEach.call(root.querySelectorAll('[id]'), function (el) { ids[el.id] = el.id + suffix; el.id += suffix; });
+      var refAttrs = ['fill', 'stroke', 'marker-start', 'marker-mid', 'marker-end', 'clip-path', 'mask', 'filter', 'style', 'href', 'xlink:href', 'aria-labelledby', 'aria-describedby', 'aria-controls', 'for'];
+      [].forEach.call(root.querySelectorAll('*'), function (el) {
+        refAttrs.forEach(function (a) {
+          var v = el.getAttribute(a); if (!v) return;
+          var n = v.replace(/url\(\s*(['"]?)#([^'")\s]+)\1\s*\)/g, function (m, q, id) { return ids[id] ? 'url(#' + ids[id] + ')' : m; });
+          if (a === 'href' || a === 'xlink:href') n = n.replace(/^#(.+)$/, function (m, id) { return ids[id] ? '#' + ids[id] : m; });
+          else if (/^aria-|^for$/.test(a)) n = n.split(/\s+/).map(function (id) { return ids[id] || id; }).join(' ');
+          if (n !== v) el.setAttribute(a, n);
+        });
+      });
+    }
+    [].forEach.call(rc.querySelectorAll('.rc-mark'), function (m, i) {
+      var fig = rc.querySelector('.rc-fig[data-step="' + i + '"]');
+      if (!fig) return;
+      var box = fig.querySelector('.rc-fig-view, .rc-view');
+      if (!box || box.querySelector('svg.rc-svg')) return;
+      var panel = m.getAttribute('data-panel');
+      var key = m.getAttribute('data-view') || panel;
+      var view = views[key];
+      if (!view) return;
+      var W = Math.max(1, fig.clientWidth || rc.clientWidth);
+      var natural = W * view[3] / view[2];
+      var H = box.clientHeight > 40 ? box.clientHeight : Math.round(Math.max(W * 0.5, Math.min(natural, W * 1.25, window.innerHeight * 0.75)));
+      var copy = srcView.cloneNode(true);
+      var svg = copy.querySelector('svg.rc-svg');
+      svg.removeAttribute('style');
+      [].forEach.call(svg.querySelectorAll('.rc-panel'), function (g) {
+        if (g.getAttribute('data-panel') !== panel) g.parentNode.removeChild(g);
+        else g.classList.add('is-active');
+      });
+      uniqueIds(copy, '--f' + i);
+      copy.className = 'rc-view rc-fig-view';
+      copy.style.height = H + 'px';
+      copy.setAttribute('aria-hidden', 'true');
+      copy.setAttribute('inert', '');
+      svg.setAttribute('viewBox', vb(fit(view, W, H)));
+      box.parentNode.replaceChild(copy, box);
+      fig.classList.add('is-ready', 'is-zoomed');
+      fig.setAttribute('data-active-panel', panel || '');
+      fig.setAttribute('data-active-view', key);
+    });
+  });
+});
+</script>
 <p class="series-return"><a href="/#writing">← All writing</a></p></article></div>
 <footer class="site-footer">
   <a class="footer-name" href="/">Hadrien Cornier<span>Notes from Austin, Texas.</span></a>
