@@ -30,6 +30,8 @@ const t = (x, y, value, opts = {}) => text(x, y, value, { size: 14, ...opts });
 const small = (x, y, value, opts = {}) => text(x, y, value, { size: 12.5, fill: C.muted, ...opts });
 const head = (x, y, value, opts = {}) => text(x, y, value, { size: 15, weight: 700, ...opts });
 const eq = (x, y, parts, opts = {}) => math(x, y, parts, { size: 17, ...opts });
+// A small label whose symbols need real subscripts: words go in ['…', 'word'] parts.
+const lab = (x, y, parts, opts = {}) => math(x, y, parts, { size: 12.5, fill: C.muted, ...opts });
 const arrow = (x1, y1, x2, y2, opts = {}) => line(r, x1, y1, x2, y2, { arrow: true, width: 2, size: 10, ...opts });
 const box = (x, y, w, h, opts = {}) => rect(r, x, y, w, h, { width: 1.8, jitter: 1.4, ...opts });
 const dot = (x, y, rad, fill, extra = '') => `<circle cx="${n(x)}" cy="${n(y)}" r="${rad}" fill="${fill}"${extra}/>`;
@@ -45,10 +47,10 @@ function panel(id, title, body) {
 function tree() {
   let s = box(16, 178, 92, 64) + t(62, 204, 'improve', { anchor: 'middle', weight: 700 }) + t(62, 222, 'the policy', { anchor: 'middle', weight: 700 });
   const fams = [
-    [F.one, '1 · score-function', 'REINFORCE 1992 · PPO 2017', 'GRPO 2024', 'A · ∇θ log π'],
-    [F.two, '2 · pathwise (continuous Q)', 'DDPG 2015 · TD3 2018', 'SAC 2018', '∇a Q · ∇θ a'],
-    [F.three, '3 · conditioned BC', 'RECAP (π*0.6) 2025 · π0.7 2026', 'GVC 2026', 'reward → prompt'],
-    [F.four, '4 · manifold search, flow tilting', 'Policy Decorator 2024 · DSRL 2025', 'QF3 2026 · world model + GVC', 'steer a0 · tilt v · imagine'],
+    [F.one, '1 · score-function', 'REINFORCE 1992 · PPO 2017', 'GRPO 2024', 'needs the exact log π'],
+    [F.two, '2 · pathwise (continuous Q)', 'DDPG 2015 · TD3 2018', 'SAC 2018', "climbs the critic's slope"],
+    [F.three, '3 · conditioned BC', 'RECAP (π*0.6) 2025 · π0.7 2026', 'GVC 2026', 'conditions on the reward'],
+    [F.four, '4 · manifold search, flow tilting', 'Policy Decorator 2024 · DSRL 2025', 'QF3 2026 · world model + GVC', 'steer the noise · tilt the flow · imagine'],
   ];
   fams.forEach(([color, name, l1, l2, gist], i) => {
     const y = 50 + i * 84;
@@ -94,7 +96,7 @@ function cliffPlot(y0, family) {
 }
 function cliff() {
   let s = cliffPlot(70, 'ppo') + cliffPlot(254, 'sac');
-  s += eq(16, 432, ['A · ∇', ['θ', 'sub'], ' log π   vs   ∂Q/∂a · ∂a/∂θ'], { size: 16 });
+  s += t(16, 430, 'PPO: make 2.0 more likely  vs  SAC: climb the slope', { size: 13 });
   return panel('cliff', 'The cliff paradox', s);
 }
 
@@ -153,15 +155,15 @@ function needs() {
   s += head(214, 74, '2 · pathwise', { fill: F.two }) + t(214, 96, 'needs ∂Q/∂a back to θ', { size: 13.5 });
   s += eq(214, 130, ['∇', ['a', 'sub'], 'Q · ∇', ['θ', 'sub'], ' a'], { size: 16 });
   s += box(100, 200, 200, 58, { stroke: C.ink });
-  s += t(200, 223, 'flow policy (π0)', { anchor: 'middle', weight: 700 }) + small(200, 244, 'noise → 10 Euler steps → a1', { anchor: 'middle' });
+  s += t(200, 223, 'flow policy (π0)', { anchor: 'middle', weight: 700 }) + small(200, 244, 'noise → 10 refining steps → a1', { anchor: 'middle' });
   s += arrow(150, 200, 106, 152, { stroke: C.red }) + arrow(250, 200, 294, 152, { stroke: C.red });
   s += t(92, 186, '✗', { size: 22, weight: 700, fill: C.red }) + t(296, 186, '✗', { size: 22, weight: 700, fill: C.red });
-  s += t(16, 290, '✗ 1: log π = log p0 − ∫ tr(∂v/∂a) dt: intractable', { fill: C.red, size: 13 });
-  s += t(16, 312, '✗ 2: ten Jacobians multiply → critic mirage', { fill: C.red, size: 13 });
+  s += t(16, 290, '✗ 1: no closed-form log π for a flow', { fill: C.red, size: 13 });
+  s += t(16, 312, '✗ 2: ∂Q/∂a must pass back through 10 steps: unstable', { fill: C.red, size: 13 });
   s += arrow(200, 324, 200, 352, { stroke: F.three });
   s += box(16, 356, 368, 70, { stroke: F.three });
-  s += head(26, 378, '3 · reward → prompt, plain BC', { fill: F.three }) + small(374, 378, 'needs neither', { anchor: 'end', fill: F.three });
-  s += eq(26, 408, ['‖ v', ['θ', 'sub'], '(a', ['t', 'sub'], ', t, s, I) − (a', ['1', 'sub'], ' − a', ['0', 'sub'], ') ‖²'], { size: 15 });
+  s += head(26, 380, '3 · condition on the reward', { fill: F.three }) + small(374, 380, 'needs neither', { anchor: 'end', fill: F.three });
+  s += t(26, 406, 'plain BC, with a reward label as an extra input', { size: 13 });
   return panel('needs', 'Two needs a flow cannot meet', s);
 }
 
@@ -198,7 +200,7 @@ function mug() {
   return panel('mug', 'Two good answers', s);
 }
 
-// 5. Flow matching: crossing training lines, splitting Euler paths, the speedometer.
+// 5. Flow matching: the loss and its constant target, crossing training lines, splitting Euler paths.
 function flow1d(x, tt) {
   const comps = [[1, 0.06], [-1, 0.06]];
   let tot = 0, v = 0;
@@ -213,7 +215,7 @@ function flow1d(x, tt) {
 function flowPanel() {
   let s = '';
   const plot = (y0, h) => ({ X: (q) => 52 + q * 312, Y: (a) => y0 + h / 2 - a * (h / 2 - 8) / 1.6 });
-  const A = plot(52, 140), B = plot(212, 140);
+  const A = plot(146, 100), B = plot(278, 122);
   const starts = [-1.3, -0.8, -0.45, -0.15, 0.1, 0.35, 0.7, 1.2];
   const ends = [1, -1, 1, -1, 1, -1, 1, -1];
   for (const p of [A, B]) {
@@ -223,18 +225,19 @@ function flowPanel() {
   }
   s += small(A.X(0), A.Y(-1.6) + 14, 't = 0', { anchor: 'middle' }) + small(A.X(1), A.Y(-1.6) + 14, 't = 1', { anchor: 'middle' });
   starts.forEach((a0, i) => { s += line(r, A.X(0), A.Y(a0), A.X(1), A.Y(ends[i]), { stroke: C.ink, width: 1.3, passes: 1 }) + dot(A.X(0), A.Y(a0), 3, C.ink); });
-  s += head(16, 50, 'training pairs: straight lines cross', { size: 14 });
-  s += eq(150, 112, ['a', ['t', 'sub'], ' = (1−t) a', ['0', 'sub'], ' + t a', ['1', 'sub']], { size: 15, fill: C.yellow, extra: ` stroke="${BOARD}" stroke-width="5" paint-order="stroke"` });
-  s += head(16, 210, '10 Euler steps of 0.1 v: the streams split', { size: 14 });
+  s += eq(16, 60, ['L = ‖ v', ['θ', 'sub'], '(a', ['t', 'sub'], ', t, s) − (a', ['1', 'sub'], ' − a', ['0', 'sub'], ') ‖²'], { size: 16 });
+  s += lab(16, 82, [['target ', 'word'], 'a', ['1', 'sub'], ' − a', ['0', 'sub'], [': the whole trip, the same at every t', 'word']], { fill: C.yellow });
+  s += small(16, 100, '→ v is a speed: 60 mph at t = 0, 0.5 and 0.9', { fill: C.ink });
+  s += small(16, 116, 'mile 54 + 0.1 h × 60 mph = mile 60');
+  s += head(16, 140, 'training pairs: straight lines cross', { size: 14 });
+  s += eq(150, 198, ['a', ['t', 'sub'], ' = (1−t) a', ['0', 'sub'], ' + t a', ['1', 'sub']], { size: 15, fill: C.yellow, extra: ` stroke="${BOARD}" stroke-width="5" paint-order="stroke"` });
+  s += head(16, 272, '10 Euler steps of 0.1 v: the streams split', { size: 14 });
   for (const a0 of starts) {
     let a = a0; const pts = [[B.X(0), B.Y(a)]];
     for (let k = 0; k < 10; k++) { a += 0.1 * flow1d(a, k / 10); pts.push([B.X((k + 1) / 10), B.Y(a)]); }
     s += poly(pts, C.yellow, ' stroke-width="1.8"') + pts.map(([x, y]) => dot(x, y, 2, C.yellow)).join('');
   }
   s += small(B.X(0.02), B.Y(-1.6) + 14, '1 step from t = 0 lands on the average: 0, the mug');
-  s += head(16, 376, 'v is a speedometer', { fill: C.yellow, size: 14 });
-  s += t(16, 398, '60 mph at t = 0, 0.5 and 0.9 · target a1 − a0', { size: 13 });
-  s += t(16, 420, 'mile 54 + 0.1 h × 60 mph = mile 60', { size: 13 });
   return panel('flow', 'Flow matching in 10 steps', s);
 }
 
@@ -346,7 +349,7 @@ function gvc() {
   const col = (x, title, inLabel, inTall, outLabel, outTall, loss, color) => {
     let c = head(x, 58, title, { fill: color, size: 14 });
     const inH = inTall ? 96 : 14, outH = outTall ? 96 : 14;
-    c += `<rect x="${x + 4}" y="${120 - inH / 2}" width="14" height="${inH}" fill="${C.ink}" fill-opacity=".55"/>` + small(x, 186, inLabel, { fill: C.ink });
+    c += `<rect x="${x + 4}" y="${120 - inH / 2}" width="14" height="${inH}" fill="${C.ink}" fill-opacity=".55"/>` + (Array.isArray(inLabel) ? lab(x, 186, inLabel, { fill: C.ink }) : small(x, 186, inLabel, { fill: C.ink }));
     c += arrow(x + 24, 120, x + 52, 120, { stroke: C.muted, width: 1.6, size: 8 }) + box(x + 56, 98, 54, 44, { stroke: color }) + small(x + 83, 124, 'net', { anchor: 'middle', fill: C.ink });
     c += arrow(x + 114, 120, x + 138, 120, { stroke: C.muted, width: 1.6, size: 8 });
     c += `<rect x="${x + 142}" y="${120 - outH / 2}" width="14" height="${outH}" fill="${color}" fill-opacity=".85"/>` + small(x + 172, 186, outLabel, { anchor: 'end', fill: color });
@@ -354,7 +357,7 @@ function gvc() {
     return c;
   };
   s += col(16, 'standard critic', 's, a: 1,450-D', true, 'R̂: 1', false, 'loss (R̂ − R)²: 1 number', C.red);
-  s += col(208, 'GVC', 's, z_i: return bin', false, 'v: 1,450-D', true, 'loss ‖v − (a1 − a0)‖²', C.green);
+  s += col(208, 'GVC', [['s, ', 'word'], 'z', ['i', 'sub'], [': return bin', 'word']], false, 'v: 1,450-D', true, 'loss ‖v − (a1 − a0)‖²', C.green);
   s += t(16, 234, 'inputs teach nothing; outputs in the loss do', { size: 13 });
   s += t(16, 254, '→ 1,450× more supervision per sample', { size: 13, fill: C.green });
   s += head(16, 290, 'test time: best of 16', { fill: F.three, size: 14 });
@@ -364,7 +367,7 @@ function gvc() {
   s += line(r, 16, 371, 376, 371, { stroke: C.muted, width: 1.2 });
   s += small(20 + best * 22 + 7, 384, 'execute', { anchor: 'middle', fill: C.green });
   s += eq(16, 410, ['Q', ['GVC', 'subword'], ' = Σ', ['i', 'sub'], ' p(z', ['i', 'sub'], '|s, a) z', ['i', 'sub']], { size: 15 });
-  s += small(16, 430, 'p(z|s, a) by Bayes over K bins; TD anchor (Q − y_TD)²');
+  s += lab(16, 430, ['p(z|s, a)', [' by Bayes over M bins; TD anchor ', 'word'], '(Q − y', ['TD', 'subword'], ')²']);
   return panel('gvc', 'A critic versus GVC', s);
 }
 
@@ -381,13 +384,13 @@ function beyond() {
   s += small(16, 208, 'DSRL, FRS: choose a0 · Policy Decorator, PLD, MiDAS: add Δa', { fill: C.ink });
   s += head(16, 246, '4B · tilt with a one-step preview', { fill: F.four, size: 14 });
   const ax = 64, ay = 372;
-  s += dot(ax, ay, 5, C.ink) + small(ax - 8, ay + 20, 'a_t', { fill: C.ink });
+  s += dot(ax, ay, 5, C.ink) + lab(ax - 8, ay + 20, ['a', ['t', 'sub']], { fill: C.ink });
   s += arrow(ax, ay, ax + 90, ay - 40, { stroke: C.ink }) + small(ax + 52, ay - 10, 'v', { fill: C.ink });
   s += line(r, ax + 90, ay - 40, ax + 210, ay - 92, { stroke: C.muted, width: 1.4, dash: '5 4' });
-  s += ring(ax + 210, ay - 92, 6, C.yellow) + small(ax + 222, ay - 88, 'â1 = a_t + (1 − t) v', { fill: C.yellow });
-  s += arrow(ax + 210, ay - 92, ax + 220, ay - 132, { stroke: C.green }) + small(ax + 228, ay - 124, '∇a Q at â1', { fill: C.green });
+  s += ring(ax + 210, ay - 92, 6, C.yellow) + lab(ax + 222, ay - 88, ['â', ['1', 'sub'], ' = a', ['t', 'sub'], ' + (1 − t) v'], { fill: C.yellow });
+  s += arrow(ax + 210, ay - 92, ax + 220, ay - 132, { stroke: C.green }) + lab(ax + 228, ay - 124, ['∇', ['a', 'sub'], 'Q', [' at ', 'word'], 'â', ['1', 'sub']], { fill: C.green });
   s += arrow(ax, ay, ax + 86, ay - 58, { stroke: C.yellow, width: 2.6 }) + small(ax + 18, ay - 50, 'tilted v', { fill: C.yellow });
-  s += small(16, 410, 'QF3, FlowDPG (Q-score matching line)', { fill: C.ink });
+  s += small(16, 410, "QF3, FlowDPG: pull v toward the critic's slope", { fill: C.ink });
   s += small(16, 428, 'gradient through 1 step, never through 10');
   return panel('beyond', 'Steer a frozen flow, or tilt it', s);
 }
@@ -438,9 +441,9 @@ function imagine() {
   s += small(218, 322, 'execute the best of 16', { fill: C.green });
   s += curve([[300, 372], [360, 330], [370, 280], [340, 250]], { stroke: C.yellow, width: 1.8, arrow: true, dash: '6 5' });
   s += small(388, 300, 'distill:', { anchor: 'end', fill: C.yellow }) + small(388, 316, 'Quality 5', { anchor: 'end', fill: C.yellow });
-  s += small(16, 60, 'pause, simulate three jumps, take the winner (Bennett)', { fill: C.ink });
+  s += small(16, 60, 'my extrapolation · Bennett: simulate three jumps, take the winner', { fill: C.ink });
   s += small(16, 428, 'propose 16 → simulate in latent space → score → act → distill');
-  return panel('imagine', 'Imagine, score, act', s);
+  return panel('imagine', 'Proposal: imagine, score, act', s);
 }
 
 export function board() {
