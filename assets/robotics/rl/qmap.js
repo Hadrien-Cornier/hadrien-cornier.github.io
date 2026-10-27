@@ -353,7 +353,36 @@
     var frames = Q.frames, idx = 0, pinned = -1, view = null, isNarrow = false;
     slider.max = String(frames.length - 1);
     function frameIndex(t) { for (var k = 0; k < frames.length; k++) if (frames[k].t === t) return k; return 0; }
+    // The whole board shows several narrated moments at once: the recorded table on the map,
+    // updates 5 and 6 (the worked arithmetic) in the update panel, and updates 19 and 24 below.
+    // One shared frame cannot do that. Starting from the final snapshot replaces those updates
+    // and leaves the update panel with no arithmetic.
+    function showNarrated(announce) {
+      var sel = pinned >= 0 ? pinned : START;
+      var snap = frames[frameIndex(10000)], worked = frames[frameIndex(6)];
+      gMap.innerHTML = renderMap(Q, snap.t, sel, { update: true });
+      if (gStatus) gStatus.textContent = statusText(Q, snap, isNarrow);
+      if (gCell) gCell.innerHTML = renderCell(Q, snap.t, sel);
+      if (gMath) gMath.innerHTML = renderMath(Q, worked, isNarrow);
+      if (gCredit) gCredit.innerHTML = renderCredit(Q, 24);
+      idx = frameIndex(6);
+      var label = 'after 6 updates';
+      slider.value = String(idx);
+      slider.setAttribute('aria-valuetext', label);
+      readout.textContent = 'update 6';
+      back.disabled = false;
+      fwd.disabled = idx >= frames.length - 1;
+      back.setAttribute('aria-label', 'One update back');
+      fwd.setAttribute('aria-label', 'One update forward');
+      back.title = back.getAttribute('aria-label'); fwd.title = fwd.getAttribute('aria-label');
+      if (announce && live) live.textContent = label + '. ' + describe(Q, snap.t, sel);
+    }
+    function narrating() {
+      var v = rc.getAttribute('data-active-view');
+      return !v || v === 'whole';
+    }
     function draw(announce) {
+      if (narrating()) { showNarrated(announce); return; }
       var f = frames[idx], u = f.kind === 'update' ? Q.updateAt(f.t) : null;
       var sel = pinned >= 0 ? pinned : (u ? u.s : START);
       gMap.innerHTML = renderMap(Q, f.t, sel, { update: true });
@@ -401,6 +430,7 @@
     function onView() {
       var v = rc.getAttribute('data-active-view');
       if (v === view) return; view = v;
+      if (!v || v === 'whole') { pinned = -1; showNarrated(false); return; }
       if (DEFAULT[v] !== undefined) { pinned = -1; go(frameIndex(DEFAULT[v]), false); }
     }
     new MutationObserver(onView).observe(rc, { attributes: true, attributeFilter: ['data-active-view'] });
@@ -412,7 +442,7 @@
     }
     if (root.ResizeObserver) new ResizeObserver(narrow).observe(vw);
     isNarrow = vw.clientWidth < 560; rc.classList.toggle('qm-narrow', isNarrow);
-    go(frameIndex(10000), false);
+    showNarrated(false);
     onView();
   }
   function boot() { [].forEach.call(document.querySelectorAll('.rc'), function (rc) { if (rc.querySelector('[data-qm="map"]')) mount(rc); }); }
