@@ -8,6 +8,7 @@ import matter from 'gray-matter';
 import { katex } from '@mdit/plugin-katex';
 import { parseMarket, renderMarket, renderValueLoop } from './robotics-market.mjs';
 import { parseTimeline, renderTimeline, timelineProse } from './robotics-timeline.mjs';
+import { highlightPython } from './highlight-code.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ORIGIN = 'https://hadrien-cornier.github.io';
@@ -124,6 +125,7 @@ export function renderArticle(source, root = ROOT, html = undefined) {
   const updated = data.updated ? dateValue(data.updated, 'updated') : date;
   if (data.draft !== undefined && typeof data.draft !== 'boolean') throw new Error('draft must be true or false');
   if (data.layout !== undefined && !['essay', 'short'].includes(data.layout)) throw new Error('layout must be essay or short when provided');
+  if (data.code_highlight !== undefined && typeof data.code_highlight !== 'boolean') throw new Error('code_highlight must be true or false');
   validateSeriesMetadata(data);
   validateTags(data);
   validatePaper(data);
@@ -141,7 +143,9 @@ export function renderArticle(source, root = ROOT, html = undefined) {
     return {...data, paper, tags:data.tags ? [...data.tags] : [], date, updated, body:html, headings:[], components, readingMinutes:Math.max(1, Math.ceil(words / 220))};
   }
   if (html !== undefined) throw new Error('Only a short article (layout: short) may have an .html body');
-  const md = new MarkdownIt({html:true, linkify:true, typographer:false}).use(katex, {
+  // An article that sets code_highlight colors its python code blocks; markdown-it wraps the result in <pre><code>.
+  const highlight = data.code_highlight ? (code, lang) => (lang === 'python' ? highlightPython(code) : '') : null;
+  const md = new MarkdownIt({html:true, linkify:true, typographer:false, highlight}).use(katex, {
     delimiters:'dollars', throwOnError:true, trust:false, output:'htmlAndMathml',
   });
   const headings = [];
