@@ -247,7 +247,7 @@ test('every robotics board paints in WebKit', {timeout: 90_000}, async (t) => {
       };
       for (const slug of slugs) {
         if (openedCount > 0 && openedCount % 8 === 0) {
-          await page.close().catch(() => {});
+          await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
           page = await openPaintPage(browser, origin, mode);
         }
         openedCount += 1;
@@ -257,7 +257,7 @@ test('every robotics board paints in WebKit', {timeout: 90_000}, async (t) => {
           try {
             // commit does not wait for the embedded videos. Waiting for DOMContentLoaded
             // stalls on those frames, and the next essay then stalls too.
-            await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 8_000});
+            await within(page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 8_000}), 7_000, 'open timed out');
             await page.waitForSelector('article', {timeout: 4_000});
             await page.waitForFunction(() => {
               const rc = document.querySelector('#rc');
@@ -283,10 +283,10 @@ test('every robotics board paints in WebKit', {timeout: 90_000}, async (t) => {
                 }
               }
             }
-            const tall = mode.lastMark && await page.evaluate(() => {
+            const tall = mode.lastMark && await within(page.evaluate(() => {
               const svg = document.querySelector('svg.rc-svg');
               return !!svg && svg.getBoundingClientRect().height * 2 > 4000;
-            }).catch(() => false);
+            }), 3_000, 'board height timed out').catch(() => false);
             if (tall) {
               const marks = page.locator('.rc-mark');
               const markCount = await marks.count();
@@ -327,7 +327,7 @@ test('every robotics board paints in WebKit', {timeout: 90_000}, async (t) => {
           }
         }
       }
-      await page.close();
+      await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
     }
   } finally {
     await within(browser ? browser.close().catch(() => {}) : Promise.resolve(), 3_000, 'browser close timed out').catch(() => {});
