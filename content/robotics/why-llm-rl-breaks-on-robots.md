@@ -20,19 +20,17 @@ So let's try it. Take a Unitree G1 humanoid with 29 joints and ask it to fold a 
 
 Here's the short version. Classical policy-gradient RL comes in two families. One family, which includes the PPO and GRPO that train LLMs, needs the exact log-probability of each action. The other, which includes SAC, needs to differentiate the critic's score back through the policy. A modern robot policy makes the first intractable and the second unstable, which is why the field had to invent a third way: turn the reward into a prompt and train with plain supervised learning.
 
-We'll start with why robots make RL hard in the first place.
-
 ## Robots trigger the whole deadly triad
 
 In [Breaking Bellman](/robotics/breaking-bellman/) and the [deadly triad](/robotics/rl-5-the-deadly-triad/) part of my RL series, I looked at three ingredients that make value learning blow up when they meet: function approximation, bootstrapping and off-policy data. A toy problem can usually avoid at least one of them. A robot needs all three, and each one is forced on us for a concrete reason.
 
 **Function approximation.** A humanoid like Figure 02 or the G1 has 23 to 43 continuous degrees of freedom (DoF, the joints you can command), and it sees the world through camera pixels. No table has a row for every combination of 43 joint angles and a camera image, so everything has to live inside neural networks that generalize from the states they've seen to the ones they haven't.
 
-**Bootstrapping.** At 50 Hz, a task like folding a shirt or busing a table is thousands of frames long. Suppose you wait until the end of the episode to see how it went, and then hand that one score back to every frame. Thousands of random decisions all fed into that single number, so the estimate for any one frame is hugely noisy. Instead, you bootstrap. You score a step by its immediate reward plus the critic's guess about where you landed:
+**Bootstrapping.** At 50 Hz, a task like folding a shirt or busing a table is thousands of frames long. Suppose you wait until the end of the episode to see how it went, and then hand that one score back to every frame. Thousands of random decisions all fed into that single number, so the estimate for any one frame is hugely noisy. Instead, you bootstrap. You score a step by its immediate reward $r$ plus the critic's guess $V(s')$, the predicted return from the next state $s'$, discounted by a factor $\gamma$ just below 1:
 
 $$r + \gamma V(s')$$
 
-Here $r$ is the reward for this step, $s'$ is the next state, $V(s')$ is the critic's predicted return from $s'$, and $\gamma$ is a discount just below 1. The catch is that the training target now contains the critic's own guess, so the critic's errors feed back into its own training.
+The catch is that the training target now contains the critic's own guess, so the critic's errors feed back into its own training.
 
 **Off-policy replay.** Robot hours are expensive. Motors heat up, things break, and a person has to walk over and reset the objects after every attempt. You can't afford to use a rollout for one gradient step and throw it away, which is what on-policy methods do. So modern robot RL is mostly the art of off-policy sample efficiency: squeezing as much signal as you can out of every trajectory in the replay buffer, whether it's a human demo, an autonomous success, a clumsy near-miss or an outright failure.
 
@@ -49,17 +47,19 @@ Now move to dexterous manipulation with a VLA like $\pi_0$, and you hit two wall
 
 I contribute to Hugging Face's [LeRobot](https://github.com/huggingface/lerobot), and that's where I first noticed how big this gap is. Open source has good imitation learners ($\pi_0$, ACT) and a 2018-era SAC. None of the 2025 to 2026 off-policy generative RL stack in this article is implemented yet.
 
-<div class="rc-mark" id="sec-map" data-panel="tree" data-view="tree" data-title="Four families of robot RL"></div>
-
 ## The route
 
-The board on the side follows along as you scroll. Its first panel is the map: four families of policy improvement, from REINFORCE in 1992 to $\pi_{0.7}$, GVC and QF3 in 2026. The route through them follows the three sentences above:
+The route through the article follows the three sentences above:
 
 1. **Section 1** derives the two classic families from the product rule, and shows what each one needs from the policy.
 2. **Section 2** shows why a robot needs a policy that can hold two good answers at once, and how flow matching ($\pi_0$) does it.
 3. **Section 3** shows why a flow policy can't give either family what it needs.
 4. **Section 4** is family 3, the third way: the reward becomes a prompt.
 5. **Section 5** is family 4, which goes beyond the data the robot already has.
+
+<div class="rc-mark" id="sec-map" data-panel="tree" data-view="tree" data-title="Four families of robot RL"></div>
+
+The board on the side follows along as you scroll. Its first panel is the map: four families of policy improvement, from REINFORCE in 1992 to $\pi_{0.7}$, GVC and QF3 in 2026. The first two families are the classics, and we'll derive both from the product rule. The other two are what people built after flow matching broke the classics.
 
 <div class="rc-mark" id="sec-cliff" data-panel="cliff" data-view="cliff" data-title="The cliff paradox"></div>
 
@@ -119,11 +119,11 @@ That blindness to the slope has an upside, and it's why people love PPO when rol
 
 Why is that a good thing? A critic can be badly wrong about actions nobody has tried. Somewhere in the huge space of untried actions, it can predict a big return for no reason at all. I'll call such a spike a critic mirage. PPO never asks the critic about untried actions, so it's immune to mirages.
 
-Now feed PPO a replay buffer from 3 days ago and watch what happens. PPO doesn't use $\log \pi_\theta$ directly. It uses the probability ratio
+Now feed PPO a replay buffer from 3 days ago and watch what happens. PPO doesn't use $\log \pi_\theta$ directly. It compares the current policy with $\pi_{\text{old}}$, the policy that collected the sample, through the probability ratio
 
 $$r(\theta) = \frac{\pi_\theta(a \mid s)}{\pi_{\text{old}}(a \mid s)}$$
 
-where $\pi_{\text{old}}$ is the policy that collected the sample. A ratio of 1.5 means the current policy picks this action 50% more often than the old one did. PPO clips the ratio to $[0.8, 1.2]$, so that no single update moves the policy too far. For one sample, the objective is
+A ratio of 1.5 means the current policy picks this action 50% more often than the old one did. PPO clips the ratio to $[0.8, 1.2]$, so that no single update moves the policy too far. For one sample, the objective is
 
 $$L(\theta) = \min\big(r A,\ \text{clip}(r, 0.8, 1.2)\, A\big)$$
 
@@ -222,9 +222,11 @@ Training is self-supervised on the replay buffer, and it's surprisingly simple:
 3. Pick a random time $t \in [0, 1]$, and put a point on the straight line between them, $a_t = (1 - t)\, a_0 + t\, a_1$.
 4. Regress the network's velocity at that point, with a squared error, onto the whole arrow from noise to data, $a_1 - a_0$.
 
+That's conditional flow matching (CFM), with the loss
+
 $$\mathcal{L}_{\text{CFM}}(\theta) = \mathbb{E}_{t, a_0, a_1}\Big[\big\| v_\theta(a_t, t, s) - (a_1 - a_0) \big\|^2\Big]$$
 
-That's conditional flow matching (CFM). The training step and the sampler fit in a few lines:
+The training step and the sampler fit in a few lines:
 
 ```python
 # train: one step on a batch of recorded chunks
@@ -256,7 +258,7 @@ Small steps of $0.1\, v_\theta$ fix this. The lower drawing shows the sampling p
 
 <div class="rc-mark" id="sec-needs-again" data-panel="needs" data-view="needs" data-title="Two needs a flow cannot meet"></div>
 
-Back to the panel from section 1, now that we know what a flow policy is. Family 1 needs $\log \pi_\theta(a_1 \mid s)$, the exact log-probability of the chunk that ten Euler steps produced. Family 2 needs to push the critic's slope $\nabla_{a_1} Q_\phi$ back through those same ten steps and into $\theta$.
+Back to the panel from section 1, now that we know what a flow policy is. Family 1 needs $\log \pi_\theta(a_1 \mid s)$, the log-probability of the chunk the flow produces. Family 2 needs to push the critic's slope $\nabla_{a_1} Q_\phi$ back through those same ten steps and into $\theta$.
 
 Each of the next two subsections takes one red cross and shows where it comes from. For family 1 the log-probability turns into an integral of a Jacobian trace, and for family 2 the backward pass turns into a product of ten Jacobians.
 
@@ -272,7 +274,7 @@ The sampler follows an ODE, an ordinary differential equation, $da_t/dt = v_\the
 
 With many coordinates, the same idea becomes the divergence of the velocity field. The divergence is the trace, meaning the sum of the diagonal entries, of the Jacobian $\partial v_\theta / \partial a_t$, the matrix of how each coordinate's velocity changes when you nudge each coordinate's position. Each diagonal entry is the one-dimensional rate for one coordinate, so the sum is the total squeezing rate. To keep the numbers small, take one 29-joint action instead of the whole chunk. Its Jacobian is $29 \times 29$ (the full chunk's would be $1{,}450 \times 1{,}450$).
 
-Start from the Gaussian noise density $p_0$, which we know exactly, and integrate the divergence along the path:
+For the continuous flow that the 10 Euler steps approximate, start from the Gaussian noise density $p_0$, which we know exactly, and integrate the divergence along the path:
 
 $$\log \pi_\theta(a_1 \mid s) = \log p_0(a_0) - \int_0^1 \left(\sum_{i=1}^{29} \frac{\partial v_{\theta,i}(a_t, t, s)}{\partial a_{t,i}}\right) dt$$
 
@@ -404,7 +406,11 @@ It's the RECAP loss again, with a return bin where RECAP had Good or Bad. Every 
 
 But a critic has to answer "how good is this action?", and this network answers "what would you do if you were aiming for return $z_i$?" How do you get a score out of it?
 
-With Bayes' rule, and the use case is Best-of-$N$ at test time. The policy proposes $N = 16$ candidate chunks. For each candidate $a$, GVC asks every return bin how well it explains the chunk. It checks which bin $z_i$ gives the smallest flow-matching error on $a$, using the error as a stand-in for $-\log p(a \mid s, z_i)$. It's the same ELBO proxy as FPO, with a smaller job: here it only ranks 16 candidates, and it no longer decides how far a training update may move the policy. If $a$ looks like what the network does when it's prompted with a high return, the high bins win. Bayes' rule combines these per-bin likelihoods with a prior $p(z_i \mid s)$, how likely each return bin is from state $s$ before looking at the action, and turns them into probabilities over the bins:
+With Bayes' rule, and the use case is Best-of-$N$ at test time. The policy proposes $N = 16$ candidate chunks. For each candidate $a$, GVC asks every return bin how well it explains the chunk. It checks which bin $z_i$ gives the smallest flow-matching error on $a$, using the error as a stand-in for $-\log p(a \mid s, z_i)$.
+
+It's the same ELBO proxy as FPO, with a smaller job: here it only ranks 16 candidates, and it no longer decides how far a training update may move the policy. If $a$ looks like what the network does when it's prompted with a high return, the high bins win.
+
+Bayes' rule combines these per-bin likelihoods with a prior $p(z_i \mid s)$, how likely each return bin is from state $s$ before looking at the action, and turns them into probabilities over the bins:
 
 $$p(z_i \mid s, a) = \frac{p(a \mid s, z_i)\, p(z_i \mid s)}{\sum_{j=1}^{K} p(a \mid s, z_j)\, p(z_j \mid s)}$$
 
