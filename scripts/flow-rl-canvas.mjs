@@ -156,7 +156,7 @@ function needs() {
   s += t(200, 223, 'flow policy (π0)', { anchor: 'middle', weight: 700 }) + small(200, 244, 'noise → 10 Euler steps → a1', { anchor: 'middle' });
   s += arrow(150, 200, 106, 152, { stroke: C.red }) + arrow(250, 200, 294, 152, { stroke: C.red });
   s += t(92, 186, '✗', { size: 22, weight: 700, fill: C.red }) + t(296, 186, '✗', { size: 22, weight: 700, fill: C.red });
-  s += t(16, 290, '✗ 1: log π = ∫ trace of a Jacobian, no closed form', { fill: C.red, size: 13 });
+  s += t(16, 290, '✗ 1: log π = log p0 − ∫ tr(∂v/∂a) dt: intractable', { fill: C.red, size: 13 });
   s += t(16, 312, '✗ 2: ten Jacobians multiply → critic mirage', { fill: C.red, size: 13 });
   s += arrow(200, 324, 200, 352, { stroke: F.three });
   s += box(16, 356, 368, 70, { stroke: F.three });
