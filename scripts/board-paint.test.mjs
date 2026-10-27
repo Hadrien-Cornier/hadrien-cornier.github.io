@@ -144,9 +144,14 @@ async function boardShot(page, selector, index) {
   // a multi-thousand-pixel svg is the buffer WebKit already fails to paint.
   // Query by index. A locator would wait on the placeholder the snapshot replaces.
   // page.evaluate has no timeout of its own, and a stuck main thread would hold the whole run.
+  // An empty phone figure has the board color before its snapshot arrives. That is not a blank drawing.
+  await page.waitForFunction(({selector, index}) => {
+    const el = document.querySelectorAll(selector)[index];
+    return !!(el && (el.matches('svg') || el.querySelector('svg')));
+  }, {selector, index}, {timeout: 2_500}).catch(() => {});
   const box = await within(page.evaluate(({selector, index}) => {
     const el = document.querySelectorAll(selector)[index];
-    if (!el) return null;
+    if (!el || !(el.matches('svg') || el.querySelector('svg'))) return null;
     const style = getComputedStyle(el);
     if (style.display === 'none' || style.visibility === 'hidden') return null;
     const rect = el.getBoundingClientRect();
@@ -277,19 +282,19 @@ test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) =>
             }
             if (!saw) {
               // A board inside a closed drawer, or the hidden live stage on a phone, is not on screen.
-              const onScreen = await page.evaluate(() => [...document.querySelectorAll('svg.rc-svg')].some((el) => {
-                const style = getComputedStyle(el);
-                if (style.display === 'none' || style.visibility === 'hidden') return false;
-                let node = el;
+              const onScreen = await page.evaluate((selector) => [...document.querySelectorAll(selector)].some((el) => {
+                const svg = el.matches('svg') ? el : el.querySelector('svg.rc-svg');
+                if (!svg) return false;
+                let node = svg;
                 while (node) {
                   if (getComputedStyle(node).display === 'none' || getComputedStyle(node).visibility === 'hidden') return false;
                   node = node.parentElement;
                 }
-                const rect = el.getBoundingClientRect();
+                const rect = svg.getBoundingClientRect();
                 const width = Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0);
                 const height = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
                 return width > 20 && height > 20;
-              }));
+              }), mode.boards);
               if (onScreen) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
             }
             opened = true;
