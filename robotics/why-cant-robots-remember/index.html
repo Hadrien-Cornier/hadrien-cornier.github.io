@@ -168,7 +168,7 @@
 <h3 id="section-copycat-behavior">Copycat behavior</h3>
 <p>The second problem has a name. Imagine an expert whose joint command is 0.10, 0.12, 0.14, 0.16, and so on. A policy that sees two frames can work out the last command, and copying it is wrong by only 0.02 each step. The training loss looks great. Then the cup moves, and the policy keeps copying.</p>
 <p><a href="https://arxiv.org/abs/2010.14876">Wen and colleagues</a> (2020) measured this on six simulated control tasks: the cloned policy's actions were easier to predict from its own past actions than the expert's were, in all six. <a href="https://arxiv.org/abs/1905.11979">De Haan and colleagues</a> (2019) showed that handing a cloned policy its previous action can lower its validation error and its reward at the same time (Pong, Hopper and others). <a href="https://arxiv.org/abs/2207.09705">Chuang and colleagues</a> (2022) trace the same effect to how information flows through the network, and propose an architecture that avoids it by design.</p>
-<p>Nobody should read this as &quot;history always hurts&quot;. The same Wen paper finds two frames beat one in five of six partially observed tasks. The picture is mixed:</p>
+<p>History can help. The same Wen paper finds two frames beat one in five of six partially observed tasks. The picture is mixed:</p>
 <div class="essay-table history">
 <div class="table-scroll" role="region" aria-label="Table" tabindex="0"><table>
 <thead>

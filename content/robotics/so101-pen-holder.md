@@ -94,7 +94,7 @@ The design is open source: [github.com/Hadrien-Cornier/so101-pen-holder](https:/
 </figure>
 </div>
 
-The videos are not test results. They show no drawing and no tablet reading. I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. I felt no play by hand, but that is not a measurement. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the [README of the repository](https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet) explains why.
+I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. I felt no play by hand. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the [README of the repository](https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet) explains why.
 
 The rest of this article explains how I got there, and why each design failed or lost.
 
@@ -201,7 +201,7 @@ I chose Sy20. It reaches the largest area of paper, it needs no riser, and its t
 
 ## Design 2: the pen beside the fingers
 
-Design 2 put the slide of design 1 in the Sy20 layout. It passed its checks after two fixes: I moved the guide 6 mm out of the jaws, because the carriage hit the fingertips, and I made the spine thicker, because one section was only 41.6 mm².
+Design 2 put the slide of design 1 in the Sy20 layout: alongside, leaning out the open side of the jaws, tilt 20 degrees. It passed its checks after two fixes: I moved the guide 6 mm out of the jaws, because the carriage hit the fingertips, and I made the spine thicker, because one section was only 41.6 mm².
 
 It worked on paper, but it was not a design that anybody else would build. With the bracket, the carriage, the sleeves, two ground shafts, four bushings, the bolts and the glue, it had about 20 parts. The two holds on the pen were only 31 mm apart, and the bushings still left 0.016 to 0.049 mm of play.
 

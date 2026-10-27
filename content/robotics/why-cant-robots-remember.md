@@ -129,7 +129,7 @@ The second problem has a name. Imagine an expert whose joint command is 0.10, 0.
 
 [Wen and colleagues](https://arxiv.org/abs/2010.14876) (2020) measured this on six simulated control tasks: the cloned policy's actions were easier to predict from its own past actions than the expert's were, in all six. [De Haan and colleagues](https://arxiv.org/abs/1905.11979) (2019) showed that handing a cloned policy its previous action can lower its validation error and its reward at the same time (Pong, Hopper and others). [Chuang and colleagues](https://arxiv.org/abs/2207.09705) (2022) trace the same effect to how information flows through the network, and propose an architecture that avoids it by design.
 
-Nobody should read this as "history always hurts". The same Wen paper finds two frames beat one in five of six partially observed tasks. The picture is mixed:
+History can help. The same Wen paper finds two frames beat one in five of six partially observed tasks. The picture is mixed:
 
 <div class="essay-table history">
 
