@@ -195,10 +195,11 @@ async function reveal(page, selector, index) {
   await within(page.evaluate(({selector, index}) => {
     const el = document.querySelectorAll(selector)[index];
     if (!el) return;
-    // A whole-canvas phone figure is taller than the screen and draws its panel at the top.
-    // Centering it photographs the empty board below that panel.
-    const block = el.getBoundingClientRect().height > window.innerHeight + 40 ? 'start' : 'center';
-    el.scrollIntoView({block});
+    // A whole-canvas phone figure is taller than the screen. The drawing is the active
+    // panel, which may sit below the top of that figure.
+    const tall = el.getBoundingClientRect().height > window.innerHeight + 40;
+    const panel = tall && (el.querySelector('.rc-panel.is-active') || el.querySelector('.rc-panel'));
+    (panel || el).scrollIntoView({block: tall ? 'start' : 'center'});
   }, {selector, index}), 8_000, 'board scroll timed out');
   await page.waitForTimeout(350);
 }
@@ -274,7 +275,23 @@ test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) =>
                 }
               }
             }
-            if (!saw && await page.locator('svg.rc-svg').count()) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
+            if (!saw) {
+              // A board inside a closed drawer, or the hidden live stage on a phone, is not on screen.
+              const onScreen = await page.evaluate(() => [...document.querySelectorAll('svg.rc-svg')].some((el) => {
+                const style = getComputedStyle(el);
+                if (style.display === 'none' || style.visibility === 'hidden') return false;
+                let node = el;
+                while (node) {
+                  if (getComputedStyle(node).display === 'none' || getComputedStyle(node).visibility === 'hidden') return false;
+                  node = node.parentElement;
+                }
+                const rect = el.getBoundingClientRect();
+                const width = Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0);
+                const height = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+                return width > 20 && height > 20;
+              }));
+              if (onScreen) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
+            }
             opened = true;
           } catch (err) {
             if (attempt === 1) failures.push(`${slug} ${mode.name} did not open: ${err.message.split('\n')[0]}`);
