@@ -1,5 +1,17 @@
 [
   {
+    "title": "Why LLM reinforcement learning breaks on robots, and how the frontier is fixing it",
+    "description": "PPO and GRPO need cheap identical rollouts and exact log-probabilities. A flow-matching robot policy gets neither. A long read that derives the two classic policy-gradient families, shows where flow matching breaks each one, and walks through the fixes of 2025 and 2026: RECAP, π0.7, GVC, DSRL, QF3 and test-time search.",
+    "tags": [
+      "reinforcement-learning",
+      "robot-learning",
+      "flow-matching",
+      "foundation-models"
+    ],
+    "date": "2026-10-27",
+    "url": "/robotics/why-llm-rl-breaks-on-robots/"
+  },
+  {
     "title": "Do you need a human body to use human data?",
     "description": "Figure AI says a humanoid can learn from human video because it is shaped like us. About 30 papers with measured results say human video also trains grippers and wheeled robots, that mismatch breaks transfer, and that the body decides what a robot can reach. A companion to Three robot bets, with a pinned blackboard.",
     "tags": [

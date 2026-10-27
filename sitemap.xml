@@ -38,6 +38,11 @@
     <changefreq>monthly</changefreq>
   </url>
   <url>
+    <loc>https://hadrien-cornier.github.io/robotics/why-llm-rl-breaks-on-robots/</loc>
+    <lastmod>2026-10-27</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
     <loc>https://hadrien-cornier.github.io/robotics/do-you-need-a-human-body-for-human-data/</loc>
     <lastmod>2026-10-23</lastmod>
     <changefreq>monthly</changefreq>

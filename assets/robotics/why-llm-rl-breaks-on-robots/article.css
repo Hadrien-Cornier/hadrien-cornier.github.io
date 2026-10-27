@@ -1,0 +1,15 @@
+@import url('/assets/robotics/rebuild/article.css');
+
+.rebuild-article .fsim { margin: 28px 0; padding: 0 0 12px; border-radius: 8px; overflow: hidden; background: #1d2824; color: #f4f1e8; }
+.rebuild-article .fsim-plot { display: block; width: 100%; height: auto; max-width: 100%; margin: 0; }
+.rebuild-article .fsim-controls:not([hidden]) { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 10px 14px 0; font: 14px/1.4 var(--sans, Arial, sans-serif); }
+.rebuild-article .fsim-controls label { display: flex; align-items: center; gap: 8px; flex: 1 1 200px; min-width: 0; }
+.rebuild-article .fsim-controls input[type=range] { flex: 1 1 auto; min-width: 0; accent-color: #f0d98a; }
+.rebuild-article .fsim-controls output { min-width: 2.2em; font-variant-numeric: tabular-nums; }
+.rebuild-article .fsim-controls button { font: inherit; padding: 6px 12px; border: 1px solid #b3b7ae; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
+.rebuild-article .fsim-readout { margin: 0; padding: 8px 14px 0; font: 14px/1.45 var(--sans, Arial, sans-serif); color: #f0d98a; }
+/* WebKit clamps a filter buffer at 4,096 device pixels, and this 14-panel board is taller than that on a 2x desktop screen.
+   Chalk each panel instead of the whole board, so every filter buffer stays one panel in size. */
+.article-body svg.flowrl-board { filter: none; }
+.article-body svg.flowrl-board .rc-panel { filter: url(#bb-chalk); }
+@media (prefers-reduced-motion: reduce) { .article-body svg.flowrl-board .rc-panel { filter: none; } }
