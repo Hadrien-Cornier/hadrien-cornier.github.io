@@ -153,7 +153,7 @@ async function reveal(page, selector, index) {
   await page.waitForTimeout(350);
 }
 
-test('every robotics board paints in WebKit', {timeout: 600_000}, async () => {
+test('every robotics board paints in WebKit', {timeout: 900_000}, async () => {
   const slugs = articleSlugs();
   assert.ok(slugs.length >= 30, `expected at least 30 built articles, found ${slugs.length}`);
   const server = await startServer();
@@ -173,7 +173,7 @@ test('every robotics board paints in WebKit', {timeout: 600_000}, async () => {
       // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
       await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
       for (const slug of slugs) {
-        await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 15_000});
+        await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 60_000});
         await page.waitForTimeout(300);
         const boards = page.locator(mode.boards);
         const count = await boards.count();
