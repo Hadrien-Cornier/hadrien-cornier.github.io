@@ -161,6 +161,29 @@ async function boardShot(page, selector, index) {
   return distinctColors(buffer);
 }
 
+async function prepare(page, origin) {
+  // Third-party frames (the YouTube embeds) must finish or WebKit never fires
+  // DOMContentLoaded. An aborted frame can sit there for the whole timeout.
+  await page.route(/^https?:\/\//, (route) => {
+    if (new URL(route.request().url()).origin === origin) return route.continue();
+    if (route.request().resourceType() === 'document') {
+      return route.fulfill({status: 200, contentType: 'text/html', body: '<!doctype html><title></title>'});
+    }
+    return route.abort();
+  });
+  // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
+  await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
+}
+
+async function openPaintPage(browser, origin, mode) {
+  const page = await browser.newPage({
+    viewport: {width: mode.width, height: mode.height},
+    deviceScaleFactor: mode.deviceScaleFactor,
+  });
+  await prepare(page, origin);
+  return page;
+}
+
 async function reveal(page, selector, index) {
   await page.evaluate(({selector, index}) => {
     const el = document.querySelectorAll(selector)[index];
@@ -192,30 +215,26 @@ test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) =>
   let painted = 0;
   try {
     for (const mode of MODES) {
-      const page = await browser.newPage({
-        viewport: {width: mode.width, height: mode.height},
-        deviceScaleFactor: mode.deviceScaleFactor,
-      });
-      // Third-party frames (the YouTube embeds) must finish or WebKit never fires
-      // DOMContentLoaded. An aborted frame can sit there for the whole timeout.
-      await page.route(/^https?:\/\//, (route) => {
-        if (new URL(route.request().url()).origin === origin) return route.continue();
-        if (route.request().resourceType() === 'document') {
-          return route.fulfill({status: 200, contentType: 'text/html', body: '<!doctype html><title></title>'});
-        }
-        return route.abort();
-      });
-      // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
-      await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
+      let page = await openPaintPage(browser, origin, mode);
       for (const slug of slugs) {
         if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
         try {
-          await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 60_000});
+          // commit does not wait for the embedded videos. Waiting for DOMContentLoaded
+          // stalls on those frames, and the next essay then stalls too.
+          await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 20_000});
+          await page.waitForSelector('article', {timeout: 15_000});
+          await page.waitForFunction(() => {
+            const rc = document.querySelector('#rc');
+            if (!rc) return true;
+            return !!rc.getAttribute('data-mode') || !rc.querySelector('svg.rc-svg');
+          }, null, {timeout: 8_000}).catch(() => {});
         } catch (err) {
           failures.push(`${slug} ${mode.name} did not open: ${err.message.split('\n')[0]}`);
+          await page.close().catch(() => {});
+          page = await openPaintPage(browser, origin, mode);
           continue;
         }
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(200);
         const boards = page.locator(mode.boards);
         const count = await boards.count();
         let saw = false;
