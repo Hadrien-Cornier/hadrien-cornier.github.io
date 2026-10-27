@@ -46,7 +46,7 @@
     "url": "/robotics/three-robot-philosophies/"
   },
   {
-    "title": "World action models vs VLAs: predict the video, or just the moves",
+    "title": "What predicting video buys a robot policy, and what it costs",
     "description": "Both look at a camera image, read an instruction and output robot moves. A VLA starts from an image-and-text model and learns the moves. A WAM starts from a video model and also learns the frames that come next. Eight drawings on what that changes.",
     "tags": [
       "world-action-models",
@@ -185,7 +185,7 @@
     "url": "/robotics/rl-4-on-policy-and-off-policy/"
   },
   {
-    "title": "The deadly triad: how a guess can train itself upward",
+    "title": "The deadly triad: value estimates that grow on zero reward",
     "description": "Function approximation, bootstrapping and off-policy data each make RL practical. Off-policy value learners such as deep Q-networks (DQN) and soft actor-critic (SAC) use all three, even though together they can let a prediction feed its own target with nothing to pull it back down.",
     "tags": [
       "reinforcement-learning",
@@ -217,7 +217,7 @@
     "url": "/robotics/recipes-for-choosing-a-learning-target/"
   },
   {
-    "title": "I made a small game where RL algorithms break",
+    "title": "Breaking Bellman: repair broken reinforcement learners in your browser",
     "description": "Breaking Bellman is a free browser game for learning reinforcement learning. Real algorithms train in your browser and fail, and you fix them one word at a time.",
     "tags": [
       "reinforcement-learning",
@@ -283,7 +283,7 @@
     "url": "/robotics/robot-brains-robot-bodies/"
   },
   {
-    "title": "Learning what the physics misses",
+    "title": "Learning what physics misses, and how far the gain reaches",
     "description": "Where a neural network fits in a robot controller. A network that learns only what the physics model gets wrong does the same job as a Kalman disturbance estimate, with more freedom, and this is where recent research is going.",
     "tags": [
       "so-101",
@@ -315,7 +315,7 @@
     "url": "/robotics/so101-3-choosing-the-goal/"
   },
   {
-    "title": "Seeing finer than the sensor",
+    "title": "Finer than the sensor",
     "description": "The sensor side of the joint equation: why differences of encoder ticks explode the noise, and how an observer or a Kalman filter can estimate an angle finer than one tick.",
     "tags": [
       "so-101",
@@ -326,7 +326,7 @@
     "url": "/robotics/so101-2-finer-than-the-sensor/"
   },
   {
-    "title": "One equation, and every way the arm misses it",
+    "title": "Target and goal: what to send an SO-101 servo",
     "description": "Start from torque = inertia × acceleration, then add each term a cheap servo arm really has: gravity, friction, a payload, dead time, a dead band. Each term is one way the arm misses its target.",
     "tags": [
       "so-101",
@@ -358,7 +358,7 @@
     "url": "/robotics/why-i-am-learning-robotics/"
   },
   {
-    "title": "How an arm moves: joints, geometry, and motor control",
+    "title": "From joint angles to a moving arm",
     "description": "From encoder readings to gripper position: a visual guide to robot geometry, servos, and the commands that connect them.",
     "tags": [
       "control",

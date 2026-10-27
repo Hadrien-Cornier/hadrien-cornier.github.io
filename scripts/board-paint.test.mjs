@@ -145,10 +145,14 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
   let painted = 0;
   try {
     const page = await browser.newPage({viewport: {width: 1200, height: 900}, deviceScaleFactor: 1});
+    // Judge locally served board paint without waiting for third-party embeds.
+    await page.route(/^https?:\/\//, (route) =>
+      new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
     // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
     await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
     for (const slug of slugs) {
-      await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'networkidle'});
+      await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'load', timeout: 15_000});
+      await page.waitForTimeout(300);
       const boards = page.locator(BOARDS);
       const count = await boards.count();
       let saw = false;
