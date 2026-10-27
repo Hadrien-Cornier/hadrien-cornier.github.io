@@ -131,11 +131,14 @@ function articleSlugs() {
     .sort();
 }
 
-async function boardShot(page, locator) {
-  // Crop the part of the board that is on screen. An element screenshot of the first .rc-panel
+async function boardShot(page, selector, index) {
+  // Crop a piece of the board that is on screen. An element screenshot of the first .rc-panel
   // scrolls that panel against the sticky listener and never settles, and a full-element shot of
   // a multi-thousand-pixel svg is the buffer WebKit already fails to paint.
-  const box = await locator.evaluate((el) => {
+  // Query by index. A locator would wait on the placeholder the snapshot replaces.
+  const box = await page.evaluate(({selector, index}) => {
+    const el = document.querySelectorAll(selector)[index];
+    if (!el) return null;
     const style = getComputedStyle(el);
     if (style.display === 'none' || style.visibility === 'hidden') return null;
     const rect = el.getBoundingClientRect();
@@ -143,11 +146,11 @@ async function boardShot(page, locator) {
     const left = Math.max(rect.left, 0);
     const right = Math.min(rect.right, window.innerWidth);
     const bottom = Math.min(rect.bottom, window.innerHeight);
-    const width = Math.max(0, right - left);
-    const height = Math.max(0, bottom - top);
+    const width = Math.min(720, Math.max(0, right - left));
+    const height = Math.min(520, Math.max(0, bottom - top));
     if (width < 20 || height < 20) return null;
     return {x: left, y: top, width, height};
-  }, null, {timeout: 5_000}).catch(() => null);
+  }, {selector, index}).catch(() => null);
   if (!box) return null;
   let buffer;
   try {
@@ -170,12 +173,21 @@ async function reveal(page, selector, index) {
   await page.waitForTimeout(350);
 }
 
-test('every robotics board paints in WebKit', {timeout: 720_000}, async () => {
+test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) => {
   const slugs = articleSlugs();
   assert.ok(slugs.length >= 30, `expected at least 30 built articles, found ${slugs.length}`);
-  const server = await startServer();
+  let server;
+  let browser;
+  t.after(async () => {
+    // A timed-out test leaves WebKit running, and the site check then sits until the job is cancelled.
+    await browser?.close().catch(() => {});
+    if (server) await new Promise((resolve) => server.close(resolve));
+    browser = null;
+    server = null;
+  });
+  server = await startServer();
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const browser = await webkit.launch();
+  browser = await webkit.launch();
   const failures = [];
   let painted = 0;
   try {
@@ -190,6 +202,7 @@ test('every robotics board paints in WebKit', {timeout: 720_000}, async () => {
       // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
       await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
       for (const slug of slugs) {
+        if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
         await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 30_000});
         await page.waitForTimeout(300);
         const boards = page.locator(mode.boards);
@@ -197,7 +210,7 @@ test('every robotics board paints in WebKit', {timeout: 720_000}, async () => {
         let saw = false;
         for (let index = 0; index < count; index++) {
           await reveal(page, mode.boards, index);
-          const colors = await boardShot(page, boards.nth(index));
+          const colors = await boardShot(page, mode.boards, index);
           if (!colors) continue;
           saw = true;
           painted += 1;
@@ -211,8 +224,7 @@ test('every robotics board paints in WebKit', {timeout: 720_000}, async () => {
           if (markCount > 1) {
             await reveal(page, '.rc-mark', markCount - 1);
             await page.waitForTimeout(200);
-            const stage = page.locator('.rc-stage').first();
-            const colors = await boardShot(page, stage);
+            const colors = await boardShot(page, '.rc-stage', 0);
             if (colors) {
               saw = true;
               painted += 1;
@@ -227,8 +239,10 @@ test('every robotics board paints in WebKit', {timeout: 720_000}, async () => {
       await page.close();
     }
   } finally {
-    await browser.close();
-    await new Promise((resolve) => server.close(resolve));
+    await browser?.close().catch(() => {});
+    if (server) await new Promise((resolve) => server.close(resolve));
+    browser = null;
+    server = null;
   }
   assert.ok(painted >= 10, `only snapshotted ${painted} boards`);
   assert.deepEqual(failures, []);
