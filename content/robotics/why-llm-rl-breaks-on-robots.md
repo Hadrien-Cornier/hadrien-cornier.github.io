@@ -14,7 +14,7 @@ thumbnail_alt: 'Blackboard drawing: a flow policy steers noise around a mug into
 
 Reinforcement learning is how language models got good at math and code. The recipe fits in a sentence: give the model a prompt, sample 64 answers, score them, and push up the probability of the answers that beat the group average. That's GRPO, and its older sibling PPO trained the first chat models. Robot policies today are built from the same parts (a pretrained vision-language transformer with an action head on top, a VLA, for vision-language-action model), so the obvious move is to run the same RL on a robot. Take a Unitree G1 humanoid with 29 joints, folding a shirt at 50 Hz. What goes wrong?
 
-Two things, it turns out: one in the math and one in the physical world. The fixes from 2025 and 2026 are some of the most interesting work in robot learning, so let's build up to them from the product rule.
+Two things, it turns out: one in the math and one in the physical world. Let's build up to both, and to the fixes of 2025 and 2026, from the product rule.
 
 ## Robots trigger the whole deadly triad
 
@@ -22,7 +22,7 @@ In [Breaking Bellman](/robotics/breaking-bellman/) and the [deadly triad](/robot
 
 - **Function approximation.** A humanoid like Figure 02 or the G1 has 23 to 43 continuous degrees of freedom (DoF, the joints you can command), plus camera pixels. No table can list those states, so everything lives inside neural networks.
 - **Bootstrapping.** At 50 Hz, folding a shirt or busing a table is thousands of frames long. Waiting for the end of the episode to hand out credit gives estimates with huge variance, so you bootstrap. You score a step by its reward plus the critic's guess about the next state, $r + \gamma V(s')$, where $r$ is the reward, $\gamma$ is a discount just below 1, and $V(s')$ is the predicted return from the next state $s'$.
-- **Off-policy replay.** Robot hours are scarce and expensive. Motors heat up, and a person has to reset the objects. You can't afford to generate a rollout, take one gradient step and throw the trajectory away. Modern robot RL is the art of off-policy sample efficiency: squeezing the most signal out of every trajectory in the replay buffer, whether it's a demo, an autonomous success, a clumsy near-miss or a failure.
+- **Off-policy replay.** Robot hours are expensive: motors heat up, and a person has to reset the objects. You can't afford to use a rollout for one gradient step and throw it away. Modern robot RL is the art of off-policy sample efficiency: squeezing the most signal out of every trajectory in the replay buffer, whether it's a demo, an autonomous success, a clumsy near-miss or a failure.
 
 ## Why not copy LLM RL?
 
@@ -41,11 +41,11 @@ I contribute to Hugging Face's [LeRobot](https://github.com/huggingface/lerobot)
 
 The board follows along as you scroll. Its first panel is the map: four families of policy improvement, from REINFORCE in 1992 to $\pi_{0.7}$, GVC and QF3 in 2026.
 
-1. **Section 1:** where Q-learning sits, and the first two families, **score-function** and **pathwise** (climb the critic), from the product rule.
-2. **Section 2:** **multimodality versus tractable likelihoods.** The two-for-one signal a discrete softmax gives LLMs, and flow matching ($\pi_0$) as iterative test-time compute for multimodal trajectories.
-3. **Section 3:** **why flow matching breaks both families:** a $29 \times 29$ Jacobian trace for squeezed volume, and a chain rule through 10 ODE steps.
-4. **Section 4:** **family 3, conditioned behavior cloning.** The PPO patches that failed in Physical Intelligence's laundry tests, RECAP ($\pi^*_{0.6}$) with classifier-free guidance (think Anthropic's activation steering) to repel bad trajectories, then $\pi_{0.7}$ and GVC.
-5. **Section 5:** **family 4 and a finale from biology.** Residual and noise steering (Policy Decorator, DSRL), one-step velocity tilting (QF3), latent subgoals, memory-imprint states, and test-time search with a world model and GVC.
+1. **Section 1:** the **score-function** and **pathwise** families from the product rule, and where Q-learning sits.
+2. **Section 2:** **multimodality versus tractable likelihoods:** the two-for-one signal a discrete softmax gives LLMs, and how flow matching ($\pi_0$) handles multimodal actions.
+3. **Section 3:** **why flow matching breaks both families.**
+4. **Section 4:** **family 3, conditioned behavior cloning:** the PPO patches that failed, RECAP ($\pi^*_{0.6}$) with classifier-free guidance, then $\pi_{0.7}$ and GVC.
+5. **Section 5:** **family 4, beyond the dataset:** noise steering (DSRL), velocity tilting (QF3), latent subgoals, memory, and test-time search with a world model.
 
 <div class="rc-mark" id="sec-cliff" data-panel="cliff" data-view="cliff" data-title="The cliff paradox"></div>
 
@@ -81,7 +81,7 @@ Swapping $Q$ for the advantage $A(s, a) = Q(s, a) - V(s)$ subtracts a baseline, 
 
 ### Why PPO wins in simulation and flatlines on an old buffer
 
-People love PPO when rollouts are free, and for a good reason. Its critic $V_\phi(s)$ trains only on fresh rollouts that just happened, and the actor never climbs $\nabla_a Q_\phi$. A critic can be badly wrong about actions nobody tried (call those spikes critic mirages), and PPO never asks it about them. It is immune to mirages.
+People love PPO when rollouts are free, for a good reason. Its critic $V_\phi(s)$ trains only on fresh rollouts that just happened, and the actor never climbs $\nabla_a Q_\phi$. A critic can be badly wrong about actions nobody tried (call those spikes critic mirages), and PPO never asks it about them, so it is immune to mirages.
 
 Now feed PPO a replay buffer from 3 days ago. PPO replaces $\log \pi_\theta$ with the probability ratio
 
@@ -95,7 +95,7 @@ where $\pi_{\text{old}}$ is the policy that collected the sample, and it clips $
 
 Where does the famous Q-learning (DQN) fit? In discrete Q-learning there is no actor network at all. You check all $K$ buttons and pick $a^* = \arg\max_a Q_\phi(s, a)$. On a G1 with 29 joints, you can't loop over $\infty^{29}$ actions to find the max, so you train a network to find it for you. Pathwise RL is continuous Q-learning: the actor $a_\theta(s)$ is an amortized argmax finder, trained to climb $\nabla_a Q_\phi(s, a)$.
 
-A policy still needs a dice roll, for two reasons. Exploration jiggles the torques around the mean to discover better rewards nearby, and multimodality lets one state branch into different valid futures. But you can't backpropagate through $a \sim \mathcal{N}(\mu_\theta, \sigma_\theta^2)$, because a random draw isn't a differentiable function of $\theta$. The fix is one line, and it is the same reparameterization trick that trains VAEs. Move the dice roll outside into fixed noise $\epsilon \sim \mathcal{N}(0, I)$ that has no parameters, and write the action as a deterministic formula:
+A policy still needs a dice roll, for two reasons. Exploration jiggles the torques around the mean to discover better rewards nearby, and multimodality lets one state branch into different valid futures. But you can't backpropagate through $a \sim \mathcal{N}(\mu_\theta, \sigma_\theta^2)$, because a random draw isn't a differentiable function of $\theta$. The fix is one line, the reparameterization trick that also trains VAEs. Move the dice roll outside into fixed noise $\epsilon \sim \mathcal{N}(0, I)$ that has no parameters, and write the action as a deterministic formula:
 
 $$a_\theta(s, \epsilon) = \mu_\theta(s) + \sigma_\theta(s)\, \epsilon$$
 
@@ -213,7 +213,7 @@ The first camp kept PPO and patched the flow.
 
 Patch 1 is $\pi$RL (and DPPO before it). Deterministic Euler steps have $\sigma = 0$, and a Gaussian $\log \pi_\theta$ divides by $\sigma$. So $\pi$RL injects Gaussian noise into all 10 denoising steps and treats each one as a step of a Markov decision process (MDP), with its own exact Gaussian log-probability. The cost is the horizon. A 50-step episode becomes $50 \times 10 = 500$ steps, and credit assignment over 500 steps is much harder.
 
-Patch 2 is FPO. It uses the change in flow-matching loss as a stand-in for the change in $\log \pi_\theta$ (the loss gives an ELBO, an evidence lower bound on the log-likelihood) and plugs it into PPO's $[0.8, 1.2]$ clip. Physical Intelligence tested FPO and PPO on real-robot laundry folding and reported what happened in [Appendix D of the $\pi^*_{0.6}$ paper (arXiv:2511.14759)](https://arxiv.org/abs/2511.14759). The noisy MSE proxy lied about how far the policy had moved. It failed to trigger the clip, wrecked the pretrained VLA weights, and training collapsed unless the learning rate was turned down so low that the robot barely improved. On the board it's a fake speedometer: the needle stays inside the guardrail while the real ratio has left it.
+Patch 2 is FPO. It uses the change in flow-matching loss as a stand-in for the change in $\log \pi_\theta$ (the loss gives an ELBO, an evidence lower bound on the log-likelihood) and plugs it into PPO's $[0.8, 1.2]$ clip. Physical Intelligence tested FPO and PPO on real-robot laundry folding and reported what happened in [Appendix D of the $\pi^*_{0.6}$ paper (arXiv:2511.14759)](https://arxiv.org/abs/2511.14759). The noisy MSE proxy lied about how far the policy had moved. It failed to trigger the clip, wrecked the pretrained VLA weights, and training collapsed unless the learning rate was turned down so low that the robot barely improved. On the board, the proxy's needle stays inside the guardrail while the real ratio has left it.
 
 <div class="rc-mark" id="sec-cfg" data-panel="cfg" data-view="cfg" data-title="RECAP and classifier-free guidance"></div>
 
