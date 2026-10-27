@@ -1,0 +1,109 @@
+/* The bibliography is a single column so every paper link stays in view.
+   On a phone, the remaining tables stack under their own headings so the
+   shared 105px cell floor cannot push a column off screen. */
+.paper-catalog {
+  overflow-wrap: normal;
+}
+
+.paper-catalog ul {
+  list-style: none;
+  margin: 0 0 0.4em;
+  padding: 0;
+}
+
+.paper-catalog li {
+  padding: 0.75em 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.paper-catalog a {
+  font-weight: 650;
+}
+
+.paper-group {
+  margin: 1.35em 0 0.15em;
+  font-weight: 650;
+}
+
+.paper-meta {
+  display: block;
+  margin-top: 0.2em;
+  color: var(--muted);
+  font-size: 0.86em;
+}
+
+.article-body pre {
+  white-space: pre-wrap;
+  overflow-x: visible;
+}
+
+@media (max-width: 760px) {
+  .essay-table,
+  .essay-table .table-scroll {
+    overflow-x: visible;
+  }
+
+  .essay-table table,
+  .essay-table tbody,
+  .essay-table tr,
+  .essay-table td {
+    display: block;
+    width: auto;
+    min-width: 0;
+    overflow-wrap: normal;
+  }
+
+  .essay-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .essay-table tr {
+    padding: 0.7em 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .essay-table td {
+    border: 0;
+    padding: 0.12em 0;
+    text-align: left !important;
+  }
+
+  .essay-table td::before {
+    display: block;
+    margin-bottom: 0.05em;
+    color: var(--muted);
+    font-size: 0.75em;
+    font-weight: 650;
+  }
+
+  .policy td:nth-child(1)::before { content: "Policy"; }
+  .policy td:nth-child(2)::before { content: "Authors, year"; }
+  .policy td:nth-child(3)::before { content: "Frames per step"; }
+  .policy td:nth-child(4)::before { content: "Source"; }
+
+  .latency td:nth-child(1)::before { content: "Frames"; }
+  .latency td:nth-child(2)::before { content: "Latency"; }
+  .latency td:nth-child(3)::before { content: "Memory"; }
+
+  .history td:nth-child(1)::before { content: "System"; }
+  .history td:nth-child(2)::before { content: "What happened with more history"; }
+  .history td:nth-child(3)::before { content: "Source"; }
+
+  .ways td:nth-child(1)::before { content: "Approach"; }
+  .ways td:nth-child(2)::before { content: "What it stores"; }
+  .ways td:nth-child(3)::before { content: "Measured so far"; }
+  .ways td:nth-child(4)::before { content: "Where it hurts"; }
+
+  .more td:nth-child(1)::before { content: "Kind"; }
+  .more td:nth-child(2)::before { content: "Paper"; }
+  .more td:nth-child(3)::before { content: "Authors, year"; }
+  .more td:nth-child(4)::before { content: "What it does or finds"; }
+
+  .essay-table td:empty::before {
+    content: none;
+  }
+}
