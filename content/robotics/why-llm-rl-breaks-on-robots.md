@@ -145,7 +145,7 @@ But you can't backpropagate through a dice roll. If $a \sim \mathcal{N}(\mu_\the
 
 $$a_\theta(s, \epsilon) = \mu_\theta(s) + \sigma_\theta(s)\, \epsilon$$
 
-The distribution of $a$ is the same as before. The difference is that the randomness now lives in $\epsilon$, and $\theta$ enters only through smooth functions. The objective becomes an expectation over $\epsilon$, and the product rule goes straight through. Here $N_{\text{weights}}$ is the number of weights in the actor:
+The distribution of $a$ is the same as before. The difference is that the randomness now lives in $\epsilon$, and $\theta$ enters only through smooth functions. The objective becomes an average over the noise, whose density is $p(\epsilon) = \mathcal{N}(0, I)$, and the product rule goes straight through. Here $N_{\text{weights}}$ is the number of weights in the actor:
 
 $$J(\theta) = \mathbb{E}_{\epsilon \sim p(\epsilon)}\Big[Q_\phi\big(s, a_\theta(s, \epsilon)\big)\Big] \implies \nabla_\theta J(\theta) = \mathbb{E}_{\epsilon \sim p(\epsilon)}\Big[\underbrace{\frac{\partial Q_\phi(s, a)}{\partial a}\Big|_{a = a_\theta}}_{1 \times 29} \cdot \underbrace{\nabla_\theta a_\theta(s, \epsilon)}_{29 \times N_{\text{weights}}}\Big]$$
 
