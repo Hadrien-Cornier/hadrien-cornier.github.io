@@ -24,7 +24,7 @@
     "url": "/robotics/molmobot/"
   },
   {
-    "title": "Generalized policy iteration: judge, improve, repeat",
+    "title": "Evaluate, improve, repeat: the loop inside RL algorithms",
     "description": "The loop of evaluation and improvement inside most reinforcement learning methods, worked through on the cliff grid and traced from dynamic programming to AlphaGo Zero.",
     "tags": [
       "reinforcement-learning",
@@ -34,7 +34,7 @@
     "url": "/robotics/rl-gpi/"
   },
   {
-    "title": "Three robot bets: where does the generalization ceiling come from?",
+    "title": "Does a household robot need a human body to learn from us?",
     "description": "Figure, Generalist and Physical Intelligence each bet on a different source of robot generalization: the body, the data or the mix. A long read with a pinned blackboard.",
     "tags": [
       "robotics",
@@ -78,7 +78,7 @@
     "url": "/robotics/offline-empowerment/"
   },
   {
-    "title": "Faster-WAM in LeRobot: from 300 cache reads to 10",
+    "title": "Faster-WAM in LeRobot: keep the visual depth, shrink the action decoder",
     "description": "Faster-WAM cuts a world action model's action expert to one layer. I added it to LeRobot behind opt-in flags and timed it on an A100 with random weights.",
     "tags": [
       "world-action-models",
@@ -90,7 +90,7 @@
     "url": "/robotics/faster-wam-in-lerobot/"
   },
   {
-    "title": "Policy gradients: fair credit and careful steps",
+    "title": "Which actions deserve the credit?",
     "description": "Four ways a policy-gradient update can go wrong on a robot task: blaming actions for the past, rewarding every attempt, overshooting on reused data, and groups that teach nothing. Reward-to-go, baselines, PPO clipping and group advantages, with their limits.",
     "tags": [
       "reinforcement-learning",
@@ -101,7 +101,7 @@
     "url": "/robotics/rl-6-credit-and-careful-updates/"
   },
   {
-    "title": "Learning from a fixed dataset: missing actions and bad demonstrations",
+    "title": "Learning from a frozen robot log: three ways it breaks",
     "description": "A fixed robot dataset can mislead a learner in two different ways: a hole, where it asks about actions nobody tried, and mistakes, where it copies bad demonstrations. Stay close to the data for the first, and weight actions by the reward for the second.",
     "tags": [
       "reinforcement-learning",
@@ -123,7 +123,7 @@
     "url": "/robotics/rl-8-mode-averaging/"
   },
   {
-    "title": "Reinforcement learning: the problems behind the methods",
+    "title": "Pick an RL algorithm by reading the symptom",
     "description": "Why I am learning reinforcement learning, and the six problems that drive its algorithms: delayed reward, exploration, waiting, scale, reusing data and feedback.",
     "tags": [
       "reinforcement-learning",
@@ -143,7 +143,7 @@
     "url": "/robotics/rl-1-q-learning/"
   },
   {
-    "title": "ASPIRE: Can you zero-shot robotics with a coding agent?",
+    "title": "Can you zero-shot robotics with a coding agent?",
     "description": "ASPIRE lets a coding agent debug robot programs from execution traces and save each verified fix as a text skill. What the loop does, and what the numbers cover.",
     "tags": [
       "code-as-policy",
@@ -155,7 +155,7 @@
     "url": "/robotics/can-you-zero-shot-robotics-with-a-coding-agent/"
   },
   {
-    "title": "Bootstrapping: learn before the reward arrives",
+    "title": "Bootstrapping: learning what a state is worth before the reward arrives",
     "description": "Why waiting for the final reward is slow, and how borrowing the next state's estimate lets you learn during the walk, with one worked update.",
     "tags": [
       "reinforcement-learning",
@@ -165,7 +165,7 @@
     "url": "/robotics/rl-2-bootstrapping/"
   },
   {
-    "title": "Function approximation: share a value, share an error",
+    "title": "Shared weights: how one update reaches states you never visited",
     "description": "When states share a few weights, one update can teach states you never visited, and it can also blur two states together and move the target you're chasing.",
     "tags": [
       "reinforcement-learning",
@@ -207,7 +207,7 @@
     "url": "/robotics/why-cant-robots-remember/"
   },
   {
-    "title": "Recipes for choosing a learning target",
+    "title": "Recipes for Choosing a Learning Target",
     "description": "Rules of thumb for a reinforcement learning target: freeze, take a second estimate, or take the minimum, and why the combinations table is one reading, not a law.",
     "tags": [
       "reinforcement-learning",
@@ -239,7 +239,7 @@
     "url": "/robotics/so101-7-learning-between-and-during-strokes/"
   },
   {
-    "title": "How do I get the XYZ position of my robot's tool tip?",
+    "title": "Measuring the tool in 3D",
     "description": "I get $10,000 worth of measurements from a $40 drawing tablet. Now I want the height of the pen too.",
     "tags": [
       "so-101",
@@ -250,7 +250,7 @@
     "url": "/robotics/so101-8-measuring-the-tool-in-3d/"
   },
   {
-    "title": "Where the last millimeter of my drawing arm goes",
+    "title": "Where the last millimeter goes",
     "description": "My SO-101 arm cannot see its own pen tip. A tablet can. Here is what the tablet showed: how much error a learned correction removes, which causes are left, and why the base joint matters most.",
     "tags": [
       "so-101",
@@ -272,7 +272,7 @@
     "url": "/robotics/eigendexplore/"
   },
   {
-    "title": "A few predictions about robotics",
+    "title": "Robot brains get cheap. Who gets paid?",
     "description": "If intelligence keeps getting cheaper, the robotics industry may start to look more like a combination of AI infrastructure, industrial services, and manufacturing.",
     "tags": [
       "robotics",
@@ -337,7 +337,7 @@
     "url": "/robotics/so101-1-target-and-goal/"
   },
   {
-    "title": "How robot control is changing",
+    "title": "How robots choose their next movement",
     "description": "From copying a person to practicing and imagining: how a robot chooses its next movement in 2026, and what is still missing.",
     "tags": [
       "control",

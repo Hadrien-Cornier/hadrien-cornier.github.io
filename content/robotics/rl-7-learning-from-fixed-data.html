@@ -1,0 +1,84 @@
+<div class="article-body rebuild-article">
+<article class='comparison-short'><div class='rc-body'>
+<p>Say you have a log of a robot arm picking up a mug. Several operators drove it, some good and some clumsy, and the log is frozen: you can't run the robot again. You want a policy that grasps better than the average person in there. Normally a learner scores each recorded move by its reward plus its own guess of what happens next. If a guess is wrong, it tries the move and finds out. Here it can't, and that breaks learning in three unrelated ways. From the outside they all look the same: the robot grasps badly.</p>
+<p>Let's start with the missing action. The critic (Q, a network that predicts how much reward follows an action) scores a slow descent 4 and a fast descent 3, and the log holds those moves 60 and 40 times. Then it scores a sideways sweep 9. Nobody ever tried the sweep! Taking the max over actions picks exactly that guess, which <a href='https://arxiv.org/abs/1812.02900'>Fujimoto, Meger and Precup</a> call extrapolation error. The second failure is a log that is accurate and full of operator mistakes, so anything that copies the log copies those too. The third is a log that lies. The board walks one mug state through all three, with made-up numbers you can check by hand.</p>
+<figure class='short-board'><svg class='rc-svg' viewBox='0 0 600 1840' role='img' aria-labelledby='fd7-t fd7-d'><title id='fd7-t'>One mug state, three ways a fixed robot log goes wrong</title><desc id='fd7-d'>Row one: the critic guesses Q = 9 for a sideways sweep that the log never tried, while the true value is minus 5. The bootstrap target becomes 8.1 instead of 3.6, and further backups carry the error to earlier states. Fixes control unsupported actions: behavior cloning and BCQ avoid unsupported queries, CQL penalizes their values, TD3+BC pulls the policy toward logged actions, and IQL fits values from logged actions only, giving a state value of 3.93 and a target of about 3.54. Row two: 70 attempts rotate the wrist and 30 grab straight on. Plain copying keeps 30 percent bad grabs. AWR weighting with temperature 5 keeps 19 percent, and with temperature 1 keeps 2 percent. Row three: false records, such as a dropped mug labeled success, need pipeline repair. Bottom: a hole needs support control, a mistake needs selection by reward, a lie needs a repaired log.</desc><defs><marker id='fd7-r' viewBox='0 0 10 10' refX='8' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0 0L10 5L0 10z' fill='#f08a7a'/></marker><style>.fd7-t{font:700 22px system-ui,sans-serif}.fd7-h{font:700 17px system-ui,sans-serif;letter-spacing:.04em}.fd7-x{font:16px system-ui,sans-serif}.fd7-s{font:15px system-ui,sans-serif}.fd7-m{font:16px ui-monospace,Menlo,Consolas,monospace}.fd7-b{font-weight:700}</style></defs>
+<rect width='600' height='1840' rx='14' fill='#17201c'/>
+<g fill='#eeeae0'>
+<text x='24' y='40' class='fd7-t'>One mug, one frozen log</text>
+<text x='24' y='66' class='fd7-s' fill='#a7b2aa'>Made-up numbers. Discount γ = 0.9, reward r = 0 on this step.</text>
+<rect x='12' y='84' width='576' height='780' rx='10' fill='none' stroke='#3a4a42' stroke-width='2'/>
+<text x='28' y='114' class='fd7-h' fill='#f08a7a'>① A HOLE IN THE DATA</text>
+<text x='28' y='140' class='fd7-x'>Gripper above the mug (state s′). The critic Q predicts the</text>
+<text x='28' y='160' class='fd7-x'>return after each action. Nobody tried a sideways sweep.</text>
+<line x1='40' y1='300' x2='360' y2='300' stroke='#a7b2aa' stroke-width='1.5'/>
+<rect x='60' y='252' width='70' height='48' fill='#7fd3c4'/><text x='95' y='244' class='fd7-s' text-anchor='middle' fill='#7fd3c4'>Q = 4</text>
+<rect x='160' y='264' width='70' height='36' fill='#7fd3c4' opacity='.65'/><text x='195' y='256' class='fd7-s' text-anchor='middle' fill='#7fd3c4'>Q = 3</text>
+<rect x='260' y='192' width='70' height='108' fill='#f08a7a'/><text x='295' y='184' class='fd7-s fd7-b' text-anchor='middle' fill='#f08a7a'>Q = 9 ?!</text>
+<rect x='260' y='300' width='70' height='60' fill='none' stroke='#f08a7a' stroke-width='2' stroke-dasharray='5 4'/><text x='295' y='336' class='fd7-s' text-anchor='middle' fill='#f08a7a'>true −5</text>
+<text x='95' y='384' class='fd7-s' text-anchor='middle'>slow descent</text><text x='195' y='384' class='fd7-s' text-anchor='middle'>fast descent</text><text x='295' y='384' class='fd7-s' text-anchor='middle'>sideways sweep</text>
+<text x='95' y='404' class='fd7-s' text-anchor='middle' fill='#a7b2aa'>n = 60</text><text x='195' y='404' class='fd7-s' text-anchor='middle' fill='#a7b2aa'>n = 40</text><text x='295' y='404' class='fd7-s fd7-b' text-anchor='middle' fill='#f08a7a'>n = 0</text>
+<text x='384' y='200' class='fd7-s' fill='#a7b2aa'>target one step earlier:</text>
+<text x='384' y='224' class='fd7-m'>r + γ · max Q(s′, a)</text>
+<text x='384' y='262' class='fd7-s' fill='#a7b2aa'>max over all actions:</text>
+<text x='384' y='288' class='fd7-m fd7-b' fill='#f08a7a'>0 + 0.9 × 9 = 8.1</text>
+<text x='384' y='326' class='fd7-s' fill='#a7b2aa'>max over logged actions:</text>
+<text x='384' y='352' class='fd7-m fd7-b' fill='#7fd3c4'>0 + 0.9 × 4 = 3.6</text>
+<path d='M560 430 L48 430' stroke='#f08a7a' stroke-width='2.5' fill='none' marker-end='url(#fd7-r)'/>
+<text x='28' y='458' class='fd7-x'>The inflated 8.1 raises the value one step earlier, and more</text>
+<text x='28' y='478' class='fd7-x'>backups carry the error further back. The log never shows</text>
+<text x='28' y='498' class='fd7-x'>the sweep failing, so nothing corrects it.</text>
+<text x='28' y='536' class='fd7-h' fill='#7fd3c4'>FIX: CONTROL UNSUPPORTED ACTIONS</text>
+<text x='28' y='562' class='fd7-x'><tspan class='fd7-b' fill='#7fd3c4'>BC</tspan>  copies logged actions and never asks Q</text>
+<text x='28' y='582' class='fd7-x'><tspan class='fd7-b' fill='#7fd3c4'>BCQ</tspan>  picks from a model of logged actions, plus a small nudge</text>
+<text x='28' y='602' class='fd7-x'><tspan class='fd7-b' fill='#7fd3c4'>CQL</tspan>  lowers Q on the policy's picks relative to logged ones</text>
+<text x='28' y='628' class='fd7-x'><tspan class='fd7-b' fill='#7fd3c4'>TD3+BC</tspan>  maximize λQ(s, π(s)) − (π(s) − a)²</text>
+<text x='70' y='648' class='fd7-s' fill='#a7b2aa'>π(s) policy's action, a logged action, λ value vs copying</text>
+<text x='70' y='668' class='fd7-s' fill='#a7b2aa'>a big enough Q error still overpowers the copying term</text>
+<text x='28' y='694' class='fd7-x'><tspan class='fd7-b' fill='#7fd3c4'>IQL</tspan>  three steps, and the 9 never enters:</text>
+<text x='46' y='716' class='fd7-x'>1. V(s′) = expectile of logged Q (τ = 0.9 tilts the mean up)</text>
+<text x='70' y='736' class='fd7-m'>4 (60%), 3 (40%) → V(s′) = 3.93</text>
+<text x='46' y='758' class='fd7-x'>2. train Q toward r + γV(s′) = 0 + 0.9 × 3.93 ≈ 3.54</text>
+<text x='46' y='780' class='fd7-x'>3. copy logged actions, weighted by advantage (row ②)</text>
+<text x='28' y='808' class='fd7-s' fill='#a7b2aa'>Price: little gain past the log. BCQ is only as good as its action</text>
+<text x='28' y='828' class='fd7-s' fill='#a7b2aa'>model, CQL can push rare good actions down, BCQ and TD3+BC</text>
+<text x='28' y='848' class='fd7-s' fill='#a7b2aa'>keep logged mistakes, and critic errors can still leak through.</text>
+<rect x='12' y='880' width='576' height='594' rx='10' fill='none' stroke='#3a4a42' stroke-width='2'/>
+<text x='28' y='910' class='fd7-h' fill='#f2cf63'>② MISTAKES, HONESTLY RECORDED</text>
+<text x='28' y='936' class='fd7-x'>Gripper at the mug. 70 attempts rotate the wrist first;</text>
+<text x='28' y='956' class='fd7-x'>30 grab straight on, and that grab often knocks the mug over.</text>
+<text x='28' y='986' class='fd7-m'>A(s, a) = Q(s, a) − V(s)</text><text x='290' y='980' class='fd7-s' fill='#a7b2aa'>V(s): the usual value here</text><text x='290' y='1000' class='fd7-s' fill='#a7b2aa'>A: how much better than usual</text>
+<text x='28' y='1030' class='fd7-x' fill='#7fd3c4'>rotate: A = +1</text><text x='200' y='1030' class='fd7-x' fill='#f08a7a'>grab: A = −2</text>
+<text x='28' y='1062' class='fd7-x'><tspan class='fd7-b'>AWR</tspan>: copy each action with weight exp(A/β)</text>
+<text x='28' y='1082' class='fd7-s' fill='#a7b2aa'>β = temperature; larger β flattens back toward plain copying</text>
+<text x='28' y='1117' class='fd7-s' fill='#a7b2aa'>copy all (BC)</text><rect x='210' y='1098' width='245' height='28' fill='#7fd3c4'/><rect x='455' y='1098' width='105' height='28' fill='#f08a7a'/><text x='220' y='1117' class='fd7-s fd7-b' fill='#17201c'>rotate 70%</text><text x='465' y='1117' class='fd7-s fd7-b' fill='#17201c'>grab 30%</text>
+<text x='28' y='1159' class='fd7-s' fill='#a7b2aa'>AWR, β = 5</text><rect x='210' y='1140' width='283' height='28' fill='#7fd3c4'/><rect x='493' y='1140' width='67' height='28' fill='#f08a7a'/><text x='220' y='1159' class='fd7-s fd7-b' fill='#17201c'>81%</text><text x='503' y='1159' class='fd7-s fd7-b' fill='#17201c'>19%</text>
+<text x='28' y='1201' class='fd7-s' fill='#a7b2aa'>AWR, β = 1</text><rect x='210' y='1182' width='343' height='28' fill='#7fd3c4'/><rect x='553' y='1182' width='7' height='28' fill='#f08a7a'/><text x='220' y='1201' class='fd7-s fd7-b' fill='#17201c'>98%</text><text x='565' y='1201' class='fd7-s fd7-b' fill='#f08a7a'>2%</text>
+<text x='28' y='1240' class='fd7-m'>β = 1: 0.7·e¹ = 1.90 vs 0.3·e⁻² = 0.04</text>
+<text x='28' y='1272' class='fd7-x'>Train one network to output one wrist angle with squared</text>
+<text x='28' y='1292' class='fd7-x'>error, and it can land in between: a half turn nobody did.</text>
+<text x='28' y='1320' class='fd7-x'>Two more ways to select: keep only the best episodes, or give</text>
+<text x='28' y='1340' class='fd7-x'>the policy A as an extra input and ask for a high A when it</text>
+<text x='28' y='1360' class='fd7-x'>runs (advantage conditioning).</text>
+<text x='28' y='1390' class='fd7-s' fill='#a7b2aa'>Needs: rewards that rank actions, Q right on logged actions,</text>
+<text x='28' y='1410' class='fd7-s' fill='#a7b2aa'>a good action somewhere in the log, and true records.</text>
+<text x='28' y='1434' class='fd7-s' fill='#f2cf63'>0/1 success, no discount: clean and hesitant grasps both return 1.</text>
+<text x='28' y='1454' class='fd7-s' fill='#f2cf63'>Nobody rotated the wrist here? Then nothing can be up-weighted.</text>
+<rect x='12' y='1490' width='576' height='224' rx='10' fill='none' stroke='#3a4a42' stroke-width='2'/>
+<text x='28' y='1520' class='fd7-h' fill='#f39ac0'>③ RECORDS THAT LIE</text>
+<rect x='24' y='1536' width='172' height='64' rx='8' fill='none' stroke='#f39ac0' stroke-width='1.5'/><text x='110' y='1562' class='fd7-s' text-anchor='middle'>camera clock</text><text x='110' y='1584' class='fd7-s' text-anchor='middle'>≠ command clock</text>
+<rect x='214' y='1536' width='172' height='64' rx='8' fill='none' stroke='#f39ac0' stroke-width='1.5'/><text x='300' y='1562' class='fd7-s' text-anchor='middle'>logged command</text><text x='300' y='1584' class='fd7-s' text-anchor='middle'>≠ what the arm did</text>
+<rect x='404' y='1536' width='172' height='64' rx='8' fill='none' stroke='#f39ac0' stroke-width='1.5'/><text x='490' y='1562' class='fd7-s' text-anchor='middle'>mug on the floor,</text><text x='490' y='1584' class='fd7-s' text-anchor='middle'>label: success</text>
+<text x='28' y='1628' class='fd7-x'>A dropped mug labeled success gets a high A, so weighting</text>
+<text x='28' y='1648' class='fd7-x'>copies it harder. Every method above trusts the records.</text>
+<text x='28' y='1676' class='fd7-x fd7-b' fill='#7fd3c4'>FIX THE PIPELINE: sync clocks, log executed actions,</text>
+<text x='28' y='1696' class='fd7-x' fill='#7fd3c4'>audit outcomes, drop episodes that contradict themselves.</text>
+<text x='28' y='1756' class='fd7-h'>DIAGNOSE, THEN TREAT</text>
+<text x='28' y='1784' class='fd7-x fd7-b' fill='#f08a7a'>① hole</text><text x='218' y='1784' class='fd7-x fd7-b' fill='#f2cf63'>② mistake</text><text x='408' y='1784' class='fd7-x fd7-b' fill='#f39ac0'>③ lie</text>
+<text x='28' y='1808' class='fd7-x'>stay on support</text><text x='218' y='1808' class='fd7-x'>select by reward</text><text x='408' y='1808' class='fd7-x'>repair the log</text>
+</g></svg><figcaption>One state, three failures. The mug numbers are invented for illustration. The method mechanics follow the papers listed under Sources.</figcaption></figure>
+<p>Do real measurements agree? Mostly. In robomimic's square-nut task (<a href='https://arxiv.org/abs/2108.03298'>Mandlekar et al., 2021</a>; best training success rate, averaged over three seeds), adding 100 demonstrations from worse operators to 100 from better ones dropped plain BC from 58.7% to 46.7% success. More data gave a worse policy, which is what we'd expect if copying also copies mistakes. Give the cloning policy a memory of earlier observations (BC-RNN) and the result reverses, from 66.0% to 73.3%, and that comparison doesn't tell us why. In the <a href='https://hadrien-cornier.github.io/breaking-bellman/'>Breaking Bellman</a> two-link reaching simulation (three seeds, final tip distance to the target), a log of 50 good-controller and 50 random-command episodes put IQL at 0.22 m and AWR at 0.57 m. Both weight actions by advantage, yet their complete training procedures ended far apart. Swap in 100 clean controller episodes and plain copying wins: deterministic BC finishes 0.065 m from the target against 0.12 m for IQL. DDPG, which picks actions by climbing its own critic, finishes 0.84 m away.</p>
+<p>If I had that mug log, I'd audit the records before training anything, because every method on the board takes the transitions at their word. Then I'd train plain BC as the baseline, since it is hard to beat on clean demonstrations, and check where the critic's favorite actions sit relative to the data. Only after that is it worth arguing about β.</p>
+<details><summary>Sources</summary><ul><li>BCQ and extrapolation error: <a href='https://arxiv.org/abs/1812.02900'>Fujimoto, Meger and Precup (2019)</a></li><li>TD3+BC, with λ = α / mean|Q| and α = 2.5: <a href='https://arxiv.org/abs/2106.06860'>Fujimoto and Gu (2021)</a></li><li>CQL: <a href='https://arxiv.org/abs/2006.04779'>Kumar, Zhou, Tucker and Levine (2020)</a></li><li>IQL: <a href='https://arxiv.org/abs/2110.06169'>Kostrikov, Nair and Levine (2021)</a></li><li>AWR: <a href='https://arxiv.org/abs/1910.00177'>Peng, Kumar, Zhang and Levine (2019)</a></li><li>Advantage conditioning: <a href='https://arxiv.org/abs/1912.13465'>Kumar, Peng and Levine (2019)</a>. π*0.6 applies a binary version to a robot foundation model: <a href='https://arxiv.org/abs/2511.14759'>Physical Intelligence (2025)</a></li><li>Human-demonstration results: <a href='https://arxiv.org/abs/2108.03298'>robomimic, Mandlekar et al. (2021)</a></li><li>Reaching simulation records: <a href='https://github.com/Hadrien-Cornier/breaking-bellman/blob/681cae3820f05f8604d212c0ab048ebf0e017e73/EXPERIMENTS.md'>EXPERIMENTS.md at commit 681cae3</a></li></ul></details>
+</div></article>
+</div>
