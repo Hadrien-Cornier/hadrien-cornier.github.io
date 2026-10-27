@@ -303,7 +303,7 @@ $$g_1 = \frac{\partial Q_\phi(s, a_1)}{\partial a_1} \cdot J_9 J_8 \cdots J_1 \c
 
 Each $J_k$ is the Jacobian of one Euler step: the identity $I$ (the chunk carries over) plus a small correction from the velocity network. The sampled gradient sums ten such terms, one per step.
 
-That product is backpropagation through a 10-layer RNN, and it has the same problem RNNs have. Suppose one factor stretches some direction by 1.3. Nine of them stretch it by $1.3^9 \approx 10.6$. A factor of 0.7 shrinks it to $0.7^9 \approx 0.04$. The gradient explodes in some directions and vanishes in others.
+That product is backpropagation through a 10-layer RNN, and it has the same problem RNNs have. If each of the nine factors stretches the propagated direction by 1.3, the total stretch is $1.3^9 \approx 10.6$. If each one scales it by 0.7, the total is $0.7^9 \approx 0.04$. The gradient explodes in some directions and vanishes in others.
 
 Now look at what gets amplified. The signal at the end of the chain is the critic's slope, in a 1,450-D space. Real, coordinated motions fill only a thin manifold of that space: most random combinations of 1,450 numbers look nothing like a recorded motion. Off that manifold the critic has never seen a sample, and that's where mirages live. The amplified gradient steers the chunk off the manifold and into a critic mirage. It's the black hole from section 1, with ten amplifiers in front of it.
 
@@ -313,7 +313,7 @@ Now look at what gets amplified. The signal at the end of the chain is the criti
 
 ### Patching PPO onto flows: πRL and FPO
 
-The first camp kept PPO and patched the flow so that it had a likelihood to give. There were two patches.
+The first camp kept PPO and patched the flow so that it had a likelihood to give.
 
 **Patch 1 is $\pi$RL (and DPPO before it).** The starting noise makes the final action random, but once that noise is drawn, every Euler step is deterministic. A deterministic step has $\sigma = 0$, and a Gaussian $\log \pi_\theta$ divides by $\sigma$. So $\pi$RL injects Gaussian noise into all 10 denoising steps. Each step is then a small Gaussian policy with an exact log-probability, so you can treat each one as a step of a Markov decision process (MDP) and run PPO on it.
 
@@ -327,9 +327,7 @@ Physical Intelligence tested FPO and PPO on real-robot laundry folding and repor
 
 ### RECAP ($\pi^*_{0.6}$): the reward becomes a prompt
 
-The second camp started from what already works. Supervised behavior cloning (BC) on a flow is the plain loss $\|v_\theta - (a_1 - a_0)\|^2$, and it never needed $\log \pi_\theta$ or $\nabla_a Q_\phi$. So keep that loss, and feed the reward into the input instead of the gradient.
-
-That's RECAP, in three steps.
+The second camp started from what already works. Supervised behavior cloning (BC) on a flow is the plain loss $\|v_\theta - (a_1 - a_0)\|^2$, and it never needed $\log \pi_\theta$ or $\nabla_a Q_\phi$. So keep that loss, and feed the reward into the input instead of the gradient. That's RECAP:
 
 1. It trains a state critic $V_\phi(s)$ offline, with 201 value bins (the critic predicts a distribution over 201 values instead of one number). This critic only scores states that are actually in the buffer, so nobody ever asks it about an untried action, and it's safe from mirages.
 2. The critic labels every trajectory in the buffer with a prompt token. The top 30% by advantage get $I = \text{Good}$, and the rest get $I = \text{Bad}$.
@@ -349,7 +347,7 @@ $$v_{\text{guided}} = v_{\text{all}} + \beta\, \big(v_{\text{good}} - v_{\text{a
 
 At $\beta = 0$ you get the plain average, at $\beta = 1$ you get $v_{\text{good}}$, and above 1 you go past Good.
 
-Put numbers on it, as on the board. Good is 30% of the data and pulls with $v_{\text{good}} = (0.7, 1)$. Bad is the other 70% and pulls with $v_{\text{bad}} = (-0.3, 1)$. The unlabeled average is
+Put numbers on it, as on the board. The unlabeled arrow at a point mixes Good and Bad by how likely each is to have produced that point, and in general that mix changes from point to point. At our point, suppose it matches the dataset: Good has weight 30% and pulls with $v_{\text{good}} = (0.7, 1)$, and Bad has weight 70% and pulls with $v_{\text{bad}} = (-0.3, 1)$. The unlabeled average is
 
 $$v_{\text{all}} = 0.3\,(0.7, 1) + 0.7\,(-0.3, 1) = (0, 1)$$
 
@@ -472,14 +470,14 @@ while True:
     s = observe() + memory_imprint()
     cands  = [flow_policy.sample(s) for _ in range(16)]       # propose
     future = [world_model.rollout(s, a) for a in cands]       # simulate, in latent space
-    best   = max(range(16), key=lambda i: gvc(future[i], cands[i]))
+    best   = max(range(16), key=lambda i: gvc_score(future[i]))   # score the imagined outcome
     execute(cands[best])                                      # act
     buffer.add(s, cands[best], quality=5)                     # distill on the next pass
 ```
 
 1. **Propose.** Given the state and its memory imprint, the multimodal flow policy proposes $N = 16$ diverse candidate chunks: a left grasp, a right grasp, a fast push, a gentle hook.
 2. **Simulate.** A fast latent world model rolls the 16 chunks forward in embedding space in milliseconds, and GVC scores the 16 outcomes in parallel.
-3. **Act and distill.** The robot executes the best of the 16 and logs the winning trajectory back into the replay buffer as a new `Quality: 5` experience, so the base flow reflex absorbs it on the next training pass. What took a search today becomes a reflex tomorrow, the way AlphaZero's policy learns to play the move its search would have found.
+3. **Act and distill.** The robot executes the best of the 16 and logs the winning trajectory back into the replay buffer as a new `Quality: 5` experience, so the base flow reflex absorbs it on the next training pass. AlphaZero's policy learns the same way, by imitating the moves its search selected.
 
 </div></div>
 </div>
