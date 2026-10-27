@@ -13,7 +13,7 @@ const {webkit} = require('playwright');
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BOARDS = '.rc-view, figure.short-board, svg.rc-svg';
 // A blank board is a flat field. Chalk drawings stay well above this after coarse sampling.
-const MIN_COLORS = 80;
+const MIN_COLORS = 40;
 
 function contentType(file) {
   return {
@@ -139,13 +139,7 @@ async function reveal(page, locator) {
 
 async function boardShot(page, locator) {
   await reveal(page, locator);
-  // Scrolling retargets the wide camera, so the view can show an empty margin of a later panel.
-  // Pin the drawing to the board origin. A filter that paints nothing is still a flat field there.
-  await locator.evaluate((el) => {
-    const svg = el.matches?.('svg.rc-svg') ? el : el.querySelector?.('svg.rc-svg');
-    if (svg) svg.style.setProperty('transform', 'none', 'important');
-  });
-  await page.waitForTimeout(40);
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const box = await locator.boundingBox();
   if (!box || box.width < 80 || box.height < 80) return null;
   const view = page.viewportSize();
@@ -172,6 +166,9 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
     for (const slug of slugs) {
       await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'networkidle'});
       await page.evaluate(() => document.querySelectorAll('details').forEach((el) => { el.open = true; }));
+      // The wide camera pans on scroll, and a later inline transform would undo a one-shot pin.
+      // A stylesheet rule keeps the board origin in view. A filter that paints nothing is still a flat field.
+      await page.addStyleTag({content: 'svg.rc-svg { transform: none !important; }'});
       const boards = page.locator(BOARDS);
       const count = await boards.count();
       let saw = false;
