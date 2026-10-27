@@ -1,7 +1,7 @@
 [
   {
     "title": "Why LLM reinforcement learning breaks on robots, and how the frontier is fixing it",
-    "description": "PPO and GRPO need cheap identical rollouts and exact log-probabilities. A flow-matching robot policy gets neither. A long read that derives the two classic policy-gradient families, shows where flow matching breaks each one, and walks through the fixes of 2025 and 2026: RECAP, π0.7, GVC, DSRL, QF3 and test-time search.",
+    "description": "LLM reinforcement learning comes in two families: one needs the exact log-probability of each action, and the other differentiates the critic back through the policy. A flow-matching robot policy gives neither, so the frontier turned the reward into a prompt. A long read that derives both families, shows where flow matching breaks each one, and walks through the fixes of 2025 and 2026: RECAP, π0.7, GVC, DSRL, QF3 and test-time search.",
     "tags": [
       "reinforcement-learning",
       "robot-learning",

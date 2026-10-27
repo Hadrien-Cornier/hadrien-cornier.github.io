@@ -1,6 +1,6 @@
 /** Draw the blackboard for "Why LLM reinforcement learning breaks on robots" and its flow simulator fallback.
  *
- * Fourteen panels follow the article, one idea each. Numbers on the board are the article's worked examples.
+ * Fifteen panels follow the article, one idea each. Numbers on the board are the article's worked examples.
  * Run `node scripts/flow-rl-canvas.mjs` to rewrite the board, the simulator fallback and the thumbnail,
  * then build the site.
  */
@@ -19,7 +19,7 @@ export const SIM_DEFAULT = { steps: 10, beta: 0, seed: 7 };
 const BOARD = '#1d2824';
 const F = { one: C.blue, two: C.green, three: C.yellow, four: C.pink };
 const PW = 400, PH = 440, GAP = 12, TOP = 76;
-const ORDER = ['tree', 'cliff', 'clip', 'pathwise', 'mug', 'flow', 'funnel', 'chain', 'patches', 'cfg', 'gvc', 'beyond', 'memory', 'imagine'];
+const ORDER = ['tree', 'cliff', 'clip', 'pathwise', 'needs', 'mug', 'flow', 'funnel', 'chain', 'patches', 'cfg', 'gvc', 'beyond', 'memory', 'imagine'];
 // Three columns keep the drawn board under 4,096 px on a desktop: WebKit clamps a larger chalk-filter buffer and paints the wrong panel.
 const COLS = 3;
 const origin = (i) => [14 + (i % COLS) * (PW + GAP), TOP + Math.floor(i / COLS) * (PH + GAP)];
@@ -145,6 +145,26 @@ function pathwise() {
   return panel('pathwise', 'Climbing the critic', s);
 }
 
+// 3b. The core idea: what each family needs, why a flow gives neither, and the third way.
+function needs() {
+  let s = box(16, 52, 180, 96, { stroke: F.one }) + box(204, 52, 180, 96, { stroke: F.two });
+  s += head(26, 74, '1 · score-function', { fill: F.one }) + t(26, 96, 'needs log π(a|s)', { size: 13.5 });
+  s += eq(26, 130, ['A · ∇', ['θ', 'sub'], ' log π'], { size: 16 });
+  s += head(214, 74, '2 · pathwise', { fill: F.two }) + t(214, 96, 'needs ∂Q/∂a back to θ', { size: 13.5 });
+  s += eq(214, 130, ['∇', ['a', 'sub'], 'Q · ∇', ['θ', 'sub'], ' a'], { size: 16 });
+  s += box(100, 200, 200, 58, { stroke: C.ink });
+  s += t(200, 223, 'flow policy (π0)', { anchor: 'middle', weight: 700 }) + small(200, 244, 'noise → 10 Euler steps → a1', { anchor: 'middle' });
+  s += arrow(150, 200, 106, 152, { stroke: C.red }) + arrow(250, 200, 294, 152, { stroke: C.red });
+  s += t(92, 186, '✗', { size: 22, weight: 700, fill: C.red }) + t(296, 186, '✗', { size: 22, weight: 700, fill: C.red });
+  s += t(16, 290, '✗ 1: log π = ∫ trace of a Jacobian, no closed form', { fill: C.red, size: 13 });
+  s += t(16, 312, '✗ 2: ten Jacobians multiply → critic mirage', { fill: C.red, size: 13 });
+  s += arrow(200, 324, 200, 352, { stroke: F.three });
+  s += box(16, 356, 368, 70, { stroke: F.three });
+  s += head(26, 378, '3 · reward → prompt, plain BC', { fill: F.three }) + small(374, 378, 'needs neither', { anchor: 'end', fill: F.three });
+  s += eq(26, 408, ['‖ v', ['θ', 'sub'], '(a', ['t', 'sub'], ', t, s, I) − (a', ['1', 'sub'], ' − a', ['0', 'sub'], ') ‖²'], { size: 15 });
+  return panel('needs', 'Two needs a flow cannot meet', s);
+}
+
 // 4. Two good routes around a mug, and the softmax two-for-one.
 function mug() {
   let s = '';
@@ -174,7 +194,7 @@ function mug() {
   s += t(180, 266, 'push 1 up → 1,023 go down', { size: 13 });
   s += small(16, 376, 'loss gradient on logit k: π(k|s) − 1 if correct, π(k|s) if wrong');
   s += t(16, 400, '+ two modes fit · + exact log π in one pass (FAST)', { size: 13 });
-  s += t(16, 424, 'flow: pull one arrow, nothing else moves', { size: 13, fill: C.red });
+  s += t(16, 424, 'flow: no automatic push-down elsewhere', { size: 13, fill: C.red });
   return panel('mug', 'Two good answers', s);
 }
 
@@ -234,7 +254,7 @@ function funnel() {
   const gx = 286, gy = 64, cs = 3.6;
   s += `<rect x="${gx}" y="${gy}" width="${29 * cs}" height="${29 * cs}" fill="${C.ink}" fill-opacity=".1" stroke="${C.ink}" stroke-width="1"/>`;
   for (let i = 0; i < 29; i++) s += `<rect x="${n(gx + i * cs)}" y="${n(gy + i * cs)}" width="${cs}" height="${cs}" fill="${C.yellow}"/>`;
-  s += small(gx + 52, gy + 29 * cs + 18, '∂v/∂a: 29 × 29', { anchor: 'middle', fill: C.ink }) + small(gx + 52, gy + 29 * cs + 34, 'trace = the diagonal', { anchor: 'middle' });
+  s += small(gx + 40, gy + 29 * cs + 18, '∂v/∂a: 29 × 29 per action', { anchor: 'middle', fill: C.ink }) + small(gx + 52, gy + 29 * cs + 34, 'trace = diagonal sum', { anchor: 'middle' });
   s += head(16, 290, 'log-likelihood of a flow', { size: 14 });
   s += eq(16, 322, ['log π(a', ['1', 'sub'], '|s) = log p', ['0', 'sub'], '(a', ['0', 'sub'], ') − ∫ tr(∂v/∂a', ['t', 'sub'], ') dt'], { size: 16 });
   s += t(16, 360, 'each diagonal entry: 1 backward pass', { size: 13 });
@@ -427,8 +447,8 @@ export function board() {
   const views = Object.fromEntries(ORDER.map((id, i) => { const [x, y] = origin(i); return [id, [x - 6, y - 6, PW + 12, PH + 12]]; }));
   const [W, H] = [WHOLE[2], WHOLE[3]];
   const legend = `<text x="${W / 2}" y="58" text-anchor="middle" font-family="${esc("Arial, Helvetica, sans-serif")}" font-size="14"><tspan fill="${F.one}">1 score-function</tspan><tspan fill="${C.muted}"> · </tspan><tspan fill="${F.two}">2 pathwise</tspan><tspan fill="${C.muted}"> · </tspan><tspan fill="${F.three}">3 conditioned BC</tspan><tspan fill="${C.muted}"> · </tspan><tspan fill="${F.four}">4 manifold search</tspan></text>`;
-  const body = [tree(), cliff(), clip(), pathwise(), mug(), flowPanel(), funnel(), chain(), patches(), cfg(), gvc(), beyond(), memory(), imagine()].join('');
-  return `<svg id="rc-flowrl" class="rc-svg flowrl-board" viewBox="${WHOLE.join(' ')}" role="img" aria-label="Blackboard with fourteen panels: four families of robot reinforcement learning, the cliff paradox, the PPO clip on stale data, climbing the critic, two good answers around a mug, flow matching in ten steps, squeezed volume, ten Jacobians multiplying, two PPO patches, classifier-free guidance, a critic versus GVC, steering a frozen flow, subgoals and memory, and imagining before acting" data-whole="${WHOLE.join(' ')}" data-views='${JSON.stringify(views)}'><rect width="${W}" height="${H}" fill="${BOARD}"/>${text(W / 2, 36, 'Why LLM RL breaks on robots, and the fixes', { font: HAND, size: 26, weight: 700, anchor: 'middle' })}${legend}${body}</svg>`;
+  const body = [tree(), cliff(), clip(), pathwise(), needs(), mug(), flowPanel(), funnel(), chain(), patches(), cfg(), gvc(), beyond(), memory(), imagine()].join('');
+  return `<svg id="rc-flowrl" class="rc-svg flowrl-board" viewBox="${WHOLE.join(' ')}" role="img" aria-label="Blackboard with fifteen panels: four families of robot reinforcement learning, the cliff paradox, the PPO clip on stale data, climbing the critic, what each family needs and why a flow policy gives neither, two good answers around a mug, flow matching in ten steps, squeezed volume, ten Jacobians multiplying, two PPO patches, classifier-free guidance, a critic versus GVC, steering a frozen flow, subgoals and memory, and imagining before acting" data-whole="${WHOLE.join(' ')}" data-views='${JSON.stringify(views)}'><rect width="${W}" height="${H}" fill="${BOARD}"/>${text(W / 2, 36, 'Why LLM RL breaks on robots, and the fixes', { font: HAND, size: 26, weight: 700, anchor: 'middle' })}${legend}${body}</svg>`;
 }
 
 export function simFigure() {
