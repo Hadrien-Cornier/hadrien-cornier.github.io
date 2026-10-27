@@ -1,6 +1,6 @@
 [
   {
-    "title": "Do you need a human body to learn from human video?",
+    "title": "Do you need a human body to use human data?",
     "description": "Figure AI says a humanoid can learn from human video because it is shaped like us. About 30 papers with measured results say human video also trains grippers and wheeled robots, that mismatch breaks transfer, and that the body decides what a robot can reach. A companion to Three robot bets, with a pinned blackboard.",
     "tags": [
       "robotics",
@@ -228,7 +228,7 @@
     "url": "/robotics/breaking-bellman/"
   },
   {
-    "title": "Learning between strokes and during them",
+    "title": "Teaching my drawing arm to keep learning",
     "description": "After part 6: direct motor drive, learning between drawings, feedback during a stroke, and a twin tested across days. The repeat floor is not a claim of one-millimeter control.",
     "tags": [
       "so-101",
@@ -294,7 +294,7 @@
     "url": "/robotics/so101-4-learning-what-physics-misses/"
   },
   {
-    "title": "A printed pen holder for measuring SO-101 drawing error",
+    "title": "A pen holder that shows the arm’s error, not its own",
     "description": "I want to see my SO-101 trajectory errors as ink on paper. For that, the pen must not add an error of its own. I made five holder designs. The one I release is a printed sleeve that slides onto the stock gripper: 4 printed parts, nothing to buy, any pen from 8 to 13 mm.",
     "tags": [
       "so-101",
@@ -305,7 +305,7 @@
     "url": "/robotics/so101-pen-holder/"
   },
   {
-    "title": "Choosing the goal: what to send a servo so the joint lands where you want",
+    "title": "Six ways to choose the goal",
     "description": "One general formula for the goal sent to a servo. Every controller I built, from a plain look-ahead to MPC, is that formula with some terms set to zero.",
     "tags": [
       "so-101",
