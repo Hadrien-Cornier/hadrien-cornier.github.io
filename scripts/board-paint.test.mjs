@@ -11,9 +11,13 @@ const require = createRequire(import.meta.url);
 const {webkit} = require('playwright');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const BOARDS = '.rc-view, figure.short-board';
 // A blank board is a flat field. Chalk drawings stay well above this after coarse sampling.
 const MIN_COLORS = 40;
+const MODES = [
+  {name: 'dpr1', width: 1200, height: 900, deviceScaleFactor: 1, boards: '.rc-stage, figure.short-board', lastMark: false},
+  {name: 'dpr2', width: 1440, height: 900, deviceScaleFactor: 2, boards: '.rc-stage, figure.short-board', lastMark: true},
+  {name: 'dpr3', width: 430, height: 900, deviceScaleFactor: 3, boards: '.rc-fig .rc-fig-view, figure.short-board', lastMark: false},
+];
 
 function contentType(file) {
   return {
@@ -128,14 +132,28 @@ function articleSlugs() {
 }
 
 async function boardShot(page, locator) {
-  const panel = locator.locator('.rc-panel').first();
-  const target = await panel.count() ? panel : locator;
-  // Element screenshots follow the panel itself. A page-level crop follows the camera, which pans to an empty margin while the reader scrolls.
-  const buffer = await target.screenshot({type: 'png', animations: 'disabled', timeout: 15_000});
+  if (!(await locator.count())) return null;
+  if (!(await locator.isVisible().catch(() => false))) return null;
+  // Screenshot the visible board container. Screenshotting the first .rc-panel makes Playwright
+  // scroll that panel into view, and the sticky board listener never settles, so the shot times out.
+  let buffer;
+  try {
+    buffer = await locator.screenshot({type: 'png', animations: 'disabled', timeout: 8_000});
+  } catch {
+    return null;
+  }
   return distinctColors(buffer);
 }
 
-test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
+async function reveal(page, selector, index) {
+  await page.evaluate(({selector, index}) => {
+    const el = document.querySelectorAll(selector)[index];
+    if (el) el.scrollIntoView({block: 'center'});
+  }, {selector, index});
+  await page.waitForTimeout(350);
+}
+
+test('every robotics board paints in WebKit', {timeout: 600_000}, async () => {
   const slugs = articleSlugs();
   assert.ok(slugs.length >= 30, `expected at least 30 built articles, found ${slugs.length}`);
   const server = await startServer();
@@ -144,29 +162,52 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
   const failures = [];
   let painted = 0;
   try {
-    const page = await browser.newPage({viewport: {width: 1200, height: 900}, deviceScaleFactor: 1});
-    // Judge locally served board paint without waiting for third-party embeds.
-    await page.route(/^https?:\/\//, (route) =>
-      new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
-    // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
-    await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
-    for (const slug of slugs) {
-      await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'load', timeout: 15_000});
-      await page.waitForTimeout(300);
-      const boards = page.locator(BOARDS);
-      const count = await boards.count();
-      let saw = false;
-      for (let index = 0; index < count; index++) {
-        const locator = boards.nth(index);
-        const colors = await boardShot(page, locator);
-        if (!colors) continue;
-        saw = true;
-        painted += 1;
-        if (colors.colors < MIN_COLORS) {
-          failures.push(`${slug} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+    for (const mode of MODES) {
+      const page = await browser.newPage({
+        viewport: {width: mode.width, height: mode.height},
+        deviceScaleFactor: mode.deviceScaleFactor,
+      });
+      // Judge locally served board paint without waiting for third-party embeds.
+      await page.route(/^https?:\/\//, (route) =>
+        new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
+      // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
+      await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
+      for (const slug of slugs) {
+        await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 15_000});
+        await page.waitForTimeout(300);
+        const boards = page.locator(mode.boards);
+        const count = await boards.count();
+        let saw = false;
+        for (let index = 0; index < count; index++) {
+          await reveal(page, mode.boards, index);
+          const colors = await boardShot(page, boards.nth(index));
+          if (!colors) continue;
+          saw = true;
+          painted += 1;
+          if (colors.colors < MIN_COLORS) {
+            failures.push(`${slug} ${mode.name} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+          }
         }
+        if (mode.lastMark) {
+          const marks = page.locator('.rc-mark');
+          const markCount = await marks.count();
+          if (markCount > 1) {
+            await reveal(page, '.rc-mark', markCount - 1);
+            await page.waitForTimeout(200);
+            const stage = page.locator('.rc-stage').first();
+            const colors = await boardShot(page, stage);
+            if (colors) {
+              saw = true;
+              painted += 1;
+              if (colors.colors < MIN_COLORS) {
+                failures.push(`${slug} ${mode.name} last mark is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+              }
+            }
+          }
+        }
+        if (!saw && await page.locator('svg.rc-svg').count()) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
       }
-      if (!saw && await page.locator('svg.rc-svg').count()) failures.push(`${slug} has a board but no screenshot`);
+      await page.close();
     }
   } finally {
     await browser.close();

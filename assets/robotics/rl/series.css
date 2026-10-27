@@ -254,6 +254,11 @@ body :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   filter: url(#bb-chalk);
   stroke-linecap: round; stroke-linejoin: round;
 }
+/* WebKit clamps an SVG filter buffer at 4096 device px. A multi-panel board is one tall svg, so the filter on the whole drawing blanks the lower panels. Filter each panel instead. */
+.article-body svg.rc-svg:has(.rc-panel) { filter: none; }
+.article-body svg.rc-svg .rc-panel { filter: url(#bb-chalk); }
+/* A short board is one svg and has no panels. The same clamp blanks it once the drawing is taller than the buffer. */
+.article-body figure.short-board > svg.rc-svg { filter: none; }
 .article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) text {
   font-family: var(--bb-hand) !important; letter-spacing: .01em;
 }
@@ -306,7 +311,10 @@ body :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .article-body .rb-ctrl button { background: transparent !important; color: var(--bb-chalk) !important; border-color: var(--bb-dim) !important; }
 .article-body :is(.rb-row input[type="range"], .rb-checks input) { accent-color: var(--bb-yellow); }
 .article-body .rb-widget :focus-visible { outline-color: var(--bb-yellow); }
-@media (prefers-reduced-motion: reduce) { .article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) { filter: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .article-body :is(svg.rc-svg, svg.ft-graph, svg.ft-failure, .rls-figure > svg, svg.bb) { filter: none; }
+  .article-body svg.rc-svg .rc-panel { filter: none; }
+}
 @media print {
   :root:not([data-theme="light"]), :root[data-theme="light"] { --paper: #fff; --ink: #242622; --muted: #50554e; --accent: #954025; --line: #bbb; --rl-surface: #f5f5f0; --rl-raised: #eee; --rl-warning: #f0d8cb; --rl-diagram-filter: none; color-scheme: light; }
 }
