@@ -217,124 +217,149 @@ async function reveal(page, selector, index) {
   await page.waitForTimeout(80);
 }
 
-test('every robotics board paints in WebKit', {timeout: 90_000}, async (t) => {
+test('every robotics board paints in WebKit', {timeout: 300_000}, async (t) => {
   const slugs = articleSlugs();
   assert.ok(slugs.length >= 30, `expected at least 30 built articles, found ${slugs.length}`);
   let server;
-  let browser;
+  // One browser per density. A relaunch in reopen() closes that process, and sharing
+  // one browser would take the other densities down with it.
+  const browsers = new Set();
+  const closeBrowser = async (b) => {
+    if (!b || !browsers.delete(b)) return;
+    await within(b.close().catch(() => {}), 3_000, 'browser close timed out').catch(() => {});
+  };
   t.after(async () => {
     // A wedged WebProcess must not hold node --test after the run.
-    await within(browser ? browser.close().catch(() => {}) : Promise.resolve(), 3_000, 'browser close timed out').catch(() => {});
+    await Promise.all([...browsers].map((b) => closeBrowser(b)));
     if (server) server.close();
-    browser = null;
     server = null;
   });
   server = await startServer();
   const origin = `http://127.0.0.1:${server.address().port}`;
-  browser = await webkit.launch();
   const failures = [];
   let painted = 0;
   try {
-    for (const mode of MODES) {
-      let page = await openPaintPage(browser, origin, mode);
-      let openedCount = 0;
+    // All three densities, every article. In series, dpr1 alone passed 90s and the
+    // loop kept launching WebKit after the timeout until the job was cancelled.
+    await Promise.all(MODES.map(async (mode) => {
+      if (t.signal.aborted) return;
+      let modeBrowser;
+      let page;
       const reopen = async () => {
+        if (t.signal.aborted) return;
         // A stuck board call keeps the WebKit process. Open the replacement first.
-        const dying = browser;
-        browser = await webkit.launch();
-        page = await openPaintPage(browser, origin, mode);
-        await within(dying.close().catch(() => {}), 3_000, 'browser close timed out').catch(() => {});
+        const dying = modeBrowser;
+        modeBrowser = await webkit.launch();
+        browsers.add(modeBrowser);
+        page = await openPaintPage(modeBrowser, origin, mode);
+        await closeBrowser(dying);
       };
-      for (const slug of slugs) {
-        if (openedCount > 0 && openedCount % 8 === 0) {
-          await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
-          page = await openPaintPage(browser, origin, mode);
-        }
-        openedCount += 1;
-        if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
-        let opened = false;
-        for (let attempt = 0; attempt < 2 && !opened; attempt++) {
-          try {
-            // commit does not wait for the embedded videos. Waiting for DOMContentLoaded
-            // stalls on those frames, and the next essay then stalls too.
-            await within(page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 8_000}), 7_000, 'open timed out');
-            await page.waitForSelector('article', {timeout: 4_000});
-            await page.waitForFunction(() => {
-              const rc = document.querySelector('#rc');
-              if (!rc) return true;
-              return !!rc.getAttribute('data-mode') || !rc.querySelector('svg.rc-svg');
-            }, null, {timeout: 1_500}).catch(() => {});
-            const boards = page.locator(mode.boards);
-            const count = await boards.count();
-            let saw = false;
-            // One board per essay. Walking every phone figure is what wedged Linux WebKit.
-            if (count > 0) {
-              await reveal(page, mode.boards, 0);
-              let colors = await boardShot(page, mode.boards, 0);
-              if (!colors) {
-                await page.waitForTimeout(250);
-                colors = await boardShot(page, mode.boards, 0);
-              }
-              if (colors) {
-                saw = true;
-                painted += 1;
-                if (colors.colors < MIN_COLORS) {
-                  failures.push(`${slug} ${mode.name} board 0 is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+      try {
+        modeBrowser = await webkit.launch();
+        browsers.add(modeBrowser);
+        page = await openPaintPage(modeBrowser, origin, mode);
+        let openedCount = 0;
+        for (const slug of slugs) {
+          if (t.signal.aborted) break;
+          // A fresh page every twelve essays. One page for a whole density is what wedged WebKit.
+          if (openedCount > 0 && openedCount % 12 === 0) {
+            await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
+            if (t.signal.aborted) break;
+            page = await openPaintPage(modeBrowser, origin, mode);
+          }
+          openedCount += 1;
+          if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
+          let opened = false;
+          for (let attempt = 0; attempt < 2 && !opened; attempt++) {
+            if (t.signal.aborted) break;
+            try {
+              // .mp4 answers 204 and other origins are stubbed, so DOMContentLoaded fires.
+              // commit returns before stylesheets and the board script have run.
+              await within(page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 8_000}), 10_000, 'open timed out');
+              await page.waitForSelector('article', {timeout: 4_000});
+              await page.waitForFunction(() => {
+                // canvas.js sets data-mode on .rc. A short board's #rc figure never gets it.
+                const rc = document.querySelector('.rc');
+                if (!rc) return true;
+                return !!rc.getAttribute('data-mode') || !rc.querySelector('svg.rc-svg');
+              }, null, {timeout: 1_500}).catch(() => {});
+              const boards = page.locator(mode.boards);
+              const count = await boards.count();
+              let saw = false;
+              // One board per essay. Walking every phone figure is what wedged Linux WebKit.
+              if (count > 0) {
+                await reveal(page, mode.boards, 0);
+                let colors = await boardShot(page, mode.boards, 0);
+                if (!colors) {
+                  await page.waitForTimeout(250);
+                  colors = await boardShot(page, mode.boards, 0);
                 }
-              }
-            }
-            const tall = mode.lastMark && await within(page.evaluate(() => {
-              const svg = document.querySelector('svg.rc-svg');
-              return !!svg && svg.getBoundingClientRect().height * 2 > 4000;
-            }), 3_000, 'board height timed out').catch(() => false);
-            if (tall) {
-              const marks = page.locator('.rc-mark');
-              const markCount = await marks.count();
-              if (markCount > 1) {
-                await reveal(page, '.rc-mark', markCount - 1);
-                await page.waitForTimeout(80);
-                const colors = await boardShot(page, '.rc-stage', 0);
                 if (colors) {
                   saw = true;
                   painted += 1;
                   if (colors.colors < MIN_COLORS) {
-                    failures.push(`${slug} ${mode.name} last mark is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+                    failures.push(`${slug} ${mode.name} board 0 is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
                   }
                 }
               }
-            }
-            if (!saw) {
-              // A board inside a closed drawer, or the hidden live stage on a phone, is not on screen.
-              const onScreen = await page.evaluate((selector) => [...document.querySelectorAll(selector)].some((el) => {
-                const svg = el.matches('svg') ? el : el.querySelector('svg.rc-svg');
-                if (!svg) return false;
-                let node = svg;
-                while (node) {
-                  if (getComputedStyle(node).display === 'none' || getComputedStyle(node).visibility === 'hidden') return false;
-                  node = node.parentElement;
+              const tall = mode.lastMark && await within(page.evaluate(() => {
+                const svg = document.querySelector('svg.rc-svg');
+                return !!svg && svg.getBoundingClientRect().height * 2 > 4000;
+              }), 3_000, 'board height timed out').catch(() => false);
+              if (tall) {
+                const marks = page.locator('.rc-mark');
+                const markCount = await marks.count();
+                if (markCount > 1) {
+                  await reveal(page, '.rc-mark', markCount - 1);
+                  await page.waitForTimeout(80);
+                  const colors = await boardShot(page, '.rc-stage', 0);
+                  if (colors) {
+                    saw = true;
+                    painted += 1;
+                    if (colors.colors < MIN_COLORS) {
+                      failures.push(`${slug} ${mode.name} last mark is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+                    }
+                  }
                 }
-                const rect = svg.getBoundingClientRect();
-                const width = Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0);
-                const height = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
-                return width > 20 && height > 20;
-              }), mode.boards);
-              if (onScreen) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
+              }
+              if (!saw) {
+                // A board inside a closed drawer, or the hidden live stage on a phone, is not on screen.
+                const onScreen = await page.evaluate((selector) => [...document.querySelectorAll(selector)].some((el) => {
+                  const svg = el.matches('svg') ? el : el.querySelector('svg.rc-svg');
+                  if (!svg) return false;
+                  let node = svg;
+                  while (node) {
+                    if (getComputedStyle(node).display === 'none' || getComputedStyle(node).visibility === 'hidden') return false;
+                    node = node.parentElement;
+                  }
+                  const rect = svg.getBoundingClientRect();
+                  const width = Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0);
+                  const height = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+                  return width > 20 && height > 20;
+                }), mode.boards);
+                if (onScreen) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
+              }
+              opened = true;
+            } catch (err) {
+              if (t.signal.aborted) break;
+              if (attempt === 1) failures.push(`${slug} ${mode.name} did not open: ${err.message.split('\n')[0]}`);
+              await reopen();
             }
-            opened = true;
-          } catch (err) {
-            if (attempt === 1) failures.push(`${slug} ${mode.name} did not open: ${err.message.split('\n')[0]}`);
-            await reopen();
           }
         }
+      } catch (err) {
+        if (!t.signal.aborted) failures.push(`${mode.name} stopped: ${err.message.split('\n')[0]}`);
+      } finally {
+        if (page) await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
+        await closeBrowser(modeBrowser);
       }
-      await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
-    }
+    }));
   } finally {
-    await within(browser ? browser.close().catch(() => {}) : Promise.resolve(), 3_000, 'browser close timed out').catch(() => {});
+    await Promise.all([...browsers].map((b) => closeBrowser(b)));
     if (server) server.close();
-    browser = null;
     server = null;
   }
+  if (t.signal.aborted) return;
   assert.ok(painted >= 10, `only snapshotted ${painted} boards`);
   assert.deepEqual(failures, []);
 });
