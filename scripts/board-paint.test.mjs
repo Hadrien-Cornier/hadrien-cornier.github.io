@@ -11,9 +11,13 @@ const require = createRequire(import.meta.url);
 const {webkit} = require('playwright');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const BOARDS = '.rc-view, figure.short-board';
 // A blank board is a flat field. Chalk drawings stay well above this after coarse sampling.
 const MIN_COLORS = 40;
+const MODES = [
+  {name: 'dpr1', width: 1200, height: 900, deviceScaleFactor: 1, boards: '.rc-stage, figure.short-board', lastMark: false},
+  {name: 'dpr2', width: 1440, height: 900, deviceScaleFactor: 2, boards: '.rc-stage, figure.short-board', lastMark: true},
+  {name: 'dpr3', width: 430, height: 900, deviceScaleFactor: 3, boards: '.rc-fig .rc-fig-view, figure.short-board', lastMark: false},
+];
 
 function contentType(file) {
   return {
@@ -127,50 +131,186 @@ function articleSlugs() {
     .sort();
 }
 
-async function boardShot(page, locator) {
-  const panel = locator.locator('.rc-panel').first();
-  const target = await panel.count() ? panel : locator;
-  // Element screenshots follow the panel itself. A page-level crop follows the camera, which pans to an empty margin while the reader scrolls.
-  const buffer = await target.screenshot({type: 'png', animations: 'disabled', timeout: 15_000});
+function within(promise, ms, label) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(label)), ms);
+    promise.then((value) => { clearTimeout(timer); resolve(value); }, (err) => { clearTimeout(timer); reject(err); });
+  });
+}
+
+async function boardShot(page, selector, index) {
+  // Crop a piece of the board that is on screen. An element screenshot of the first .rc-panel
+  // scrolls that panel against the sticky listener and never settles, and a full-element shot of
+  // a multi-thousand-pixel svg is the buffer WebKit already fails to paint.
+  // Query by index. A locator would wait on the placeholder the snapshot replaces.
+  // page.evaluate has no timeout of its own, and a stuck main thread would hold the whole run.
+  // An empty phone figure has the board color before its snapshot arrives. That is not a blank drawing.
+  await page.waitForFunction(({selector, index}) => {
+    const el = document.querySelectorAll(selector)[index];
+    return !!(el && (el.matches('svg') || el.querySelector('svg')));
+  }, {selector, index}, {timeout: 2_500}).catch(() => {});
+  const box = await within(page.evaluate(({selector, index}) => {
+    const el = document.querySelectorAll(selector)[index];
+    if (!el || !(el.matches('svg') || el.querySelector('svg'))) return null;
+    const style = getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') return null;
+    const rect = el.getBoundingClientRect();
+    const top = Math.max(rect.top, 0);
+    const left = Math.max(rect.left, 0);
+    const right = Math.min(rect.right, window.innerWidth);
+    const bottom = Math.min(rect.bottom, window.innerHeight);
+    const width = Math.min(720, Math.max(0, right - left));
+    const height = Math.min(520, Math.max(0, bottom - top));
+    if (width < 20 || height < 20) return null;
+    return {x: left, y: top, width, height};
+  }, {selector, index}), 8_000, 'board measure timed out');
+  if (!box) return null;
+  const buffer = await within(
+    page.screenshot({type: 'png', animations: 'disabled', timeout: 8_000, clip: box}),
+    10_000,
+    'board shot timed out',
+  );
   return distinctColors(buffer);
 }
 
-test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
+async function prepare(page, origin) {
+  // Third-party frames (the YouTube embeds) must finish or WebKit never fires
+  // DOMContentLoaded. An aborted frame can sit there for the whole timeout.
+  await page.route(/^https?:\/\//, (route) => {
+    if (new URL(route.request().url()).origin === origin) return route.continue();
+    if (route.request().resourceType() === 'document') {
+      return route.fulfill({status: 200, contentType: 'text/html', body: '<!doctype html><title></title>'});
+    }
+    return route.abort();
+  });
+  // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
+  await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
+}
+
+async function openPaintPage(browser, origin, mode) {
+  const page = await browser.newPage({
+    viewport: {width: mode.width, height: mode.height},
+    deviceScaleFactor: mode.deviceScaleFactor,
+  });
+  await prepare(page, origin);
+  return page;
+}
+
+async function reveal(page, selector, index) {
+  await within(page.evaluate(({selector, index}) => {
+    const el = document.querySelectorAll(selector)[index];
+    if (!el) return;
+    // A whole-canvas phone figure is taller than the screen. The drawing is the active
+    // panel, which may sit below the top of that figure.
+    const tall = el.getBoundingClientRect().height > window.innerHeight + 40;
+    const panel = tall && (el.querySelector('.rc-panel.is-active') || el.querySelector('.rc-panel'));
+    (panel || el).scrollIntoView({block: tall ? 'start' : 'center'});
+  }, {selector, index}), 8_000, 'board scroll timed out');
+  await page.waitForTimeout(350);
+}
+
+test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) => {
   const slugs = articleSlugs();
   assert.ok(slugs.length >= 30, `expected at least 30 built articles, found ${slugs.length}`);
-  const server = await startServer();
+  let server;
+  let browser;
+  t.after(async () => {
+    // A timed-out test leaves WebKit running, and the site check then sits until the job is cancelled.
+    await browser?.close().catch(() => {});
+    if (server) await new Promise((resolve) => server.close(resolve));
+    browser = null;
+    server = null;
+  });
+  server = await startServer();
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const browser = await webkit.launch();
+  browser = await webkit.launch();
   const failures = [];
   let painted = 0;
   try {
-    const page = await browser.newPage({viewport: {width: 1200, height: 900}, deviceScaleFactor: 1});
-    // Judge locally served board paint without waiting for third-party embeds.
-    await page.route(/^https?:\/\//, (route) =>
-      new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
-    // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
-    await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
-    for (const slug of slugs) {
-      await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'load', timeout: 15_000});
-      await page.waitForTimeout(300);
-      const boards = page.locator(BOARDS);
-      const count = await boards.count();
-      let saw = false;
-      for (let index = 0; index < count; index++) {
-        const locator = boards.nth(index);
-        const colors = await boardShot(page, locator);
-        if (!colors) continue;
-        saw = true;
-        painted += 1;
-        if (colors.colors < MIN_COLORS) {
-          failures.push(`${slug} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+    for (const mode of MODES) {
+      let page = await openPaintPage(browser, origin, mode);
+      const reopen = async () => {
+        // A stuck board call keeps the WebKit process. Open the replacement first.
+        const dying = browser;
+        browser = await webkit.launch();
+        page = await openPaintPage(browser, origin, mode);
+        await within(dying.close().catch(() => {}), 3_000, 'browser close timed out').catch(() => {});
+      };
+      for (const slug of slugs) {
+        if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
+        let opened = false;
+        for (let attempt = 0; attempt < 2 && !opened; attempt++) {
+          try {
+            // commit does not wait for the embedded videos. Waiting for DOMContentLoaded
+            // stalls on those frames, and the next essay then stalls too.
+            await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 20_000});
+            await page.waitForSelector('article', {timeout: 15_000});
+            await page.waitForFunction(() => {
+              const rc = document.querySelector('#rc');
+              if (!rc) return true;
+              return !!rc.getAttribute('data-mode') || !rc.querySelector('svg.rc-svg');
+            }, null, {timeout: 8_000}).catch(() => {});
+            await page.waitForTimeout(200);
+            const boards = page.locator(mode.boards);
+            const count = await boards.count();
+            let saw = false;
+            for (let index = 0; index < count; index++) {
+              await reveal(page, mode.boards, index);
+              const colors = await boardShot(page, mode.boards, index);
+              if (!colors) continue;
+              saw = true;
+              painted += 1;
+              if (colors.colors < MIN_COLORS) {
+                failures.push(`${slug} ${mode.name} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+              }
+            }
+            if (mode.lastMark) {
+              const marks = page.locator('.rc-mark');
+              const markCount = await marks.count();
+              if (markCount > 1) {
+                await reveal(page, '.rc-mark', markCount - 1);
+                await page.waitForTimeout(200);
+                const colors = await boardShot(page, '.rc-stage', 0);
+                if (colors) {
+                  saw = true;
+                  painted += 1;
+                  if (colors.colors < MIN_COLORS) {
+                    failures.push(`${slug} ${mode.name} last mark is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+                  }
+                }
+              }
+            }
+            if (!saw) {
+              // A board inside a closed drawer, or the hidden live stage on a phone, is not on screen.
+              const onScreen = await page.evaluate((selector) => [...document.querySelectorAll(selector)].some((el) => {
+                const svg = el.matches('svg') ? el : el.querySelector('svg.rc-svg');
+                if (!svg) return false;
+                let node = svg;
+                while (node) {
+                  if (getComputedStyle(node).display === 'none' || getComputedStyle(node).visibility === 'hidden') return false;
+                  node = node.parentElement;
+                }
+                const rect = svg.getBoundingClientRect();
+                const width = Math.min(rect.right, window.innerWidth) - Math.max(rect.left, 0);
+                const height = Math.min(rect.bottom, window.innerHeight) - Math.max(rect.top, 0);
+                return width > 20 && height > 20;
+              }), mode.boards);
+              if (onScreen) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
+            }
+            opened = true;
+          } catch (err) {
+            if (attempt === 1) failures.push(`${slug} ${mode.name} did not open: ${err.message.split('\n')[0]}`);
+            await reopen();
+          }
         }
       }
-      if (!saw && await page.locator('svg.rc-svg').count()) failures.push(`${slug} has a board but no screenshot`);
+      await page.close();
     }
   } finally {
-    await browser.close();
-    await new Promise((resolve) => server.close(resolve));
+    await browser?.close().catch(() => {});
+    if (server) await new Promise((resolve) => server.close(resolve));
+    browser = null;
+    server = null;
   }
   assert.ok(painted >= 10, `only snapshotted ${painted} boards`);
   assert.deepEqual(failures, []);
