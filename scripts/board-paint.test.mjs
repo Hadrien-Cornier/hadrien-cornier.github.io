@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url);
 const {webkit} = require('playwright');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const BOARDS = '.rc-view, figure.short-board, svg.rc-svg';
+const BOARDS = '.rc-view, figure.short-board';
 // A blank board is a flat field. Chalk drawings stay well above this after coarse sampling.
 const MIN_COLORS = 40;
 
@@ -127,28 +127,12 @@ function articleSlugs() {
     .sort();
 }
 
-async function reveal(page, locator) {
-  for (let i = 0; i < 24; i++) {
-    const box = await locator.boundingBox();
-    if (box && box.width >= 80 && box.height >= 80 && box.y < 180 && box.y + box.height > 280) return box;
-    await page.mouse.wheel(0, box && box.y < 80 ? -500 : 500);
-    await page.waitForTimeout(20);
-  }
-  return locator.boundingBox();
-}
-
 async function boardShot(page, locator) {
-  await reveal(page, locator);
-  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-  const box = await locator.boundingBox();
-  if (!box || box.width < 80 || box.height < 80) return null;
-  const view = page.viewportSize();
-  const x = Math.max(0, box.x);
-  const y = Math.max(0, box.y);
-  const width = Math.min(box.x + box.width, view.width) - x;
-  const height = Math.min(box.y + box.height, view.height, y + 420) - y;
-  if (width < 80 || height < 80) return null;
-  return distinctColors(await page.screenshot({clip: {x, y, width, height}, type: 'png'}));
+  const panel = locator.locator('.rc-panel').first();
+  const target = await panel.count() ? panel : locator;
+  // Element screenshots follow the panel itself. A page-level crop follows the camera, which pans to an empty margin while the reader scrolls.
+  const buffer = await target.screenshot({type: 'png', animations: 'disabled', timeout: 15_000});
+  return distinctColors(buffer);
 }
 
 test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
@@ -165,18 +149,11 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
     await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
     for (const slug of slugs) {
       await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'networkidle'});
-      await page.evaluate(() => document.querySelectorAll('details').forEach((el) => { el.open = true; }));
-      // The wide camera pans on scroll, and a later inline transform would undo a one-shot pin.
-      // A stylesheet rule keeps the board origin in view. A filter that paints nothing is still a flat field.
-      await page.addStyleTag({content: 'svg.rc-svg { transform: none !important; }'});
       const boards = page.locator(BOARDS);
       const count = await boards.count();
       let saw = false;
       for (let index = 0; index < count; index++) {
         const locator = boards.nth(index);
-        // The svg's layout box is the whole canvas. The view is the board a reader sees, and a crop of the canvas margin is a flat field.
-        const nested = await locator.evaluate((el) => el.matches('svg') && !!el.closest('.rc-view, figure.short-board'));
-        if (nested) continue;
         const colors = await boardShot(page, locator);
         if (!colors) continue;
         saw = true;
