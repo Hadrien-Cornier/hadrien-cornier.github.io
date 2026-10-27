@@ -65,6 +65,8 @@ Most of this article is about the third kind, because that is where the hall exa
 
 Short memory is still memory, and it works better than you might expect. This is how many frames some well-known policies read at each step:
 
+<div class="essay-table policy">
+
 | Policy | Authors, year | Frames per step | Source |
 | --- | --- | ---: | --- |
 | [RT-1](https://arxiv.org/abs/2212.06817) | Brohan et al., 2022 | 6 | Section 5.1 |
@@ -73,6 +75,8 @@ Short memory is still memory, and it works better than you might expect. This is
 | [ACT](https://arxiv.org/abs/2304.13705) | Zhao et al., 2023 | 1 | Section IV-C |
 | [π0](https://arxiv.org/abs/2410.24164) | Black et al., 2024 | 1 | Section IV |
 | [OpenVLA](https://arxiv.org/abs/2406.09246) | Kim et al., 2024 | 1, listed as a limitation | Section 6 |
+
+</div>
 
 History helps where it is used well. RT-1 loses accuracy when its six-frame history is removed: 97 to 82 percent on seen tasks and 76 to 62 percent on unseen ones (its Table 13, real robot). Each frame costs RT-1 only 8 tokens, thanks to a compression layer, so six frames stay cheap.
 
@@ -105,11 +109,15 @@ $$
 
 Here $M$ is the number of past frames, $P$ is the tokens per frame and $I$ is the instruction length. Attention cost grows roughly with $N^2$. The [HAMLET](https://arxiv.org/abs/2510.00695) paper (Koo et al., 2025) measured it for a robot policy ([GR00T N1.5](https://arxiv.org/abs/2503.14734) on [RoboCasa](https://arxiv.org/abs/2406.02523), one A100):
 
+<div class="essay-table latency">
+
 | Frames | Latency | Memory |
 | ---: | ---: | ---: |
 | 1 | 80.5 ms | 289 MB |
 | 4 | 108.5 ms | 1,051 MB |
 | 8 | 193.0 ms | 2,023 MB |
+
+</div>
 
 Navigation models face the same bill, so they spend tokens unevenly. [NavFoM](https://arxiv.org/abs/2509.12129) (Zhang et al., 2025) gives the newest frame 64 tokens and each older frame 4, under a fixed budget. When the budget runs out it drops the oldest frames.
 
@@ -121,7 +129,9 @@ The second problem has a name. Imagine an expert whose joint command is 0.10, 0.
 
 [Wen and colleagues](https://arxiv.org/abs/2010.14876) (2020) measured this on six simulated control tasks: the cloned policy's actions were easier to predict from its own past actions than the expert's were, in all six. [De Haan and colleagues](https://arxiv.org/abs/1905.11979) (2019) showed that handing a cloned policy its previous action can lower its validation error and its reward at the same time (Pong, Hopper and others). [Chuang and colleagues](https://arxiv.org/abs/2207.09705) (2022) trace the same effect to how information flows through the network, and propose an architecture that avoids it by design.
 
-Nobody should read this as "history always hurts". The same Wen paper finds two frames beat one in five of six partially observed tasks. The picture is mixed:
+History can help. The same Wen paper finds two frames beat one in five of six partially observed tasks. The picture is mixed:
+
+<div class="essay-table history">
 
 | System | What happened with more history | Source |
 | --- | --- | --- |
@@ -130,11 +140,13 @@ Nobody should read this as "history always hurts". The same Wen paper finds two 
 | π0 and [GR00T N1.5](https://arxiv.org/abs/2503.14734) (VLM start) | About flat from 1 to 8 frames | [ContextVLA](https://arxiv.org/abs/2510.04246) (Jang et al., 2025), Fig. 2 (read from a chart) |
 | GR00T N1.5, naive multi-frame | [LIBERO](https://arxiv.org/abs/2306.03310) 95.6 → 86.8 | [HAMLET](https://arxiv.org/abs/2510.00695) (Koo et al., 2025), Table 2 |
 
+</div>
+
 So the cause depends on the model. The authors of ContextVLA read their result as the pretrained VLM start doing the work, but that is their interpretation of an ablation, not a separate test. A 2026 audit by [Liao and Cao](https://arxiv.org/abs/2607.03372) looked inside three frozen VLAs. Past-frame content stays decodable, but information unique to the history is nearly absent, and the models use history mainly when the current frame is heavily degraded.
 
 ## Six ways to remember, and what each one stores
 
-<div class="table-scroll">
+<div class="essay-table ways">
 
 | Approach | What it stores | Measured so far | Where it hurts |
 | --- | --- | --- | --- |
@@ -236,7 +248,7 @@ That is across-task, procedural memory. It remembers how to recover from a plann
 
 A literature sweep of 148 robot-memory papers (titles, authors and years checked against arXiv and Crossref) shows how fast this field moves: 88 of them were posted in 2026. These 22 matter most for the argument above. Each description in the last column comes from the paper's own abstract.
 
-<div class="table-scroll">
+<div class="essay-table more">
 
 | Kind | Paper | Authors, year | What it does or finds |
 | --- | --- | --- | --- |
@@ -281,243 +293,215 @@ What I would watch next: benchmarks that test several memory types on one robot,
 <details>
 <summary>Every paper named in this article, and the full verified list</summary>
 
-All entries link to the paper. Authors and years come from the arXiv record (one entry from Crossref). The first table lists the 32 works named in the article. The second lists the other 138 papers from the sweep, grouped by the sweep's own label.
+All entries link to the paper. Authors and years come from the arXiv record (one entry from Crossref). The first group lists the 32 works named in the article. The rest are the other 138 papers from the sweep, grouped by the sweep's own label.
 
-<div class="table-scroll">
-
-| Named in the article | Paper | Authors | Year | Link |
-| --- | --- | --- | ---: | --- |
-| RT-1 | RT-1: Robotics Transformer for Real-World Control at Scale | Anthony Brohan et al. | 2022 | [arXiv 2212.06817](https://arxiv.org/abs/2212.06817) |
-| Octo | Octo: An Open-Source Generalist Robot Policy | Octo Model Team | 2024 | [arXiv 2405.12213](https://arxiv.org/abs/2405.12213) |
-| Diffusion Policy | Diffusion Policy: Visuomotor Policy Learning via Action Diffusion | Cheng Chi et al. | 2023 | [arXiv 2303.04137](https://arxiv.org/abs/2303.04137) |
-| ACT | Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware | Tony Z. Zhao et al. | 2023 | [arXiv 2304.13705](https://arxiv.org/abs/2304.13705) |
-| π0 | π0: A Vision-Language-Action Flow Model for General Robot Control | Kevin Black et al. | 2024 | [arXiv 2410.24164](https://arxiv.org/abs/2410.24164) |
-| π0.5 | π0.5: a Vision-Language-Action Model with Open-World Generalization | Physical Intelligence | 2025 | [arXiv 2504.16054](https://arxiv.org/abs/2504.16054) |
-| OpenVLA | OpenVLA: An Open-Source Vision-Language-Action Model | Moo Jin Kim et al. | 2024 | [arXiv 2406.09246](https://arxiv.org/abs/2406.09246) |
-| GR00T N1 (the article uses N1.5) | GR00T N1: An Open Foundation Model for Generalist Humanoid Robots | NVIDIA (Bjorck et al.) | 2025 | [arXiv 2503.14734](https://arxiv.org/abs/2503.14734) |
-| CogACT | CogACT: A Foundational Vision-Language-Action Model for Synergizing Cognition and Action in Robotic Manipulation | Qixiu Li et al. | 2024 | [arXiv 2411.19650](https://arxiv.org/abs/2411.19650) |
-| SAM2Act | SAM2Act: Integrating Visual Foundation Model with A Memory Architecture for Robotic Manipulation | Haoquan Fang et al. | 2025 | [arXiv 2501.18564](https://arxiv.org/abs/2501.18564) |
-| RoboMME | RoboMME: Benchmarking and Understanding Memory for Robotic Generalist Policies | Yinpei Dai et al. | 2026 | [arXiv 2603.04639](https://arxiv.org/abs/2603.04639) |
-| MemER | MemER: Scaling Up Memory for Robot Control via Experience Retrieval | Ajay Sridhar et al. | 2025 | [arXiv 2510.20328](https://arxiv.org/abs/2510.20328) |
-| MemoryVLA | MemoryVLA: Perceptual-Cognitive Memory in Vision-Language-Action Models for Robotic Manipulation | Hao Shi et al. | 2025 | [arXiv 2508.19236](https://arxiv.org/abs/2508.19236) |
-| CronusVLA | CronusVLA: Towards Efficient and Robust Manipulation via Multi-Frame Vision-Language-Action Modeling | Hao Li et al. | 2025 | [arXiv 2506.19816](https://arxiv.org/abs/2506.19816) |
-| HAMLET | HAMLET: Switch your Vision-Language-Action Model into a History-Aware Policy | Myungkyu Koo et al. | 2025 | [arXiv 2510.00695](https://arxiv.org/abs/2510.00695) |
-| ContextVLA | ContextVLA: Vision-Language-Action Model with Amortized Multi-Frame Context | Huiwon Jang et al. | 2025 | [arXiv 2510.04246](https://arxiv.org/abs/2510.04246) |
-| NavFoM | Embodied Navigation Foundation Model | Jiazhao Zhang et al. | 2025 | [arXiv 2509.12129](https://arxiv.org/abs/2509.12129) |
-| Robostral Navigate | Robostral Navigate | Abdelaziz Bounhar et al. | 2026 | [arXiv 2607.20785](https://arxiv.org/abs/2607.20785) |
-| ViNT | ViNT: A Foundation Model for Visual Navigation | Dhruv Shah et al. | 2023 | [arXiv 2306.14846](https://arxiv.org/abs/2306.14846) |
-| NoMaD | NoMaD: Goal Masked Diffusion Policies for Navigation and Exploration | Ajay Sridhar et al. | 2023 | [arXiv 2310.07896](https://arxiv.org/abs/2310.07896) |
-| VLMaps | Visual Language Maps for Robot Navigation | Chenguang Huang et al. | 2022 | [arXiv 2210.05714](https://arxiv.org/abs/2210.05714) |
-| ASPIRE | ASPIRE: Agentic /Skills Discovery for Robotics | Runyu Lu et al. | 2026 | [arXiv 2607.00272](https://arxiv.org/abs/2607.00272) |
-| SOLE-R1 | SOLE-R1: Video-Language Reasoning as the Sole Reward for On-Robot Reinforcement Learning | Philip Schroeder et al. | 2026 | [arXiv 2603.28730](https://arxiv.org/abs/2603.28730) |
-| Wen et al. (copycat) | Fighting Copycat Agents in Behavioral Cloning from Observation Histories | Chuan Wen et al. | 2020 | [arXiv 2010.14876](https://arxiv.org/abs/2010.14876) |
-| de Haan et al. (causal confusion) | Causal Confusion in Imitation Learning | Pim de Haan et al. | 2019 | [arXiv 1905.11979](https://arxiv.org/abs/1905.11979) |
-| Torne et al. (past-token prediction) | Learning Long-Context Diffusion Policies via Past-Token Prediction | Marcel Torne et al. | 2025 | [arXiv 2505.09561](https://arxiv.org/abs/2505.09561) |
-| LIBERO | LIBERO: Benchmarking Knowledge Transfer for Lifelong Robot Learning | Bo Liu et al. | 2023 | [arXiv 2306.03310](https://arxiv.org/abs/2306.03310) |
-| LIBERO-PRO | LIBERO-PRO: Towards Robust and Fair Evaluation of Vision-Language-Action Models Beyond Memorization | Xueyang Zhou et al. | 2025 | [arXiv 2510.03827](https://arxiv.org/abs/2510.03827) |
-| SimplerEnv | Evaluating Real-World Robot Manipulation Policies in Simulation | Xuanlin Li et al. | 2024 | [arXiv 2405.05941](https://arxiv.org/abs/2405.05941) |
-| RoboCasa | RoboCasa: Large-Scale Simulation of Everyday Tasks for Generalist Robots | Soroush Nasiriany et al. | 2024 | [arXiv 2406.02523](https://arxiv.org/abs/2406.02523) |
-| R2R-CE | Beyond the Nav-Graph: Vision-and-Language Navigation in Continuous Environments | Jacob Krantz et al. | 2020 | [arXiv 2004.02857](https://arxiv.org/abs/2004.02857) |
-| RxR-CE | Room-Across-Room: Multilingual Vision-and-Language Navigation with Dense Spatiotemporal Grounding | Alexander Ku et al. | 2020 | [arXiv 2010.07954](https://arxiv.org/abs/2010.07954) |
-
-</div>
-
-<div class="table-scroll">
-
-**Analysis of history and memory use** (3)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | Beyond Success Rate: Interventional Evaluation of Memory in Vision-Language-Action Systems | Keyuan Luo et al. | [arXiv 2610.23372](https://arxiv.org/abs/2610.23372) |
-| 2026 | Memory That Changes Action Is Not Memory That Guides It: Counterfactual Auditing of History-Conditioned Robot Policies | Jiajie Zhang et al. | [arXiv 2609.27247](https://arxiv.org/abs/2609.27247) |
-| 2026 | Present but Not Remembered: Auditing How Frozen VLAs Encode, Deploy, and Steer Visual History | Chih-Ting Liao and Xin Cao | [arXiv 2607.03372](https://arxiv.org/abs/2607.03372) |
-
-**Benchmarks** (23)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | Benchmarking and Enhancing Skill-Level Memory for Partially Observable Robotic Manipulation | Yansong Shi et al. | [arXiv 2609.38886](https://arxiv.org/abs/2609.38886) |
-| 2026 | Beyond the Current Observation: Evaluating Multimodal Large Language Models in Controllable Non-Markov Games | Shengyuan Ding et al. | [arXiv 2606.19338](https://arxiv.org/abs/2606.19338) |
-| 2026 | Can a Frontier VLM Serve as a Robot Policy for Memory-Dependent Manipulation? | Jack B. Jedlicki et al. | [arXiv 2610.17350](https://arxiv.org/abs/2610.17350) |
-| 2026 | Compiling and Benchmarking Task-State Horizons for Embodied Agents | Meiqi Wang and Shichao Li | [arXiv 2608.08036](https://arxiv.org/abs/2608.08036) |
-| 2026 | EMBER-Bench: Benchmarking Cross-Event Causal Memory in Long-Horizon Embodied Tasks | Aoyang Cai et al. | [arXiv 2610.05013](https://arxiv.org/abs/2610.05013) |
-| 2026 | EmbodiedMemory-Bench: Benchmarking Embodied Memory for Long-Horizon Embodied Tasks | Lizhou Liang et al. | [arXiv 2609.28236](https://arxiv.org/abs/2609.28236) |
-| 2026 | Explore with Long-term Memory: A Benchmark and Multimodal LLM-based Reinforcement Learning Framework for Embodied Exploration | Sen Wang et al. | [arXiv 2601.10744](https://arxiv.org/abs/2601.10744) |
-| 2026 | Grounded in Time: A Multi-Source Dataset and Benchmark for Temporal Grounding in Robotic Manipulation | Yi Wang et al. | [arXiv 2610.04255](https://arxiv.org/abs/2610.04255) |
-| 2026 | LongBench: Evaluating Robotic Manipulation Policies on Real-World Long-Horizon Tasks | Xueyao Chen et al. | [arXiv 2604.16788](https://arxiv.org/abs/2604.16788) |
-| 2026 | MEMOBench: A Process Level Memory Benchmark for Robotic Manipulation | Haiyang Sun et al. | [arXiv 2609.07047](https://arxiv.org/abs/2609.07047) |
-| 2026 | MIKASA-Robo-VLA: Benchmarking Memory in VLA Models for Long-Horizon Manipulation | Egor Cherepanov et al. | [arXiv 2610.00604](https://arxiv.org/abs/2610.00604) |
-| 2026 | MemTransfer: Benchmarking Memory Beyond Matched Experience in Embodied Decision-Making | Haiming Tang et al. | [arXiv 2609.32313](https://arxiv.org/abs/2609.32313) |
-| 2026 | Memory Retention Is Not Enough to Master Memory Tasks in Reinforcement Learning | Oleg Shchendrigin et al. | [arXiv 2601.15086](https://arxiv.org/abs/2601.15086) |
-| 2026 | RMBench: Memory-Dependent Robotic Manipulation Benchmark with Insights into Policy Design | Tianxing Chen et al. | [arXiv 2603.01229](https://arxiv.org/abs/2603.01229) |
-| 2026 | RoboMME-Interference: Benchmarking Robot Memory Under Interference | Soumil Rathi | [arXiv 2606.22338](https://arxiv.org/abs/2606.22338) |
-| 2026 | RoboMemArena: A Comprehensive and Challenging Robotic Memory Benchmark | Huashuo Lei et al. | [arXiv 2605.10921](https://arxiv.org/abs/2605.10921) |
-| 2026 | What Should Embodied Agents Remember? Benchmarking and Evaluating Memory Modality for Embodied Agents | Junxiang Wang et al. | [arXiv 2610.12561](https://arxiv.org/abs/2610.12561) |
-| 2026 | WorldLines: Benchmarking and Modeling Long-Horizon Stateful Embodied Agents | Yehang Zhang et al. | [arXiv 2606.18847](https://arxiv.org/abs/2606.18847) |
-| 2025 | Benchmarking Partial Observability in Reinforcement Learning with a Suite of Memory-Improvable Domains | Ruo Yu Tao et al. | [arXiv 2508.00046](https://arxiv.org/abs/2508.00046) |
-| 2025 | FindingDory: A Benchmark to Evaluate Memory in Embodied Agents | Karmesh Yadav et al. | [arXiv 2506.15635](https://arxiv.org/abs/2506.15635) |
-| 2025 | Memory, Benchmark & Robots: A Benchmark for Solving Complex Tasks with Reinforcement Learning | Egor Cherepanov et al. | [arXiv 2502.10550](https://arxiv.org/abs/2502.10550) |
-| 2025 | RoboCerebra: A Large-scale Benchmark for Long-horizon Robotic Manipulation Evaluation | Songhao Han et al. | [arXiv 2506.06677](https://arxiv.org/abs/2506.06677) |
-| 2024 | GOAT-Bench: A Benchmark for Multi-Modal Lifelong Navigation | Mukul Khanna et al. | [arXiv 2404.06609](https://arxiv.org/abs/2404.06609) |
-
-**Key frames and retrieval** (11)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | BPP: Long-Context Robot Imitation Learning by Focusing on Key History Frames | Max Sobol Mark et al. | [arXiv 2602.15010](https://arxiv.org/abs/2602.15010) |
-| 2026 | Divide-and-Remember: Recursive Action-Relevant Memory for Long-Horizon VLA Policies | Xuehui Yu et al. | [arXiv 2610.00982](https://arxiv.org/abs/2610.00982) |
-| 2026 | EventVLA: Event-Driven Visual Evidence Memory for Long-Horizon Vision-Language-Action Policies | Ganlin Yang et al. | [arXiv 2606.20092](https://arxiv.org/abs/2606.20092) |
-| 2026 | KEMO: Event-Driven Keyframe Memory for Long-Horizon Robot Manipulation with VLA Policies | Yihan Zeng et al. | [arXiv 2606.23589](https://arxiv.org/abs/2606.23589) |
-| 2026 | Memory Retrieval in Visuomotor Policies for Long-Horizon Robot Control | Rutav Shah et al. | [arXiv 2606.25136](https://arxiv.org/abs/2606.25136) |
-| 2026 | Non-Markovian Long-Horizon Robot Manipulation via Keyframe Chaining | Yipeng Chen et al. | [arXiv 2603.01465](https://arxiv.org/abs/2603.01465) |
-| 2024 | RAG-Modulo: Solving Sequential Tasks using Experience, Critics, and Language Models | Abhinav Jain et al. | [arXiv 2409.12294](https://arxiv.org/abs/2409.12294) |
-| 2024 | RAP: Retrieval-Augmented Planning with Contextual Memory for Multimodal LLM Agents | Tomoyuki Kagaya et al. | [arXiv 2402.03610](https://arxiv.org/abs/2402.03610) |
-| 2024 | ReMEmbR: Building and Reasoning Over Long-Horizon Spatio-Temporal Memory for Robot Navigation | Abrar Anwar et al. | [arXiv 2409.13682](https://arxiv.org/abs/2409.13682) |
-| 2023 | JARVIS-1: Open-World Multi-task Agents with Memory-Augmented Multimodal Language Models | Zihao Wang et al. | [arXiv 2311.05997](https://arxiv.org/abs/2311.05997) |
-| 2017 | Neural Episodic Control | Alexander Pritzel et al. | [arXiv 1703.01988](https://arxiv.org/abs/1703.01988) |
-
-**Latent and vector memory** (10)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | Chameleon: Control-Indexed Prospective Memory for Visuomotor Manipulation | Xinying Guo et al. | [arXiv 2603.24576](https://arxiv.org/abs/2603.24576) |
-| 2026 | Dual Latent Memory in Vision-Language-Action Models for Robotic Manipulation | Hongyu Qu et al. | [arXiv 2607.07608](https://arxiv.org/abs/2607.07608) |
-| 2026 | ECHO: Continuous Hierarchical Memory for Vision-Language-Action Models | Yanbin Hu et al. | [arXiv 2605.10993](https://arxiv.org/abs/2605.10993) |
-| 2026 | LTM: Latent Transition Based In-Context Memory for Vision-Language-Action Models | Qixin Sun et al. | [arXiv 2610.21362](https://arxiv.org/abs/2610.21362) |
-| 2026 | Mem4Act: Learning Effective Latent Memory for Long-Horizon Robotic Manipulation | Yun Zhang et al. | [arXiv 2610.22323](https://arxiv.org/abs/2610.22323) |
-| 2026 | Memory Without Curation: Learning Multi-Stream Latent Memory for Robot Policies | Yilin Wu et al. | [arXiv 2610.14406](https://arxiv.org/abs/2610.14406) |
-| 2026 | MemoryVLA++: Temporal Modeling via Memory and Imagination in Vision-Language-Action Models | Hao Shi et al. | [arXiv 2606.09827](https://arxiv.org/abs/2606.09827) |
-| 2026 | Scaling Short-Term Memory of Visuomotor Policies for Long-Horizon Tasks | Rutav Shah et al. | [arXiv 2606.16178](https://arxiv.org/abs/2606.16178) |
-| 2026 | StateMem: Single-State Residual Memory with Adaptive Inference for Vision-Language-Action Policies | Wenzhuo Li et al. | [arXiv 2609.22684](https://arxiv.org/abs/2609.22684) |
-| 2026 | VPWEM: Non-Markovian Visuomotor Policy with Working and Episodic Memory | Yuheng Lei et al. | [arXiv 2603.04910](https://arxiv.org/abs/2603.04910) |
-
-**Longer frame context** (8)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | HIRE: History-Conditioned Interaction Reasoning and High-Rate Execution for Visually Aliased Precision Manipulation | Rongji Li et al. | [arXiv 2609.30828](https://arxiv.org/abs/2609.30828) |
-| 2026 | SimpleMemVLA: A Simple but Effective Native-Video Memory for Vision-Language-Action Models | Cheng Yin et al. | [arXiv 2609.05533](https://arxiv.org/abs/2609.05533) |
-| 2026 | TemporalFlow-VLA: Learning Physically Grounded Execution History for Long-Horizon Robot Manipulation | Jiarui Yang et al. | [arXiv 2608.26821](https://arxiv.org/abs/2608.26821) |
-| 2026 | Training and Evaluating Diffusion Policies with Long Context Lengths | Abhinav Agarwal et al. | [arXiv 2606.16447](https://arxiv.org/abs/2606.16447) |
-| 2025 | StreamVLN: Streaming Vision-and-Language Navigation via SlowFast Context Modeling | Meng Wei et al. | [arXiv 2507.05240](https://arxiv.org/abs/2507.05240) |
-| 2025 | VLN-R1: Vision-Language Navigation via Reinforcement Fine-Tuning | Zhangyang Qi et al. | [arXiv 2506.17221](https://arxiv.org/abs/2506.17221) |
-| 2022 | Resolving Copycat Problems in Visual Imitation Learning via Residual Action Prediction | Chia-Chi Chuang et al. | [arXiv 2207.09705](https://arxiv.org/abs/2207.09705) |
-| 2021 | History Aware Multimodal Transformer for Vision-and-Language Navigation | Shizhe Chen et al. | [arXiv 2110.13309](https://arxiv.org/abs/2110.13309) |
-
-**Maps and scene memory** (28)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | AtlasVLA: Persistent World-Ego State Modeling for Vision-Language-Action Models | Guiyu Zhao et al. | [arXiv 2608.06729](https://arxiv.org/abs/2608.06729) |
-| 2026 | GaussMemory: Task-Driven 3D Gaussian Scene Memory for Long-Horizon Robotic Manipulation | Zhiqiang Hu et al. | [arXiv 2608.14986](https://arxiv.org/abs/2608.14986) |
-| 2026 | OCC4M: Object-Centric 4D Memory for Spatiotemporal Reasoning in Long-Horizon Manipulation | Jack B. Jedlicki et al. | [arXiv 2609.28798](https://arxiv.org/abs/2609.28798) |
-| 2026 | Personalizing Embodied Multimodal Large Language Model Agents over Long-term User Interactions | Jeongeun Lee et al. | [arXiv 2605.26256](https://arxiv.org/abs/2605.26256) |
-| 2026 | SERF: Spatiotemporal Environment and Robot Feature Map for Long-Horizon Mobile Manipulation | Sunghwan Kim et al. | [arXiv 2606.12956](https://arxiv.org/abs/2606.12956) |
-| 2026 | Safe Task Planning with Long-Term Graph Memory for Embodied Agents | Siyuan Li et al. | [arXiv 2609.08444](https://arxiv.org/abs/2609.08444) |
-| 2026 | Spatial Memory for Out-of-Vision Manipulation in Vision-Language-Action | Pengteng Li et al. | [arXiv 2605.22283](https://arxiv.org/abs/2605.22283) |
-| 2026 | Where Memory Belongs: Ledger, an Object Ledger for Memory-Augmented VLAs | Tanguy Dieudonné et al. | [arXiv 2609.34554](https://arxiv.org/abs/2609.34554) |
-| 2025 | CityNavAgent: Aerial Vision-and-Language Navigation with Hierarchical Semantic Planning and Global Memory | Weichen Zhang et al. | [arXiv 2505.05622](https://arxiv.org/abs/2505.05622) |
-| 2025 | DyNaVLM: Zero-Shot Vision-Language Navigation System with Dynamic Viewpoints and Self-Refining Graph Memory | Zihe Ji et al. | [arXiv 2506.15096](https://arxiv.org/abs/2506.15096) |
-| 2025 | EchoVLA: Robotic Vision-Language-Action Model with Synergistic Declarative Memory for Mobile Manipulation | Min Lin et al. | [arXiv 2511.18112](https://arxiv.org/abs/2511.18112) |
-| 2025 | L3M+P: Lifelong Planning with Large Language Models | Krish Agarwal et al. | [arXiv 2508.01917](https://arxiv.org/abs/2508.01917) |
-| 2025 | MapNav: A Novel Memory Representation via Annotated Semantic Maps for Vision-and-Language Navigation | Lingfeng Zhang et al. | [arXiv 2502.13451](https://arxiv.org/abs/2502.13451) |
-| 2025 | MossVLN: Memory-Observation Synergistic System for Continuous Vision-Language Navigation | Ting Yu et al. | [DOI 10.1109/TMM.2025.3586105](https://doi.org/10.1109/TMM.2025.3586105) |
-| 2024 | 3D-Mem: 3D Scene Memory for Embodied Exploration and Reasoning | Yuncong Yang et al. | [arXiv 2411.17735](https://arxiv.org/abs/2411.17735) |
-| 2024 | Hierarchical Open-Vocabulary 3D Scene Graphs for Language-Grounded Robot Navigation | Abdelrhman Werby et al. | [arXiv 2403.17846](https://arxiv.org/abs/2403.17846) |
-| 2024 | KARMA: Augmenting Embodied AI Agents with Long-and-short Term Memory Systems | Zixuan Wang et al. | [arXiv 2409.14908](https://arxiv.org/abs/2409.14908) |
-| 2024 | MC-GPT: Empowering Vision-and-Language Navigation with Memory Map and Reasoning Chains | Zhaohuan Zhan et al. | [arXiv 2405.10620](https://arxiv.org/abs/2405.10620) |
-| 2024 | MapGPT: Map-Guided Prompting with Adaptive Path Planning for Vision-and-Language Navigation | Jiaqi Chen et al. | [arXiv 2401.07314](https://arxiv.org/abs/2401.07314) |
-| 2023 | ConceptGraphs: Open-Vocabulary 3D Scene Graphs for Perception and Planning | Qiao Gu et al. | [arXiv 2309.16650](https://arxiv.org/abs/2309.16650) |
-| 2023 | GOAT: GO to Any Thing | Matthew Chang et al. | [arXiv 2311.06430](https://arxiv.org/abs/2311.06430) |
-| 2023 | GridMM: Grid Memory Map for Vision-and-Language Navigation | Zihan Wang et al. | [arXiv 2307.12907](https://arxiv.org/abs/2307.12907) |
-| 2022 | BEVBert: Multimodal Map Pre-training for Language-guided Navigation | Dong An et al. | [arXiv 2212.04385](https://arxiv.org/abs/2212.04385) |
-| 2022 | CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory | Nur Muhammad Mahi Shafiullah et al. | [arXiv 2210.05663](https://arxiv.org/abs/2210.05663) |
-| 2020 | Neural Topological SLAM for Visual Navigation | Devendra Singh Chaplot et al. | [arXiv 2005.12256](https://arxiv.org/abs/2005.12256) |
-| 2020 | Occupancy Anticipation for Efficient Exploration and Navigation | Santhosh K. Ramakrishnan et al. | [arXiv 2008.09285](https://arxiv.org/abs/2008.09285) |
-| 2019 | Scene Memory Transformer for Embodied Agents in Long-Horizon Tasks | Kuan Fang et al. | [arXiv 1903.03878](https://arxiv.org/abs/1903.03878) |
-| 2017 | Neural SLAM: Learning to Explore with External Memory | Jingwei Zhang et al. | [arXiv 1706.09520](https://arxiv.org/abs/1706.09520) |
-
-**Other designs** (15)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | 2AM: Grounding Agent-Side Memory as Guidance for Steerable Action Models in Long-Horizon Manipulation | Yutong Hu et al. | [arXiv 2609.11308](https://arxiv.org/abs/2609.11308) |
-| 2026 | BEACON: Belief-Enabled Adaptive CONtrol for Imitation Learning under Uncertainty | Moonyoung Lee et al. | [arXiv 2609.22730](https://arxiv.org/abs/2609.22730) |
-| 2026 | HIMM: Human-Inspired Long-Term Memory Modeling for Embodied Exploration and Question Answering | Ji Li et al. | [arXiv 2602.15513](https://arxiv.org/abs/2602.15513) |
-| 2026 | MemoAct: Atkinson-Shiffrin-Inspired Hierarchical Memory-Augmented Policy for Robotic Manipulation | Liufan Tan et al. | [arXiv 2603.18494](https://arxiv.org/abs/2603.18494) |
-| 2026 | MotionVLA: Injecting Geometric Motion into Vision-Language-Action Model | Shanglin Yuan et al. | [arXiv 2606.08288](https://arxiv.org/abs/2606.08288) |
-| 2026 | Multimodal Filesystem Memory For Long-Horizon Embodied Agents | Chloe Su et al. | [arXiv 2610.22686](https://arxiv.org/abs/2610.22686) |
-| 2026 | Physical Time as a Missing Dimension of Robot Policy Memory Dynamics | Yushen Liang et al. | [arXiv 2610.20524](https://arxiv.org/abs/2610.20524) |
-| 2026 | Simple Agentic Memory for Generalist Robot Policies | Yuyou Zhang et al. | [arXiv 2609.36595](https://arxiv.org/abs/2609.36595) |
-| 2026 | Trace-Focused Diffusion Policy for Multi-Modal Action Disambiguation in Long-Horizon Robotic Manipulation | Yuxuan Hu et al. | [arXiv 2602.07388](https://arxiv.org/abs/2602.07388) |
-| 2026 | Worth Remembering: Surprise-Gated Robot Episodic Memory | Nicolas Gorlo et al. | [arXiv 2606.03787](https://arxiv.org/abs/2606.03787) |
-| 2025 | Ella: Embodied Social Agents with Lifelong Memory | Hongxin Zhang et al. | [arXiv 2506.24019](https://arxiv.org/abs/2506.24019) |
-| 2025 | History-Aware Visuomotor Policy Learning via Point Tracking | Jingjing Chen et al. | [arXiv 2509.17141](https://arxiv.org/abs/2509.17141) |
-| 2025 | JanusVLN: Decoupling Semantics and Spatiality with Dual Implicit Memory for Vision-Language Navigation | Shuang Zeng et al. | [arXiv 2509.22548](https://arxiv.org/abs/2509.22548) |
-| 2025 | Meta-Memory: Retrieving and Integrating Semantic-Spatial Memories for Robot Spatial Reasoning | Yufan Mao et al. | [arXiv 2509.20754](https://arxiv.org/abs/2509.20754) |
-| 2024 | Embodied VideoAgent: Persistent Memory from Egocentric Videos and Embodied Sensors Enables Dynamic Scene Understanding | Yue Fan et al. | [arXiv 2501.00358](https://arxiv.org/abs/2501.00358) |
-
-**Recurrent and state-space memory** (13)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | AURA: Action-Gated Memory for Robot Policies at Constant VRAM | Josef Chen | [arXiv 2606.02775](https://arxiv.org/abs/2606.02775) |
-| 2026 | Chronos: A Physics-Informed Full-History Framework for Non-Markovian Long-Horizon Manipulation | Yulin Zhou et al. | [arXiv 2606.30318](https://arxiv.org/abs/2606.30318) |
-| 2026 | DRAM: Delta-rule Recurrent Associative Memory for Robot Manipulation Policies | Xinyu Zhao et al. | [arXiv 2609.32453](https://arxiv.org/abs/2609.32453) |
-| 2026 | DSSP: Diffusion State Space Policy with Full-History Encoding | Zhiyuan Guan et al. | [arXiv 2605.14598](https://arxiv.org/abs/2605.14598) |
-| 2026 | MemBodied: Recurrent Associative Memory for Vision-Language-Action Models | Tej Deep Pala et al. | [arXiv 2609.28256](https://arxiv.org/abs/2609.28256) |
-| 2026 | Minimal Recurrent Behavioral Memory for Imitation under Partial Observability | Xianyao Li et al. | [arXiv 2609.25757](https://arxiv.org/abs/2609.25757) |
-| 2026 | ReCAT: Remember, Count, and Time: Structured Recurrent Memory for Robot Manipulation | Pankhuri Vanjani et al. | [arXiv 2609.35200](https://arxiv.org/abs/2609.35200) |
-| 2026 | ReMem-VLA: Empowering Vision-Language-Action Model with Memory via Dual-Level Recurrent Queries | Hang Li et al. | [arXiv 2603.12942](https://arxiv.org/abs/2603.12942) |
-| 2026 | Recursive Belief Vision Language Action Models | Vaidehi Bagaria et al. | [arXiv 2602.20659](https://arxiv.org/abs/2602.20659) |
-| 2026 | SmoLSTM: A Compact Vision-Language-Action Model with Recurrent Memory that Persists | Jan-Gerrit Habekost et al. | [arXiv 2609.22854](https://arxiv.org/abs/2609.22854) |
-| 2026 | μVLA: On Recurrent Memory for Partially Observable Manipulation in VLA Models | Egor Cherepanov et al. | [arXiv 2606.12497](https://arxiv.org/abs/2606.12497) |
-| 2025 | MTIL: Encoding Full History with Mamba for Temporal Imitation Learning | Yulin Zhou et al. | [arXiv 2505.12410](https://arxiv.org/abs/2505.12410) |
-| 2019 | Learning Belief Representations for Imitation Learning in POMDPs | Tanmay Gangwani et al. | [arXiv 1906.09510](https://arxiv.org/abs/1906.09510) |
-
-**Skills and code** (10)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | Explore, Execute, Evolve: A Skill Acquisition and Reuse Loop for Embodied Agents | Sicheng Xie et al. | [arXiv 2609.37810](https://arxiv.org/abs/2609.37810) |
-| 2026 | From Local Corrections to Generalized Skills: Improving Neuro-Symbolic Policies with MEMO | Benjamin A. Christie et al. | [arXiv 2603.04560](https://arxiv.org/abs/2603.04560) |
-| 2026 | SEAR: Self-Evolving Agentic Robotics | Xinyi Wang et al. | [arXiv 2610.18792](https://arxiv.org/abs/2610.18792) |
-| 2026 | SkillComposer: Learning Reusable Skills for Natural-Language Robot Programming | John Woods and Hasti Seifi | [arXiv 2608.14944](https://arxiv.org/abs/2608.14944) |
-| 2026 | Skills in Weights, Memory in Code: Hybrid Learning for Memory-Dependent Robot Manipulation | Yunhao Zhao et al. | [arXiv 2608.09410](https://arxiv.org/abs/2608.09410) |
-| 2026 | Teach and Grow: An Agent-Centered Architecture for General Robot Learning | Chang Nie et al. | [arXiv 2608.17209](https://arxiv.org/abs/2608.17209) |
-| 2026 | Video2Skill: From Streaming Experience to Reusable Embodied Skills | Jianshu Zhang et al. | [arXiv 2609.36691](https://arxiv.org/abs/2609.36691) |
-| 2025 | Robotic Ultra-Long-Horizon Manipulation Skills via Human-guided Lifelong Code Generation | Yuan Meng et al. | [arXiv 2509.18597](https://arxiv.org/abs/2509.18597) |
-| 2024 | Lifelong Robot Library Learning: Bootstrapping Composable and Generalizable Skills for Embodied Control with Language Models | Georgios Tziafas and Hamidreza Kasaei | [arXiv 2406.18746](https://arxiv.org/abs/2406.18746) |
-| 2023 | Voyager: An Open-Ended Embodied Agent with Large Language Models | Guanzhi Wang et al. | [arXiv 2305.16291](https://arxiv.org/abs/2305.16291) |
-
-**Surveys** (1)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | From Sliding Windows to Self-evolving Lifelong Memory: A Dual-perspective Survey of Memory Paradigms for Long-Horizon Robotics VLA Models | Yong Wang et al. | [arXiv 2610.23319](https://arxiv.org/abs/2610.23319) |
-
-**Text and language memory** (16)
-
-| Year | Paper | Authors | Link |
-| ---: | --- | --- | --- |
-| 2026 | Don't Drop the BATON: Long-Horizon Robot Manipulation via Agentic Subtask Exploration and Transition-aware Memory | Bingxin Xu et al. | [arXiv 2608.16889](https://arxiv.org/abs/2608.16889) |
-| 2026 | Evolvable Embodied Agent for Robotic Manipulation via Long Short-Term Reflection and Optimization | Jianzong Wang et al. | [arXiv 2604.13533](https://arxiv.org/abs/2604.13533) |
-| 2026 | Explicit Language Memory for Long-Horizon Planning in Vision-Language-Action Models | Houze Xu et al. | [arXiv 2608.04765](https://arxiv.org/abs/2608.04765) |
-| 2026 | HAM-VLN: Harnessing Hierarchical Agentic Memory for Zero-Shot Vision-and-Language Navigation | An Liu et al. | [arXiv 2607.29600](https://arxiv.org/abs/2607.29600) |
-| 2026 | MEM: Multi-Scale Embodied Memory for Vision Language Action Models | Marcel Torne et al. | [arXiv 2603.03596](https://arxiv.org/abs/2603.03596) |
-| 2026 | Notes-to-Self: Scratchpad Augmented VLAs for Memory Dependent Manipulation Tasks | Sanjay Haresh et al. | [arXiv 2602.21013](https://arxiv.org/abs/2602.21013) |
-| 2026 | REMM: Revisable Embodied Memory for Manipulation | Revanth Krishna Senthilkumaran et al. | [arXiv 2610.12710](https://arxiv.org/abs/2610.12710) |
-| 2026 | Robo-Cortex: A Self-Evolving Embodied Agent via Dual-Grain Cognitive Memory and Autonomous Knowledge Induction | Nga Teng Chan et al. | [arXiv 2605.18729](https://arxiv.org/abs/2605.18729) |
-| 2025 | FCRF: Flexible Constructivism Reflection for Long-Horizon Robotic Task Planning with Large Language Models | Yufan Song et al. | [arXiv 2507.14975](https://arxiv.org/abs/2507.14975) |
-| 2025 | LLM-Empowered Embodied Agent for Memory-Augmented Task Planning in Household Robotics | Marc Glocker et al. | [arXiv 2504.21716](https://arxiv.org/abs/2504.21716) |
-| 2025 | MAP-VLA: Memory-Augmented Prompting for Vision-Language-Action Model in Robotic Manipulation | Runhao Li et al. | [arXiv 2511.09516](https://arxiv.org/abs/2511.09516) |
-| 2025 | SE-VLN: A Self-Evolving Vision-Language Navigation Framework Based on Multimodal Large Language Models | Xiangyu Dong et al. | [arXiv 2507.13152](https://arxiv.org/abs/2507.13152) |
-| 2023 | Open-Ended Instructable Embodied Agents with Memory-Augmented Large Language Models | Gabriel Sarch et al. | [arXiv 2310.15127](https://arxiv.org/abs/2310.15127) |
-| 2023 | REFLECT: Summarizing Robot Experiences for Failure Explanation and Correction | Zeyi Liu et al. | [arXiv 2306.15724](https://arxiv.org/abs/2306.15724) |
-| 2023 | TidyBot: Personalized Robot Assistance with Large Language Models | Jimmy Wu et al. | [arXiv 2305.05658](https://arxiv.org/abs/2305.05658) |
-| 2022 | Inner Monologue: Embodied Reasoning through Planning with Language Models | Wenlong Huang et al. | [arXiv 2207.05608](https://arxiv.org/abs/2207.05608) |
-
-
+<div class="paper-catalog">
+<p class="paper-group">Named in the article</p>
+<ul>
+<li id="paper-2212.06817"><a href="https://arxiv.org/abs/2212.06817">RT-1: Robotics Transformer for Real-World Control at Scale</a> <span class="paper-meta">RT-1 · Anthony Brohan et al. · 2022</span></li>
+<li id="paper-2405.12213"><a href="https://arxiv.org/abs/2405.12213">Octo: An Open-Source Generalist Robot Policy</a> <span class="paper-meta">Octo · Octo Model Team · 2024</span></li>
+<li id="paper-2303.04137"><a href="https://arxiv.org/abs/2303.04137">Diffusion Policy: Visuomotor Policy Learning via Action Diffusion</a> <span class="paper-meta">Diffusion Policy · Cheng Chi et al. · 2023</span></li>
+<li id="paper-2304.13705"><a href="https://arxiv.org/abs/2304.13705">Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware</a> <span class="paper-meta">ACT · Tony Z. Zhao et al. · 2023</span></li>
+<li id="paper-2410.24164"><a href="https://arxiv.org/abs/2410.24164">π0: A Vision-Language-Action Flow Model for General Robot Control</a> <span class="paper-meta">π0 · Kevin Black et al. · 2024</span></li>
+<li id="paper-2504.16054"><a href="https://arxiv.org/abs/2504.16054">π0.5: a Vision-Language-Action Model with Open-World Generalization</a> <span class="paper-meta">π0.5 · Physical Intelligence · 2025</span></li>
+<li id="paper-2406.09246"><a href="https://arxiv.org/abs/2406.09246">OpenVLA: An Open-Source Vision-Language-Action Model</a> <span class="paper-meta">OpenVLA · Moo Jin Kim et al. · 2024</span></li>
+<li id="paper-2503.14734"><a href="https://arxiv.org/abs/2503.14734">GR00T N1: An Open Foundation Model for Generalist Humanoid Robots</a> <span class="paper-meta">GR00T N1 (the article uses N1.5) · NVIDIA (Bjorck et al.) · 2025</span></li>
+<li id="paper-2411.19650"><a href="https://arxiv.org/abs/2411.19650">CogACT: A Foundational Vision-Language-Action Model for Synergizing Cognition and Action in Robotic Manipulation</a> <span class="paper-meta">CogACT · Qixiu Li et al. · 2024</span></li>
+<li id="paper-2501.18564"><a href="https://arxiv.org/abs/2501.18564">SAM2Act: Integrating Visual Foundation Model with A Memory Architecture for Robotic Manipulation</a> <span class="paper-meta">SAM2Act · Haoquan Fang et al. · 2025</span></li>
+<li id="paper-2603.04639"><a href="https://arxiv.org/abs/2603.04639">RoboMME: Benchmarking and Understanding Memory for Robotic Generalist Policies</a> <span class="paper-meta">RoboMME · Yinpei Dai et al. · 2026</span></li>
+<li id="paper-2510.20328"><a href="https://arxiv.org/abs/2510.20328">MemER: Scaling Up Memory for Robot Control via Experience Retrieval</a> <span class="paper-meta">MemER · Ajay Sridhar et al. · 2025</span></li>
+<li id="paper-2508.19236"><a href="https://arxiv.org/abs/2508.19236">MemoryVLA: Perceptual-Cognitive Memory in Vision-Language-Action Models for Robotic Manipulation</a> <span class="paper-meta">MemoryVLA · Hao Shi et al. · 2025</span></li>
+<li id="paper-2506.19816"><a href="https://arxiv.org/abs/2506.19816">CronusVLA: Towards Efficient and Robust Manipulation via Multi-Frame Vision-Language-Action Modeling</a> <span class="paper-meta">CronusVLA · Hao Li et al. · 2025</span></li>
+<li id="paper-2510.00695"><a href="https://arxiv.org/abs/2510.00695">HAMLET: Switch your Vision-Language-Action Model into a History-Aware Policy</a> <span class="paper-meta">HAMLET · Myungkyu Koo et al. · 2025</span></li>
+<li id="paper-2510.04246"><a href="https://arxiv.org/abs/2510.04246">ContextVLA: Vision-Language-Action Model with Amortized Multi-Frame Context</a> <span class="paper-meta">ContextVLA · Huiwon Jang et al. · 2025</span></li>
+<li id="paper-2509.12129"><a href="https://arxiv.org/abs/2509.12129">Embodied Navigation Foundation Model</a> <span class="paper-meta">NavFoM · Jiazhao Zhang et al. · 2025</span></li>
+<li id="paper-2607.20785"><a href="https://arxiv.org/abs/2607.20785">Robostral Navigate</a> <span class="paper-meta">Robostral Navigate · Abdelaziz Bounhar et al. · 2026</span></li>
+<li id="paper-2306.14846"><a href="https://arxiv.org/abs/2306.14846">ViNT: A Foundation Model for Visual Navigation</a> <span class="paper-meta">ViNT · Dhruv Shah et al. · 2023</span></li>
+<li id="paper-2310.07896"><a href="https://arxiv.org/abs/2310.07896">NoMaD: Goal Masked Diffusion Policies for Navigation and Exploration</a> <span class="paper-meta">NoMaD · Ajay Sridhar et al. · 2023</span></li>
+<li id="paper-2210.05714"><a href="https://arxiv.org/abs/2210.05714">Visual Language Maps for Robot Navigation</a> <span class="paper-meta">VLMaps · Chenguang Huang et al. · 2022</span></li>
+<li id="paper-2607.00272"><a href="https://arxiv.org/abs/2607.00272">ASPIRE: Agentic /Skills Discovery for Robotics</a> <span class="paper-meta">ASPIRE · Runyu Lu et al. · 2026</span></li>
+<li id="paper-2603.28730"><a href="https://arxiv.org/abs/2603.28730">SOLE-R1: Video-Language Reasoning as the Sole Reward for On-Robot Reinforcement Learning</a> <span class="paper-meta">SOLE-R1 · Philip Schroeder et al. · 2026</span></li>
+<li id="paper-2010.14876"><a href="https://arxiv.org/abs/2010.14876">Fighting Copycat Agents in Behavioral Cloning from Observation Histories</a> <span class="paper-meta">Wen et al. (copycat) · Chuan Wen et al. · 2020</span></li>
+<li id="paper-1905.11979"><a href="https://arxiv.org/abs/1905.11979">Causal Confusion in Imitation Learning</a> <span class="paper-meta">de Haan et al. (causal confusion) · Pim de Haan et al. · 2019</span></li>
+<li id="paper-2505.09561"><a href="https://arxiv.org/abs/2505.09561">Learning Long-Context Diffusion Policies via Past-Token Prediction</a> <span class="paper-meta">Torne et al. (past-token prediction) · Marcel Torne et al. · 2025</span></li>
+<li id="paper-2306.03310"><a href="https://arxiv.org/abs/2306.03310">LIBERO: Benchmarking Knowledge Transfer for Lifelong Robot Learning</a> <span class="paper-meta">LIBERO · Bo Liu et al. · 2023</span></li>
+<li id="paper-2510.03827"><a href="https://arxiv.org/abs/2510.03827">LIBERO-PRO: Towards Robust and Fair Evaluation of Vision-Language-Action Models Beyond Memorization</a> <span class="paper-meta">LIBERO-PRO · Xueyang Zhou et al. · 2025</span></li>
+<li id="paper-2405.05941"><a href="https://arxiv.org/abs/2405.05941">Evaluating Real-World Robot Manipulation Policies in Simulation</a> <span class="paper-meta">SimplerEnv · Xuanlin Li et al. · 2024</span></li>
+<li id="paper-2406.02523"><a href="https://arxiv.org/abs/2406.02523">RoboCasa: Large-Scale Simulation of Everyday Tasks for Generalist Robots</a> <span class="paper-meta">RoboCasa · Soroush Nasiriany et al. · 2024</span></li>
+<li id="paper-2004.02857"><a href="https://arxiv.org/abs/2004.02857">Beyond the Nav-Graph: Vision-and-Language Navigation in Continuous Environments</a> <span class="paper-meta">R2R-CE · Jacob Krantz et al. · 2020</span></li>
+<li id="paper-2010.07954"><a href="https://arxiv.org/abs/2010.07954">Room-Across-Room: Multilingual Vision-and-Language Navigation with Dense Spatiotemporal Grounding</a> <span class="paper-meta">RxR-CE · Alexander Ku et al. · 2020</span></li>
+</ul>
+<p class="paper-group">Analysis of history and memory use (3)</p>
+<ul>
+<li id="paper-2610.23372"><a href="https://arxiv.org/abs/2610.23372">Beyond Success Rate: Interventional Evaluation of Memory in Vision-Language-Action Systems</a> <span class="paper-meta">Keyuan Luo et al. · 2026</span></li>
+<li id="paper-2609.27247"><a href="https://arxiv.org/abs/2609.27247">Memory That Changes Action Is Not Memory That Guides It: Counterfactual Auditing of History-Conditioned Robot Policies</a> <span class="paper-meta">Jiajie Zhang et al. · 2026</span></li>
+<li id="paper-2607.03372"><a href="https://arxiv.org/abs/2607.03372">Present but Not Remembered: Auditing How Frozen VLAs Encode, Deploy, and Steer Visual History</a> <span class="paper-meta">Chih-Ting Liao and Xin Cao · 2026</span></li>
+</ul>
+<p class="paper-group">Benchmarks (23)</p>
+<ul>
+<li id="paper-2609.38886"><a href="https://arxiv.org/abs/2609.38886">Benchmarking and Enhancing Skill-Level Memory for Partially Observable Robotic Manipulation</a> <span class="paper-meta">Yansong Shi et al. · 2026</span></li>
+<li id="paper-2606.19338"><a href="https://arxiv.org/abs/2606.19338">Beyond the Current Observation: Evaluating Multimodal Large Language Models in Controllable Non-Markov Games</a> <span class="paper-meta">Shengyuan Ding et al. · 2026</span></li>
+<li id="paper-2610.17350"><a href="https://arxiv.org/abs/2610.17350">Can a Frontier VLM Serve as a Robot Policy for Memory-Dependent Manipulation?</a> <span class="paper-meta">Jack B. Jedlicki et al. · 2026</span></li>
+<li id="paper-2608.08036"><a href="https://arxiv.org/abs/2608.08036">Compiling and Benchmarking Task-State Horizons for Embodied Agents</a> <span class="paper-meta">Meiqi Wang and Shichao Li · 2026</span></li>
+<li id="paper-2610.05013"><a href="https://arxiv.org/abs/2610.05013">EMBER-Bench: Benchmarking Cross-Event Causal Memory in Long-Horizon Embodied Tasks</a> <span class="paper-meta">Aoyang Cai et al. · 2026</span></li>
+<li id="paper-2609.28236"><a href="https://arxiv.org/abs/2609.28236">EmbodiedMemory-Bench: Benchmarking Embodied Memory for Long-Horizon Embodied Tasks</a> <span class="paper-meta">Lizhou Liang et al. · 2026</span></li>
+<li id="paper-2601.10744"><a href="https://arxiv.org/abs/2601.10744">Explore with Long-term Memory: A Benchmark and Multimodal LLM-based Reinforcement Learning Framework for Embodied Exploration</a> <span class="paper-meta">Sen Wang et al. · 2026</span></li>
+<li id="paper-2610.04255"><a href="https://arxiv.org/abs/2610.04255">Grounded in Time: A Multi-Source Dataset and Benchmark for Temporal Grounding in Robotic Manipulation</a> <span class="paper-meta">Yi Wang et al. · 2026</span></li>
+<li id="paper-2604.16788"><a href="https://arxiv.org/abs/2604.16788">LongBench: Evaluating Robotic Manipulation Policies on Real-World Long-Horizon Tasks</a> <span class="paper-meta">Xueyao Chen et al. · 2026</span></li>
+<li id="paper-2609.07047"><a href="https://arxiv.org/abs/2609.07047">MEMOBench: A Process Level Memory Benchmark for Robotic Manipulation</a> <span class="paper-meta">Haiyang Sun et al. · 2026</span></li>
+<li id="paper-2610.00604"><a href="https://arxiv.org/abs/2610.00604">MIKASA-Robo-VLA: Benchmarking Memory in VLA Models for Long-Horizon Manipulation</a> <span class="paper-meta">Egor Cherepanov et al. · 2026</span></li>
+<li id="paper-2609.32313"><a href="https://arxiv.org/abs/2609.32313">MemTransfer: Benchmarking Memory Beyond Matched Experience in Embodied Decision-Making</a> <span class="paper-meta">Haiming Tang et al. · 2026</span></li>
+<li id="paper-2601.15086"><a href="https://arxiv.org/abs/2601.15086">Memory Retention Is Not Enough to Master Memory Tasks in Reinforcement Learning</a> <span class="paper-meta">Oleg Shchendrigin et al. · 2026</span></li>
+<li id="paper-2603.01229"><a href="https://arxiv.org/abs/2603.01229">RMBench: Memory-Dependent Robotic Manipulation Benchmark with Insights into Policy Design</a> <span class="paper-meta">Tianxing Chen et al. · 2026</span></li>
+<li id="paper-2606.22338"><a href="https://arxiv.org/abs/2606.22338">RoboMME-Interference: Benchmarking Robot Memory Under Interference</a> <span class="paper-meta">Soumil Rathi · 2026</span></li>
+<li id="paper-2605.10921"><a href="https://arxiv.org/abs/2605.10921">RoboMemArena: A Comprehensive and Challenging Robotic Memory Benchmark</a> <span class="paper-meta">Huashuo Lei et al. · 2026</span></li>
+<li id="paper-2610.12561"><a href="https://arxiv.org/abs/2610.12561">What Should Embodied Agents Remember? Benchmarking and Evaluating Memory Modality for Embodied Agents</a> <span class="paper-meta">Junxiang Wang et al. · 2026</span></li>
+<li id="paper-2606.18847"><a href="https://arxiv.org/abs/2606.18847">WorldLines: Benchmarking and Modeling Long-Horizon Stateful Embodied Agents</a> <span class="paper-meta">Yehang Zhang et al. · 2026</span></li>
+<li id="paper-2508.00046"><a href="https://arxiv.org/abs/2508.00046">Benchmarking Partial Observability in Reinforcement Learning with a Suite of Memory-Improvable Domains</a> <span class="paper-meta">Ruo Yu Tao et al. · 2025</span></li>
+<li id="paper-2506.15635"><a href="https://arxiv.org/abs/2506.15635">FindingDory: A Benchmark to Evaluate Memory in Embodied Agents</a> <span class="paper-meta">Karmesh Yadav et al. · 2025</span></li>
+<li id="paper-2502.10550"><a href="https://arxiv.org/abs/2502.10550">Memory, Benchmark &amp; Robots: A Benchmark for Solving Complex Tasks with Reinforcement Learning</a> <span class="paper-meta">Egor Cherepanov et al. · 2025</span></li>
+<li id="paper-2506.06677"><a href="https://arxiv.org/abs/2506.06677">RoboCerebra: A Large-scale Benchmark for Long-horizon Robotic Manipulation Evaluation</a> <span class="paper-meta">Songhao Han et al. · 2025</span></li>
+<li id="paper-2404.06609"><a href="https://arxiv.org/abs/2404.06609">GOAT-Bench: A Benchmark for Multi-Modal Lifelong Navigation</a> <span class="paper-meta">Mukul Khanna et al. · 2024</span></li>
+</ul>
+<p class="paper-group">Key frames and retrieval (11)</p>
+<ul>
+<li id="paper-2602.15010"><a href="https://arxiv.org/abs/2602.15010">BPP: Long-Context Robot Imitation Learning by Focusing on Key History Frames</a> <span class="paper-meta">Max Sobol Mark et al. · 2026</span></li>
+<li id="paper-2610.00982"><a href="https://arxiv.org/abs/2610.00982">Divide-and-Remember: Recursive Action-Relevant Memory for Long-Horizon VLA Policies</a> <span class="paper-meta">Xuehui Yu et al. · 2026</span></li>
+<li id="paper-2606.20092"><a href="https://arxiv.org/abs/2606.20092">EventVLA: Event-Driven Visual Evidence Memory for Long-Horizon Vision-Language-Action Policies</a> <span class="paper-meta">Ganlin Yang et al. · 2026</span></li>
+<li id="paper-2606.23589"><a href="https://arxiv.org/abs/2606.23589">KEMO: Event-Driven Keyframe Memory for Long-Horizon Robot Manipulation with VLA Policies</a> <span class="paper-meta">Yihan Zeng et al. · 2026</span></li>
+<li id="paper-2606.25136"><a href="https://arxiv.org/abs/2606.25136">Memory Retrieval in Visuomotor Policies for Long-Horizon Robot Control</a> <span class="paper-meta">Rutav Shah et al. · 2026</span></li>
+<li id="paper-2603.01465"><a href="https://arxiv.org/abs/2603.01465">Non-Markovian Long-Horizon Robot Manipulation via Keyframe Chaining</a> <span class="paper-meta">Yipeng Chen et al. · 2026</span></li>
+<li id="paper-2409.12294"><a href="https://arxiv.org/abs/2409.12294">RAG-Modulo: Solving Sequential Tasks using Experience, Critics, and Language Models</a> <span class="paper-meta">Abhinav Jain et al. · 2024</span></li>
+<li id="paper-2402.03610"><a href="https://arxiv.org/abs/2402.03610">RAP: Retrieval-Augmented Planning with Contextual Memory for Multimodal LLM Agents</a> <span class="paper-meta">Tomoyuki Kagaya et al. · 2024</span></li>
+<li id="paper-2409.13682"><a href="https://arxiv.org/abs/2409.13682">ReMEmbR: Building and Reasoning Over Long-Horizon Spatio-Temporal Memory for Robot Navigation</a> <span class="paper-meta">Abrar Anwar et al. · 2024</span></li>
+<li id="paper-2311.05997"><a href="https://arxiv.org/abs/2311.05997">JARVIS-1: Open-World Multi-task Agents with Memory-Augmented Multimodal Language Models</a> <span class="paper-meta">Zihao Wang et al. · 2023</span></li>
+<li id="paper-1703.01988"><a href="https://arxiv.org/abs/1703.01988">Neural Episodic Control</a> <span class="paper-meta">Alexander Pritzel et al. · 2017</span></li>
+</ul>
+<p class="paper-group">Latent and vector memory (10)</p>
+<ul>
+<li id="paper-2603.24576"><a href="https://arxiv.org/abs/2603.24576">Chameleon: Control-Indexed Prospective Memory for Visuomotor Manipulation</a> <span class="paper-meta">Xinying Guo et al. · 2026</span></li>
+<li id="paper-2607.07608"><a href="https://arxiv.org/abs/2607.07608">Dual Latent Memory in Vision-Language-Action Models for Robotic Manipulation</a> <span class="paper-meta">Hongyu Qu et al. · 2026</span></li>
+<li id="paper-2605.10993"><a href="https://arxiv.org/abs/2605.10993">ECHO: Continuous Hierarchical Memory for Vision-Language-Action Models</a> <span class="paper-meta">Yanbin Hu et al. · 2026</span></li>
+<li id="paper-2610.21362"><a href="https://arxiv.org/abs/2610.21362">LTM: Latent Transition Based In-Context Memory for Vision-Language-Action Models</a> <span class="paper-meta">Qixin Sun et al. · 2026</span></li>
+<li id="paper-2610.22323"><a href="https://arxiv.org/abs/2610.22323">Mem4Act: Learning Effective Latent Memory for Long-Horizon Robotic Manipulation</a> <span class="paper-meta">Yun Zhang et al. · 2026</span></li>
+<li id="paper-2610.14406"><a href="https://arxiv.org/abs/2610.14406">Memory Without Curation: Learning Multi-Stream Latent Memory for Robot Policies</a> <span class="paper-meta">Yilin Wu et al. · 2026</span></li>
+<li id="paper-2606.09827"><a href="https://arxiv.org/abs/2606.09827">MemoryVLA++: Temporal Modeling via Memory and Imagination in Vision-Language-Action Models</a> <span class="paper-meta">Hao Shi et al. · 2026</span></li>
+<li id="paper-2606.16178"><a href="https://arxiv.org/abs/2606.16178">Scaling Short-Term Memory of Visuomotor Policies for Long-Horizon Tasks</a> <span class="paper-meta">Rutav Shah et al. · 2026</span></li>
+<li id="paper-2609.22684"><a href="https://arxiv.org/abs/2609.22684">StateMem: Single-State Residual Memory with Adaptive Inference for Vision-Language-Action Policies</a> <span class="paper-meta">Wenzhuo Li et al. · 2026</span></li>
+<li id="paper-2603.04910"><a href="https://arxiv.org/abs/2603.04910">VPWEM: Non-Markovian Visuomotor Policy with Working and Episodic Memory</a> <span class="paper-meta">Yuheng Lei et al. · 2026</span></li>
+</ul>
+<p class="paper-group">Longer frame context (8)</p>
+<ul>
+<li id="paper-2609.30828"><a href="https://arxiv.org/abs/2609.30828">HIRE: History-Conditioned Interaction Reasoning and High-Rate Execution for Visually Aliased Precision Manipulation</a> <span class="paper-meta">Rongji Li et al. · 2026</span></li>
+<li id="paper-2609.05533"><a href="https://arxiv.org/abs/2609.05533">SimpleMemVLA: A Simple but Effective Native-Video Memory for Vision-Language-Action Models</a> <span class="paper-meta">Cheng Yin et al. · 2026</span></li>
+<li id="paper-2608.26821"><a href="https://arxiv.org/abs/2608.26821">TemporalFlow-VLA: Learning Physically Grounded Execution History for Long-Horizon Robot Manipulation</a> <span class="paper-meta">Jiarui Yang et al. · 2026</span></li>
+<li id="paper-2606.16447"><a href="https://arxiv.org/abs/2606.16447">Training and Evaluating Diffusion Policies with Long Context Lengths</a> <span class="paper-meta">Abhinav Agarwal et al. · 2026</span></li>
+<li id="paper-2507.05240"><a href="https://arxiv.org/abs/2507.05240">StreamVLN: Streaming Vision-and-Language Navigation via SlowFast Context Modeling</a> <span class="paper-meta">Meng Wei et al. · 2025</span></li>
+<li id="paper-2506.17221"><a href="https://arxiv.org/abs/2506.17221">VLN-R1: Vision-Language Navigation via Reinforcement Fine-Tuning</a> <span class="paper-meta">Zhangyang Qi et al. · 2025</span></li>
+<li id="paper-2207.09705"><a href="https://arxiv.org/abs/2207.09705">Resolving Copycat Problems in Visual Imitation Learning via Residual Action Prediction</a> <span class="paper-meta">Chia-Chi Chuang et al. · 2022</span></li>
+<li id="paper-2110.13309"><a href="https://arxiv.org/abs/2110.13309">History Aware Multimodal Transformer for Vision-and-Language Navigation</a> <span class="paper-meta">Shizhe Chen et al. · 2021</span></li>
+</ul>
+<p class="paper-group">Maps and scene memory (28)</p>
+<ul>
+<li id="paper-2608.06729"><a href="https://arxiv.org/abs/2608.06729">AtlasVLA: Persistent World-Ego State Modeling for Vision-Language-Action Models</a> <span class="paper-meta">Guiyu Zhao et al. · 2026</span></li>
+<li id="paper-2608.14986"><a href="https://arxiv.org/abs/2608.14986">GaussMemory: Task-Driven 3D Gaussian Scene Memory for Long-Horizon Robotic Manipulation</a> <span class="paper-meta">Zhiqiang Hu et al. · 2026</span></li>
+<li id="paper-2609.28798"><a href="https://arxiv.org/abs/2609.28798">OCC4M: Object-Centric 4D Memory for Spatiotemporal Reasoning in Long-Horizon Manipulation</a> <span class="paper-meta">Jack B. Jedlicki et al. · 2026</span></li>
+<li id="paper-2605.26256"><a href="https://arxiv.org/abs/2605.26256">Personalizing Embodied Multimodal Large Language Model Agents over Long-term User Interactions</a> <span class="paper-meta">Jeongeun Lee et al. · 2026</span></li>
+<li id="paper-2606.12956"><a href="https://arxiv.org/abs/2606.12956">SERF: Spatiotemporal Environment and Robot Feature Map for Long-Horizon Mobile Manipulation</a> <span class="paper-meta">Sunghwan Kim et al. · 2026</span></li>
+<li id="paper-2609.08444"><a href="https://arxiv.org/abs/2609.08444">Safe Task Planning with Long-Term Graph Memory for Embodied Agents</a> <span class="paper-meta">Siyuan Li et al. · 2026</span></li>
+<li id="paper-2605.22283"><a href="https://arxiv.org/abs/2605.22283">Spatial Memory for Out-of-Vision Manipulation in Vision-Language-Action</a> <span class="paper-meta">Pengteng Li et al. · 2026</span></li>
+<li id="paper-2609.34554"><a href="https://arxiv.org/abs/2609.34554">Where Memory Belongs: Ledger, an Object Ledger for Memory-Augmented VLAs</a> <span class="paper-meta">Tanguy Dieudonné et al. · 2026</span></li>
+<li id="paper-2505.05622"><a href="https://arxiv.org/abs/2505.05622">CityNavAgent: Aerial Vision-and-Language Navigation with Hierarchical Semantic Planning and Global Memory</a> <span class="paper-meta">Weichen Zhang et al. · 2025</span></li>
+<li id="paper-2506.15096"><a href="https://arxiv.org/abs/2506.15096">DyNaVLM: Zero-Shot Vision-Language Navigation System with Dynamic Viewpoints and Self-Refining Graph Memory</a> <span class="paper-meta">Zihe Ji et al. · 2025</span></li>
+<li id="paper-2511.18112"><a href="https://arxiv.org/abs/2511.18112">EchoVLA: Robotic Vision-Language-Action Model with Synergistic Declarative Memory for Mobile Manipulation</a> <span class="paper-meta">Min Lin et al. · 2025</span></li>
+<li id="paper-2508.01917"><a href="https://arxiv.org/abs/2508.01917">L3M+P: Lifelong Planning with Large Language Models</a> <span class="paper-meta">Krish Agarwal et al. · 2025</span></li>
+<li id="paper-2502.13451"><a href="https://arxiv.org/abs/2502.13451">MapNav: A Novel Memory Representation via Annotated Semantic Maps for Vision-and-Language Navigation</a> <span class="paper-meta">Lingfeng Zhang et al. · 2025</span></li>
+<li id="paper-TMM.2025.3586105"><a href="https://doi.org/10.1109/TMM.2025.3586105">MossVLN: Memory-Observation Synergistic System for Continuous Vision-Language Navigation</a> <span class="paper-meta">Ting Yu et al. · 2025</span></li>
+<li id="paper-2411.17735"><a href="https://arxiv.org/abs/2411.17735">3D-Mem: 3D Scene Memory for Embodied Exploration and Reasoning</a> <span class="paper-meta">Yuncong Yang et al. · 2024</span></li>
+<li id="paper-2403.17846"><a href="https://arxiv.org/abs/2403.17846">Hierarchical Open-Vocabulary 3D Scene Graphs for Language-Grounded Robot Navigation</a> <span class="paper-meta">Abdelrhman Werby et al. · 2024</span></li>
+<li id="paper-2409.14908"><a href="https://arxiv.org/abs/2409.14908">KARMA: Augmenting Embodied AI Agents with Long-and-short Term Memory Systems</a> <span class="paper-meta">Zixuan Wang et al. · 2024</span></li>
+<li id="paper-2405.10620"><a href="https://arxiv.org/abs/2405.10620">MC-GPT: Empowering Vision-and-Language Navigation with Memory Map and Reasoning Chains</a> <span class="paper-meta">Zhaohuan Zhan et al. · 2024</span></li>
+<li id="paper-2401.07314"><a href="https://arxiv.org/abs/2401.07314">MapGPT: Map-Guided Prompting with Adaptive Path Planning for Vision-and-Language Navigation</a> <span class="paper-meta">Jiaqi Chen et al. · 2024</span></li>
+<li id="paper-2309.16650"><a href="https://arxiv.org/abs/2309.16650">ConceptGraphs: Open-Vocabulary 3D Scene Graphs for Perception and Planning</a> <span class="paper-meta">Qiao Gu et al. · 2023</span></li>
+<li id="paper-2311.06430"><a href="https://arxiv.org/abs/2311.06430">GOAT: GO to Any Thing</a> <span class="paper-meta">Matthew Chang et al. · 2023</span></li>
+<li id="paper-2307.12907"><a href="https://arxiv.org/abs/2307.12907">GridMM: Grid Memory Map for Vision-and-Language Navigation</a> <span class="paper-meta">Zihan Wang et al. · 2023</span></li>
+<li id="paper-2212.04385"><a href="https://arxiv.org/abs/2212.04385">BEVBert: Multimodal Map Pre-training for Language-guided Navigation</a> <span class="paper-meta">Dong An et al. · 2022</span></li>
+<li id="paper-2210.05663"><a href="https://arxiv.org/abs/2210.05663">CLIP-Fields: Weakly Supervised Semantic Fields for Robotic Memory</a> <span class="paper-meta">Nur Muhammad Mahi Shafiullah et al. · 2022</span></li>
+<li id="paper-2005.12256"><a href="https://arxiv.org/abs/2005.12256">Neural Topological SLAM for Visual Navigation</a> <span class="paper-meta">Devendra Singh Chaplot et al. · 2020</span></li>
+<li id="paper-2008.09285"><a href="https://arxiv.org/abs/2008.09285">Occupancy Anticipation for Efficient Exploration and Navigation</a> <span class="paper-meta">Santhosh K. Ramakrishnan et al. · 2020</span></li>
+<li id="paper-1903.03878"><a href="https://arxiv.org/abs/1903.03878">Scene Memory Transformer for Embodied Agents in Long-Horizon Tasks</a> <span class="paper-meta">Kuan Fang et al. · 2019</span></li>
+<li id="paper-1706.09520"><a href="https://arxiv.org/abs/1706.09520">Neural SLAM: Learning to Explore with External Memory</a> <span class="paper-meta">Jingwei Zhang et al. · 2017</span></li>
+</ul>
+<p class="paper-group">Other designs (15)</p>
+<ul>
+<li id="paper-2609.11308"><a href="https://arxiv.org/abs/2609.11308">2AM: Grounding Agent-Side Memory as Guidance for Steerable Action Models in Long-Horizon Manipulation</a> <span class="paper-meta">Yutong Hu et al. · 2026</span></li>
+<li id="paper-2609.22730"><a href="https://arxiv.org/abs/2609.22730">BEACON: Belief-Enabled Adaptive CONtrol for Imitation Learning under Uncertainty</a> <span class="paper-meta">Moonyoung Lee et al. · 2026</span></li>
+<li id="paper-2602.15513"><a href="https://arxiv.org/abs/2602.15513">HIMM: Human-Inspired Long-Term Memory Modeling for Embodied Exploration and Question Answering</a> <span class="paper-meta">Ji Li et al. · 2026</span></li>
+<li id="paper-2603.18494"><a href="https://arxiv.org/abs/2603.18494">MemoAct: Atkinson-Shiffrin-Inspired Hierarchical Memory-Augmented Policy for Robotic Manipulation</a> <span class="paper-meta">Liufan Tan et al. · 2026</span></li>
+<li id="paper-2606.08288"><a href="https://arxiv.org/abs/2606.08288">MotionVLA: Injecting Geometric Motion into Vision-Language-Action Model</a> <span class="paper-meta">Shanglin Yuan et al. · 2026</span></li>
+<li id="paper-2610.22686"><a href="https://arxiv.org/abs/2610.22686">Multimodal Filesystem Memory For Long-Horizon Embodied Agents</a> <span class="paper-meta">Chloe Su et al. · 2026</span></li>
+<li id="paper-2610.20524"><a href="https://arxiv.org/abs/2610.20524">Physical Time as a Missing Dimension of Robot Policy Memory Dynamics</a> <span class="paper-meta">Yushen Liang et al. · 2026</span></li>
+<li id="paper-2609.36595"><a href="https://arxiv.org/abs/2609.36595">Simple Agentic Memory for Generalist Robot Policies</a> <span class="paper-meta">Yuyou Zhang et al. · 2026</span></li>
+<li id="paper-2602.07388"><a href="https://arxiv.org/abs/2602.07388">Trace-Focused Diffusion Policy for Multi-Modal Action Disambiguation in Long-Horizon Robotic Manipulation</a> <span class="paper-meta">Yuxuan Hu et al. · 2026</span></li>
+<li id="paper-2606.03787"><a href="https://arxiv.org/abs/2606.03787">Worth Remembering: Surprise-Gated Robot Episodic Memory</a> <span class="paper-meta">Nicolas Gorlo et al. · 2026</span></li>
+<li id="paper-2506.24019"><a href="https://arxiv.org/abs/2506.24019">Ella: Embodied Social Agents with Lifelong Memory</a> <span class="paper-meta">Hongxin Zhang et al. · 2025</span></li>
+<li id="paper-2509.17141"><a href="https://arxiv.org/abs/2509.17141">History-Aware Visuomotor Policy Learning via Point Tracking</a> <span class="paper-meta">Jingjing Chen et al. · 2025</span></li>
+<li id="paper-2509.22548"><a href="https://arxiv.org/abs/2509.22548">JanusVLN: Decoupling Semantics and Spatiality with Dual Implicit Memory for Vision-Language Navigation</a> <span class="paper-meta">Shuang Zeng et al. · 2025</span></li>
+<li id="paper-2509.20754"><a href="https://arxiv.org/abs/2509.20754">Meta-Memory: Retrieving and Integrating Semantic-Spatial Memories for Robot Spatial Reasoning</a> <span class="paper-meta">Yufan Mao et al. · 2025</span></li>
+<li id="paper-2501.00358"><a href="https://arxiv.org/abs/2501.00358">Embodied VideoAgent: Persistent Memory from Egocentric Videos and Embodied Sensors Enables Dynamic Scene Understanding</a> <span class="paper-meta">Yue Fan et al. · 2024</span></li>
+</ul>
+<p class="paper-group">Recurrent and state-space memory (13)</p>
+<ul>
+<li id="paper-2606.02775"><a href="https://arxiv.org/abs/2606.02775">AURA: Action-Gated Memory for Robot Policies at Constant VRAM</a> <span class="paper-meta">Josef Chen · 2026</span></li>
+<li id="paper-2606.30318"><a href="https://arxiv.org/abs/2606.30318">Chronos: A Physics-Informed Full-History Framework for Non-Markovian Long-Horizon Manipulation</a> <span class="paper-meta">Yulin Zhou et al. · 2026</span></li>
+<li id="paper-2609.32453"><a href="https://arxiv.org/abs/2609.32453">DRAM: Delta-rule Recurrent Associative Memory for Robot Manipulation Policies</a> <span class="paper-meta">Xinyu Zhao et al. · 2026</span></li>
+<li id="paper-2605.14598"><a href="https://arxiv.org/abs/2605.14598">DSSP: Diffusion State Space Policy with Full-History Encoding</a> <span class="paper-meta">Zhiyuan Guan et al. · 2026</span></li>
+<li id="paper-2609.28256"><a href="https://arxiv.org/abs/2609.28256">MemBodied: Recurrent Associative Memory for Vision-Language-Action Models</a> <span class="paper-meta">Tej Deep Pala et al. · 2026</span></li>
+<li id="paper-2609.25757"><a href="https://arxiv.org/abs/2609.25757">Minimal Recurrent Behavioral Memory for Imitation under Partial Observability</a> <span class="paper-meta">Xianyao Li et al. · 2026</span></li>
+<li id="paper-2609.35200"><a href="https://arxiv.org/abs/2609.35200">ReCAT: Remember, Count, and Time: Structured Recurrent Memory for Robot Manipulation</a> <span class="paper-meta">Pankhuri Vanjani et al. · 2026</span></li>
+<li id="paper-2603.12942"><a href="https://arxiv.org/abs/2603.12942">ReMem-VLA: Empowering Vision-Language-Action Model with Memory via Dual-Level Recurrent Queries</a> <span class="paper-meta">Hang Li et al. · 2026</span></li>
+<li id="paper-2602.20659"><a href="https://arxiv.org/abs/2602.20659">Recursive Belief Vision Language Action Models</a> <span class="paper-meta">Vaidehi Bagaria et al. · 2026</span></li>
+<li id="paper-2609.22854"><a href="https://arxiv.org/abs/2609.22854">SmoLSTM: A Compact Vision-Language-Action Model with Recurrent Memory that Persists</a> <span class="paper-meta">Jan-Gerrit Habekost et al. · 2026</span></li>
+<li id="paper-2606.12497"><a href="https://arxiv.org/abs/2606.12497">μVLA: On Recurrent Memory for Partially Observable Manipulation in VLA Models</a> <span class="paper-meta">Egor Cherepanov et al. · 2026</span></li>
+<li id="paper-2505.12410"><a href="https://arxiv.org/abs/2505.12410">MTIL: Encoding Full History with Mamba for Temporal Imitation Learning</a> <span class="paper-meta">Yulin Zhou et al. · 2025</span></li>
+<li id="paper-1906.09510"><a href="https://arxiv.org/abs/1906.09510">Learning Belief Representations for Imitation Learning in POMDPs</a> <span class="paper-meta">Tanmay Gangwani et al. · 2019</span></li>
+</ul>
+<p class="paper-group">Skills and code (10)</p>
+<ul>
+<li id="paper-2609.37810"><a href="https://arxiv.org/abs/2609.37810">Explore, Execute, Evolve: A Skill Acquisition and Reuse Loop for Embodied Agents</a> <span class="paper-meta">Sicheng Xie et al. · 2026</span></li>
+<li id="paper-2603.04560"><a href="https://arxiv.org/abs/2603.04560">From Local Corrections to Generalized Skills: Improving Neuro-Symbolic Policies with MEMO</a> <span class="paper-meta">Benjamin A. Christie et al. · 2026</span></li>
+<li id="paper-2610.18792"><a href="https://arxiv.org/abs/2610.18792">SEAR: Self-Evolving Agentic Robotics</a> <span class="paper-meta">Xinyi Wang et al. · 2026</span></li>
+<li id="paper-2608.14944"><a href="https://arxiv.org/abs/2608.14944">SkillComposer: Learning Reusable Skills for Natural-Language Robot Programming</a> <span class="paper-meta">John Woods and Hasti Seifi · 2026</span></li>
+<li id="paper-2608.09410"><a href="https://arxiv.org/abs/2608.09410">Skills in Weights, Memory in Code: Hybrid Learning for Memory-Dependent Robot Manipulation</a> <span class="paper-meta">Yunhao Zhao et al. · 2026</span></li>
+<li id="paper-2608.17209"><a href="https://arxiv.org/abs/2608.17209">Teach and Grow: An Agent-Centered Architecture for General Robot Learning</a> <span class="paper-meta">Chang Nie et al. · 2026</span></li>
+<li id="paper-2609.36691"><a href="https://arxiv.org/abs/2609.36691">Video2Skill: From Streaming Experience to Reusable Embodied Skills</a> <span class="paper-meta">Jianshu Zhang et al. · 2026</span></li>
+<li id="paper-2509.18597"><a href="https://arxiv.org/abs/2509.18597">Robotic Ultra-Long-Horizon Manipulation Skills via Human-guided Lifelong Code Generation</a> <span class="paper-meta">Yuan Meng et al. · 2025</span></li>
+<li id="paper-2406.18746"><a href="https://arxiv.org/abs/2406.18746">Lifelong Robot Library Learning: Bootstrapping Composable and Generalizable Skills for Embodied Control with Language Models</a> <span class="paper-meta">Georgios Tziafas and Hamidreza Kasaei · 2024</span></li>
+<li id="paper-2305.16291"><a href="https://arxiv.org/abs/2305.16291">Voyager: An Open-Ended Embodied Agent with Large Language Models</a> <span class="paper-meta">Guanzhi Wang et al. · 2023</span></li>
+</ul>
+<p class="paper-group">Surveys (1)</p>
+<ul>
+<li id="paper-2610.23319"><a href="https://arxiv.org/abs/2610.23319">From Sliding Windows to Self-evolving Lifelong Memory: A Dual-perspective Survey of Memory Paradigms for Long-Horizon Robotics VLA Models</a> <span class="paper-meta">Yong Wang et al. · 2026</span></li>
+</ul>
+<p class="paper-group">Text and language memory (16)</p>
+<ul>
+<li id="paper-2608.16889"><a href="https://arxiv.org/abs/2608.16889">Don't Drop the BATON: Long-Horizon Robot Manipulation via Agentic Subtask Exploration and Transition-aware Memory</a> <span class="paper-meta">Bingxin Xu et al. · 2026</span></li>
+<li id="paper-2604.13533"><a href="https://arxiv.org/abs/2604.13533">Evolvable Embodied Agent for Robotic Manipulation via Long Short-Term Reflection and Optimization</a> <span class="paper-meta">Jianzong Wang et al. · 2026</span></li>
+<li id="paper-2608.04765"><a href="https://arxiv.org/abs/2608.04765">Explicit Language Memory for Long-Horizon Planning in Vision-Language-Action Models</a> <span class="paper-meta">Houze Xu et al. · 2026</span></li>
+<li id="paper-2607.29600"><a href="https://arxiv.org/abs/2607.29600">HAM-VLN: Harnessing Hierarchical Agentic Memory for Zero-Shot Vision-and-Language Navigation</a> <span class="paper-meta">An Liu et al. · 2026</span></li>
+<li id="paper-2603.03596"><a href="https://arxiv.org/abs/2603.03596">MEM: Multi-Scale Embodied Memory for Vision Language Action Models</a> <span class="paper-meta">Marcel Torne et al. · 2026</span></li>
+<li id="paper-2602.21013"><a href="https://arxiv.org/abs/2602.21013">Notes-to-Self: Scratchpad Augmented VLAs for Memory Dependent Manipulation Tasks</a> <span class="paper-meta">Sanjay Haresh et al. · 2026</span></li>
+<li id="paper-2610.12710"><a href="https://arxiv.org/abs/2610.12710">REMM: Revisable Embodied Memory for Manipulation</a> <span class="paper-meta">Revanth Krishna Senthilkumaran et al. · 2026</span></li>
+<li id="paper-2605.18729"><a href="https://arxiv.org/abs/2605.18729">Robo-Cortex: A Self-Evolving Embodied Agent via Dual-Grain Cognitive Memory and Autonomous Knowledge Induction</a> <span class="paper-meta">Nga Teng Chan et al. · 2026</span></li>
+<li id="paper-2507.14975"><a href="https://arxiv.org/abs/2507.14975">FCRF: Flexible Constructivism Reflection for Long-Horizon Robotic Task Planning with Large Language Models</a> <span class="paper-meta">Yufan Song et al. · 2025</span></li>
+<li id="paper-2504.21716"><a href="https://arxiv.org/abs/2504.21716">LLM-Empowered Embodied Agent for Memory-Augmented Task Planning in Household Robotics</a> <span class="paper-meta">Marc Glocker et al. · 2025</span></li>
+<li id="paper-2511.09516"><a href="https://arxiv.org/abs/2511.09516">MAP-VLA: Memory-Augmented Prompting for Vision-Language-Action Model in Robotic Manipulation</a> <span class="paper-meta">Runhao Li et al. · 2025</span></li>
+<li id="paper-2507.13152"><a href="https://arxiv.org/abs/2507.13152">SE-VLN: A Self-Evolving Vision-Language Navigation Framework Based on Multimodal Large Language Models</a> <span class="paper-meta">Xiangyu Dong et al. · 2025</span></li>
+<li id="paper-2310.15127"><a href="https://arxiv.org/abs/2310.15127">Open-Ended Instructable Embodied Agents with Memory-Augmented Large Language Models</a> <span class="paper-meta">Gabriel Sarch et al. · 2023</span></li>
+<li id="paper-2306.15724"><a href="https://arxiv.org/abs/2306.15724">REFLECT: Summarizing Robot Experiences for Failure Explanation and Correction</a> <span class="paper-meta">Zeyi Liu et al. · 2023</span></li>
+<li id="paper-2305.05658"><a href="https://arxiv.org/abs/2305.05658">TidyBot: Personalized Robot Assistance with Large Language Models</a> <span class="paper-meta">Jimmy Wu et al. · 2023</span></li>
+<li id="paper-2207.05608"><a href="https://arxiv.org/abs/2207.05608">Inner Monologue: Embodied Reasoning through Planning with Language Models</a> <span class="paper-meta">Wenlong Huang et al. · 2022</span></li>
+</ul>
 </div>
 
 </details>
