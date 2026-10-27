@@ -196,14 +196,25 @@ test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) =>
         viewport: {width: mode.width, height: mode.height},
         deviceScaleFactor: mode.deviceScaleFactor,
       });
-      // Judge locally served board paint without waiting for third-party embeds.
-      await page.route(/^https?:\/\//, (route) =>
-        new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
+      // Third-party frames (the YouTube embeds) must finish or WebKit never fires
+      // DOMContentLoaded. An aborted frame can sit there for the whole timeout.
+      await page.route(/^https?:\/\//, (route) => {
+        if (new URL(route.request().url()).origin === origin) return route.continue();
+        if (route.request().resourceType() === 'document') {
+          return route.fulfill({status: 200, contentType: 'text/html', body: '<!doctype html><title></title>'});
+        }
+        return route.abort();
+      });
       // Reduced motion removes the chalk filter, so a check that leaves it on misses boards that are blank for readers.
       await page.emulateMedia({reducedMotion: 'no-preference', colorScheme: 'dark'});
       for (const slug of slugs) {
         if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
-        await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 30_000});
+        try {
+          await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'domcontentloaded', timeout: 60_000});
+        } catch (err) {
+          failures.push(`${slug} ${mode.name} did not open: ${err.message.split('\n')[0]}`);
+          continue;
+        }
         await page.waitForTimeout(300);
         const boards = page.locator(mode.boards);
         const count = await boards.count();
