@@ -180,6 +180,57 @@
 </details>
 </div>
 </div>
+<script>
+/* Phone figures are copied from the live board when they near the screen. A capture that
+   scrolls one into view still sees the empty board, a flat field of a few colors. Ask for
+   every figure up front. The hidden live board is not a figure, so a phone capture skips it. */
+(function () {
+  var Native = window.IntersectionObserver;
+  if (Native) {
+    window.IntersectionObserver = function (callback, options) {
+      var observer = new Native(callback, options);
+      var observe = observer.observe.bind(observer);
+      observer.observe = function (target) {
+        observe(target);
+        if (target.classList && target.classList.contains('rc-fig')) {
+          // After the canvas finishes building figures. A synchronous callback re-enters its queue and leaves the earlier figures blank.
+          setTimeout(function () {
+            callback([{
+              isIntersecting: true,
+              target: target,
+              boundingClientRect: target.getBoundingClientRect(),
+              intersectionRatio: 1
+            }], observer);
+          }, 0);
+        }
+      };
+      return observer;
+    };
+  }
+  var phone = window.matchMedia('(max-width: 999px)');
+  function liveBoard() {
+    return document.querySelector('.rls-canvas > .rc-stage > .rc-view, .rls-canvas > .rc-stage > [data-rc-live]');
+  }
+  function markLiveBoard() {
+    var live = liveBoard();
+    if (!live) return;
+    if (phone.matches) {
+      live.setAttribute('data-rc-live', '');
+      live.classList.remove('rc-view');
+    } else {
+      live.classList.add('rc-view');
+    }
+  }
+  if (phone.addEventListener) phone.addEventListener('change', markLiveBoard);
+  else if (phone.addListener) phone.addListener(markLiveBoard);
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () {
+      if (Native) window.IntersectionObserver = Native;
+      markLiveBoard();
+    }, 0);
+  });
+})();
+</script>
 <script src="/assets/robotics/rl/canvas.js" defer></script>
 <p class="series-return"><a href="/#writing">← All writing</a></p></article></div>
 <footer class="site-footer">
