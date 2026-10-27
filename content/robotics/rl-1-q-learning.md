@@ -307,7 +307,7 @@ Teaching calculation, computed in the page. The one-step update in round $k$ is 
 
 ## When it converges
 
-A route can work while other scores are still wrong. The guarantee covers the whole table in the limit, if every cell and move keeps getting tried and the step size shrinks without stopping learning. The drawing shows why: one sweep of expected updates multiplies the largest gap between two guesses of the table by at most $\gamma = 0.99$. The run's fixed step size of 0.5 is outside the guarantee.
+A route can work while other scores are still wrong. The guarantee covers the whole table in the limit, if every cell and move keeps getting tried and the step size shrinks without stopping learning. The drawing shows the full-backup bound: the largest gap between two guesses of the table is multiplied by at most $\gamma = 0.99$. With step size $\alpha = 0.5$, one sweep of expected Q-learning updates that updates every score together multiplies the largest gap in the table by at most $1 - \alpha + \alpha\gamma = 0.995$. The run's fixed step size of 0.5 is outside the guarantee.
 
 <details>
 <summary>The exact conditions, and why the expected target is stable</summary>

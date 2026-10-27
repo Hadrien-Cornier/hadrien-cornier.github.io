@@ -98,7 +98,7 @@
 <figcaption>The holder on the arm, 13 s. The sleeve is on the stock fixed finger, and the pen is in both clamps with a thumbscrew on each. The Wacom Intuos S tablet is in front of the arm, and the tip is above it. <a class="video-link" href="/assets/robotics/so101-pen-holder/on-the-arm.mp4">Open video</a></figcaption>
 </figure>
 </div>
-<p>The videos are not test results. They show no drawing and no tablet reading. I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. I felt no play by hand, but that is not a measurement. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the <a href="https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet">README of the repository</a> explains why.</p>
+<p>I have not measured the play at the tip, the tip position, or the hold of the sleeve yet. I felt no play by hand. The tests are in the last section. I bought the tablet to measure where the pen tip goes, and the <a href="https://github.com/Hadrien-Cornier/so101-pen-holder#measure-the-tip-with-a-wacom-tablet">README of the repository</a> explains why.</p>
 <p>The rest of this article explains how I got there, and why each design failed or lost.</p>
 <h2 id="section-what-the-holder-must-do">What the holder must do</h2>
 <p>I wrote the requirements before I looked for a design. Each one removes one source of error that is not the arm, or one reason why nobody would use the holder:</p>
@@ -241,7 +241,7 @@
 <p>I chose Sy20. It reaches the largest area of paper, it needs no riser, and its tip stays about 6 mm from the roll axis, so a wrist_roll error barely moves it. Every later design keeps this layout.</p>
 <div class="rc-slot" data-for="fig-all-layouts-4" data-src="/assets/robotics/so101-pen-holder/all-layouts-4.svg" data-caption=""><span class="rc-sr">Layouts P60 and H: a close-up, the arm in a drawing pose, and the reach map of each</span></div>
 <h2 id="section-design-2-the-pen-beside-the-fingers">Design 2: the pen beside the fingers</h2>
-<p>Design 2 put the slide of design 1 in the Sy20 layout. It passed its checks after two fixes: I moved the guide 6 mm out of the jaws, because the carriage hit the fingertips, and I made the spine thicker, because one section was only 41.6 mm².</p>
+<p>Design 2 put the slide of design 1 in the Sy20 layout: alongside, leaning out the open side of the jaws, tilt 20 degrees. It passed its checks after two fixes: I moved the guide 6 mm out of the jaws, because the carriage hit the fingertips, and I made the spine thicker, because one section was only 41.6 mm².</p>
 <p>It worked on paper, but it was not a design that anybody else would build. With the bracket, the carriage, the sleeves, two ground shafts, four bushings, the bolts and the glue, it had about 20 parts. The two holds on the pen were only 31 mm apart, and the bushings still left 0.016 to 0.049 mm of play.</p>
 <h2 id="section-design-3-two-v-clamps-on-one-part">Design 3: two V clamps on one part</h2>
 <p>So I asked what each part did, and whether something simpler could do the same job.</p>
