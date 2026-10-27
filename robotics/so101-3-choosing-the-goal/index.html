@@ -578,6 +578,89 @@
 </div>
 </div>
 <script src="/assets/robotics/rl/canvas.js" defer></script>
+<script defer>
+/* At phone width the shared canvas copies each panel only after the figure nears the screen.
+   Until that copy, the figure is the empty board. Draw every panel once, up front, on this page. */
+(function () {
+  var narrow = window.matchMedia('(max-width: 999px)');
+  function fit(v, W, H) {
+    var A = W / H, x = v[0], y = v[1], w = v[2], h = v[3];
+    if (w / h < A) { var nw = h * A; x -= (nw - w) / 2; w = nw; }
+    else { var nh = w / A; y -= (nh - h) * 0.3; h = nh; }
+    return [x, y, w, h];
+  }
+  function vb(v) { return v.map(function (n) { return Math.round(n * 10) / 10; }).join(' '); }
+  function uniqueIds(root, suffix) {
+    var ids = {};
+    [].forEach.call(root.querySelectorAll('[id]'), function (el) { ids[el.id] = el.id + suffix; el.id += suffix; });
+    var attrs = ['fill', 'stroke', 'marker-start', 'marker-mid', 'marker-end', 'clip-path', 'mask', 'filter', 'style', 'href', 'xlink:href'];
+    [].forEach.call(root.querySelectorAll('*'), function (el) {
+      attrs.forEach(function (a) {
+        var value = el.getAttribute(a); if (!value) return;
+        var next = value.replace(/url\(\s*(['"]?)#([^'")\s]+)\1\s*\)/g, function (m, q, id) { return ids[id] ? 'url(#' + ids[id] + ')' : m; });
+        if (a === 'href' || a === 'xlink:href') next = next.replace(/^#(.+)$/, function (m, id) { return ids[id] ? '#' + ids[id] : m; });
+        if (next !== value) el.setAttribute(a, next);
+      });
+    });
+  }
+  function stageView() {
+    var stage = document.querySelector('#rc > .rc-stage');
+    return stage ? stage.querySelector('.rc-view, [data-rc-view="stage"]') : null;
+  }
+  function paint() {
+    if (!narrow.matches) {
+      var back = stageView();
+      if (back) back.classList.add('rc-view');
+      return;
+    }
+    var rc = document.getElementById('rc');
+    if (!rc || rc.getAttribute('data-phone-paint') === '1') return;
+    var view = stageView();
+    var svg = view && view.querySelector('svg.rc-svg');
+    var figs = [].slice.call(rc.querySelectorAll(':scope > .rc-body > .rc-fig, :scope .rc-body .rc-fig'));
+    if (!svg || !figs.length) return;
+    var views = JSON.parse(svg.getAttribute('data-views'));
+    var marks = [].slice.call(rc.querySelectorAll('.rc-mark'));
+    view.classList.remove('rc-view');
+    view.setAttribute('data-rc-view', 'stage');
+    figs.forEach(function (fig, i) {
+      var mark = marks[i]; if (!mark) return;
+      var key = mark.getAttribute('data-panel');
+      var panelView = views[key + '_n'] || views[key]; if (!panelView) return;
+      var box = fig.querySelector('.rc-view');
+      var W = Math.max(1, (box && box.clientWidth) || fig.clientWidth || 1);
+      var H = Math.max(1, (box && box.clientHeight) || Math.round(W * panelView[3] / panelView[2]));
+      var copy = view.cloneNode(true);
+      copy.className = 'rc-view rc-fig-view';
+      copy.removeAttribute('data-rc-view');
+      copy.style.height = H + 'px';
+      var board = copy.querySelector('svg.rc-svg');
+      board.removeAttribute('style');
+      [].forEach.call(board.querySelectorAll('.rc-panel'), function (panel) {
+        if (panel.getAttribute('data-panel') !== key) panel.parentNode.removeChild(panel);
+        else panel.classList.add('is-active');
+      });
+      uniqueIds(copy, '--p' + i);
+      board.setAttribute('viewBox', vb(fit(panelView, W, H)));
+      var shown = fig.cloneNode(false);
+      while (fig.firstChild) {
+        var child = fig.firstChild;
+        if (child === box) { fig.removeChild(box); shown.appendChild(copy); }
+        else shown.appendChild(child);
+      }
+      shown.classList.add('is-ready', 'is-zoomed');
+      shown.setAttribute('data-active-panel', key);
+      shown.setAttribute('data-active-view', key);
+      fig.parentNode.replaceChild(shown, fig);
+    });
+    rc.setAttribute('data-phone-paint', '1');
+  }
+  function boot() { paint(); if (!document.getElementById('rc') || document.getElementById('rc').getAttribute('data-phone-paint') === '1' || !narrow.matches) return; document.addEventListener('DOMContentLoaded', paint); }
+  if (narrow.addEventListener) narrow.addEventListener('change', paint);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
 <p class="series-return"><a href="/#writing">← All writing</a></p></article></div>
 <footer class="site-footer">
   <a class="footer-name" href="/">Hadrien Cornier<span>Notes from Austin, Texas.</span></a>
