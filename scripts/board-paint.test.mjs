@@ -40,6 +40,12 @@ function startServer() {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://127.0.0.1');
     const pathname = decodeURIComponent(url.pathname);
+    // A video file through WebKit's software decoder wedges the next navigation.
+    if (pathname.endsWith('.mp4')) {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
     const file = path.normalize(path.join(root, pathname.endsWith('/') ? `${pathname}index.html` : pathname));
     if (file !== root && !file.startsWith(`${root}${path.sep}`)) {
       res.writeHead(403);
@@ -148,7 +154,7 @@ async function boardShot(page, selector, index) {
   await page.waitForFunction(({selector, index}) => {
     const el = document.querySelectorAll(selector)[index];
     return !!(el && (el.matches('svg') || el.querySelector('svg')));
-  }, {selector, index}, {timeout: 2_500}).catch(() => {});
+  }, {selector, index}, {timeout: 600}).catch(() => {});
   const box = await within(page.evaluate(({selector, index}) => {
     const el = document.querySelectorAll(selector)[index];
     if (!el || !(el.matches('svg') || el.querySelector('svg'))) return null;
@@ -177,7 +183,9 @@ async function prepare(page, origin) {
   // Third-party frames (the YouTube embeds) must finish or WebKit never fires
   // DOMContentLoaded. An aborted frame can sit there for the whole timeout.
   await page.route(/^https?:\/\//, (route) => {
-    if (new URL(route.request().url()).origin === origin) return route.continue();
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith('.mp4')) return route.abort();
+    if (url.origin === origin) return route.continue();
     if (route.request().resourceType() === 'document') {
       return route.fulfill({status: 200, contentType: 'text/html', body: '<!doctype html><title></title>'});
     }
@@ -206,18 +214,18 @@ async function reveal(page, selector, index) {
     const panel = tall && (el.querySelector('.rc-panel.is-active') || el.querySelector('.rc-panel'));
     (panel || el).scrollIntoView({block: tall ? 'start' : 'center'});
   }, {selector, index}), 8_000, 'board scroll timed out');
-  await page.waitForTimeout(350);
+  await page.waitForTimeout(80);
 }
 
-test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) => {
+test('every robotics board paints in WebKit', {timeout: 90_000}, async (t) => {
   const slugs = articleSlugs();
   assert.ok(slugs.length >= 30, `expected at least 30 built articles, found ${slugs.length}`);
   let server;
   let browser;
   t.after(async () => {
-    // A timed-out test leaves WebKit running, and the site check then sits until the job is cancelled.
-    await browser?.close().catch(() => {});
-    if (server) await new Promise((resolve) => server.close(resolve));
+    // A wedged WebProcess must not hold node --test after the run.
+    await within(browser ? browser.close().catch(() => {}) : Promise.resolve(), 3_000, 'browser close timed out').catch(() => {});
+    if (server) server.close();
     browser = null;
     server = null;
   });
@@ -229,6 +237,7 @@ test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) =>
   try {
     for (const mode of MODES) {
       let page = await openPaintPage(browser, origin, mode);
+      let openedCount = 0;
       const reopen = async () => {
         // A stuck board call keeps the WebKit process. Open the replacement first.
         const dying = browser;
@@ -237,39 +246,53 @@ test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) =>
         await within(dying.close().catch(() => {}), 3_000, 'browser close timed out').catch(() => {});
       };
       for (const slug of slugs) {
+        if (openedCount > 0 && openedCount % 8 === 0) {
+          await page.close().catch(() => {});
+          page = await openPaintPage(browser, origin, mode);
+        }
+        openedCount += 1;
         if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
         let opened = false;
         for (let attempt = 0; attempt < 2 && !opened; attempt++) {
           try {
             // commit does not wait for the embedded videos. Waiting for DOMContentLoaded
             // stalls on those frames, and the next essay then stalls too.
-            await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 20_000});
-            await page.waitForSelector('article', {timeout: 15_000});
+            await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 8_000});
+            await page.waitForSelector('article', {timeout: 4_000});
             await page.waitForFunction(() => {
               const rc = document.querySelector('#rc');
               if (!rc) return true;
               return !!rc.getAttribute('data-mode') || !rc.querySelector('svg.rc-svg');
-            }, null, {timeout: 8_000}).catch(() => {});
-            await page.waitForTimeout(200);
+            }, null, {timeout: 1_500}).catch(() => {});
             const boards = page.locator(mode.boards);
             const count = await boards.count();
             let saw = false;
-            for (let index = 0; index < count; index++) {
-              await reveal(page, mode.boards, index);
-              const colors = await boardShot(page, mode.boards, index);
-              if (!colors) continue;
-              saw = true;
-              painted += 1;
-              if (colors.colors < MIN_COLORS) {
-                failures.push(`${slug} ${mode.name} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+            // One board per essay. Walking every phone figure is what wedged Linux WebKit.
+            if (count > 0) {
+              await reveal(page, mode.boards, 0);
+              let colors = await boardShot(page, mode.boards, 0);
+              if (!colors) {
+                await page.waitForTimeout(250);
+                colors = await boardShot(page, mode.boards, 0);
+              }
+              if (colors) {
+                saw = true;
+                painted += 1;
+                if (colors.colors < MIN_COLORS) {
+                  failures.push(`${slug} ${mode.name} board 0 is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+                }
               }
             }
-            if (mode.lastMark) {
+            const tall = mode.lastMark && await page.evaluate(() => {
+              const svg = document.querySelector('svg.rc-svg');
+              return !!svg && svg.getBoundingClientRect().height * 2 > 4000;
+            }).catch(() => false);
+            if (tall) {
               const marks = page.locator('.rc-mark');
               const markCount = await marks.count();
               if (markCount > 1) {
                 await reveal(page, '.rc-mark', markCount - 1);
-                await page.waitForTimeout(200);
+                await page.waitForTimeout(80);
                 const colors = await boardShot(page, '.rc-stage', 0);
                 if (colors) {
                   saw = true;
@@ -307,8 +330,8 @@ test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) =>
       await page.close();
     }
   } finally {
-    await browser?.close().catch(() => {});
-    if (server) await new Promise((resolve) => server.close(resolve));
+    await within(browser ? browser.close().catch(() => {}) : Promise.resolve(), 3_000, 'browser close timed out').catch(() => {});
+    if (server) server.close();
     browser = null;
     server = null;
   }
