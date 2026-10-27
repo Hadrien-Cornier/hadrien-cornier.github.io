@@ -1,0 +1,17 @@
+@import url('/assets/robotics/rl/series.css');
+
+.rebuild-article { overflow-wrap: anywhere; }
+.rebuild-article img, .rebuild-article video { max-width: 100%; height: auto; }
+.rebuild-article pre { max-width: 100%; overflow: auto; }
+.rebuild-article table { display: block; max-width: 100%; overflow: auto; }
+.rebuild-article .comparison-short .rc-body { max-width: 760px; margin-inline: auto; }
+.rebuild-article .short-board { margin: 28px 0; padding: 0; border-radius: 8px; overflow: hidden; background: #17241f; }
+.rebuild-article .short-board svg { display: block; width: 100%; height: auto; max-width: 100%; margin: 0; }
+.rebuild-article .rc-mark:has(>*) { height: auto; display: flow-root; }
+.rebuild-article .rc-fig-title { overflow-wrap: anywhere; }
+/* Before enhancement, and with scripts removed, read the whole drawing in place. */
+.rebuild-article .rc:not([data-mode]) { display: block; width: 100%; left: auto; transform: none; }
+.rebuild-article .rc:not([data-mode]) .rc-stage,
+.rebuild-article .rc:not([data-mode]) .rc-view { display: block; position: static; height: auto; max-height: none; overflow: visible; }
+.rebuild-article .rc:not([data-mode]) svg.rc-svg { display: block; position: static; width: 100%; height: auto; max-width: 100%; transform: none; }
+.rebuild-article .rc:not([data-mode]) .rc-panel { opacity: 1; visibility: visible; }
