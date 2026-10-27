@@ -137,6 +137,31 @@ async function reveal(page, locator) {
   return locator.boundingBox();
 }
 
+async function diagnose(page, locator) {
+  const notes = [];
+  const geometry = await page.evaluate(() => {
+    const svg = document.querySelector('svg.rc-svg');
+    if (!svg) return 'no svg';
+    const box = svg.getBBox();
+    return `css ${svg.style.width}x${svg.style.height} transform ${svg.style.transform} bbox ${Math.round(box.x)},${Math.round(box.y)} ${Math.round(box.width)}x${Math.round(box.height)} chalk ${!!document.getElementById('bb-chalk')}`;
+  });
+  notes.push(geometry);
+  await page.evaluate(() => document.querySelectorAll('svg.rc-svg').forEach((svg) => svg.style.setProperty('filter', 'none', 'important')));
+  const bare = await boardShot(page, locator);
+  notes.push(`filter none ${bare ? bare.colors : 'no shot'}`);
+  await page.evaluate(() => document.querySelectorAll('svg.rc-svg').forEach((svg) => svg.style.removeProperty('filter')));
+  const kids = await page.evaluate(() => [...document.querySelector('svg.rc-svg').children].map((el, i) => ({
+    i, tag: el.tagName, panel: el.getAttribute('data-panel') || el.getAttribute('class') || '',
+  })));
+  for (const kid of kids) {
+    await page.evaluate((i) => { document.querySelector('svg.rc-svg').children[i].setAttribute('display', 'none'); }, kid.i);
+    const shot = await boardShot(page, locator);
+    notes.push(`hide ${kid.i} ${kid.tag} ${kid.panel} ${shot ? shot.colors : 'no shot'}`);
+    await page.evaluate((i) => { document.querySelector('svg.rc-svg').children[i].removeAttribute('display'); }, kid.i);
+  }
+  return notes.join(' | ');
+}
+
 async function boardShot(page, locator) {
   const box = await reveal(page, locator);
   if (!box || box.width < 80 || box.height < 80) return null;
@@ -173,7 +198,7 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
         saw = true;
         painted += 1;
         if (colors.colors < MIN_COLORS) {
-          failures.push(`${slug} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+          failures.push(`${slug} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height}); ${await diagnose(page, boards.nth(index))}`);
         }
       }
       if (!saw && await page.locator('svg.rc-svg').count()) failures.push(`${slug} has a board but no screenshot`);
