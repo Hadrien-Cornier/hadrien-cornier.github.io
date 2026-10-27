@@ -176,7 +176,11 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async () => {
       const count = await boards.count();
       let saw = false;
       for (let index = 0; index < count; index++) {
-        const colors = await boardShot(page, boards.nth(index));
+        const locator = boards.nth(index);
+        // The svg's layout box is the whole canvas. The view is the board a reader sees, and a crop of the canvas margin is a flat field.
+        const nested = await locator.evaluate((el) => el.matches('svg') && !!el.closest('.rc-view, figure.short-board'));
+        if (nested) continue;
+        const colors = await boardShot(page, locator);
         if (!colors) continue;
         saw = true;
         painted += 1;
