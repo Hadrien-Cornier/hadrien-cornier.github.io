@@ -131,12 +131,20 @@ function articleSlugs() {
     .sort();
 }
 
+function within(promise, ms, label) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(label)), ms);
+    promise.then((value) => { clearTimeout(timer); resolve(value); }, (err) => { clearTimeout(timer); reject(err); });
+  });
+}
+
 async function boardShot(page, selector, index) {
   // Crop a piece of the board that is on screen. An element screenshot of the first .rc-panel
   // scrolls that panel against the sticky listener and never settles, and a full-element shot of
   // a multi-thousand-pixel svg is the buffer WebKit already fails to paint.
   // Query by index. A locator would wait on the placeholder the snapshot replaces.
-  const box = await page.evaluate(({selector, index}) => {
+  // page.evaluate has no timeout of its own, and a stuck main thread would hold the whole run.
+  const box = await within(page.evaluate(({selector, index}) => {
     const el = document.querySelectorAll(selector)[index];
     if (!el) return null;
     const style = getComputedStyle(el);
@@ -150,14 +158,13 @@ async function boardShot(page, selector, index) {
     const height = Math.min(520, Math.max(0, bottom - top));
     if (width < 20 || height < 20) return null;
     return {x: left, y: top, width, height};
-  }, {selector, index}).catch(() => null);
+  }, {selector, index}), 8_000, 'board measure timed out');
   if (!box) return null;
-  let buffer;
-  try {
-    buffer = await page.screenshot({type: 'png', animations: 'disabled', timeout: 8_000, clip: box});
-  } catch {
-    return null;
-  }
+  const buffer = await within(
+    page.screenshot({type: 'png', animations: 'disabled', timeout: 8_000, clip: box}),
+    10_000,
+    'board shot timed out',
+  );
   return distinctColors(buffer);
 }
 
@@ -185,14 +192,14 @@ async function openPaintPage(browser, origin, mode) {
 }
 
 async function reveal(page, selector, index) {
-  await page.evaluate(({selector, index}) => {
+  await within(page.evaluate(({selector, index}) => {
     const el = document.querySelectorAll(selector)[index];
     if (!el) return;
     // A whole-canvas phone figure is taller than the screen and draws its panel at the top.
     // Centering it photographs the empty board below that panel.
     const block = el.getBoundingClientRect().height > window.innerHeight + 40 ? 'start' : 'center';
     el.scrollIntoView({block});
-  }, {selector, index});
+  }, {selector, index}), 8_000, 'board scroll timed out');
   await page.waitForTimeout(350);
 }
 
@@ -216,55 +223,64 @@ test('every robotics board paints in WebKit', {timeout: 1_200_000}, async (t) =>
   try {
     for (const mode of MODES) {
       let page = await openPaintPage(browser, origin, mode);
+      const reopen = async () => {
+        // A stuck board call keeps the WebKit process. Open the replacement first.
+        const dying = browser;
+        browser = await webkit.launch();
+        page = await openPaintPage(browser, origin, mode);
+        await within(dying.close().catch(() => {}), 3_000, 'browser close timed out').catch(() => {});
+      };
       for (const slug of slugs) {
         if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
-        try {
-          // commit does not wait for the embedded videos. Waiting for DOMContentLoaded
-          // stalls on those frames, and the next essay then stalls too.
-          await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 20_000});
-          await page.waitForSelector('article', {timeout: 15_000});
-          await page.waitForFunction(() => {
-            const rc = document.querySelector('#rc');
-            if (!rc) return true;
-            return !!rc.getAttribute('data-mode') || !rc.querySelector('svg.rc-svg');
-          }, null, {timeout: 8_000}).catch(() => {});
-        } catch (err) {
-          failures.push(`${slug} ${mode.name} did not open: ${err.message.split('\n')[0]}`);
-          await page.close().catch(() => {});
-          page = await openPaintPage(browser, origin, mode);
-          continue;
-        }
-        await page.waitForTimeout(200);
-        const boards = page.locator(mode.boards);
-        const count = await boards.count();
-        let saw = false;
-        for (let index = 0; index < count; index++) {
-          await reveal(page, mode.boards, index);
-          const colors = await boardShot(page, mode.boards, index);
-          if (!colors) continue;
-          saw = true;
-          painted += 1;
-          if (colors.colors < MIN_COLORS) {
-            failures.push(`${slug} ${mode.name} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
-          }
-        }
-        if (mode.lastMark) {
-          const marks = page.locator('.rc-mark');
-          const markCount = await marks.count();
-          if (markCount > 1) {
-            await reveal(page, '.rc-mark', markCount - 1);
+        let opened = false;
+        for (let attempt = 0; attempt < 2 && !opened; attempt++) {
+          try {
+            // commit does not wait for the embedded videos. Waiting for DOMContentLoaded
+            // stalls on those frames, and the next essay then stalls too.
+            await page.goto(`${origin}/robotics/${slug}/`, {waitUntil: 'commit', timeout: 20_000});
+            await page.waitForSelector('article', {timeout: 15_000});
+            await page.waitForFunction(() => {
+              const rc = document.querySelector('#rc');
+              if (!rc) return true;
+              return !!rc.getAttribute('data-mode') || !rc.querySelector('svg.rc-svg');
+            }, null, {timeout: 8_000}).catch(() => {});
             await page.waitForTimeout(200);
-            const colors = await boardShot(page, '.rc-stage', 0);
-            if (colors) {
+            const boards = page.locator(mode.boards);
+            const count = await boards.count();
+            let saw = false;
+            for (let index = 0; index < count; index++) {
+              await reveal(page, mode.boards, index);
+              const colors = await boardShot(page, mode.boards, index);
+              if (!colors) continue;
               saw = true;
               painted += 1;
               if (colors.colors < MIN_COLORS) {
-                failures.push(`${slug} ${mode.name} last mark is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+                failures.push(`${slug} ${mode.name} board ${index} is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
               }
             }
+            if (mode.lastMark) {
+              const marks = page.locator('.rc-mark');
+              const markCount = await marks.count();
+              if (markCount > 1) {
+                await reveal(page, '.rc-mark', markCount - 1);
+                await page.waitForTimeout(200);
+                const colors = await boardShot(page, '.rc-stage', 0);
+                if (colors) {
+                  saw = true;
+                  painted += 1;
+                  if (colors.colors < MIN_COLORS) {
+                    failures.push(`${slug} ${mode.name} last mark is blank (${colors.colors} colors in ${colors.width}x${colors.height})`);
+                  }
+                }
+              }
+            }
+            if (!saw && await page.locator('svg.rc-svg').count()) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
+            opened = true;
+          } catch (err) {
+            if (attempt === 1) failures.push(`${slug} ${mode.name} did not open: ${err.message.split('\n')[0]}`);
+            await reopen();
           }
         }
-        if (!saw && await page.locator('svg.rc-svg').count()) failures.push(`${slug} ${mode.name} has a board but no screenshot`);
       }
       await page.close();
     }
