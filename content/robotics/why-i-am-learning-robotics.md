@@ -1,239 +1,387 @@
 ---
-title: 'Why I am learning robotics'
+title: "Why I am learning robotics"
 description: 'The most impressive robots of the last decade stayed in videos because they could not generalize. Language models changed that, and robotics now looks like language models in 2019.'
 date: '2026-09-28'
-updated: '2026-10-05'
+updated: '2026-10-27'
 slug: 'why-i-am-learning-robotics'
 tags: ['robotics', 'industry']
 thumbnail: /assets/robotics/thumbnails/why-i-am-learning-robotics.jpg
 thumbnail_alt: 'Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.'
+layout: essay
 ---
 
-In 2018, Boston Dynamics posted a video of its Atlas humanoid jumping over a log and running up a set of boxes. A year earlier, Atlas did a backflip. For a lot of people, me included, those clips were what a robot was supposed to look like. So where are they? I went looking for one at work, and I couldn't find many. Spot, the robot dog, [went on sale in 2020](https://venturebeat.com/ai/boston-dynamics-buy-spot-robot-74500) for $74,500, and Boston Dynamics now says it has [more than 1,500 Spots in customer hands](https://bostondynamics.com/products/spot/). Over the same years, Amazon put [one million robots](https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model) into its warehouses, and almost none of them can walk.
-
-<figure class="video-embed">
-<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/LikxFZZO2sk" title="Parkour Atlas, Boston Dynamics, 2018" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<figcaption>Boston Dynamics, "Parkour Atlas" (October 2018). <a href="https://www.youtube.com/watch?v=LikxFZZO2sk">Watch on YouTube</a></figcaption>
-</figure>
-
-That's the question that pulled me into robotics: **why did the most capable robots in the world stay in the videos, and why does that seem to be changing now?** My short answer is that the problem was never the body. It was the software, and more precisely the fact that the software couldn't generalize. Language models are changing that, and I think robotics today looks a lot like language models did in 2019.
-
-## Why the best robots stayed in the videos
-
-Boston Dynamics explained how the parkour worked in [a 2021 post](https://bostondynamics.com/blog/flipping-the-script-with-atlas/). Atlas used **model predictive control**: a model of its own dynamics predicts how the body will move over the next moments, and an optimizer picks the forces that keep it on track. The jumps and vaults came from a small library of template behaviors that engineers designed offline. The controller adapted them to the terrain on the fly. It's great engineering. The catch is that each new behavior is a project for a team of experts.
-
-<figure class="video-embed">
-<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/tF4DML7FIWk" title="Atlas, Partners in Parkour, Boston Dynamics, 2021" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<figcaption>Boston Dynamics, "Partners in Parkour" (August 2021). This is the routine the 2021 post explains: behaviors designed offline, then adapted by model predictive control on the course. <a href="https://www.youtube.com/watch?v=tF4DML7FIWk">Watch on YouTube</a></figcaption>
-</figure>
-
-That works when the task is fixed. Spot sells for inspection because inspection is easy to specify: walk this route, read these gauges, take this thermal photo. Now suppose you ask it to unload the dishwasher in a kitchen it has never seen. Who writes that behavior? And the next one? Change the cup, the lighting, the table height or the clutter, and the same instruction needs a different movement. The ability to carry a skill into a situation you didn't program for is called **generalization**, and a hand-engineered controller has very little of it.
-
-You can see how hard it was to turn that hardware into a business. Boston Dynamics had three owners in eight years: Google bought it in 2013, SoftBank in 2017 and Hyundai in 2021. The robots were never the weak part.
-
-## Hardware is not the bottleneck
-
-Here's a simple test for whether a robot's body is good enough for a task. Let a person drive it by remote control, which is called **teleoperation**. Can the operator do the task through the robot? Then the motors, joints and cameras are good enough. What's missing is a program that does what the operator did.
-
-Cheap robots pass this test more often than you might expect. The 2023 [ACT paper](https://arxiv.org/abs/2304.13705) asked directly whether learning lets "low-cost and imprecise hardware" do fine manipulation. Its two-arm ALOHA setup threaded cable ties and slotted a battery from about 50 demonstrations per task. A year later, [Mobile ALOHA](https://arxiv.org/abs/2401.02117) put the same arms on a wheeled base and learned to sauté a shrimp, store heavy pots in a cabinet and call an elevator, again from 50 demonstrations per task. A [Unitree G1 humanoid starts at $13,500](https://www.unitree.com/g1/). One SO-101 arm, the one I use, costs [a little over $100 in parts](https://github.com/TheRobotStudio/SO-ARM100).
-
-The two Mobile ALOHA videos below make the teleoperation test visible. On the left, a person drives the robot through a three-course meal. On the right, the robot does chores on its own after learning from demonstrations.
-
-<figure class="video-embed video-pair">
-<div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/mnLVbwxSdNM" title="Mobile ALOHA teleoperated cooking a three-course meal" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div><figcaption>Teleoperated: a person drives the arms (Stanford IRIS Lab). <a href="https://www.youtube.com/watch?v=mnLVbwxSdNM">Watch on YouTube</a></figcaption></div>
-<div><div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/HaaZ8ss-HP4" title="Mobile ALOHA autonomous housekeeping" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div><figcaption>Autonomous: the learned policy runs the robot (Zipeng Fu). <a href="https://www.youtube.com/watch?v=HaaZ8ss-HP4">Watch on YouTube</a></figcaption></div>
-</figure>
-
-This doesn't mean hardware is solved. Hands are still fragile, cables wear out, batteries run down, and a robot that breaks every week isn't useful (more on that in the drawers at the end). But compare two gaps. One is between the hardware and the task. The other is between what the hardware does with a human driving it and what it does on its own. The second gap is much bigger, and it's a software gap.
-
-## From language models to robot actions
-
-Language models closed this kind of gap for text. A **large language model**, or LLM, is trained to predict the next piece of text, and in doing so it absorbs a huge amount of general knowledge. Two extensions brought that knowledge to robots:
-
-| Model | Input | Output |
-|---|---|---|
-| Large language model (LLM) | Text | Text |
-| Vision-language model (VLM) | Images and text | Text |
-| Vision-language-action model (VLA) | Camera images, a text instruction, the robot's joint state | Robot actions |
-
-A VLA usually starts from a pretrained VLM and is then trained on robot data, so the robot inherits what the VLM learned from the web. [RT-2](https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/) showed in 2023 that this transfer is real: on scenarios with unseen objects, backgrounds and environments, success rose from RT-1's **32% to 62%**. Systems like [Gemini Robotics 1.5](https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/) add a reasoning model on top that breaks "put the groceries away" into steps and hands each one to the VLA.
-
-[OpenVLA](https://arxiv.org/abs/2406.09246) shows the recipe clearly. Two vision encoders turn the camera image into tokens, a 7-billion-parameter language model reads them with the instruction, and the model's output tokens are decoded back into a small change of the gripper's position, rotation and opening.
-
-![Diagram of OpenVLA: the input image goes through DinoV2 and SigLIP encoders and an MLP projector, the instruction goes through the Llama tokenizer, Llama 2 7B processes both, and an action de-tokenizer outputs a 7D robot action: change in position, rotation and gripper.](/assets/robotics/why-robotics/openvla-architecture-chalk.png "OpenVLA architecture. Redrawn from Kim et al., OpenVLA (2024), CC BY 4.0.")
-
-Figure's [Helix](https://www.figure.ai/news/helix) is the same idea on a humanoid. In the video, two robots run the same model and put away groceries they never saw in training.
-
-<figure class="video-embed">
-<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/Z3yQHYNXPws" title="Introducing Helix, Figure, 2025" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<figcaption>Figure, "Introducing Helix" (February 2025). <a href="https://www.youtube.com/watch?v=Z3yQHYNXPws">Watch on YouTube</a></figcaption>
-</figure>
-
-For me, the clearest sign of the shift is what Boston Dynamics itself did. In August 2025, with Toyota Research Institute, it showed Atlas driven by [a single large behavior model](https://bostondynamics.com/blog/large-behavior-models-atlas-find-new-footing/) that controls the whole body, legs and hands, from demonstrations. Tasks like tying a rope or spreading a tablecloth, which would be miserable to hand-program, use the same training process as stacking blocks. In their words, "if you can demonstrate it, the robot can learn it." In January 2026, the company [unveiled a production Atlas](https://bostondynamics.com/blog/boston-dynamics-unveils-new-atlas-robot-to-revolutionize-industry/) and a partnership with Google DeepMind to put Gemini models inside it, and Hyundai announced a factory that can build **30,000 robots per year**. So the company that best stood for hand-engineered control is now betting on learned policies.
-
-<figure class="video-embed">
-<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/HYwekersccY" title="Getting a Leg up with End-to-end Neural Networks, Boston Dynamics, 2025" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<figcaption>Boston Dynamics and Toyota Research Institute, "Getting a Leg up with End-to-end Neural Networks" (August 2025). Watch the person with the hockey stick move the box and close the lid: the policy recovers on its own. <a href="https://www.youtube.com/watch?v=HYwekersccY">Watch on YouTube</a></figcaption>
-</figure>
-
-## A reset button on classical robotics
-
-The classical robot is a pipeline of separate modules, each written by experts: perception finds the objects, state estimation works out where everything is, a planner chooses a path and a controller follows it. Each module has its own equations and its own decades of research. A VLA replaces most of that pipeline with one network that goes from pixels and words to actions.
-
-That's a reset button. A lot of what used to be an equations problem becomes a data problem. Which demonstrations do you collect? How do you cover the situations that matter? How do you know the robot got better? It also means someone who arrives late, like me, isn't decades behind. These questions are new for everybody.
-
-It isn't a full reset, though, and this is the part I find most interesting. Underneath every VLA, a motor still runs a classical feedback loop. The network outputs a target angle, and the joint doesn't land exactly on it: gravity pulls it down, friction holds it back and the servo reacts late. That last mile is where my own research sits. I'm testing whether a controller can be more accurate than the classical ones on my SO-101 arm, and the [series that starts with one equation](/robotics/so101-1-target-and-goal/) is what I've learned so far.
-
-## Robotics is in its 2019
-
-The timeline below puts the two fields side by side. Pick a stage to see what happened in each one.
-
-```so101-widget
-{"type":"llm-timeline","fallback":"Language models: Transformer (2017), GPT-1 and BERT (2018), GPT-2 (2019), scaling laws and GPT-3 (2020), InstructGPT and ChatGPT (2022). Robot learning: SayCan and RT-1 (2022), ACT, RT-2 and Open X-Embodiment (2023), π0 (2024), Helix, π0.5 and the Atlas large behavior model (2025), Figure Index (2026). Robot learning in 2026 is at the stage language models reached with GPT-2 in 2019: collecting data on purpose, at scale."}
-```
-
-The dates come from the papers and announcements: the [Transformer](https://arxiv.org/abs/1706.03762), [GPT-3](https://arxiv.org/abs/2005.14165), the [scaling laws](https://arxiv.org/abs/2001.08361) and [InstructGPT](https://arxiv.org/abs/2203.02155) for language, and [SayCan](https://arxiv.org/abs/2204.01691), [RT-1](https://arxiv.org/abs/2212.06817), [RT-2](https://arxiv.org/abs/2307.15818), [Open X-Embodiment](https://arxiv.org/abs/2310.08864), [π0](https://arxiv.org/abs/2410.24164), [Helix](https://www.figure.ai/news/helix) and [π0.5](https://arxiv.org/abs/2504.16054) for robots.
-
-In 2019, GPT-2 showed that a bigger model trained on more data generalizes better, and a whole industry grew up around producing training data: [Scale](https://scale.com/about), [Labelbox](https://labelbox.com/company/about/) and [Snorkel AI](https://snorkel.ai/company/) all date from that period. I think robotics is at that point now. In August 2026, Figure launched [Index](https://www.figure.ai/news/introducing-index), an app that pays people to record everyday activities, and reported more than **16 million videos** from **44,000 weekly users**. A month later it [reported](https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization) **56% task success in 30 homes the robot had never seen**, compared with 9% without the Index pretraining. That's real generalization. It's also a long way from a robot you'd trust to finish the job.
-
-The first big step was pooling. In 2023, [Open X-Embodiment](https://arxiv.org/abs/2310.08864) gathered robot data from 21 institutions into one dataset, so a single model could learn from 22 different robots.
-
-![Collage of the Open X-Embodiment dataset: 1M episodes from 311 scenes, 34 research labs across 21 institutions, 22 embodiments, 527 skills and 60 datasets, surrounded by sample frames from datasets such as RT-1, Bridge, ALOHA and QT-Opt.](/assets/robotics/why-robotics/open-x-embodiment.png "Open X-Embodiment. Figure from the Open X-Embodiment Collaboration (2023), CC BY 4.0.")
-
-The data can come from several places, and each one gives something different:
-
-| Source | What it gives the learner | What remains difficult |
-|---|---|---|
-| Teleoperation: a person controls the robot | Camera views paired with actual robot commands and measured motion | Operator time, scene resets, and collecting enough varied examples |
-| Physics simulation | Repeatable trials, known state, and many experiments running in parallel | Matching real contact, friction, deformable objects, and sensor behavior |
-| Human video, filmed from the person's point of view | Everyday tasks across many people, objects, and places | Recovering motion and contact, then translating them to a different body |
-
-Variety matters as much as volume. [DROID](https://arxiv.org/abs/2403.12945) sent the same robot setup to 52 buildings and recorded 76,000 teleoperated episodes in bathrooms, bedrooms, kitchens and offices, because a robot that only saw one lab learns that lab.
-
-![Grid of photos from the DROID dataset: the same Franka robot arm working in bathrooms, kitchens, dining rooms, bedrooms, laboratories, laundry rooms and offices. Center panel: 76k episodes, 564 scenes, 52 buildings, 13 institutions, 86 tasks or verbs.](/assets/robotics/why-robotics/droid-scenes.png "DROID. Figure from Khazatsky et al., DROID (2024), CC BY 4.0.")
-
-### Learning from people's point of view
-
-There's a second way around the data problem: record people instead of robots. **Egocentric** data is video filmed from the person's own point of view, usually with a head-mounted camera, so the hands sit in the frame the way a robot's grippers would. People already do every task we care about, in every kind of place. The question is whether a robot can learn from hands that aren't its own.
-
-In February 2026, NVIDIA's [EgoScale](https://arxiv.org/abs/2602.16710) tried it at a large scale. It pre-trained a VLA on **20,854 hours** of egocentric human video, then trained it on a small set of matched human and robot play data (50 hours of human data, 4 hours of robot data), and finally on the target tasks. On a robot with a 22-degree-of-freedom hand, average success went up by **54%** compared with no pre-training.
-
-![EgoScale pipeline in three panels. Pre-training: 20,854 hours of egocentric human videos with tracked hands. Mid-training: human and robot play data recorded side by side, 50 hours human and 4 hours robot. Post-training: a robot with dexterous hands doing tasks like injecting a syringe, using tongs, unscrewing a bottle and folding a shirt.](/assets/robotics/why-robotics/egoscale-pipeline.png "EgoScale: human video first, a little matched robot data second, the target task last. Figure from EgoScale (2026), CC BY 4.0.")
-
-The matched human data comes from a light capture rig: a camera on the head, cameras on the wrists and tracked gloves, so each frame comes with the hand's motion.
-
-![A person wearing a head-mounted camera, wrist cameras and tracked gloves folds a towel at a desk. On the right, the head camera view and the two wrist camera views of the same moment.](/assets/robotics/why-robotics/egoscale-capture.png "EgoScale's capture setup for the matched human data. Figure from EgoScale (2026), CC BY 4.0.")
-
-But why would this work at all, when a human hand looks nothing like a gripper? A paper from Physical Intelligence, with Stanford's Chelsea Finn among the authors ([Kareer et al., 2025](https://arxiv.org/abs/2512.22414)), gives an answer I like. They co-trained π0.5 on robot data plus 3 to 5 hours of head-camera human video per task, with no special step to align humans and robots. Then they looked inside the model with a **t-SNE** plot. t-SNE squashes the model's high-dimensional internal vectors into two dimensions, so that points close together are inputs the model treats as similar.
-
-Without robot pre-training, human and robot inputs form two separate clouds: the model learned them as two different worlds. With more diverse robot pre-training, the clouds merge, and the same task done by a human or by a robot lands in the same place. That's also when the transfer shows up. On scenes the robot only saw through human video, performance nearly doubles.
-
-![Three scatter plots, a schematic. With no robot pre-training, human points and robot points form two separate clusters. With some pre-training, they start to overlap. With large, diverse pre-training, human and robot points are mixed along the same shape.](/assets/robotics/why-robotics/human-robot-tsne-schematic.png "A schematic of the trend in Kareer et al. (2025). I drew it to show the idea; the real t-SNE plot is in the paper.")
-
-### Where the analogy breaks
-
-The parallel isn't perfect, and I want to be honest about where it breaks.
-
-1. **The data wasn't free.** GPT-2 trained on text that already existed on the internet. Nobody wrote down what a robot saw, commanded and felt while opening a drawer. Every hour of robot data has to be produced, usually by a person.
-2. **The scaling law is only starting to appear.** In 2020, language models got a curve that predicts how much better a model gets with more data and compute. That turned a bet into an investment plan. Robotics is just getting its first curves. EgoScale found that the validation loss falls in a straight line against the log of the hours of human video, and robot success rose with it, from 0.30 at 1,000 hours to 0.71 at 20,000 hours (average task completion). That's one recipe, one robot and five points, not a general law. So it's still possible we're really in 2017, not 2019.
-3. **The bar for reliability is higher.** A wrong answer in a chat costs a retry. A wrong grasp can break a glass. And long tasks multiply errors: if a job has 20 steps that each succeed 95% of the time, the robot finishes only $0.95^{20} \approx 36\%$ of the time.
-
-![Three panels from EgoScale. Left: validation loss during training for 1k, 2k, 4k, 10k and 20k hours of human video; small datasets overfit. Center: the best loss against data on a log scale falls on a straight line, L = 0.024 - 0.003 ln(D). Right: average robot task completion rises from 0.30 at 1k hours to 0.71 at 20k hours.](/assets/robotics/why-robotics/egoscale-scaling.png "Point 2: the first robot scaling curve I know of, for human video. Figure from EgoScale (2026), CC BY 4.0.")
-
-![Line chart of the chance to finish a task against the number of steps, for 99%, 95% and 90% success per step. At 20 steps and 95% per step, 36% of jobs finish.](/assets/robotics/why-robotics/long-task-reliability.png "Chance to finish = (success per step) to the power of the number of steps, assuming no recovery. My chart.")
-
-Mobile ALOHA's authors published their failures too, and they show what those lost percentage points look like.
-
-<figure class="video-embed">
-<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/xGNNW6smDPQ" title="Mobile ALOHA funny failures" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<figcaption>Mobile ALOHA failures (Zipeng Fu). <a href="https://www.youtube.com/watch?v=xGNNW6smDPQ">Watch on YouTube</a></figcaption>
-</figure>
-
-That third point is also why measurement is so hard. Benchmarks like [LIBERO](https://github.com/Lifelong-Robot-Learning/LIBERO) and [RoboCasa](https://robocasa.ai/leaderboard.html) make it possible to compare policies in simulation, and even there the leading entry on RoboCasa scored **36.7%** on held-out multi-step tasks in September 2026. In the real world, someone has to reset the scene, the lighting shifts and the cup is slightly different every time.
-
-![Overview of RoboCasa365: diverse simulated kitchen scenes, a large object library, interactive fixtures, 365 everyday tasks, 2,500 kitchen scenes, 3,200+ objects, 2,200+ hours of data and 500K+ trajectories, with examples of skills, long-horizon tasks and semantic reasoning.](/assets/robotics/why-robotics/robocasa365.png "RoboCasa365, a simulated benchmark of household tasks. Figure from the RoboCasa365 paper (2026), CC BY 4.0.")
-
-## Waymo: a robot that tries not to touch the world
-
-One robot already works at scale, and it's worth asking why. Waymo's cars drove more than **270 million** fully autonomous miles through June 2026. Against human drivers in the same cities, [Waymo reports](https://waymo.com/safety/impact/) **82% fewer** injury crashes and **95% fewer** crashes with a serious injury or worse.
-
-So why does driving work before manipulation? My reading is that a car's job is to not touch anything. Every contact is a failure. The car has to predict where everything will be and stay away from it. A kitchen robot is the opposite. Its whole job is contact: push, grasp, squeeze, pour. And contact is exactly where physics gets hard to predict, with friction, slipping and soft objects that change shape.
-
-How did Waymo get the extra nines of reliability? Simulation is a big part of the answer. Waymo runs closed-loop simulation, where the other cars and pedestrians react to what the Waymo does. In its [10 AI lessons](https://waymo.com/blog/2026/08/10ailessons/), it describes an automated Critic that reviews the millions of road miles driven each week "and tens of billions in simulation." The simulator finds rare events before the car meets them on the road. But Waymo is also clear that simulation isn't enough: in the same post, it says a driving system only truly matures when it's solely responsible for the driving. So it's simulation plus hundreds of millions of real driverless miles, not simulation instead of them.
-
-The other thing I find interesting is how much explicit structure Waymo keeps. Its foundation model doesn't just output a path. It also outputs [structured representations](https://waymo.com/blog/2025/12/demonstrably-safe-ai-for-autonomous-driving/): objects, their attributes and the road graph. And a separate onboard validation layer checks each planned trajectory against physics-based constraints and traffic laws before the car follows it. FieldAI, which builds autonomy for robots in unstructured environments, makes a similar choice: its Field Foundation Models [combine learned models with physics-based reasoning and uncertainty awareness](https://www.fieldai.com/news/fieldai-and-nvidia-omniverse-building-the-next-generation-of-industrial-ai). That's the question my SO-101 series asks at a much smaller scale: where should physics stay inside a learned system?
-
-## World models: imagining the future before acting
-
-A VLA maps what the robot sees to an action. A **world model** answers a different question: given what the robot sees now and an action, what will it see next? With one, a robot can try actions in its head, a company can generate training data, and you can test a policy without a real robot.
-
-Waymo uses one for driving. The [Waymo World Model](https://waymo.com/blog/2026/02/the-waymo-world-model-a-new-frontier-for-autonomous-driving-simulation), built on Google DeepMind's Genie 3, generates both camera and lidar data for scenes that are hard to film for real, like extreme weather or strange objects on the road. You can steer it with driving actions, a scene layout or a text prompt.
-
-For robots, the clearest picture puts the real camera frame next to the imagined ones. NVIDIA's [DreamGen](https://arxiv.org/abs/2505.12705) starts from one real image from the robot's camera, asks a video model adapted to that robot to imagine the rest of the task, and then recovers the actions from the imagined video. With teleoperation data from only one pick-and-place task in one environment, a humanoid learned **22 new behaviors**.
-
-![DreamGen overview. Top: a real initial camera frame of a robot facing a pink cup and sunflowers, outlined in red, then a video world model generates a sequence of frames where the robot hand picks up the cup and pours, with pseudo-actions extracted from the generated frames. Bottom: generated examples for towel folding and hammer use, new behaviors like opening a laptop, and new environments like a kitchen.](/assets/robotics/why-robotics/dreamgen-imagined.png "Left, in red: the real camera frame. Right: video imagined by the world model, from which the actions are extracted. Figure from DreamGen (2025), CC BY 4.0.")
-
-1X does this live on its NEO humanoid. With its world model, [announced in January 2026](https://www.globenewswire.com/news-release/2026/01/12/3217155/0/en/1X-Unveils-Paradigm-Shift-In-Humanoid-AI-NEO-s-Starting-to-Learn-On-Its-Own.html), you give NEO a voice or text prompt, it generates a video of the future from what its camera sees, and an inverse dynamics model turns the imagined frames into movements.
-
-<figure class="video-embed">
-<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/lS_z60kjVEk" title="NEO is Starting to Learn on Its Own, 1X, 2026" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<figcaption>1X, "NEO is Starting to Learn on Its Own" (January 2026). <a href="https://www.youtube.com/watch?v=lS_z60kjVEk">Watch on YouTube</a></figcaption>
-</figure>
-
-Not every world model draws pixels. Meta's [V-JEPA 2](https://arxiv.org/abs/2506.09985) predicts the *features* of the next frame instead of the frame itself. It first learned from over a million hours of video without action labels, then from less than **62 hours of robot data**, and used its predictions to plan movements. Yann LeCun's company [AMI](https://amilabs.xyz/) is pursuing this direction.
-
-![Diagram of V-JEPA 2-AC: previous video frames pass through a frozen encoder into a predictor that also receives robot actions and poses; the prediction is compared with the frozen encoding of the future frame using an L1 loss.](/assets/robotics/why-robotics/vjepa2-ac-chalk.png "V-JEPA 2-AC predicts the next frame's features from past frames and the robot's action. Redrawn from Assran et al., V-JEPA 2 (2025), CC BY 4.0.")
-
-## Reindustrializing Europe and the United States
-
-This is the part that excites me most.
-
-Factories in Europe and the US already use a lot of robots. The International Federation of Robotics counts [449 robots per 10,000 manufacturing employees in Germany and 307 in the US](https://ifr.org/ifr-press-releases/news/robot-density-surges-in-europe-asia-and-americas), against 1,220 in South Korea. But those robots sit mostly where the task never changes: welding the same car body, placing the same chip. Every new task means an integrator reprogramming the cell, so automation only pays off at high volume. Small-batch work, with many different parts and frequent changes, stayed manual, and manual work moved to wherever labor was cheapest.
-
-![Bar chart of industrial robots per 10,000 manufacturing employees in 2024: South Korea 1,220, Singapore 818, Germany 449, Japan 446, United States 307.](/assets/robotics/why-robotics/robot-density.png "Robot density in 2024. My chart from the IFR numbers.")
-
-Now suppose a robot can learn a new task from a few dozen demonstrations in an afternoon. That calculation changes. Small-batch production becomes something a robot can do, and labor cost stops being the reason to build a factory far away. With an aging workforce in Europe and a political push in both regions to bring manufacturing back, general-purpose robots could make reindustrialization economically possible rather than a slogan. Hyundai building a factory for 30,000 robots a year is one company placing that bet.
-
-<figure class="video-embed">
-<div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/rrUHZKlrxms" title="Atlas product features, Boston Dynamics, 2026" loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<figcaption>Boston Dynamics, the production Atlas (January 2026). Hyundai plans to use it in its car plants, starting with parts sequencing. <a href="https://www.youtube.com/watch?v=rrUHZKlrxms">Watch on YouTube</a></figcaption>
-</figure>
-
-What's blocking it, again, is software that generalizes and is reliable enough for a production line. This is what I want to explore.
-
-## Open questions I keep returning to
-
-These questions keep pulling me in, but you don't need them for the argument above.
-
-<details>
-<summary>Does the robot need a human body?</summary>
-
-Amazon's million robots are mostly wheeled machines and arms designed around warehouse work. A machine can be extremely useful without looking like a person.
-
-The humanoid argument starts from the environment: doors, shelves, tools and workstations were built for human reach and movement. [BMW reports](https://www.press.bmwgroup.com/global/article/attachment/T0455864EN/644966) that Figure 02 moved **more than 90,000 components in about 1,250 operating hours** at its Spartanburg plant. Agility reported [more than 100,000 tote movements](https://www.agilityrobotics.com/content/digit-moves-over-100k-totes) by Digit at a GXO facility. Those are repeated industrial jobs with defined conditions. The real comparison is the whole job: how often the robot succeeds, how much human help it needs, how long it runs and what it costs to maintain.
-
+<div class="article-body rebuild-article">
+<div class='rc'>
+<div class='rc-stage'><div class='rc-view'>
+<svg class='rc-svg' viewBox='0 0 600 3980' role='img' aria-label='Blackboard with eight panels that follow one robot task: putting groceries away in a kitchen the robot has never seen' data-whole='[0,0,600,3980]' data-views='{"gap":[0,0,600,480],"body":[0,500,600,480],"program":[0,1000,600,480],"models":[0,1500,600,480],"data":[0,2000,600,480],"scale":[0,2500,600,480],"driving":[0,3000,600,480],"economics":[0,3500,600,480]}' font-family='ui-sans-serif, system-ui, sans-serif'>
+<defs><marker id='rc-arr' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0,0 L10,5 L0,10 z' fill='#f2efe6'/></marker><marker id='rc-arr-y' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto-start-reverse'><path d='M0,0 L10,5 L0,10 z' fill='#f5d76e'/></marker></defs>
+<g class='rc-panel' data-panel='gap'>
+<rect x='0' y='0' width='600' height='480' rx='14' fill='#1e2a25'/>
+<text x='24' y='38' fill='#f5d76e' font-size='22' font-weight='700'>1. The demo and the deployment</text>
+<text x='24' y='76' fill='#f2efe6' font-size='17'><tspan fill='#8ecae6' font-weight='700'>2017</tspan>  Atlas backflip (demo video)</text>
+<text x='24' y='104' fill='#f2efe6' font-size='17'><tspan fill='#8ecae6' font-weight='700'>2018</tspan>  Atlas obstacle jumps (demo video)</text>
+<text x='24' y='132' fill='#f2efe6' font-size='17'><tspan fill='#8ecae6' font-weight='700'>2020</tspan>  Spot goes on sale at $74,500</text>
+<text x='78' y='158' fill='#f2efe6' font-size='17'>more than 1,500 Spot units with customers</text>
+<text x='24' y='190' fill='#f2efe6' font-size='17'><tspan fill='#8ecae6' font-weight='700'>Amazon</tspan>  1,000,000 robots, mostly without legs</text>
+<text x='24' y='228' fill='#f5d76e' font-size='16'>Backflip: hard motion, known world.</text>
+<text x='24' y='250' fill='#f5d76e' font-size='16'>Groceries in a new kitchen: easy motion, unknown world.</text>
+<line x1='24' y1='268' x2='576' y2='268' stroke='#f2efe6' stroke-opacity='0.25'/>
+<circle cx='262' cy='300' r='13' fill='#d9b45a' fill-opacity='0.55'/>
+<path d='M262,281 V275 M243,300 H237 M281,300 H287 M249,287 L245,283 M275,287 L279,283' stroke='#d9b45a' stroke-width='2'/>
+<text x='292' y='305' fill='#f2efe6' font-size='16'>dim evening light</text>
+<path d='M58,400 L66,346 L118,346 L126,400 z' fill='none' stroke='#f2efe6' stroke-width='2'/>
+<text x='70' y='380' fill='#f2efe6' font-size='14'>bag</text>
+<rect x='142' y='334' width='36' height='66' fill='none' stroke='#f08a7e' stroke-width='2.5'/>
+<text x='154' y='374' fill='#f08a7e' font-size='20' font-weight='700'>?</text>
+<text x='128' y='326' fill='#f08a7e' font-size='15'>unseen brand</text>
+<rect x='212' y='372' width='24' height='28' fill='none' stroke='#9be39b' stroke-width='2.5'/>
+<path d='M236,378 q10,8 0,16' fill='none' stroke='#9be39b' stroke-width='2.5'/>
+<text x='202' y='364' fill='#9be39b' font-size='15'>clutter</text>
+<rect x='40' y='400' width='300' height='12' fill='#f2efe6' fill-opacity='0.8'/>
+<line x1='24' y1='464' x2='452' y2='464' stroke='#f2efe6' stroke-opacity='0.5'/>
+<line x1='30' y1='462' x2='30' y2='414' stroke='#8ecae6' stroke-width='2' marker-end='url(#rc-arr)'/>
+<text x='40' y='448' fill='#8ecae6' font-size='15'>taller counter</text>
+<rect x='360' y='286' width='86' height='176' rx='6' fill='none' stroke='#f2efe6' stroke-width='2'/>
+<text x='372' y='378' fill='#f2efe6' font-size='15'>fridge</text>
+<text x='470' y='300' fill='#f5d76e' font-size='17' font-weight='700'>Generalization:</text>
+<text x='470' y='324' fill='#f2efe6' font-size='16'>same skill when</text>
+<text x='470' y='346' fill='#f2efe6' font-size='16'>these change:</text>
+<text x='470' y='374' fill='#f08a7e' font-size='16'>object</text>
+<text x='470' y='398' fill='#d9b45a' font-size='16'>lighting</text>
+<text x='470' y='422' fill='#8ecae6' font-size='16'>height</text>
+<text x='470' y='446' fill='#9be39b' font-size='16'>clutter</text>
+</g>
+<g class='rc-panel' data-panel='body'>
+<rect x='0' y='500' width='600' height='480' rx='14' fill='#1e2a25'/>
+<text x='24' y='538' fill='#f5d76e' font-size='22' font-weight='700'>2. Body or brain? The teleoperation test</text>
+<rect x='24' y='566' width='176' height='56' rx='8' fill='none' stroke='#f2efe6' stroke-width='2'/>
+<text x='36' y='590' fill='#f2efe6' font-size='16'>A person drives</text><text x='36' y='611' fill='#f2efe6' font-size='16'>the robot</text>
+<line x1='202' y1='594' x2='236' y2='594' stroke='#f2efe6' stroke-width='2' marker-end='url(#rc-arr)'/>
+<rect x='240' y='566' width='128' height='56' rx='8' fill='none' stroke='#9be39b' stroke-width='2'/>
+<text x='252' y='600' fill='#9be39b' font-size='17'>task done</text>
+<line x1='370' y1='594' x2='398' y2='594' stroke='#f2efe6' stroke-width='2' marker-end='url(#rc-arr)'/>
+<text x='404' y='590' fill='#9be39b' font-size='16' font-weight='700'>the body is enough</text><text x='404' y='611' fill='#9be39b' font-size='16'>for this task</text>
+<rect x='24' y='652' width='176' height='56' rx='8' fill='none' stroke='#f2efe6' stroke-width='2'/>
+<text x='36' y='676' fill='#f2efe6' font-size='16'>The robot runs</text><text x='36' y='697' fill='#f2efe6' font-size='16'>on its own</text>
+<line x1='202' y1='680' x2='236' y2='680' stroke='#f2efe6' stroke-width='2' marker-end='url(#rc-arr)'/>
+<rect x='240' y='652' width='128' height='56' rx='8' fill='none' stroke='#f08a7e' stroke-width='2'/>
+<text x='252' y='686' fill='#f08a7e' font-size='17'>task fails</text>
+<line x1='370' y1='680' x2='398' y2='680' stroke='#f2efe6' stroke-width='2' marker-end='url(#rc-arr)'/>
+<text x='404' y='676' fill='#f08a7e' font-size='16' font-weight='700'>the policy is</text><text x='404' y='697' fill='#f08a7e' font-size='16' font-weight='700'>the gap</text>
+<text x='24' y='752' fill='#8ecae6' font-size='16' font-weight='700'>Evidence, one task at a time</text>
+<text x='24' y='778' fill='#f2efe6' font-size='15'>ALOHA 2023: cheap imprecise arms thread cable ties,</text>
+<text x='24' y='798' fill='#f2efe6' font-size='15'>insert batteries. About 50 demonstrations per task.</text>
+<text x='24' y='824' fill='#f2efe6' font-size='15'>Mobile ALOHA 2024: shrimp, heavy pot, elevator.</text>
+<text x='24' y='844' fill='#f2efe6' font-size='15'>50 demonstrations per task.</text>
+<line x1='24' y1='864' x2='576' y2='864' stroke='#f2efe6' stroke-opacity='0.25'/>
+<text x='24' y='892' fill='#f5d76e' font-size='16' font-weight='700'>The body still limits you</text>
+<text x='24' y='918' fill='#f2efe6' font-size='15'>hands · cables · battery · repair access · mass · heat · upkeep</text>
+<text x='24' y='950' fill='#8ecae6' font-size='15'>Unitree G1 from $13,500     SO-101 arm parts: a bit over $100</text>
+</g>
+<g class='rc-panel' data-panel='program'>
+<rect x='0' y='1000' width='600' height='480' rx='14' fill='#1e2a25'/>
+<text x='24' y='1038' fill='#f5d76e' font-size='22' font-weight='700'>3. Two ways to write the grocery program</text>
+<text x='24' y='1068' fill='#8ecae6' font-size='16' font-weight='700'>Engineered: a person writes and tunes every box</text>
+<g font-size='14' fill='#f2efe6'>
+<rect x='24' y='1082' width='96' height='44' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='34' y='1109'>perception</text>
+<rect x='134' y='1082' width='96' height='44' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='144' y='1101'>state</text><text x='144' y='1119'>estimation</text>
+<rect x='244' y='1082' width='96' height='44' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='256' y='1109'>planning</text>
+<rect x='354' y='1082' width='96' height='44' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='368' y='1109'>control</text>
+<rect x='464' y='1082' width='96' height='44' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='478' y='1109'>motors</text>
+</g>
+<g stroke='#f2efe6' stroke-width='1.8' marker-end='url(#rc-arr)'><line x1='120' y1='1104' x2='132' y2='1104'/><line x1='230' y1='1104' x2='242' y2='1104'/><line x1='340' y1='1104' x2='352' y2='1104'/><line x1='450' y1='1104' x2='462' y2='1104'/></g>
+<text x='24' y='1150' fill='#f2efe6' font-size='14' fill-opacity='0.85'>Atlas 2021: body-dynamics model, force optimization, offline behavior templates</text>
+<text x='24' y='1170' fill='#f08a7e' font-size='14'>Unseen cereal box: some box breaks, an engineer fixes it.</text>
+<line x1='24' y1='1186' x2='576' y2='1186' stroke='#f2efe6' stroke-opacity='0.25'/>
+<text x='24' y='1212' fill='#9be39b' font-size='16' font-weight='700'>Learned: one network, trained on demonstrations</text>
+<g font-size='14' fill='#f2efe6'>
+<rect x='24' y='1224' width='170' height='28' rx='6' fill='none' stroke='#8ecae6' stroke-width='1.8'/><text x='34' y='1243'>camera images</text>
+<rect x='24' y='1260' width='170' height='28' rx='6' fill='none' stroke='#8ecae6' stroke-width='1.8'/><text x='34' y='1279'>put the groceries away</text>
+<rect x='24' y='1296' width='170' height='28' rx='6' fill='none' stroke='#8ecae6' stroke-width='1.8'/><text x='34' y='1315'>joint angles</text>
+</g>
+<g stroke='#f2efe6' stroke-width='1.8' marker-end='url(#rc-arr)'><line x1='196' y1='1238' x2='236' y2='1262'/><line x1='196' y1='1274' x2='236' y2='1274'/><line x1='196' y1='1310' x2='236' y2='1286'/></g>
+<rect x='240' y='1232' width='170' height='84' rx='10' fill='#2c3d35' stroke='#9be39b' stroke-width='2.5'/>
+<text x='256' y='1266' fill='#9be39b' font-size='17' font-weight='700'>learned policy</text>
+<text x='256' y='1290' fill='#f2efe6' font-size='14'>(VLA, section 4)</text>
+<line x1='325' y1='1318' x2='325' y2='1348' stroke='#f5d76e' stroke-width='2' marker-end='url(#rc-arr-y)'/>
+<text x='334' y='1338' fill='#f5d76e' font-size='14'>action / motion target</text>
+<g font-size='14' fill='#f2efe6'>
+<rect x='240' y='1352' width='170' height='44' rx='8' fill='none' stroke='#f5d76e' stroke-width='1.8'/><text x='254' y='1370'>convert to</text><text x='254' y='1388'>joint targets</text>
+<rect x='438' y='1352' width='138' height='44' rx='8' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='452' y='1370'>joint feedback</text><text x='452' y='1388'>controller</text>
+<rect x='438' y='1420' width='138' height='32' rx='8' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='482' y='1441'>motors</text>
+</g>
+<g stroke='#f2efe6' stroke-width='1.8' marker-end='url(#rc-arr)'><line x1='410' y1='1374' x2='436' y2='1374'/><line x1='507' y1='1396' x2='507' y2='1418'/></g>
+<path d='M438,1436 H422 V1388 H436' fill='none' stroke='#8ecae6' stroke-width='1.6' marker-end='url(#rc-arr)'/>
+<text x='414' y='1440' fill='#8ecae6' font-size='13' text-anchor='end'>measured angle feeds back</text>
+<g font-size='13' fill='#f5d76e'><text x='24' y='1372'>OpenVLA-style action:</text><text x='24' y='1390'>Δ hand position, rotation,</text><text x='24' y='1408'>gripper: needs conversion</text></g>
+<text x='24' y='1470' fill='#f08a7e' font-size='14'>gravity · friction · servo delay → tracking error</text>
+</g>
+<g class='rc-panel' data-panel='models'>
+<rect x='0' y='1500' width='600' height='480' rx='14' fill='#1e2a25'/>
+<text x='24' y='1538' fill='#f5d76e' font-size='22' font-weight='700'>4. From text to actions</text>
+<text x='24' y='1578' fill='#f2efe6' font-size='17'><tspan font-weight='700' fill='#8ecae6'>LLM</tspan>   text → text</text>
+<text x='24' y='1608' fill='#f2efe6' font-size='17'><tspan font-weight='700' fill='#8ecae6'>VLM</tspan>   <tspan fill='#f5d76e'>images</tspan> + text → text</text>
+<text x='24' y='1638' fill='#f2efe6' font-size='17'><tspan font-weight='700' fill='#8ecae6'>VLA</tspan>   images + text + <tspan fill='#f5d76e'>joint state</tspan> → <tspan fill='#f5d76e'>actions</tspan></text>
+<text x='24' y='1666' fill='#f2efe6' font-size='14' fill-opacity='0.85'>Usual recipe: start from a pretrained VLM, then train on robot data.</text>
+<text x='24' y='1704' fill='#9be39b' font-size='16' font-weight='700'>OpenVLA, one step of the grocery task</text>
+<g font-size='13' fill='#f2efe6'>
+<rect x='24' y='1716' width='98' height='48' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='34' y='1737'>DinoV2 +</text><text x='34' y='1755'>SigLIP</text>
+<rect x='134' y='1716' width='98' height='48' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='144' y='1737'>MLP</text><text x='144' y='1755'>projector</text>
+<rect x='244' y='1716' width='98' height='48' rx='6' fill='#2c3d35' stroke='#9be39b' stroke-width='2'/><text x='254' y='1737'>Llama 2</text><text x='254' y='1755'>7B params</text>
+<rect x='354' y='1716' width='98' height='48' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='364' y='1737'>tokens back</text><text x='364' y='1755'>to numbers</text>
+<rect x='464' y='1716' width='98' height='48' rx='6' fill='none' stroke='#f5d76e' stroke-width='2'/><text x='474' y='1737' fill='#f5d76e'>action:</text><text x='474' y='1755' fill='#f5d76e'>7 numbers</text>
+</g>
+<g stroke='#f2efe6' stroke-width='1.8' marker-end='url(#rc-arr)'><line x1='122' y1='1740' x2='132' y2='1740'/><line x1='232' y1='1740' x2='242' y2='1740'/><line x1='342' y1='1740' x2='352' y2='1740'/><line x1='452' y1='1740' x2='462' y2='1740'/></g>
+<text x='24' y='1784' fill='#f2efe6' font-size='13' fill-opacity='0.85'>camera frame in</text>
+<line x1='293' y1='1800' x2='293' y2='1768' stroke='#8ecae6' stroke-width='1.6' marker-end='url(#rc-arr)'/>
+<text x='230' y='1816' fill='#8ecae6' font-size='13'>instruction text</text>
+<text x='370' y='1790' fill='#f5d76e' font-size='13'>3: move the hand</text>
+<text x='370' y='1808' fill='#f5d76e' font-size='13'>3: rotate it, 1: gripper</text>
+<text x='24' y='1860' fill='#8ecae6' font-size='16' font-weight='700'>RT-2, 2023: unseen objects, backgrounds, environments</text>
+<text x='24' y='1896' fill='#f2efe6' font-size='16'>RT-1</text>
+<rect x='90' y='1880' width='128' height='22' fill='#f08a7e'/>
+<text x='226' y='1897' fill='#f2efe6' font-size='16'>32%</text>
+<text x='24' y='1934' fill='#f2efe6' font-size='16'>RT-2</text>
+<rect x='90' y='1918' width='248' height='22' fill='#9be39b'/>
+<text x='346' y='1935' fill='#f2efe6' font-size='16'>62%</text>
+<line x1='90' y1='1950' x2='490' y2='1950' stroke='#f2efe6' stroke-opacity='0.4'/>
+<text x='490' y='1968' fill='#f2efe6' font-size='12' text-anchor='end'>100%</text>
+</g>
+<g class='rc-panel' data-panel='data'>
+<rect x='0' y='2000' width='600' height='480' rx='14' fill='#1e2a25'/>
+<text x='24' y='2038' fill='#f5d76e' font-size='22' font-weight='700'>5. Three sources of robot data</text>
+<g font-size='14'>
+<rect x='24' y='2056' width='176' height='178' rx='8' fill='none' stroke='#8ecae6' stroke-width='2'/>
+<text x='36' y='2082' fill='#8ecae6' font-size='16' font-weight='700'>Teleoperation</text>
+<text x='36' y='2108' fill='#9be39b'>+ measured actions</text><text x='36' y='2128' fill='#9be39b'>+ real contact</text>
+<text x='36' y='2160' fill='#f08a7e'>− operator time</text><text x='36' y='2180' fill='#f08a7e'>− scene resets</text><text x='36' y='2200' fill='#f08a7e'>− hard to vary</text>
+<rect x='212' y='2056' width='176' height='178' rx='8' fill='none' stroke='#8ecae6' stroke-width='2'/>
+<text x='224' y='2082' fill='#8ecae6' font-size='16' font-weight='700'>Simulation</text>
+<text x='224' y='2108' fill='#9be39b'>+ repeatable trials</text><text x='224' y='2128' fill='#9be39b'>+ known state</text><text x='224' y='2148' fill='#9be39b'>+ parallel runs</text>
+<text x='224' y='2180' fill='#f08a7e'>− contact, friction,</text><text x='224' y='2200' fill='#f08a7e'>  soft objects, sensors</text><text x='224' y='2220' fill='#f08a7e'>  transfer badly</text>
+<rect x='400' y='2056' width='176' height='178' rx='8' fill='none' stroke='#8ecae6' stroke-width='2'/>
+<text x='412' y='2082' fill='#8ecae6' font-size='16' font-weight='700'>Human video</text>
+<text x='412' y='2108' fill='#9be39b'>+ huge coverage</text><text x='412' y='2128' fill='#9be39b'>+ everyday tasks</text>
+<text x='412' y='2160' fill='#f08a7e'>− no measured motion</text><text x='412' y='2180' fill='#f08a7e'>  or contact</text><text x='412' y='2200' fill='#f08a7e'>− a human body</text>
+</g>
+<text x='24' y='2272' fill='#9be39b' font-size='16' font-weight='700'>EgoScale, 2026: human video first</text>
+<g font-size='13' fill='#f2efe6'>
+<rect x='24' y='2284' width='168' height='48' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='34' y='2305'>20,854 h</text><text x='34' y='2323'>egocentric video</text>
+<rect x='212' y='2284' width='176' height='48' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='222' y='2305'>matched play: 50 h</text><text x='222' y='2323'>human + 4 h robot</text>
+<rect x='408' y='2284' width='168' height='48' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='418' y='2313'>target task</text>
+</g>
+<g stroke='#f2efe6' stroke-width='1.8' marker-end='url(#rc-arr)'><line x1='192' y1='2308' x2='210' y2='2308'/><line x1='388' y1='2308' x2='406' y2='2308'/></g>
+<text x='24' y='2376' fill='#8ecae6' font-size='16' font-weight='700'>Figure Index, 2026: 30 homes the robot never saw</text>
+<text x='24' y='2412' fill='#f2efe6' font-size='15'>no Index</text>
+<rect x='130' y='2396' width='36' height='22' fill='#f08a7e'/>
+<text x='174' y='2413' fill='#f2efe6' font-size='16'>9%</text>
+<text x='24' y='2448' fill='#f2efe6' font-size='15'>with Index</text>
+<rect x='130' y='2432' width='224' height='22' fill='#9be39b'/>
+<text x='362' y='2449' fill='#f2efe6' font-size='16'>56% task success</text>
+<text x='24' y='2472' fill='#f2efe6' font-size='12' fill-opacity='0.75'>Figure-reported comparison across 30 previously unseen homes</text>
+</g>
+<g class='rc-panel' data-panel='scale'>
+<rect x='0' y='2500' width='600' height='480' rx='14' fill='#1e2a25'/>
+<text x='24' y='2538' fill='#f5d76e' font-size='22' font-weight='700'>6. More data helps; long tasks hurt</text>
+<text x='110' y='2568' fill='#8ecae6' font-size='14'>Validation loss fell roughly linearly with log data volume.</text>
+<text x='110' y='2586' fill='#9be39b' font-size='13'>Dots: average task completion (EgoScale, reported)</text>
+<line x1='90' y1='2695' x2='540' y2='2695' stroke='#f2efe6' stroke-width='1.5'/>
+<line x1='90' y1='2595' x2='90' y2='2695' stroke='#f2efe6' stroke-width='1.5'/>
+<text x='84' y='2606' fill='#f2efe6' font-size='12' text-anchor='end'>1.0</text>
+<text x='84' y='2699' fill='#f2efe6' font-size='12' text-anchor='end'>0</text>
+<g fill='#f2efe6' font-size='12' text-anchor='middle'><text x='90' y='2712'>1k h</text><text x='194' y='2712'>2k</text><text x='298' y='2712'>4k</text><text x='436' y='2712'>10k</text><text x='530' y='2712'>20k h (log scale)</text></g>
+<circle cx='90' cy='2662' r='6' fill='#9be39b'/><circle cx='540' cy='2617' r='6' fill='#9be39b'/>
+<text x='102' y='2678' fill='#9be39b' font-size='14'>0.30 task completion</text>
+<text x='528' y='2606' fill='#9be39b' font-size='14' text-anchor='end'>0.71</text>
+<line x1='70' y1='2730' x2='70' y2='2940' stroke='#f2efe6' stroke-width='1.5'/>
+<line x1='70' y1='2940' x2='560' y2='2940' stroke='#f2efe6' stroke-width='1.5'/>
+<text x='64' y='2735' fill='#f2efe6' font-size='12' text-anchor='end'>100%</text>
+<text x='64' y='2944' fill='#f2efe6' font-size='12' text-anchor='end'>0%</text>
+<g fill='#f2efe6' font-size='12' text-anchor='middle'><text x='70' y='2958'>0</text><text x='192' y='2958'>5</text><text x='315' y='2958'>10</text><text x='437' y='2958'>15</text><text x='560' y='2958'>20 steps</text></g>
+<polyline fill='none' stroke='#9be39b' stroke-width='2.5' points='70,2730 119,2734.2 168,2738.3 217,2742.3 266,2746.2 315,2750.1 364,2753.9 413,2757.6 462,2761.2 511,2764.8 560,2768.2'/>
+<polyline fill='none' stroke='#f5d76e' stroke-width='3' points='70,2730 119,2750.5 168,2769 217,2785.6 266,2800.7 315,2814.3 364,2826.5 413,2837.6 462,2847.6 511,2856.6 560,2864.7'/>
+<polyline fill='none' stroke='#f08a7e' stroke-width='2.5' points='70,2730 119,2769.9 168,2802.2 217,2828.4 266,2849.6 315,2866.8 364,2880.7 413,2892 462,2901.1 511,2908.5 560,2914.5'/>
+<circle cx='560' cy='2864.7' r='6' fill='#f5d76e'/>
+<text x='330' y='2782' fill='#9be39b' font-size='14'>p = 0.99 per step</text>
+<text x='206' y='2810' fill='#f5d76e' font-size='14'>p = 0.95</text>
+<text x='150' y='2852' fill='#f08a7e' font-size='14'>p = 0.90</text>
+<text x='594' y='2760' fill='#9be39b' font-size='14' text-anchor='end'>82%</text>
+<text x='594' y='2856' fill='#f5d76e' font-size='14' text-anchor='end'>36%</text>
+<text x='594' y='2932' fill='#f08a7e' font-size='14' text-anchor='end'>12%</text>
+<text x='80' y='2910' fill='#f2efe6' font-size='15'>P(complete) = pⁿ,  0.95²⁰ ≈ 36%</text>
+<text x='80' y='2930' fill='#f2efe6' font-size='12' fill-opacity='0.8'>p = success at a step, given the robot reached it; no recovery</text>
+</g>
+<g class='rc-panel' data-panel='driving'>
+<rect x='0' y='3000' width='600' height='480' rx='14' fill='#1e2a25'/>
+<text x='24' y='3038' fill='#f5d76e' font-size='22' font-weight='700'>7. Avoid contact, make contact, imagine first</text>
+<rect x='24' y='3060' width='260' height='92' rx='6' fill='#2a3631'/>
+<line x1='24' y1='3106' x2='284' y2='3106' stroke='#f2efe6' stroke-dasharray='10 8' stroke-opacity='0.6'/>
+<rect x='60' y='3114' width='44' height='24' rx='5' fill='#8ecae6'/>
+<path d='M106,3126 C150,3126 160,3080 230,3082' fill='none' stroke='#8ecae6' stroke-width='2' stroke-dasharray='4 4' marker-end='url(#rc-arr)'/>
+<rect x='170' y='3116' width='22' height='22' fill='#f08a7e'/>
+<text x='24' y='3176' fill='#8ecae6' font-size='16' font-weight='700'>Driving: avoid contact</text>
+<text x='24' y='3198' fill='#f2efe6' font-size='13'>Waymo: 270M+ autonomous miles;</text>
+<text x='24' y='3216' fill='#f2efe6' font-size='13'>82% fewer injury crashes, 95% fewer</text>
+<text x='24' y='3234' fill='#f2efe6' font-size='13'>serious ones (company-reported)</text>
+<path d='M360,3070 v30 h-16 v40 M420,3070 v30 h16 v40' fill='none' stroke='#f2efe6' stroke-width='3'/>
+<rect x='356' y='3112' width='68' height='34' rx='12' fill='#d9b45a' fill-opacity='0.7'/>
+<text x='364' y='3134' fill='#1e2a25' font-size='13' font-weight='700'>bread</text>
+<path d='M330,3128 h10 M450,3128 h-10' stroke='#f08a7e' stroke-width='2.5' marker-end='url(#rc-arr)'/>
+<text x='316' y='3176' fill='#f08a7e' font-size='16' font-weight='700'>Groceries: make contact</text>
+<text x='316' y='3198' fill='#f2efe6' font-size='13'>grasp, push, squeeze, pour</text>
+<text x='316' y='3216' fill='#f2efe6' font-size='13'>friction, slip, deformation:</text>
+<text x='316' y='3234' fill='#f2efe6' font-size='13'>hard to simulate and predict</text>
+<line x1='24' y1='3254' x2='576' y2='3254' stroke='#f2efe6' stroke-opacity='0.25'/>
+<text x='24' y='3282' fill='#9be39b' font-size='16' font-weight='700'>World model: predict before acting, two routes</text>
+<text x='24' y='3304' fill='#8ecae6' font-size='13'>A. Plan with predicted features (V-JEPA 2)</text>
+<g font-size='13' fill='#f2efe6'>
+<rect x='24' y='3312' width='160' height='40' rx='6' fill='none' stroke='#8ecae6' stroke-width='1.8'/><text x='34' y='3328'>camera now +</text><text x='34' y='3344'>candidate action</text>
+<rect x='206' y='3312' width='110' height='40' rx='8' fill='#2c3d35' stroke='#9be39b' stroke-width='2'/><text x='218' y='3337'>world model</text>
+<rect x='338' y='3312' width='110' height='40' rx='6' fill='none' stroke='#f5d76e' stroke-width='1.8'/><text x='348' y='3328'>predicted</text><text x='348' y='3344'>features</text>
+<rect x='470' y='3312' width='106' height='40' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='480' y='3328'>compare,</text><text x='480' y='3344'>pick action</text>
+</g>
+<g stroke='#f2efe6' stroke-width='1.8' marker-end='url(#rc-arr)'><line x1='184' y1='3332' x2='204' y2='3332'/><line x1='316' y1='3332' x2='336' y2='3332'/><line x1='448' y1='3332' x2='468' y2='3332'/></g>
+<text x='24' y='3378' fill='#8ecae6' font-size='13'>B. Generate video, then recover actions (DreamGen, NEO)</text>
+<g font-size='13' fill='#f2efe6'>
+<rect x='24' y='3386' width='160' height='40' rx='6' fill='none' stroke='#8ecae6' stroke-width='1.8'/><text x='34' y='3402'>camera now +</text><text x='34' y='3418'>task request</text>
+<rect x='206' y='3386' width='110' height='40' rx='8' fill='#2c3d35' stroke='#9be39b' stroke-width='2'/><text x='218' y='3411'>video model</text>
+<rect x='338' y='3386' width='110' height='40' rx='6' fill='none' stroke='#f5d76e' stroke-width='1.8'/><text x='348' y='3402'>generated</text><text x='348' y='3418'>video</text>
+<rect x='470' y='3386' width='106' height='40' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='480' y='3402'>inverse</text><text x='480' y='3418'>dynamics</text>
+</g>
+<g stroke='#f2efe6' stroke-width='1.8' marker-end='url(#rc-arr)'><line x1='184' y1='3406' x2='204' y2='3406'/><line x1='316' y1='3406' x2='336' y2='3406'/><line x1='448' y1='3406' x2='468' y2='3406'/></g>
+<line x1='523' y1='3428' x2='523' y2='3444' stroke='#f5d76e' stroke-width='2' marker-end='url(#rc-arr-y)'/>
+<text x='523' y='3462' fill='#f5d76e' font-size='13' text-anchor='middle'>recovered actions</text>
+<text x='24' y='3452' fill='#f2efe6' font-size='13'>DreamGen: 1 real image + 1 seed task → 22 new behaviors</text>
+<text x='24' y='3470' fill='#f2efe6' font-size='13'>V-JEPA 2: 1M+ h video, then under 62 h robot data</text>
+</g>
+<g class='rc-panel' data-panel='economics'>
+<rect x='0' y='3500' width='600' height='480' rx='14' fill='#1e2a25'/>
+<text x='24' y='3538' fill='#f5d76e' font-size='22' font-weight='700'>8. Cheaper task changes</text>
+<text x='24' y='3564' fill='#8ecae6' font-size='14'>2024 robots per 10,000 manufacturing employees (IFR)</text>
+<g font-size='15' fill='#f2efe6'>
+<text x='24' y='3596'>South Korea</text><rect x='160' y='3580' width='400' height='24' fill='#9be39b'/><text x='552' y='3598' fill='#1e2a25' text-anchor='end' font-weight='700'>1,220</text>
+<text x='24' y='3634'>Singapore</text><rect x='160' y='3618' width='268' height='24' fill='#8ecae6'/><text x='436' y='3636'>818</text>
+<text x='24' y='3672'>Germany</text><rect x='160' y='3656' width='147' height='24' fill='#8ecae6'/><text x='315' y='3674'>449</text>
+<text x='24' y='3710'>Japan</text><rect x='160' y='3694' width='146' height='24' fill='#8ecae6'/><text x='314' y='3712'>446</text>
+<text x='24' y='3748'>United States</text><rect x='160' y='3732' width='101' height='24' fill='#f08a7e'/><text x='269' y='3750'>307</text>
+</g>
+<text x='24' y='3796' fill='#f2efe6' font-size='14'>Today: one fixed cell per task; every change costs integration and reprogramming.</text>
+<g font-size='13' fill='#f2efe6'>
+<rect x='24' y='3814' width='128' height='60' rx='6' fill='none' stroke='#f5d76e' stroke-width='1.8'/><text x='34' y='3838'>new task from a</text><text x='34' y='3856'>few dozen demos</text>
+<rect x='168' y='3814' width='128' height='60' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='178' y='3838'>cheap task</text><text x='178' y='3856'>change</text>
+<rect x='312' y='3814' width='128' height='60' rx='6' fill='none' stroke='#f2efe6' stroke-width='1.8'/><text x='322' y='3838'>small batches</text><text x='322' y='3856'>worth automating</text>
+<rect x='456' y='3814' width='128' height='60' rx='6' fill='none' stroke='#9be39b' stroke-width='1.8'/><text x='466' y='3838'>local factories</text><text x='466' y='3856'>viable again?</text>
+</g>
+<g stroke='#f2efe6' stroke-width='1.8' marker-end='url(#rc-arr)'><line x1='152' y1='3844' x2='166' y2='3844'/><line x1='296' y1='3844' x2='310' y2='3844'/><line x1='440' y1='3844' x2='454' y2='3844'/></g>
+<text x='24' y='3904' fill='#f08a7e' font-size='15'>Only if the policies generalize and run reliably in production.</text>
+<text x='24' y='3934' fill='#8ecae6' font-size='14'>Production Atlas, 2026: Hyundai factory announced at 30,000 robots/year,</text>
+<text x='24' y='3954' fill='#8ecae6' font-size='14'>first job in car plants: parts sequencing.</text>
+</g>
+</svg>
+</div><p class='rc-where'>1. The demo and the deployment</p></div>
+<div class='rc-body'>
+<span id="section-a-reset-button-on-classical-robotics" data-legacy-anchor=""></span><span id="section-from-language-models-to-robot-actions" data-legacy-anchor=""></span><span id="section-hardware-is-not-the-bottleneck" data-legacy-anchor=""></span><span id="section-learning-from-people-s-point-of-view" data-legacy-anchor=""></span><span id="section-learning-quickly-without-skipping-the-thinking" data-legacy-anchor=""></span><span id="section-open-questions-i-keep-returning-to" data-legacy-anchor=""></span><span id="section-reindustrializing-europe-and-the-united-states" data-legacy-anchor=""></span><span id="section-robotics-is-in-its-2019" data-legacy-anchor=""></span><span id="section-waymo-a-robot-that-tries-not-to-touch-the-world" data-legacy-anchor=""></span><span id="section-where-the-analogy-breaks" data-legacy-anchor=""></span><span id="section-why-the-best-robots-stayed-in-the-videos" data-legacy-anchor=""></span><span id="section-world-models-imagining-the-future-before-acting" data-legacy-anchor=""></span><div class='rc-mark' data-panel='gap' data-view='[0,0,600,480]' data-title='1. The demo and the deployment'></div>
+<h2>A backflip in 2017, a million robots without legs</h2>
+<p>In 2017 Boston Dynamics showed Atlas doing a backflip. A year later it was jumping over obstacles. Watching those clips, you could believe humanoids in your kitchen were a few years away.</p>
+<figure class='video-embed'><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/LikxFZZO2sk' title='Boston Dynamics Atlas, 2018' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><figcaption>Atlas in 2018, jumping over obstacles. <a href='https://www.youtube.com/watch?v=LikxFZZO2sk'>Watch on YouTube</a></figcaption></figure>
+<p>Spot, the dog-shaped robot from the same company, <a href='https://venturebeat.com/ai/boston-dynamics-buy-spot-robot-74500'>went on sale in 2020 for $74,500</a>, and <a href='https://bostondynamics.com/products/spot/'>more than 1,500 are with customers</a>. Amazon <a href='https://www.aboutamazon.com/news/operations/amazon-million-robots-ai-foundation-model'>says it runs 1,000,000 robots</a>, and nearly all of them roll or stay bolted in place. (These counts come from different reports, so read them as orders of magnitude.)</p>
+<p>Why didn't the backflip turn into a robot that does chores? You can plan a backflip ahead of time, but what if the robot starts tipping halfway through the jump? Atlas used a physics model of its own body to keep predicting what would happen next, and an optimizer to pick the forces to apply. That's <a href='https://bostondynamics.com/blog/flipping-the-script-with-atlas/'>model predictive control</a>. Engineers designed a library of behavior templates offline, and the controller adapted them to the terrain as it went. It's beautiful engineering, and it means every new behavior needs a team of specialists to build it. The company also changed owners three times in eight years (Google in 2013, SoftBank in 2017, Hyundai in 2021), which I read as a sign that spectacular behaviors were hard to turn into a business.</p>
+<figure class='video-embed'><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/tF4DML7FIWk' title='Boston Dynamics Atlas, 2021' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><figcaption>Atlas in 2021: engineered behaviors adapted to the terrain. <a href='https://www.youtube.com/watch?v=tF4DML7FIWk'>Watch on YouTube</a></figcaption></figure>
+<p>Let's put a bag of groceries away in a kitchen the robot has never seen. The cereal brand is unfamiliar. The evening light is dim and yellow. The counter is taller than in the lab, and a mug blocks the milk's spot. You would barely notice any of this. Now suppose the mug blocks the path the robot's planner picked. Does the robot move it, go around it, or stop? With hand-engineered control, someone has to build a way to handle that.</p>
+<p>Keeping a skill working when the object, the lighting, the surface height or the clutter changes, without anyone programming those cases, is what we call generalization. Hand-engineered control is bad at it. Learned policies have recently gotten a lot better at it, and that change is why I'm learning robotics now.</p>
+<div class='rc-mark' data-panel='body' data-view='[0,500,600,480]' data-title='2. Body or brain?'></div>
+<h2>First, check the body</h2>
+<p>When a robot fails at the groceries, the hardware is the first suspect. Maybe the fingers are too clumsy, or the arm is too weak. Try teleoperation: a human drives the robot through a controller, using its motors and cameras. If a person can put the groceries away through the robot, the body is good enough for that task. If the robot then fails on its own, the missing piece is the policy, the program that turns what the robot sees into what it does next.</p>
+<p>Run it on recent systems and the answer keeps pointing at the policy. In 2023, <a href='https://arxiv.org/abs/2304.13705'>ACT</a> used ALOHA, a pair of inexpensive and imprecise arms, to thread cable ties and insert batteries, with about 50 demonstrations per task. In 2024, <a href='https://arxiv.org/abs/2401.02117'>Mobile ALOHA</a> put the setup on wheels and learned to sauté shrimp, store a heavy pot and call an elevator, again from 50 demonstrations per task. Below, a person operates the robot through a three-course meal; alongside, the robot does housekeeping on its own. To me, the teleoperated meal is the interesting part: the body can already do all that. Getting it to choose those movements on its own is the bigger gap.</p>
+<figure class='video-embed video-pair'><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/mnLVbwxSdNM' title='Mobile ALOHA, teleoperated cooking' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/HaaZ8ss-HP4' title='Mobile ALOHA, autonomous housekeeping' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><figcaption>Left: a person teleoperates Mobile ALOHA through a three-course meal (<a href='https://www.youtube.com/watch?v=mnLVbwxSdNM'>watch on YouTube</a>). Right: the robot does housekeeping autonomously (<a href='https://www.youtube.com/watch?v=HaaZ8ss-HP4'>watch on YouTube</a>).</figcaption></figure>
+<p>The hardware also got cheap. A <a href='https://www.unitree.com/g1/'>Unitree G1</a> humanoid starts at $13,500, and the parts for an <a href='https://github.com/TheRobotStudio/SO-ARM100'>SO-101 arm</a> cost a bit over $100. Hands are fragile, cables wear out, and batteries run down, and a robot that breaks every day is useless however smart its policy is.</p>
+<details><summary>Hardware endurance: why hands are hard</summary>
+<p>Most dexterous hands keep fingers light by putting motors in the forearm and pulling with tendons. Tendons can only pull, so every joint needs an opposing tendon or a spring, and routing them through the wrist adds friction, wear and tension to manage. Motors inside the fingers avoid the tendons but put mass and heat at the end of the arm. The <a href='https://shadow-robot-company-dexterous-hand.readthedocs-hosted.com/en/latest/user_guide/md_motor_unit.html'>Shadow hand</a> uses 20 forearm motors with paired tendons. In August 2026, Figure's founder <a href='https://x.com/adcock_brett/status/2087927278458327179'>criticized an early tendon-hand design</a>; that's his judgment, not reliability data. I'd want replaceable fingers, accessible cables, and repairs that don't mean rebuilding the arm.</p>
 </details>
-
-<details>
-<summary>Could a coding agent teach or control the robot?</summary>
-
-[EmbodiedSWE](https://arxiv.org/html/2609.27308v1) treats simulated robot tasks as programming problems: an agent writes a solution, runs it and tries again, and the verified programs generate demonstrations. Its best agent solved about **82% of 28 simulated tasks**, but after fine-tuning on 500 of those demonstrations, a real robot completed a lamp disassembly in **2 of 10 trials**. [Agent as Policy](https://arxiv.org/html/2609.12541v1) keeps the coding agent in the loop on a real robot, with **5/5, 5/5 and 4/5** successes on block tasks, at 21 to 35 minutes per run. Flexible, but far from fast.
-
+<div class='rc-mark' data-panel='program' data-view='[0,1000,600,480]' data-title='3. Two ways to write the grocery program'></div>
+<h2>Two ways to write the grocery program</h2>
+<p>Write the grocery program by hand and you get four stages. Perception finds the cereal box in the camera image. State estimation works out where the box and the arm are in space. Planning picks a path for the hand, and control turns that path into motor commands. An engineer tunes each stage; Atlas's controller excels at the last two. When the unseen cereal box shows up, some stage breaks and someone has to fix it.</p>
+<p>The learned recipe replaces much of that pipeline with one network. Camera images, the instruction &ldquo;put the groceries away&rdquo; and the robot's joint angles go in, and the next action comes out. You collect demonstrations, usually by teleoperation, and train the network to imitate them. How much of the pipeline gets replaced varies from system to system.</p>
+<p>One layer stays underneath. The policy outputs action commands. Commands for hand position and rotation must first be converted into joint targets, which feedback controllers track. Gravity pulls the arm down, friction resists the joints and the servos respond late, so the arm lands a little off target. That's the layer I'm studying in my <a href='/robotics/so101-1-target-and-goal/'>SO-101 controller series</a>, where I compare controllers (no winner yet). If joints and motors are new to you, start with <a href='/robotics/from-joint-angles-to-a-moving-arm/'>from joint angles to a moving arm</a>.</p>
+<p>In February 2025, Figure showed <a href='https://www.figure.ai/news/helix'>Helix</a>: two humanoids sharing one model, putting away groceries that included objects the company says were absent from training. In August, Boston Dynamics and TRI showed a newer generation of Atlas running <a href='https://bostondynamics.com/blog/large-behavior-models-atlas-find-new-footing/'>one behavior model for legs and hands</a>, learned from demonstrations. It ties rope, spreads a tablecloth, stacks blocks, and recovers when someone moves the box it's working on. Both are company demos.</p>
+<figure class='video-embed'><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/Z3yQHYNXPws' title='Figure Helix, February 2025' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><figcaption>Figure Helix, February 2025: two humanoids, one model, groceries. <a href='https://www.youtube.com/watch?v=Z3yQHYNXPws'>Watch on YouTube</a></figcaption></figure>
+<figure class='video-embed'><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/HYwekersccY' title='Boston Dynamics and TRI, August 2025' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><figcaption>Atlas, August 2025: one learned behavior model for the whole body, including recovery after the box is moved. <a href='https://www.youtube.com/watch?v=HYwekersccY'>Watch on YouTube</a></figcaption></figure>
+<div class='rc-mark' data-panel='models' data-view='[0,1500,600,480]' data-title='4. From text to actions'></div>
+<h2>The robot's brain started as a language model</h2>
+<p>The learned policy grew out of familiar language models:</p>
+<table><thead><tr><th>Model</th><th>Input</th><th>Output</th></tr></thead><tbody><tr><td>LLM (large language model)</td><td>text</td><td>text, trained to predict the next piece of text</td></tr><tr><td>VLM (vision-language model)</td><td>images and text</td><td>text</td></tr><tr><td>VLA (vision-language-action model)</td><td>camera images, an instruction and the robot's joint state</td><td>actions</td></tr></tbody></table>
+<p>The usual way to build a VLA is to take a pretrained VLM and keep training it on robot data. That order matters for our groceries. From internet images and text, the VLM already knows what a cereal box looks like and what &ldquo;put away&rdquo; means, so the robot data only has to teach it how to move. <a href='https://deepmind.google/blog/rt-2-new-model-translates-vision-and-language-into-action/'>RT-2</a> tested this in 2023 on objects, backgrounds and environments the robot had never seen, and success went from 32% with the earlier RT-1 to 62%.</p>
+<p>Look at <a href='https://arxiv.org/abs/2406.09246'>OpenVLA</a>. Two image encoders, DinoV2 and SigLIP, turn the camera frame into features. But Llama 2, a 7-billion-parameter language model, expects text tokens, not the encoders' output. A small neural network converts that output into vectors Llama 2 can read alongside the instruction; this converter is the MLP projector in the diagram. We then convert Llama 2's output tokens back into seven numbers: three for how far to move the hand, three for how much to rotate it, and one for the gripper. That's one nudge toward the cereal box. The next frame comes in, and it does it again.</p>
+<figure><img src='/assets/robotics/why-robotics/openvla-architecture-chalk.png' alt='OpenVLA architecture: image encoders, MLP projector, Llama 2 language backbone and action detokenizer' loading='lazy'><figcaption>OpenVLA, redrawn from Kim et al., 2024 (CC BY 4.0).</figcaption></figure>
+<p>&ldquo;Put the groceries away&rdquo; is also a long instruction. <a href='https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/'>Gemini Robotics 1.5</a> adds a reasoning model on top that splits a broad instruction into steps (open the fridge, pick up the milk) and hands each step to a VLA.</p>
+<div class='rc-mark' data-panel='data' data-view='[0,2000,600,480]' data-title='5. Three sources of robot data'></div>
+<h2>Nobody wrote the action data down</h2>
+<p>Language models got a gift: the internet was already full of text. Robots get no such gift. Records of robot observations, commands and contact mostly need deliberate collection, often by teleoperation. Our grocery policy needs lots of varied kitchens, our robot's body, measured commands and contact information, plus unseen kitchens for evaluation.</p>
+<p>Three sources cover each other's weaknesses:</p>
+<table><thead><tr><th>Source</th><th>What you get</th><th>What it costs</th></tr></thead><tbody><tr><td>Teleoperation</td><td>Camera images paired with the executed commands and the measured motion: direct action labels</td><td>Operator time, scene resets, and real effort to get enough variety</td></tr><tr><td>Simulation</td><td>Repeatable trials, known state, many experiments in parallel</td><td>Contact, friction, deformable objects and sensors behave differently in reality</td></tr><tr><td>Egocentric human video</td><td>First-person video, often head-mounted with hands visible, across many people, tasks, objects and places</td><td>No measured motion or contact, and a human body instead of a robot</td></tr></tbody></table>
+<p>In 2023, <a href='https://arxiv.org/abs/2310.08864'>Open X-Embodiment</a> tried pooling experience across different bodies: about a million recorded attempts from 22 robot types. Could something learned on one arm help another? <a href='https://arxiv.org/abs/2403.12945'>DROID</a> kept the robot setup the same and changed its surroundings: 76,000 teleoperated attempts across 564 scenes in homes, offices and labs.</p>
+<figure><img src='/assets/robotics/why-robotics/open-x-embodiment.png' alt='Composition and scale of the Open X-Embodiment pooled dataset' loading='lazy'><figcaption>Open X-Embodiment Collaboration, 2023 (CC BY 4.0).</figcaption></figure>
+<figure><img src='/assets/robotics/why-robotics/droid-scenes.png' alt='Sample DROID scenes across homes, offices and labs' loading='lazy'><figcaption>DROID scenes, Khazatsky et al., 2024 (CC BY 4.0).</figcaption></figure>
+<p>Human video is exciting: people already put groceries away every day. The hard part is moving the skill from a human hand to a robot hand. <a href='https://arxiv.org/abs/2602.16710'>EgoScale</a> (February 2026) does it in three stages, shown on the board. The middle stage uses matched data from a head camera, wrist cameras and tracked gloves, so every frame comes with the hand motion attached. On a robot hand with 22 degrees of freedom, they report a 54% improvement in average success over no pretraining.</p>
+<figure><img src='/assets/robotics/why-robotics/egoscale-pipeline.png' alt='EgoScale stages: human-video pretraining, matched play, target-task training' loading='lazy'><figcaption>EgoScale training stages, 2026 (CC BY 4.0).</figcaption></figure>
+<figure><img src='/assets/robotics/why-robotics/egoscale-capture.png' alt='EgoScale capture rig with head camera, wrist cameras and tracked gloves, with synchronized views' loading='lazy'><figcaption>EgoScale matched capture, 2026 (CC BY 4.0).</figcaption></figure>
+<p>Could you just mix human video into robot training and let the model figure out the connection? <a href='https://arxiv.org/abs/2512.22414'>Kareer and colleagues</a> at Physical Intelligence tried this in 2025 with their robot policy π0.5. They added 3 to 5 hours of head-camera video per task, without a separate step to match human movements to robot movements. To see what happened inside, they used t-SNE, which squashes the model's high-dimensional internal vectors down to 2D so you can look at them. Without robot pretraining, human and robot examples sit in separate clusters. With more diverse robot pretraining, the clusters overlap, as if the model had learned one description of the task for both bodies. On scenes that appeared only in the human video, performance nearly doubled.</p>
+<figure><img src='/assets/robotics/why-robotics/human-robot-tsne-schematic.png' alt='Schematic: human and robot clusters separate without robot pretraining and overlap with diverse robot pretraining' loading='lazy'><figcaption>My schematic of the idea in Kareer et al., 2025. It shows the concept, not their actual plot.</figcaption></figure>
+<p>In August 2026 Figure <a href='https://www.figure.ai/news/introducing-index'>launched Index</a>, a paid app for recording everyday activities, and reports more than 16,000,000 videos and 44,000 weekly users. In September it <a href='https://www.figure.ai/news/helix-2-5-zero-shot-30-home-generalization'>reported</a> 56% task success in 30 homes the robot had never seen, against 9% without Index pretraining. A gap remains no matter how much video you collect: a human hand is not a robot hand.</p>
+<div class='rc-mark' data-panel='scale' data-view='[0,2500,600,480]' data-title='6. More data helps; long tasks hurt'></div>
+<h2>Is this robotics' GPT-2 moment?</h2>
+<p>Compare the two fields:</p>
+<div class='llm-timeline' data-widget='llm-timeline'>
+<table><thead><tr><th>Year</th><th>Language models</th><th>Robot learning</th></tr></thead><tbody>
+<tr data-year='2017'><td>2017</td><td><a href='https://arxiv.org/abs/1706.03762'>Transformer</a></td><td>&nbsp;</td></tr>
+<tr data-year='2018'><td>2018</td><td>GPT-1, BERT</td><td>&nbsp;</td></tr>
+<tr data-year='2019'><td>2019</td><td>GPT-2</td><td>&nbsp;</td></tr>
+<tr data-year='2020'><td>2020</td><td><a href='https://arxiv.org/abs/2001.08361'>Scaling laws</a>, <a href='https://arxiv.org/abs/2005.14165'>GPT-3</a></td><td>&nbsp;</td></tr>
+<tr data-year='2022'><td>2022</td><td><a href='https://arxiv.org/abs/2203.02155'>InstructGPT</a>, ChatGPT</td><td><a href='https://arxiv.org/abs/2204.01691'>SayCan</a>, <a href='https://arxiv.org/abs/2212.06817'>RT-1</a></td></tr>
+<tr data-year='2023'><td>2023</td><td>&nbsp;</td><td><a href='https://arxiv.org/abs/2304.13705'>ACT</a>, <a href='https://arxiv.org/abs/2307.15818'>RT-2</a>, <a href='https://arxiv.org/abs/2310.08864'>Open X-Embodiment</a></td></tr>
+<tr data-year='2024'><td>2024</td><td>&nbsp;</td><td><a href='https://arxiv.org/abs/2410.24164'>π0</a></td></tr>
+<tr data-year='2025'><td>2025</td><td>&nbsp;</td><td><a href='https://www.figure.ai/news/helix'>Helix</a>, <a href='https://arxiv.org/abs/2504.16054'>π0.5</a>, Atlas behavior model</td></tr>
+<tr data-year='2026'><td>2026</td><td>&nbsp;</td><td>Figure Index</td></tr>
+</tbody></table>
+</div>
+<p>My guess is that robotics in 2026 looks like language models around GPT-2 in 2019. GPT-2 showed that a bigger model trained on more data generalized better, and around the same period companies like <a href='https://scale.com/about'>Scale</a>, <a href='https://labelbox.com/company/about/'>Labelbox</a> and <a href='https://snorkel.ai/company/'>Snorkel AI</a> built an industry around producing data. Robotics has the same move now: people deliberately collecting data at scale, and investors starting to fund it. We might be closer to 2017, before scaling had shown much of anything, and I can't tell which from here.</p>
+<p>EgoScale supplies the best scaling evidence I know of. They pretrained on 1,000, 2,000, 4,000, 10,000 and 20,000 hours of human video. As they added video, the model's prediction error on data held aside for evaluation kept falling, roughly in a straight line against the logarithm of the hours: each doubling of video bought a similar drop in error. With the smaller datasets, the model learned the training examples better than it learned to handle new ones. Average task completion went from 0.30 at 1,000 hours to 0.71 at 20,000. That's one recipe on one robot with five data points: an early sign, far from a scaling law for robotics.</p>
+<figure><img src='/assets/robotics/why-robotics/egoscale-scaling.png' alt='EgoScale validation loss against log data volume, with task completion' loading='lazy'><figcaption>EgoScale scaling results, 2026 (CC BY 4.0).</figcaption></figure>
+<p>The analogy breaks in four places. Action data costs money to make, where text was lying around. The scaling evidence is still thin. A wrong word makes a bad sentence, while a wrong move breaks a glass. And errors compound over long tasks.</p>
+<p>Say putting the groceries away takes 20 steps: open the fridge, pick up the milk, place it, and so on. Let p be the chance that a step succeeds once the robot has reached it, the same at every step, and assume a failed step ends the attempt. Then <span class='math'>P(complete) = p<sup>n</sup> = 0.95<sup>20</sup> &asymp; 36%</span>. So with a 95% chance of succeeding at each next step, only about 36 attempts in 100 finish all 20. That's much worse than 95% sounds! Recovery is exactly what breaks this formula, which is why I care so much about Atlas putting the box back after someone moves it.</p>
+<figure><img src='/assets/robotics/why-robotics/long-task-reliability.png' alt='Probability of completing a task against number of steps for per-step success of 99%, 95% and 90%' loading='lazy'><figcaption>Task completion against step count, no-recovery model. Author-created chart.</figcaption></figure>
+<figure class='video-embed'><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/xGNNW6smDPQ' title='Mobile ALOHA failure examples' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><figcaption>Mobile ALOHA failures: what a missed step looks like on a real robot. <a href='https://www.youtube.com/watch?v=xGNNW6smDPQ'>Watch on YouTube</a></figcaption></figure>
+<p>In simulation, <a href='https://github.com/Lifelong-Robot-Learning/LIBERO'>LIBERO</a> and RoboCasa let you compare policies on the same tasks. RoboCasa365 gives us 365 everyday tasks in simulated kitchens, and the <a href='https://robocasa.ai/leaderboard.html'>leading RoboCasa result</a> in September 2026 completed only 36.7% of the multi-step tasks held out for evaluation. On a real robot, every trial needs someone to reset the kitchen, and the light and the objects drift between trials. When I read a result, I ask: does it recover, how much did the scenes vary, how many trials were repeated, how often did a human help, how long did it run, and what did maintenance cost.</p>
+<figure><img src='/assets/robotics/why-robotics/robocasa365.png' alt='RoboCasa365 benchmark scope: kitchens, objects and task families' loading='lazy'><figcaption>RoboCasa365, 2026 (CC BY 4.0).</figcaption></figure>
+<div class='rc-mark' data-panel='driving' data-view='[0,3000,600,480]' data-title='7. Avoid contact, make contact, imagine first'></div>
+<h2>What self-driving already worked out</h2>
+<p>Self-driving is the one place where a learned robot already runs in the open world at scale. Waymo <a href='https://waymo.com/safety/impact/'>reports</a> more than 270,000,000 fully autonomous miles through June 2026 and, against human drivers in the same cities, 82% fewer injury crashes and 95% fewer crashes with serious injury or worse. The matching method and error bars aren't in the summary.</p>
+<p>They <a href='https://waymo.com/blog/2026/08/10ailessons/'>test in closed-loop simulation</a>, where the other cars react to what the Waymo does, and an automated Critic reviews millions of real miles and tens of billions of simulated miles every week to dig out rare events. They also say real driverless operation, with real responsibility, was necessary. And their <a href='https://waymo.com/blog/2025/12/demonstrably-safe-ai-for-autonomous-driving/'>model</a> also reports which objects it sees and how the roads connect, alongside the path it wants to drive. A separate onboard checker asks whether the car can physically follow that path and whether it obeys traffic rules. <a href='https://www.fieldai.com/news/fieldai-and-nvidia-omniverse-building-the-next-generation-of-industrial-ai'>FieldAI</a> describes a similar mix of learned models, physics-based reasoning and uncertainty estimates. For manipulation this is still open: how much do you learn end to end, and where do physics, structure, uncertainty and independent checks go?</p>
+<p>The big difference is contact. A car's main job is to touch nothing. A grocery robot's main job is to touch things on purpose: grasp the milk, push the mug aside, squeeze the bread without crushing it, pour. Friction, slip and deformation make those contacts hard to predict, and they're exactly what simulators get wrong. So manipulation will need the same mix of simulation and real deployment, with contact as the hard part to transfer.</p>
+<p>Before we push the mug, could we predict whether it will slide aside or tip over? That's what we'd like a world model to tell us. You give it what the robot sees now and a candidate action, and it predicts what happens next, as future pixels or as more abstract features. If the predictions are good, you can try actions in imagination before you commit, generate synthetic demonstrations, and test a policy before it touches a real kitchen. All of it depends on how faithful the predictions are.</p>
+<p>The <a href='https://waymo.com/blog/2026/02/the-waymo-world-model-a-new-frontier-for-autonomous-driving-simulation'>Waymo World Model</a>, built on Genie 3, generates camera and lidar data conditioned on driving actions, scene layout or text, to cover extreme weather and strange objects on the road. <a href='https://arxiv.org/abs/2505.12705'>DreamGen</a> starts from one real robot-camera image, lets a robot-adapted video model imagine the rest of the task, then recovers the actions from the generated video with inverse dynamics (a model that looks at consecutive frames and infers the action between them). Seeded with teleoperation data from one pick-and-place task in one environment, it gave a humanoid 22 new behaviors. <a href='https://www.globenewswire.com/news-release/2026/01/12/3217155/0/en/1X-Unveils-Paradigm-Shift-In-Humanoid-AI-NEO-s-Starting-to-Learn-On-Its-Own.html'>1X's NEO</a> (January 2026) runs this loop live: a voice or text request plus the current camera view go in, the model generates the future video, and inverse dynamics turns it into motion.</p>
+<figure><img src='/assets/robotics/why-robotics/dreamgen-imagined.png' alt='DreamGen: a real seed image, generated future frames and extracted pseudo-actions' loading='lazy'><figcaption>DreamGen, 2025: the first frame is real, the rest are generated (CC BY 4.0).</figcaption></figure>
+<figure class='video-embed'><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/lS_z60kjVEk' title='1X NEO world model, January 2026' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><figcaption>1X NEO, January 2026: actions from a world model. <a href='https://www.youtube.com/watch?v=lS_z60kjVEk'>Watch on YouTube</a></figcaption></figure>
+<p><a href='https://arxiv.org/abs/2506.09985'>V-JEPA 2</a> takes the other route on the board. It predicts future features instead of pixels, so it never has to render every crumb on the counter. It learns first from more than 1,000,000 hours of video without action labels, then from under 62 hours of robot data, and uses its predictions to plan movements. <a href='https://amilabs.xyz/'>AMI</a>, associated with Yann LeCun, is pursuing this feature-prediction route.</p>
+<figure><img src='/assets/robotics/why-robotics/vjepa2-ac-chalk.png' alt='V-JEPA 2-AC: frozen encoder, action- and pose-conditioned predictor, L1 loss against the next-frame encoding' loading='lazy'><figcaption>V-JEPA 2-AC, redrawn from Assran et al., 2025 (CC BY 4.0).</figcaption></figure>
+<div class='rc-mark' data-panel='economics' data-view='[0,3500,600,480]' data-title='8. Cheaper task changes'></div>
+<h2>Why cheaper task changes could move factories</h2>
+<p>The board shows 2024 <a href='https://ifr.org/ifr-press-releases/news/robot-density-surges-in-europe-asia-and-americas'>robot density</a> in manufacturing, with South Korea at 1,220 robots per 10,000 employees and the United States at 307. Today's factory robot lives in a cell built for one task, and every task change means paying someone to integrate and reprogram it. At high volume that cost spreads over a lot of parts. With small batches, fewer parts share the integration cost, making automation harder to justify and cheap manual labor more attractive.</p>
+<figure><img src='/assets/robotics/why-robotics/robot-density.png' alt='Bar chart of 2024 manufacturing robot density by country' loading='lazy'><figcaption>Robot density in 2024, author-created chart from IFR data.</figcaption></figure>
+<p>Now move the grocery skill to a workbench: a robot that picks up a new task from a few dozen demonstrations in an afternoon. Task changes get cheap, small batches become worth automating, and the reason to send work to low-wage countries weakens. With an aging workforce in Europe and reshoring policies in place, that could make local manufacturing viable again. It happens only if the policies generalize and run reliably in production.</p>
+<p>In January 2026 Boston Dynamics <a href='https://bostondynamics.com/blog/boston-dynamics-unveils-new-atlas-robot-to-revolutionize-industry/'>announced the production Atlas</a>, a partnership with Google DeepMind on Gemini, and a Hyundai factory with an announced capacity of 30,000 robots a year. Hyundai plans to start with parts sequencing in its car plants.</p>
+<figure class='video-embed'><div class='video-frame'><iframe src='https://www.youtube-nocookie.com/embed/rrUHZKlrxms' title='Boston Dynamics production Atlas, January 2026' loading='lazy' allow='accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen' allowfullscreen referrerpolicy='strict-origin-when-cross-origin'></iframe></div><figcaption>Production Atlas, January 2026. <a href='https://www.youtube.com/watch?v=rrUHZKlrxms'>Watch on YouTube</a></figcaption></figure>
+<details><summary>Embodiment choice: does it need to look human?</summary>
+<p>Doors, shelves, tools and workstations were all built for human bodies, which is the case for a humanoid. Specialized wheels and arms already do warehouse work at huge scale. Figure 02 <a href='https://www.press.bmwgroup.com/global/article/attachment/T0455864EN/644966'>moved more than 90,000 components</a> in about 1,250 operating hours at BMW Spartanburg, and Agility's Digit <a href='https://www.agilityrobotics.com/content/digit-moves-over-100k-totes'>moved more than 100,000 totes</a> at a GXO facility. Both are defined, repetitive jobs, and the reports don't tell you about profit or how much human help was involved. I'd compare bodies on the whole job: task success, human help, uptime and maintenance cost. Looking human earns nothing by itself.</p>
 </details>
-
-<details>
-<summary>The hardware still has to survive</summary>
-
-Hands are where software meets hardware. Tendons let designers put the motors in the forearm and pull the fingers through cables, which keeps the hand light. But a cable can only pull, so it needs an opposing cable or spring, and the routing brings friction, wear and tension control. Putting motors in the fingers avoids that but adds mass and heat in a small space. In August 2026, [Figure's founder called its first tendon-based hand his biggest engineering mistake](https://x.com/adcock_brett/status/2087927278458327179), while [Shadow's hand](https://shadow-robot-company-dexterous-hand.readthedocs-hosted.com/en/latest/user_guide/md_motor_unit.html) still uses twenty forearm motors and paired tendons. A useful robot needs a plan for repair: replaceable fingers, accessible cables and parts you can service without rebuilding the arm.
-
+<div class='rc-mark' data-panel='gap' data-view='[0,0,600,3980]' data-title='The whole board'></div>
+<h2>How I'm learning it</h2>
+<p>Robotics is also unusually easy to start right now. The papers are open, the simulators are accessible, an arm costs about $100 in parts, and coding agents write experiment code fast. In <a href='https://arxiv.org/html/2609.27308v1'>EmbodiedSWE</a>, the best agent solved about 82% of 28 simulated tasks, while a real lamp-disassembly policy fine-tuned on 500 of its generated demonstrations succeeded in 2 of 10 trials. The benchmark and the lamp test use different task sets, so the two numbers don't tell us what caused the gap, and ten trials is a small sample. I'd want to see the agent working on a real object.</p>
+<details><summary>Coding agents as robot researchers</summary>
+<p>EmbodiedSWE has a coding agent write, run and revise solutions to simulated tasks, then uses the verified programs to generate demonstrations. <a href='https://arxiv.org/html/2609.12541v1'>Agent as Policy</a> keeps the coding agent inside the real-robot control loop. On three block tasks it scored 5/5, 5/5 and 4/5, but each run took 21 to 35 minutes, which is far too slow for a kitchen.</p>
 </details>
-
-## Learning quickly without skipping the thinking
-
-I've just started learning robotics, and the reset makes this a good time to begin. With papers, simulators, cheap arms and coding agents, I can take a question to an experiment in an afternoon.
-
-The speed has a trap, though. If I follow every interesting branch, I can explore for hours without making anything concrete. And when an agent builds the experiment for me, it can skip the design decisions that would have forced me to understand it. So I try to keep the parts that change my understanding: predicting a result before I run it, choosing the experiment, explaining a failure, and finding the example that makes an idea click.
-
-[Jacob Rothschild's writing about robot control](https://x.com/ja_rothschild/article/2100633491432239411) helped inspire these posts. Writing gives the learning a finish line: if I can explain something clearly without the conversation that led there, I have something I can come back to and test.
-
-The first technical post is about [joint angles, hand poses and motor control](/robotics/from-joint-angles-to-a-moving-arm/). The [SO-101 series](/robotics/so101-1-target-and-goal/) is about the last mile: why the arm misses the target the policy asks for, and what each controller does about it.
+<p>That speed makes it easy to explore forever, hand the design to the agent, and end up with no concrete result and no understanding. So I keep four jobs for myself: predict what an experiment will show before I run it, choose which experiment to run, explain each failure, and write it up clearly enough that you can follow it. (<a href='https://x.com/ja_rothschild/article/2100633491432239411'>Jacob Rothschild's post</a> pushed me toward this.)</p>
+<p>The next time you see a robot video, ask: Could a teleoperator do it, so is the body enough? Would it still work with the unseen cereal box in the dim kitchen? And when a step goes wrong, can it recover and finish the job without someone helping? A cheap arm lets us try these experiments ourselves. That's why I'm learning robotics.</p>
+</div>
+</div>
+</div>
