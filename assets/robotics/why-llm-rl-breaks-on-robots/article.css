@@ -13,3 +13,37 @@
 .article-body svg.flowrl-board { filter: none; }
 .article-body svg.flowrl-board .rc-panel { filter: url(#bb-chalk); }
 @media (prefers-reduced-motion: reduce) { .article-body svg.flowrl-board .rc-panel { filter: none; } }
+
+/* Pseudocode colors from scripts/highlight-code.mjs. Each one is at least 5.3:1 against the code background,
+   --rl-surface from the RL series stylesheet (#1d271f dark, #eeefe9 light). Dark is the default theme. */
+.rebuild-article pre { --tok-comment: #a7b0a1; --tok-keyword: #f2a283; --tok-function: #8ac6e7; --tok-string: #b8db8f; --tok-number: #f0d98a; --tok-constant: #dcb0ec; }
+:root[data-theme="light"] .rebuild-article pre { --tok-comment: #5c6358; --tok-keyword: #a63d1c; --tok-function: #1d5a85; --tok-string: #3b661c; --tok-number: #7d5200; --tok-constant: #7a3693; }
+.rebuild-article .tok-comment { color: var(--tok-comment); font-style: italic; }
+.rebuild-article .tok-keyword { color: var(--tok-keyword); font-weight: 600; }
+.rebuild-article .tok-function { color: var(--tok-function); }
+.rebuild-article .tok-string { color: var(--tok-string); }
+.rebuild-article .tok-number { color: var(--tok-number); }
+.rebuild-article .tok-constant { color: var(--tok-constant); }
+/* On a phone a long line scrolls inside its block. macOS and iOS hide overlay scrollbars, which makes the line look cut,
+   so a shadow marks each edge that has more code past it. The two cover gradients scroll with the code (local) and hide
+   the shadow at an edge the reader has reached; the shadows stay fixed to the block (scroll). The RL series stylesheet
+   paints pre and code with an !important background, so these rules need !important too, and the code element must stay
+   transparent or it hides the shadows. */
+.rebuild-article pre {
+  --pre-shade: rgba(0, 0, 0, .7);
+  background-image:
+    linear-gradient(to right, var(--rl-surface) 40%, transparent),
+    linear-gradient(to left, var(--rl-surface) 40%, transparent),
+    radial-gradient(farthest-side at 0 50%, var(--pre-shade), transparent),
+    radial-gradient(farthest-side at 100% 50%, var(--pre-shade), transparent) !important;
+  background-position: left, right, left, right !important;
+  background-size: 32px 100%, 32px 100%, 16px 100%, 16px 100% !important;
+  background-repeat: no-repeat !important;
+  background-attachment: local, local, scroll, scroll !important;
+  scrollbar-width: thin; scrollbar-color: var(--muted) transparent;
+}
+.rebuild-article pre code { background: transparent !important; }
+:root[data-theme="light"] .rebuild-article pre { --pre-shade: rgba(36, 38, 34, .3); }
+.rebuild-article pre::-webkit-scrollbar { height: 6px; }
+.rebuild-article pre::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+@media (max-width: 520px) { .rebuild-article pre { padding: 14px; font-size: 12px; } }

@@ -4,6 +4,7 @@ description: 'Why is reinforcement learning on robots so much harder than on lan
 date: '2026-10-27'
 draft: false
 layout: essay
+code_highlight: true
 tags: ['reinforcement-learning', 'robot-learning', 'flow-matching', 'foundation-models']
 thumbnail: '/assets/robotics/why-llm-rl-breaks-on-robots/thumbnail.svg'
 thumbnail_alt: 'Blackboard drawing: a flow policy steers noise around a mug into two clean routes, with classifier-free guidance pushing the samples away from the bad demonstrations'
@@ -230,10 +231,10 @@ The training step and the sampler fit in a few lines:
 
 ```python
 # train: one step on a batch of B recorded chunks
-a1 = buffer.sample_chunks()          # (B, 50, 29)
-a0 = randn_like(a1)                  # noise
-t  = rand(B, 1, 1)                   # a time in [0, 1] per sample
-at = (1 - t) * a0 + t * a1           # a point on the straight line
+a1 = buffer.sample_chunks()   # (B, 50, 29)
+a0 = randn_like(a1)           # noise
+t  = rand(B, 1, 1)            # per-sample time in [0, 1]
+at = (1 - t) * a0 + t * a1    # a point on the line
 loss = ((v(at, t, s) - (a1 - a0)) ** 2).mean()
 
 # act: 10 Euler steps from noise to a chunk
@@ -364,9 +365,11 @@ The guided arrow goes twice as far sideways as the Good demos did. The policy ex
 ```python
 # label once, with the 201-bin state critic V
 for traj in buffer:
-    traj.I = "Good" if advantage(V, traj) in top_30_percent else "Bad"
+    good = advantage(V, traj) in top_30_percent
+    traj.I = "Good" if good else "Bad"
 
-# train: plain flow-matching BC on 100% of the data, the label as input
+# train: plain flow-matching BC on 100% of the data,
+# with the label as an input
 # (dropping I on some steps teaches the unlabeled v_all)
 loss = ((v(at, t, s, I) - (a1 - a0)) ** 2).mean()
 
@@ -422,9 +425,11 @@ The sum over all $M$ bins in the denominator makes the probabilities add up to o
 cands = [policy.sample(s) for _ in range(16)]
 
 def q_gvc(a):
-    err = array([flow_error(a, s, z) for z in bins])  # small error: z explains a
-    p = softmax(-err + log_prior(s))                  # -err stands in for log p(a | s, z)
-    return (p * bins).sum()                           # expected return
+    # a small error means bin z explains the chunk a
+    err = array([flow_error(a, s, z) for z in bins])
+    # -err stands in for log p(a | s, z)
+    p = softmax(-err + log_prior(s))
+    return (p * bins).sum()   # expected return
 
 execute(max(cands, key=q_gvc))
 ```
@@ -476,11 +481,15 @@ This last part is my own extrapolation of where the field is going. Put the piec
 ```python
 while True:
     s = observe() + memory_imprint()
-    cands  = [flow_policy.sample(s) for _ in range(16)]       # propose
-    future = [world_model.rollout(s, a) for a in cands]       # simulate, in latent space
-    best   = max(range(16), key=lambda i: gvc_score(future[i]))   # score the imagined outcome
-    execute(cands[best])                                      # act
-    buffer.add(s, cands[best], quality=5)                     # distill on the next pass
+    # propose
+    cands = [flow_policy.sample(s) for _ in range(16)]
+    # simulate, in latent space
+    future = [world_model.rollout(s, a) for a in cands]
+    # score the imagined outcomes
+    best = argmax([gvc_score(f) for f in future])
+    # act, then distill on the next pass
+    execute(cands[best])
+    buffer.add(s, cands[best], quality=5)
 ```
 
 1. **Propose.** Given the state and its memory imprint, the multimodal flow policy proposes $N = 16$ diverse candidate chunks: a left grasp, a right grasp, a fast push, a gentle hook.
