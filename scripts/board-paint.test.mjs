@@ -144,7 +144,19 @@ function within(promise, ms, label) {
   });
 }
 
+// One screenshot at a time. Three at once on a shared WebKit is what blew the shot cap on the CI runner.
+let shotTurn = Promise.resolve();
+function queueShot(work) {
+  const run = shotTurn.then(work, work);
+  shotTurn = run.then(() => {}, () => {});
+  return run;
+}
+
 async function boardShot(page, selector, index) {
+  return queueShot(() => captureBoard(page, selector, index));
+}
+
+async function captureBoard(page, selector, index) {
   // Crop a piece of the board that is on screen. An element screenshot of the first .rc-panel
   // scrolls that panel against the sticky listener and never settles, and a full-element shot of
   // a multi-thousand-pixel svg is the buffer WebKit already fails to paint.
@@ -172,8 +184,8 @@ async function boardShot(page, selector, index) {
   }, {selector, index}), 8_000, 'board measure timed out');
   if (!box) return null;
   const buffer = await within(
-    page.screenshot({type: 'png', animations: 'disabled', timeout: 8_000, clip: box}),
-    10_000,
+    page.screenshot({type: 'png', animations: 'disabled', timeout: 12_000, clip: box}),
+    15_000,
     'board shot timed out',
   );
   return distinctColors(buffer);
@@ -221,12 +233,20 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async (t) => {
   const slugs = articleSlugs();
   assert.ok(slugs.length >= 30, `expected at least 30 built articles, found ${slugs.length}`);
   let server;
-  // One browser per density. A relaunch in reopen() closes that process, and sharing
-  // one browser would take the other densities down with it.
+  let browser;
+  // close() can ignore a wedged WebProcess. Kill it, or node --test stays up after the test.
   const browsers = new Set();
   const closeBrowser = async (b) => {
     if (!b || !browsers.delete(b)) return;
-    await within(b.close().catch(() => {}), 3_000, 'browser close timed out').catch(() => {});
+    const proc = typeof b.process === 'function' ? b.process() : null;
+    let timer;
+    const killed = new Promise((resolve) => {
+      timer = setTimeout(() => {
+        try { if (proc) proc.kill('SIGKILL'); } catch { /* already gone */ }
+        resolve();
+      }, 3_000);
+    });
+    await Promise.race([b.close().catch(() => {}).finally(() => clearTimeout(timer)), killed]);
   };
   t.after(async () => {
     // A wedged WebProcess must not hold node --test after the run.
@@ -236,28 +256,25 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async (t) => {
   });
   server = await startServer();
   const origin = `http://127.0.0.1:${server.address().port}`;
+  browser = await webkit.launch();
+  browsers.add(browser);
   const failures = [];
   let painted = 0;
   try {
-    // All three densities, every article. In series, dpr1 alone passed 90s and the
-    // loop kept launching WebKit after the timeout until the job was cancelled.
+    // All three densities, every article, on one browser. In series, dpr1 alone passed
+    // 90s and the loop kept launching WebKit after the timeout until the job was cancelled.
     await Promise.all(MODES.map(async (mode) => {
       if (t.signal.aborted) return;
-      let modeBrowser;
       let page;
       const reopen = async () => {
         if (t.signal.aborted) return;
-        // A stuck board call keeps the WebKit process. Open the replacement first.
-        const dying = modeBrowser;
-        modeBrowser = await webkit.launch();
-        browsers.add(modeBrowser);
-        page = await openPaintPage(modeBrowser, origin, mode);
-        await closeBrowser(dying);
+        // A stuck board call keeps its page. Open the replacement before closing it.
+        const dying = page;
+        page = await openPaintPage(browser, origin, mode);
+        if (dying) await within(dying.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
       };
       try {
-        modeBrowser = await webkit.launch();
-        browsers.add(modeBrowser);
-        page = await openPaintPage(modeBrowser, origin, mode);
+        page = await openPaintPage(browser, origin, mode);
         let openedCount = 0;
         for (const slug of slugs) {
           if (t.signal.aborted) break;
@@ -265,7 +282,7 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async (t) => {
           if (openedCount > 0 && openedCount % 12 === 0) {
             await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
             if (t.signal.aborted) break;
-            page = await openPaintPage(modeBrowser, origin, mode);
+            page = await openPaintPage(browser, origin, mode);
           }
           openedCount += 1;
           if (process.env.CI) process.stderr.write(`paint ${mode.name} ${slug}\n`);
@@ -351,7 +368,6 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async (t) => {
         if (!t.signal.aborted) failures.push(`${mode.name} stopped: ${err.message.split('\n')[0]}`);
       } finally {
         if (page) await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
-        await closeBrowser(modeBrowser);
       }
     }));
   } finally {
