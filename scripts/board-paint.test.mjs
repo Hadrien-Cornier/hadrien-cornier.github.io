@@ -230,11 +230,9 @@ async function boardShot(page, selector, index) {
     return {x: left, y: top, width, height};
   }, {selector, index}), 8_000, 'board measure timed out');
   if (!box) return null;
-  // A filtered board on the Linux runner can take longer than fifteen seconds to paint.
-  // The call is slow, not stuck: the same shot does finish, and a short cap fails the essay.
   const buffer = await within(
-    page.screenshot({type: 'png', animations: 'disabled', timeout: 40_000, clip: box}),
-    45_000,
+    page.screenshot({type: 'png', animations: 'disabled', timeout: 18_000, clip: box}),
+    20_000,
     'board shot timed out',
   );
   return distinctColors(buffer);
@@ -309,12 +307,11 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async (t) => {
   const failures = [];
   let painted = 0;
   try {
-    // All three densities, every article. In series, dpr1 alone passed 90s and the
-    // loop kept launching WebKit after the timeout until the job was cancelled.
-    // Each density has its own browser: a timed-out shot leaves its call on that pipe,
-    // and a new page on the same browser just queues behind it.
-    await Promise.all(MODES.map(async (mode) => {
-      if (t.signal.aborted) return;
+    // All three densities, every article, one after another. Side by side, a WebKit
+    // screenshot on the runner stops returning and a different essay fails each run.
+    // In the old series loop, dpr1 alone passed 90s and then kept launching WebKit.
+    for (const mode of MODES) {
+      if (t.signal.aborted) break;
       let modeBrowser;
       let page;
       const reopen = async () => {
@@ -431,7 +428,7 @@ test('every robotics board paints in WebKit', {timeout: 300_000}, async (t) => {
         if (page) await within(page.close().catch(() => {}), 3_000, 'page close timed out').catch(() => {});
         await closeBrowser(modeBrowser);
       }
-    }));
+    }
   } finally {
     await Promise.all([...browsers].map((b) => closeBrowser(b)));
     if (server) server.close();
