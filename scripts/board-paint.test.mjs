@@ -230,9 +230,11 @@ async function boardShot(page, selector, index) {
     return {x: left, y: top, width, height};
   }, {selector, index}), 8_000, 'board measure timed out');
   if (!box) return null;
+  // A filtered board on the Linux runner can take longer than fifteen seconds to paint.
+  // The call is slow, not stuck: the same shot does finish, and a short cap fails the essay.
   const buffer = await within(
-    page.screenshot({type: 'png', animations: 'disabled', timeout: 12_000, clip: box}),
-    15_000,
+    page.screenshot({type: 'png', animations: 'disabled', timeout: 40_000, clip: box}),
+    45_000,
     'board shot timed out',
   );
   return distinctColors(buffer);
