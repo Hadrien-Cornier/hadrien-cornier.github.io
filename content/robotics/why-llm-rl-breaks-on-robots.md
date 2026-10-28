@@ -15,11 +15,11 @@ thumbnail_alt: 'Blackboard drawing: a flow policy steers noise around a mug into
 
 I dug into this because I wanted to understand why reinforcement learning struggles with flow matching: repeatedly refining noise into robot actions. Why is getting it to improve such a headache?
 
-The language-model recipe makes this look straightforward, because we can give the model a prompt, sample 64 answers, score them, and increase the probability of answers that beat the group's average. That's GRPO, one of the methods behind LLM progress in math and code, while its older sibling, PPO, trained the first chat models.
+The language-model recipe makes this look straightforward, asking us to give the model a prompt, sample 64 answers, score them, and increase the probability of answers that beat the group's average. GRPO, one of the methods behind LLM progress in math and code, has an older sibling in PPO, the method that trained the first chat models.
 
-A modern robot policy even looks familiar, because a VLA, or vision-language-action model, is a pretrained vision-language transformer with a small action head. It has the same transformer and similar pretraining, so let's take a Unitree G1 humanoid with 29 joints, ask it to fold a shirt, and send motor commands 50 times a second (50 Hz). We can now see where the LLM recipe comes apart.
+A modern robot policy even looks familiar, with the pretrained vision-language transformer and small action head of a VLA, or vision-language-action model. Given the same transformer and similar pretraining, let's take a Unitree G1 humanoid with 29 joints, ask it to fold a shirt, and send motor commands 50 times a second (50 Hz). We can now see where the LLM recipe comes apart.
 
-The two standard policy-gradient routes need different things, because PPO and GRPO need the exact log-probability of a sampled action, while SAC needs to differentiate a critic's score, its prediction of future reward, back through the policy. A flow policy makes the first expensive to compute and the second unstable. A third route starts with behavior cloning (BC), supervised learning that copies recorded actions, and adds the reward as an input.
+The two standard policy-gradient routes differ in what they need from the policy. PPO and GRPO need the exact log-probability of a sampled action; SAC needs to differentiate a critic's score, its prediction of future reward, back through the policy. A flow policy makes the first expensive to compute and the second unstable. A third route starts with behavior cloning (BC), supervised learning that copies recorded actions, and adds the reward as an input.
 
 ## Robots trigger the whole deadly triad
 
@@ -27,24 +27,24 @@ Part of the difficulty is that a real robot needs function approximation, bootst
 
 **Function approximation** is necessary because a humanoid like Figure 02 or the G1 has 23 to 43 continuous degrees of freedom (DoF, the joints you can command), plus camera images. Try making a table with a row for every combination of 43 joint angles and every possible image, and you'll see why we need neural networks that generalize from states in the data to states the robot hasn't seen.
 
-**Bootstrapping** helps because at 50 Hz, folding a shirt or busing a table takes thousands of frames. We could wait until the end and assign the final score to every frame, but thousands of random decisions contributed to that score, leaving a very noisy estimate of which individual decisions helped. Instead, we train on the immediate reward $r$ plus the critic's predicted return $V(s')$ from the next state $s'$, discounted by $\gamma$, a factor just below 1:
+**Bootstrapping** helps with tasks like folding a shirt or busing a table, which take thousands of frames at 50 Hz. We could wait until the end and assign the final score to every frame, but thousands of random decisions contributed to that score, leaving a very noisy estimate of which individual decisions helped. Instead, we train on the immediate reward $r$ plus the critic's predicted return $V(s')$ from the next state $s'$, discounted by $\gamma$, a factor just below 1:
 
 $$r + \gamma V(s')$$
 
-This is bootstrapping, where the target contains the critic's own guess, so its errors feed into its next round of training.
+This is bootstrapping, with the critic's own guess in the target feeding its errors into the next round of training.
 
-**Off-policy replay** lets us reuse robot hours, which cost money because motors heat up, parts break, and someone has to reset the objects after each attempt. Spending a rollout on one gradient step and discarding it is painful, so we want a replay buffer that keeps teaching us from old trajectories, including human demonstrations, autonomous successes, near-misses and failures. This is off-policy learning, because the data can come from policies other than the one we're currently training.
+**Off-policy replay** lets us reuse expensive robot hours, during which motors heat up, parts break, and someone has to reset the objects after each attempt. Spending a rollout on one gradient step and discarding it is painful. We want a replay buffer that keeps teaching us from old trajectories, including human demonstrations, autonomous successes, near-misses and failures. This is off-policy learning, using data that can come from policies other than the one we're currently training.
 
 ## Why not copy LLM RL?
 
-Simulation lets us separate the flow-policy problem from the cost of collecting robot data. Train a G1 to walk in Isaac Gym with 4,096 parallel environments, and rollouts are cheap. When one attempt fails, 4,095 others keep running and resets are instant, so PPO works very well here.
+Simulation lets us separate the flow-policy problem from the cost of collecting robot data. Train a G1 to walk in Isaac Gym with 4,096 parallel environments, and rollouts are cheap. When one attempt fails, 4,095 others keep running and resets are instant, a setup where PPO works very well.
 
-The walking policy helps because it's a small multi-layer perceptron (MLP) that outputs a mean and a spread for each joint. Sample the torque from that unimodal Gaussian bell, and its log-probability costs one line of math. I'll write this as $\log \pi_\theta(a \mid s)$: the log-probability that policy $\pi$, with weights $\theta$, selects action $a$ in state $s$. PPO and GRPO can both use it directly.
+The walking policy is a helpful case, a small multi-layer perceptron (MLP) that outputs a mean and a spread for each joint. Sample the torque from that unimodal Gaussian bell, and its log-probability costs one line of math. I'll write this as $\log \pi_\theta(a \mid s)$: the log-probability that policy $\pi$, with weights $\theta$, selects action $a$ in state $s$. PPO and GRPO can both use it directly.
 
 Dexterous manipulation with a VLA like $\pi_0$ introduces two problems.
 
-1. **The math wall appears even in simulation** because manipulation needs several good answers to coexist, and a flow-matching policy, a cousin of diffusion, can represent them by repeatedly refining random noise into an action $a_1$. But the resulting $\log \pi_\theta(a_1 \mid s)$ has no closed form. PPO and GRPO lose the number their loss needs before we even touch a real robot.
-2. **The reset and replay wall appears in the real world** because GRPO compares 64 answers to the same prompt, and an LLM can copy that prompt 64 times in GPU memory, giving every attempt an identical starting state and a fair group-average baseline without a critic. Try restoring a crumpled shirt to exactly the same wrinkles 64 times. A robot deployed in someone's home also can't stop and collect fresh on-policy rollouts for every update. It needs to learn from whatever has accumulated in replay.
+1. **The math wall appears even in simulation.** Manipulation needs several good answers to coexist, something a flow-matching policy, a cousin of diffusion, can represent by repeatedly refining random noise into an action $a_1$. But the resulting $\log \pi_\theta(a_1 \mid s)$ has no closed form. PPO and GRPO lose the number their loss needs before we even touch a real robot.
+2. **The reset and replay wall appears in the real world.** GRPO compares 64 answers to the same prompt, an operation an LLM can perform by copying that prompt 64 times in GPU memory, giving every attempt an identical starting state and a fair group-average baseline without a critic. Try restoring a crumpled shirt to exactly the same wrinkles 64 times. A robot deployed in someone's home also can't stop and collect fresh on-policy rollouts for every update. It needs to learn from whatever has accumulated in replay.
 
 I contribute to Hugging Face's [LeRobot](https://github.com/huggingface/lerobot), which is where this gap first caught my attention. Open source has good imitation learners, including $\pi_0$ and ACT, alongside a 2018-era SAC. The 2025 to 2026 off-policy generative RL stack we'll look at here is still missing.
 
@@ -52,7 +52,7 @@ I contribute to Hugging Face's [LeRobot](https://github.com/huggingface/lerobot)
 
 I'll separate the RL update from the flow policy, then put them together to see where the trouble starts.
 
-1. **Section 1** derives the two classic gradient families from the product rule. Score-function methods increase the probability of sampled actions that did well, while pathwise methods climb the critic's slope, giving us Q-learning for continuous actions. These give us two different requirements for what the policy must provide.
+1. **Section 1** derives the two classic gradient families from the product rule. Score-function methods increase the probability of sampled actions that did well; pathwise methods climb the critic's slope, giving us Q-learning for continuous actions. These give us two different requirements for what the policy must provide.
 2. **Section 2** explains why the robot needs two good answers at once, and how flow matching in $\pi_0$ produces them.
 3. **Section 3** follows both gradients through the flow and shows where each becomes difficult.
 4. **Section 4** develops family 3: condition the policy on the reward and train with BC. This covers RECAP, $\pi_{0.7}$ and GVC, a generative value classifier.
@@ -60,7 +60,7 @@ I'll separate the RL update from the flow policy, then put them together to see 
 
 <div class="rc-mark" id="sec-map" data-panel="tree" data-view="tree" data-title="Four families of robot RL"></div>
 
-The side board follows the text as you scroll, and its first panel maps the four families, from REINFORCE in 1992 to $\pi_{0.7}$, GVC and QF3 in 2026.
+As you scroll, the side board follows the text, starting with a panel that maps the four families, from REINFORCE in 1992 to $\pi_{0.7}$, GVC and QF3 in 2026.
 
 <div class="rc-mark" id="sec-cliff" data-panel="cliff" data-view="cliff" data-title="The cliff paradox"></div>
 
@@ -78,15 +78,15 @@ Now suppose we sample $a = +2.0$, which the critic gives a score of 7, making it
 
 $$A = Q_\phi(s, 2.0) - V(s) = 7 - 2 = +5$$
 
-But $a = 2.0$ is already past the peak, where the slope is negative, $\partial Q_\phi / \partial a < 0$, so moving right lowers the return and brings us closer to the cliff.
+But at $a = 2.0$, already past the peak, the slope is negative, $\partial Q_\phi / \partial a < 0$, so moving right lowers the return and brings us closer to the cliff.
 
-The direction we move the Gaussian depends on the method, because PPO sees the advantage of +5 and makes +2.0 more likely, moving the bell right. SAC sees the negative slope and moves left, toward the peak at +1.5.
+PPO sees the advantage of +5 and makes +2.0 more likely, moving the Gaussian bell right. SAC sends the bell in the opposite direction, seeing the negative slope and moving left toward the peak at +1.5.
 
 For a fixed critic, the underlying score-function and pathwise estimators are unbiased estimates of the same gradient, so they agree when averaged over many samples. This one sample sends them in opposite directions because one measures how good the action was, while the other measures which way improves it.
 
 ### Family 1: score-function gradients (REINFORCE, PPO, GRPO)
 
-We want policy weights $\theta$ that increase expected return, so first pretend the wrist has a finite menu of torques, which lets us write expected return $J(\theta)$ as a sum over the actions:
+To find policy weights $\theta$ that increase expected return, first pretend the wrist has a finite menu of torques, letting us write expected return $J(\theta)$ as a sum over the actions:
 
 $$J(\theta) = \sum_a \pi_\theta(a \mid s)\, Q(s, a)$$
 
@@ -100,15 +100,15 @@ For continuous actions, summing over the whole axis becomes an integral, and we'
 
 $$\nabla_\theta J(\theta) = \sum_a \pi_\theta(a \mid s)\, \nabla_\theta \log \pi_\theta(a \mid s)\, Q(s, a) = \mathbb{E}_{a \sim \pi_\theta}\Big[A(s, a)\, \nabla_\theta \log \pi_\theta(a \mid s)\Big]$$
 
-I also replaced $Q$ with $A(s, a) = Q(s, a) - V(s)$, where subtracting a state baseline leaves the expectation unchanged because $\mathbb{E}_{a \sim \pi_\theta}[\nabla_\theta \log \pi_\theta] = 0$. This reduces variance because ordinary actions get an advantage near zero, while unusually good or bad actions get a stronger update.
+I also replaced $Q$ with $A(s, a) = Q(s, a) - V(s)$, where subtracting a state baseline leaves the expectation unchanged because $\mathbb{E}_{a \sim \pi_\theta}[\nabla_\theta \log \pi_\theta] = 0$. This reduces variance by giving ordinary actions an advantage near zero and unusually good or bad actions a stronger update.
 
-This log-derivative trick underlies REINFORCE (1992), PPO (2017) and GRPO (2024). You can read it as supervised learning, where we use the sampled action as the label, compute the gradient that makes it more likely, and multiply by the advantage. A positive advantage encourages the action, while a negative one discourages it.
+This log-derivative trick underlies REINFORCE (1992), PPO (2017) and GRPO (2024). You can read it as supervised learning, using the sampled action as the label, computing the gradient that makes it more likely, and multiplying by the advantage. A positive advantage encourages the action; a negative one discourages it.
 
 For our Gaussian, the log-probability gradient with respect to its mean is
 
 $$\frac{\partial \log \pi}{\partial \mu} = \frac{a - \mu}{\sigma^2}$$
 
-Here $\sigma$ is the spread, and at $a = 2.0$, $\mu = 0$, this derivative is positive. Multiplying by $A = +5$ moves the mean right without ever asking about the critic's slope.
+With $\sigma$ denoting the spread, this derivative is positive at $a = 2.0$, $\mu = 0$. Multiplying by $A = +5$ moves the mean right without ever asking about the critic's slope.
 
 <div class="rc-mark" id="sec-clip" data-panel="clip" data-view="clip" data-title="PPO's clip on a stale buffer"></div>
 
@@ -118,7 +118,7 @@ Avoiding the slope is useful when rollouts are cheap, as we can see by returning
 
 An action critic can predict a huge return somewhere nobody has tried an action, and I'll call that unsupported spike a critic mirage. PPO avoids these action-space mirages because it doesn't query untried actions.
 
-Replay brings a different problem because PPO compares the current policy with $\pi_{\text{old}}$, the policy that collected the sample, using their probability ratio:
+Replay brings a different problem in PPO's comparison of the current policy with $\pi_{\text{old}}$, the policy that collected the sample, using their probability ratio:
 
 $$r(\theta) = \frac{\pi_\theta(a \mid s)}{\pi_{\text{old}}(a \mid s)}$$
 
@@ -128,17 +128,17 @@ $$L(\theta) = \min\big(r A,\ \text{clip}(r, 0.8, 1.2)\, A\big)$$
 
 For $A > 0$, the objective increases with $r$ until 1.2, then flattens, while for $A < 0$, it is flat below 0.8. Once a sample reaches the flat side, making a good action more likely or a bad action less likely earns nothing further, so its gradient is zero.
 
-Fresh data starts with ratios at 1, which is where this clip is useful. Now take a buffer from 3 days ago, where training has moved the policy, so old samples can have ratios far outside $[0.8, 1.2]$ and those on the plateaus contribute zero gradient. We kept the expensive robot experience, but this PPO update gets nothing from it.
+Fresh data starts with ratios at 1, which is where this clip is useful. Now take a buffer from 3 days ago, after training has moved the policy, leaving old samples with ratios that can fall far outside $[0.8, 1.2]$ and contribute zero gradient on the plateaus. We kept the expensive robot experience, but this PPO update gets nothing from it.
 
 <div class="rc-mark" id="sec-pathwise" data-panel="pathwise" data-view="pathwise" data-title="Climbing the critic"></div>
 
 ### Where Q-learning sits, and family 2: pathwise gradients (DDPG, TD3, SAC)
 
-Discrete Q-learning, including DQN, can dispense with an actor, because with $K$ game buttons we can evaluate every button and choose $a^* = \arg\max_a Q_\phi(s, a)$. A handful of Atari buttons makes this easy.
+With $K$ game buttons to evaluate, discrete Q-learning methods such as DQN can dispense with an actor and choose $a^* = \arg\max_a Q_\phi(s, a)$. A handful of Atari buttons makes this easy.
 
 The G1 has $\infty^{29}$ combinations of continuous joint commands, so we need a network to find the maximum for us, the actor $a_\theta(s)$, trained to climb $\nabla_a Q_\phi(s, a)$. This is continuous Q-learning with an amortized argmax, meaning we pay for the search during training, then produce an action in one forward pass.
 
-A stochastic policy also gives us exploration and multiple possible futures, because jiggling a torque helps discover better actions; sampling different futures lets us go left or right around an obstacle.
+A stochastic policy gives us exploration by jiggling a torque to discover better actions, along with multiple possible futures that let us go left or right around an obstacle.
 
 To differentiate through that sampling, we use the reparameterization trick, also used in variational autoencoders (VAEs). Writing $a \sim \mathcal{N}(\mu_\theta, \sigma_\theta^2)$ leaves the dependence of the sampled action on $\theta$ hidden inside a random draw. Instead, draw parameter-free noise $\epsilon \sim \mathcal{N}(0, I)$ and write
 
@@ -152,7 +152,7 @@ $$J(\theta) = \mathbb{E}_{\epsilon \sim p(\epsilon)}\Big[Q_\phi\big(s, a_\theta(
 
 The product-rule term containing $\nabla_\theta p(\epsilon)$ vanishes because the noise density has no $\theta$ in it.
 
-The shapes on the board help us follow this, because the critic supplies 29 slopes, one per joint, each giving a direction and a steepness. The actor Jacobian, a $29 \times N_{\text{weights}}$ matrix of derivatives, tells us how each weight moves each joint. Their product gives one gradient over the actor's weights, which is how SAC moves left in the cliff picture.
+On the board we can follow the shapes of these quantities, starting from the critic's 29 slopes, one per joint, each giving a direction and a steepness. The actor Jacobian, a $29 \times N_{\text{weights}}$ matrix of derivatives, tells us how each weight moves each joint. Their product gives one gradient over the actor's weights, which is how SAC moves left in the cliff picture.
 
 The cost appears when we follow the loop below it.
 
@@ -166,7 +166,7 @@ The classic algorithms give us several ways to protect against this error loop.
 
 - **DDPG (2015)** gives us the basic loop.
 - **TD3 (2018)** trains twin critics and backs up $\min(Q_1, Q_2)$, since a random spike rarely shows up in both critics at the same action and the other vetoes it. It also updates the actor less often, giving the critics time to correct errors before the actor follows them.
-- **SAC (2018)** keeps a stochastic Gaussian and adds an entropy bonus $-\alpha \log \pi_\theta$, weighted by $\alpha$. This rewards uncertainty, because without that pressure, $\sigma_\theta$ collapses toward 0 at a peak, where $\nabla_a Q_\phi = 0$, and exploration stops.
+- **SAC (2018)** keeps a stochastic Gaussian and adds an entropy bonus $-\alpha \log \pi_\theta$, weighted by $\alpha$. This rewards uncertainty; without that pressure, $\sigma_\theta$ collapses toward 0 at a peak, where $\nabla_a Q_\phi = 0$, and exploration stops.
 
 <div class="rc-mark" id="sec-needs" data-panel="needs" data-view="needs" data-title="Two needs a flow cannot meet"></div>
 
@@ -193,7 +193,7 @@ Our G1 reaches past a coffee mug, with half the demonstrations going left, $a = 
 
 Fit a unimodal Gaussian MLP to these demonstrations with squared error, and its center goes to their average, $a = 0$, straight into the mug. We need a policy that keeps left and right as separate answers.
 
-An LLM's discrete softmax handles this easily because its token bins, say 1,024 of them, have probabilities that obey
+An LLM's discrete softmax handles this easily, distributing probability across token bins, say 1,024 of them, according to
 
 $$\sum_{k=1}^{1024} \pi_\theta(k \mid s) = 1$$
 
@@ -201,7 +201,7 @@ The softmax converts raw scores, or logits, into probabilities, so when we incre
 
 Two good bins can both hold probability mass, and we also get an exact $\log \pi_\theta$ in one forward pass. Physical Intelligence's FAST brings this machinery to robot actions by compressing continuous action chunks with a JPEG-style discrete cosine transform and converting them into discrete tokens.
 
-Flow matching gives us another way to keep several answers, but its regression loss pulls toward recorded actions, with no automatic softmax-style suppression of wrong answers elsewhere, so later we'll use reward labels to recover that contrast.
+Flow matching gives us another way to keep several answers, but its regression loss pulls toward recorded actions, with no automatic softmax-style suppression of wrong answers elsewhere, a contrast we'll later recover using reward labels.
 
 <div class="rc-mark" id="sec-flow" data-panel="flow" data-view="flow" data-title="Flow matching in 10 steps"></div>
 
@@ -211,7 +211,7 @@ For $\pi_0$, the output $a_1$ is a whole action chunk containing targets for all
 
 Flow matching and diffusion spend iterative test-time compute on this continuous output by calling the same network $K = 10$ times, starting with noise $a_0$ and progressively refining it into $a_1$.
 
-The network predicts a velocity $v_\theta(a_t, t, s)$ from inputs that are a partly finished chunk $a_t$, the state $s$, and sampler time $t$, running from noise at 0 to a finished chunk at 1. This clock is separate from the robot's 50 Hz clock, with each sampler step updating all 1,450 numbers.
+The network predicts a velocity $v_\theta(a_t, t, s)$ from inputs that are a partly finished chunk $a_t$, the state $s$, and sampler time $t$, running from noise at 0 to a finished chunk at 1. This clock is separate from the robot's 50 Hz clock; each sampler step updates all 1,450 numbers.
 
 Training draws its action chunks from the replay buffer.
 
@@ -240,21 +240,21 @@ for k in range(10):
     a = a + 0.1 * v(a, k / 10, s)
 ```
 
-I had to pause over the target at $t = 0.9$, because we've nearly arrived, yet we're still asking for the whole arrow $a_1 - a_0$. This avoids overshooting because the target is a velocity, so think of $v_\theta$ as a speedometer. On a 60-mile road traveled in 1 hour, it reads 60 mph at $t = 0$, $0.5$ and $0.9$. At mile 54, the last step lasts only $\Delta t = 0.1$ hour, so $54 + 0.1 \times 60 = 60$. The code's `a + 0.1 * v` does the same speed-times-time calculation.
+I had to pause over the target at $t = 0.9$, nearly at the destination yet still asking for the whole arrow $a_1 - a_0$. To see why a velocity target doesn't overshoot, think of $v_\theta$ as a speedometer. On a 60-mile road traveled in 1 hour, it reads 60 mph at $t = 0$, $0.5$ and $0.9$. At mile 54, the last step lasts only $\Delta t = 0.1$ hour, so $54 + 0.1 \times 60 = 60$. The code's `a + 0.1 * v` does the same speed-times-time calculation.
 
 A constant-velocity target has the same size at every $t$, so the gradients never vanish near $t = 1$.
 
-The straight training paths might suggest we could jump the whole way instead of taking 10 steps, but look at the upper drawing. Noise samples at $t = 0$ are paired with either $a_1 = -1$ or $a_1 = +1$, so near the start, training lines headed both ways cross. Squared-error regression averages their arrows, which means that at $t = 0$, one big step takes each sample to the average target, the mug.
+The straight training paths might suggest we could jump the whole way instead of taking 10 steps, but look at the upper drawing. With noise samples at $t = 0$ paired with either $a_1 = -1$ or $a_1 = +1$, training lines headed both ways cross near the start. Squared-error regression averages their arrows, which means that at $t = 0$, one big step takes each sample to the average target, the mug.
 
-The lower drawing shows the new paths produced during sampling, where small $0.1\,v_\theta$ steps let us ask for a fresh velocity after every move. A particle that moves right enters a region with more right-bound training lines; its next arrow turns further right. Repeating this splits the samples into two branches around the mug, even though the individual training pairs were straight.
+The lower drawing shows the new paths produced during sampling by taking small $0.1\,v_\theta$ steps and asking for a fresh velocity after every move. A particle that moves right enters a region with more right-bound training lines; its next arrow turns further right. Repeating this splits the samples into two branches around the mug, even though the individual training pairs were straight.
 
 ## 3. Why flow matching breaks both standard RL families
 
 <div class="rc-mark" id="sec-needs-again" data-panel="needs" data-view="needs" data-title="Two needs a flow cannot meet"></div>
 
-Now we can follow the two RL calculations through those ten steps. For the score-function update, we need the final chunk's log-probability, while for the pathwise update, we need the critic's slope to reach the policy weights.
+Now we can follow the two RL calculations through those ten steps. The score-function update needs the final chunk's log-probability; the pathwise update needs the critic's slope to reach the policy weights.
 
-The first calculation tracks how the flow squeezes probability, while the second multiplies derivatives through the sampler.
+The first calculation tracks how the flow squeezes probability; the second multiplies derivatives through the sampler.
 
 <div class="rc-mark" id="sec-funnel" data-panel="funnel" data-view="funnel" data-title="Squeezed volume, Jacobian trace"></div>
 
@@ -264,9 +264,9 @@ Take a one-dimensional slice of noise with width $\Delta a_0 = 1.0$ containing 3
 
 Knowing the starting Gaussian density isn't enough because we have to account for that squeezing along the entire path.
 
-The sampler approximates an ordinary differential equation (ODE), $da_t/dt = v_\theta(a_t, t, s)$, where in one dimension, $\partial v / \partial a$ gives the local stretching rate. A negative rate means points ahead move slower than those behind, compressing the slice, while a positive rate means it stretches.
+The sampler approximates an ordinary differential equation (ODE), $da_t/dt = v_\theta(a_t, t, s)$, with a local stretching rate given in one dimension by $\partial v / \partial a$. A negative rate means points ahead move slower than those behind, compressing the slice, while a positive rate means it stretches.
 
-With multiple coordinates, the rate is the divergence, which is the sum of diagonal entries, or trace, of the Jacobian $\partial v_\theta / \partial a_t$. This matrix records how every velocity coordinate changes with every position coordinate, with each diagonal entry giving one coordinate's stretching rate.
+With multiple coordinates, the rate is the divergence, the sum of diagonal entries, or trace, of the Jacobian $\partial v_\theta / \partial a_t$. This matrix records how every velocity coordinate changes with every position coordinate, with each diagonal entry giving one coordinate's stretching rate.
 
 To keep the drawing small, use one 29-joint action, whose Jacobian is $29 \times 29$; for our full chunk it would be $1{,}450 \times 1{,}450$. Starting from known Gaussian density $p_0$, the continuous-flow likelihood is
 
@@ -274,7 +274,7 @@ $$\log \pi_\theta(a_1 \mid s) = \log p_0(a_0) - \int_0^1 \left(\sum_{i=1}^{29} \
 
 Here $v_{\theta,i}$ is coordinate $i$'s velocity, and the 10 Euler steps approximate this continuous path. For our one-dimensional slice, the divergence integral is $\ln(\Delta a_1 / \Delta a_0) = \ln 0.01 \approx -4.6$. Subtracting it increases log density by 4.6, or density by $e^{4.6} \approx 100$.
 
-So there is a likelihood calculation, but it's expensive because one backward pass supplies one Jacobian row, and each diagonal entry needs a different row. Even the 29-joint version takes 29 backward passes at each of 10 ODE steps, for every sample. PPO then differentiates this calculation again with respect to $\theta$, which is intractable at VLA scale.
+There is a likelihood calculation, then, with a cost of one backward pass per Jacobian row and a different row needed for each diagonal entry. Even the 29-joint version takes 29 backward passes at each of 10 ODE steps, for every sample. PPO then differentiates this calculation again with respect to $\theta$, which is intractable at VLA scale.
 
 <details>
 <summary>What if we constrain the Jacobian?</summary>
@@ -291,7 +291,7 @@ We could skip likelihoods and backpropagate the critic's slope through the diffe
 
 $$a_{0.1} = a_0 + 0.1\, v_\theta(a_0, 0, s), \qquad a_{0.2} = a_{0.1} + 0.1\, v_\theta(a_{0.1}, 0.1, s)$$
 
-Step 1's output becomes step 2's input, so all ten form nested functions, $f_{10}(f_9(\dots f_1(a_0)))$, whose Jacobians multiply in the backward pass.
+With step 1's output becoming step 2's input, all ten form nested functions, $f_{10}(f_9(\dots f_1(a_0)))$, whose Jacobians multiply in the backward pass.
 
 The same $\theta$ appears at every step, and its contribution from step 1 must cross nine subsequent steps to reach the critic. For $t_k = k/10$, its sampled gradient is
 
@@ -299,7 +299,7 @@ $$g_1 = \frac{\partial Q_\phi(s, a_1)}{\partial a_1} \cdot J_9 J_8 \cdots J_1 \c
 
 Each $J_k$ contains the identity $I$, carrying the chunk forward, plus the velocity network's correction. The full gradient sums ten contributions like this, one from each step.
 
-We've built backpropagation through a 10-layer recurrent neural network (RNN). If the nine factors each stretch a direction by 1.3, it grows by $1.3^9 \approx 10.6$. Scale it by 0.7 each time and it shrinks to $0.7^9 \approx 0.04$, so different directions can explode or vanish.
+We've built backpropagation through a 10-layer recurrent neural network (RNN). If the nine factors each stretch a direction by 1.3, it grows by $1.3^9 \approx 10.6$. Scaling it by 0.7 each time shrinks it to $0.7^9 \approx 0.04$; across these repeated multiplications, different directions can explode or vanish.
 
 The signal being transformed is the critic's slope in 1,450 dimensions, where coordinated robot motions occupy a thin manifold. Most arbitrary combinations of 1,450 numbers resemble no recorded motion, and the critic has no data there. An amplified slope can steer the policy off the motion manifold toward a critic mirage. The same error loop we drew earlier now sits behind ten stages of amplification.
 
@@ -315,17 +315,17 @@ One approach keeps PPO and changes how the flow supplies its likelihood.
 
 Inject Gaussian noise into all 10 steps and each becomes a small Gaussian policy with an exact log-probability. We can treat the denoising process as additional steps of a Markov decision process (MDP) and apply PPO.
 
-This extends the credit-assignment problem because an episode with 50 robot decisions and 10 denoising steps per decision becomes $50 \times 10 = 500$ steps, while the reward still arrives at the end.
+The credit-assignment problem now extends over $50 \times 10 = 500$ steps for an episode with 50 robot decisions and 10 denoising steps per decision, even though the reward still arrives at the end.
 
 **FPO keeps the deterministic flow and substitutes a proxy,** using an evidence lower bound (ELBO) on log-likelihood to estimate the change in $\log \pi_\theta$ from the change in flow-matching loss. A lower regression loss roughly indicates higher likelihood, and the estimated ratio then goes into PPO's $[0.8, 1.2]$ clip.
 
-Physical Intelligence tested FPO and PPO on real-robot laundry folding in [Appendix D of the $\pi^*_{0.6}$ paper (arXiv:2511.14759)](https://arxiv.org/abs/2511.14759). The noisy flow-loss proxy failed to track how far the policy had moved. The clip didn't trigger, updates damaged the pretrained VLA weights, and training collapsed. Lowering the learning rate enough to stabilize it left very little improvement. On the board, the proxy needle stays inside the guardrail while the true ratio has already crossed it.
+Physical Intelligence tested FPO and PPO on real-robot laundry folding in [Appendix D of the $\pi^*_{0.6}$ paper (arXiv:2511.14759)](https://arxiv.org/abs/2511.14759). The noisy flow-loss proxy failed to track how far the policy had moved, leaving the clip inactive as updates damaged the pretrained VLA weights and training collapsed. Lowering the learning rate enough to stabilize it left very little improvement. On the board, the proxy needle stays inside the guardrail while the true ratio has already crossed it.
 
 <div class="rc-mark" id="sec-cfg" data-panel="cfg" data-view="cfg" data-title="RECAP and classifier-free guidance"></div>
 
 ### RECAP ($\pi^*_{0.6}$): the reward becomes an input
 
-We already know how to train a flow with BC, using $\|v_\theta - (a_1 - a_0)\|^2$, so we can condition the policy on the reward by keeping that loss and adding a label describing how well the trajectory went. We never differentiate through the reward.
+We can condition the policy on the reward using the BC loss we already know, $\|v_\theta - (a_1 - a_0)\|^2$, with an added label describing how well the trajectory went. We never differentiate through the reward.
 
 RECAP does this in three steps.
 
@@ -335,7 +335,7 @@ RECAP does this in three steps.
 
 $$\mathcal{L}_{\text{RECAP}}(\theta) = \big\| v_\theta(a_t, t, s, I) - (a_1 - a_0) \big\|^2$$
 
-The label acts like an LLM prompt, so one network learns both behaviors, and at test time we request the one we want.
+With the label acting like an LLM prompt, one network learns both behaviors, letting us request the one we want at test time.
 
 Keeping the bad trajectories serves two purposes, starting with the representations they still teach the model. Advantage-weighted regression (AWR), the standard reward-weighted BC approach, multiplies each squared error by $w = e^{A/\beta}$, with temperature $\beta$. Those weights must stay positive because a negative weight rewards increasing the error, sending $\|v_\theta\| \to \infty$. Bad samples therefore receive tiny weights, and in practice AWR discards 80 to 90% of the buffer's effective contribution.
 
@@ -349,11 +349,11 @@ $$v_{\text{guided}} = v_{\text{all}} + \beta\, \big(v_{\text{good}} - v_{\text{a
 
 At $\beta = 0$ we use the mixed velocity; at 1 we use Good; above 1 we extrapolate past it.
 
-The mixture depends on which class is likely to have produced the current point, so its weights vary across the flow. At the board's point, suppose they match the dataset's 30% Good and 70% Bad, with $v_{\text{good}} = (0.7, 1)$ and $v_{\text{bad}} = (-0.3, 1)$, giving
+The mixture's weights vary across the flow according to which class is likely to have produced the current point. At the board's point, suppose they match the dataset's 30% Good and 70% Bad, with $v_{\text{good}} = (0.7, 1)$ and $v_{\text{bad}} = (-0.3, 1)$, giving
 
 $$v_{\text{all}} = 0.3\,(0.7, 1) + 0.7\,(-0.3, 1) = (0, 1)$$
 
-The difference vector is $(0.7, 0)$, so setting $\beta = 2$ gives
+With a difference vector of $(0.7, 0)$, setting $\beta = 2$ gives
 
 $$v_{\text{guided}} = (0, 1) + 2\,(0.7, 0) = (1.4, 1)$$
 
@@ -377,7 +377,7 @@ for k in range(10):
     a = a + 0.1 * (v_all + 2.0 * (v_good - v_all))
 ```
 
-You can try this below, where each action is a 2D point where the gripper passes the mug, seen from above. The clean left and right passes make up the top 30% of demonstrations and get Good labels, while a central crash and two clumsy brushes get Bad labels. The velocity field is the exact flow-matching solution for these data, what a perfect network would learn, and you control Euler steps $K$ and guidance $\beta$.
+You can try this below, using a top-down view of the gripper passing the mug with each action represented as a 2D point. The clean left and right passes make up the top 30% of demonstrations and get Good labels, while a central crash and two clumsy brushes get Bad labels. The velocity field is the exact flow-matching solution for these data, what a perfect network would learn, and you control Euler steps $K$ and guidance $\beta$.
 
 Start with $\beta = 0$ and one step: every sample goes to the data average, inside the mug. Increase the steps and the samples separate into all five clusters, including the crash. Then set $K = 2$ and increase $\beta$ from 0 through 1 to 2. With the default 160 samples and seed 7, Good-only guidance at $\beta = 1$ still leaves 34% nearest a Bad cluster. Increasing the guidance to $\beta = 2$ brings that down to 18%.
 
@@ -387,28 +387,28 @@ Start with $\beta = 0$ and one step: every sample goes to the data average, insi
 
 ### Richer labels ($\pi_{0.7}$) and actions in the output (GVC)
 
-RECAP supplies one bit, while $\pi_{0.7}$ ([arXiv:2604.15483](https://arxiv.org/abs/2604.15483)) expands $\pi^*_{0.6}$'s $I \in \{0, 1\}$ into richer metadata and a visual target:
+RECAP supplies one bit; $\pi_{0.7}$ ([arXiv:2604.15483](https://arxiv.org/abs/2604.15483)) expands $\pi^*_{0.6}$'s $I \in \{0, 1\}$ into richer metadata and a visual target:
 
 - `Speed`,
 - `Quality`, from 1 to 5,
 - `Mistake`, true or false,
 - a subgoal image showing the scene 4 s ahead.
 
-That distills all the task specialists into one steerable generalist, where you choose the behavior by choosing the labels.
+That distills all the task specialists into one steerable generalist whose behavior you choose through its labels.
 
-The Generative Value Classifier, GVC ([Swerdlow, Dong and Finn, arXiv:2610.22497](https://arxiv.org/pdf/2610.22497)), applies the same idea to value prediction. Its starting observation is that supervision comes from the output targets in the loss, so a rich input supplies no extra target by itself.
+The Generative Value Classifier, GVC ([Swerdlow, Dong and Finn, arXiv:2610.22497](https://arxiv.org/pdf/2610.22497)), applies the same idea to value prediction. Supervision comes from the output targets in the loss; a rich input supplies no extra target by itself.
 
-A standard critic $Q_\phi(s, a) \to \hat{R}$ receives a 1,450-D action chunk and predicts one return. Training with $(\hat{R} - R)^2$ against observed return $R$ supervises one number per sample, so the critic gets very little signal from all that action data.
+A standard critic $Q_\phi(s, a) \to \hat{R}$ receives a 1,450-D action chunk and predicts one return. Training with $(\hat{R} - R)^2$ against observed return $R$ supervises one number per sample, giving the critic very little signal from all that action data.
 
 GVC makes the return an input, represented by one of $M$ bins $z_1, \dots, z_M$, and predicts the action velocity:
 
 $$\big\|v_\theta(a_t, t, s, z_i) - (a_1 - a_0)\big\|^2$$
 
-This is RECAP's loss with a return bin in place of Good or Bad, so each sample now supervises 1,450 output coordinates instead of 1, a 1,450× increase in the number of targets.
+This is RECAP's loss with a return bin in place of Good or Bad, supervising 1,450 output coordinates per sample instead of 1, a 1,450× increase in the number of targets.
 
-We still need to turn this generator into a critic, because it generates actions that fit return $z_i$, while we want the return that fits a given action.
+We still need to turn this generator into a critic, going from actions that fit return $z_i$ to the return that fits a given action.
 
-GVC uses Bayes' rule for Best-of-$N$ selection, where the policy generates $N = 16$ candidate chunks. For each candidate $a$, evaluate how well each return bin explains it, using flow-matching error as a proxy for $-\log p(a \mid s, z_i)$, with lower error meaning a better explanation.
+For Best-of-$N$ selection among $N = 16$ candidate chunks generated by the policy, GVC uses Bayes' rule. For each candidate $a$, evaluate how well each return bin explains it, using flow-matching error as a proxy for $-\log p(a \mid s, z_i)$, with lower error meaning a better explanation.
 
 This is the ELBO-style proxy FPO used, but its smaller job is to rank 16 candidates without controlling the permitted size of a policy update. An action that resembles high-return behavior gets stronger support from high bins.
 
@@ -416,7 +416,7 @@ Combine these likelihoods with a prior $p(z_i \mid s)$, the return-bin probabili
 
 $$p(z_i \mid s, a) = \frac{p(a \mid s, z_i)\, p(z_i \mid s)}{\sum_{j=1}^{M} p(a \mid s, z_j)\, p(z_j \mid s)}$$
 
-The denominator normalizes across all $M$ bins, and their expected value gives $Q_{\text{GVC}}(s, a) = \sum_i p(z_i \mid s, a)\, z_i$.
+Normalizing across all $M$ bins in the denominator lets us take their expected value, $Q_{\text{GVC}}(s, a) = \sum_i p(z_i \mid s, a)\, z_i$.
 
 A temporal-difference (TD) anchor calibrates the score with $(Q_{\text{GVC}} - y_{\text{TD}})^2$, using the bootstrapped target $y_{\text{TD}} = r + \gamma V(s')$. The robot executes the highest-scoring candidate:
 
@@ -451,7 +451,7 @@ Each $a_0$ in the Gaussian ball decodes into a realistic motion, so search stays
 
 **4B tilts the velocity with a one-step preview,** as QF3 ([Kim, McAllister, Goldberg, Abbeel, Kanazawa, arXiv:2610.08789](https://arxiv.org/abs/2610.08789)) and FlowDPG ([arXiv:2606.22303](https://arxiv.org/abs/2606.22303)) keep training the flow, pulling its velocity toward the critic's slope in an approach that builds on Q-score matching.
 
-Recall the speed-times-time calculation, where holding the current velocity for the remaining time at step $t$ gives a preview of the endpoint:
+Recall the speed-times-time calculation, holding the current velocity for the remaining time at step $t$ to preview the endpoint:
 
 $$\hat{a}_1 = a_t + (1 - t)\, v_\theta(a_t, t, s)$$
 
@@ -463,13 +463,13 @@ Evaluate the critic's slope at $\hat{a}_1$ and adjust the current velocity towar
 
 I see three remaining problems in $\pi_{0.7}$ that point toward a more complete loop.
 
-**Pixel subgoals cost too much** because producing the image 4 s ahead takes a 14B image model 1.25 s on 4× H100. The policy then turns the RGB image back into ViT tokens, the patch embeddings of a vision transformer, so we render pixels only to re-encode them immediately. Predicting the subgoal directly in that latent ViT space skips rendering and is 100× faster.
+**Pixel subgoals cost too much** because producing the image 4 s ahead takes a 14B image model 1.25 s on 4× H100. The policy then turns the RGB image back into ViT tokens, the patch embeddings of a vision transformer; we render pixels only to re-encode them immediately. Predicting the subgoal directly in that latent ViT space skips rendering and is 100× faster.
 
-We can still use hindsight experience replay (HER), which relabels an attempt with the goal it actually reached. Suppose our arm smoothly grabs the wrong shirt corner, so the subgoal choice gets `Mistake: true`. For the low-level flow controller, we relabel the goal as the corner it reached and give it `Quality: 5` because it executed that motion smoothly. The failed task attempt still teaches useful control.
+We can still use hindsight experience replay (HER), which relabels an attempt with the goal it actually reached. Suppose our arm smoothly grabs the wrong shirt corner, earning the subgoal choice a `Mistake: true` label. For the low-level flow controller, we relabel the goal as the corner it reached and give it `Quality: 5` because it executed that motion smoothly. The failed task attempt still teaches useful control.
 
-**The tags are coarse** because `Quality` and `Speed` apply to whole episodes or coarse segments. A perfect grasp followed by a clumsy fold receives one tag, with no dense credit for the individual steps.
+**The tags are coarse**, applying `Quality` and `Speed` to whole episodes or coarse segments. A perfect grasp followed by a clumsy fold receives one tag, with no dense credit for the individual steps.
 
-**The state forgets previous attempts** because current VLAs see the current frame $o_t$, or 2 frames. Suppose a heavy box slips from the gripper at $t = 1$ s, then by $t = 2$ s it's back on the table, and the camera view matches the view before the attempt. Given the same input, the policy repeats the same failed grasp.
+**The state forgets previous attempts**, as current VLAs see the current frame $o_t$, or 2 frames. Suppose a heavy box slips from the gripper at $t = 1$ s, then by $t = 2$ s it's back on the table, and the camera view matches the view before the attempt. Given the same input, the policy repeats the same failed grasp.
 
 I'd add a compressed episodic memory-imprint vector to the state, encoding recently tried actions and the critic's surprise $\Delta V$, the change in predicted value when the box slipped. That gives the policy information it can use to adapt to the physics in context at test time.
 
@@ -479,7 +479,7 @@ I'd add a compressed episodic memory-imprint vector to the state, encoding recen
 
 Max Bennett's *A Brief History of Intelligence* describes a leap in vertebrate brain evolution: pausing to simulate possible actions in an internal world model. Picture a cat or squirrel on a branch considering three jumps, scoring safe landings against falls, then taking the winner. LLMs have something analogous in token-level chain of thought, while physical robots have lacked the corresponding fast internal simulation and action-scoring loop.
 
-This next part is my extrapolation, where I'd combine the pieces into family 4C by proposing motions, simulating them, scoring them and learning from the selected action. AlphaZero uses this pattern to search candidate moves with a learned value and train its policy to imitate the search.
+I'd extrapolate from these pieces to combine them into family 4C, proposing motions, simulating them, scoring them and learning from the selected action. AlphaZero uses this pattern to search candidate moves with a learned value and train its policy to imitate the search.
 
 ```python
 while True:
