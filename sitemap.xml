@@ -29,12 +29,17 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/robotics/recent-papers/</loc>
     <lastmod>2026-10-27</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://hadrien-cornier.github.io/robotics/organizing-ai-agent-teams/</loc>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -214,7 +219,7 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -224,12 +229,12 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/agents/</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/ai/</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
@@ -319,7 +324,7 @@
   </url>
   <url>
     <loc>https://hadrien-cornier.github.io/tags/measurement/</loc>
-    <lastmod>2026-10-27</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
   </url>
   <url>
