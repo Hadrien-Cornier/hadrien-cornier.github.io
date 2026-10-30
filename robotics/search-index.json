@@ -1,13 +1,13 @@
 [
   {
     "title": "What is the best way to organize a team of AI agents?",
-    "description": "In one week, two of my agent setups failed at the seams between agents: a robot arm stuck behind four layers of permission, and a benchmark where two workers disagreed on a coordinate format. The research measures pieces of the question. Which team shape, and which model in which seat, is still open. A long read with a pinned blackboard.",
+    "description": "Two of my agent teams broke at the handoffs between agents in one week, and the studies so far measure only pieces of which team shape and which model in each seat work best.",
     "tags": [
       "agents",
       "ai",
       "measurement"
     ],
-    "date": "2026-10-29",
+    "date": "2026-10-30",
     "url": "/robotics/organizing-ai-agent-teams/"
   },
   {
