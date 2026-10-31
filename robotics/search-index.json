@@ -1,7 +1,7 @@
 [
   {
-    "title": "What is the best way to organize a team of AI agents?",
-    "description": "Two of my agent teams broke at the handoffs between agents in one week, and the studies so far measure only pieces of which team shape and which model in each seat work best.",
+    "title": "Nobody knows yet how to organize a team of AI agents",
+    "description": "Splitting work across my crew of coding agents seemed to lower the quality, and the few studies so far leave the best way to organize a team of agents open.",
     "tags": [
       "agents",
       "ai",

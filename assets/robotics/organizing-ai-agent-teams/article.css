@@ -14,10 +14,10 @@
 .ato-board .ato-r { fill: #ff7a7a; }
 .ato-board .ato-y { fill: #f5d76e; }
 /* A straight line has a zero-width box, so the chalk filter (sized from that box) would erase it. */
-.ato-board :is(.ato-fr, .ato-box, .ato-cell rect) { fill: none; filter: url(#bb-chalk); }
+.ato-board :is(.ato-fr, .ato-box) { fill: none; filter: url(#bb-chalk); }
 .ato-board .ato-ln { fill: none; }
+/* The stacked explorer cards are filled with the board color, so each card hides the outline of the card behind it. */
+.ato-board .ato-stack { fill: #1e2622; filter: url(#bb-chalk); }
 .ato-board .ato-fr { stroke: #ece8dc; stroke-opacity: .4; stroke-width: 1.5; }
 .ato-board .ato-box { stroke-width: 1.5; }
 .ato-board .ato-ln { stroke: #ece8dc; stroke-width: 1.6; }
-.ato-board .ato-cell rect { stroke-width: 1.2; }
-.ato-board .ato-cell rect:not([stroke]) { stroke: #c8c3b4; stroke-opacity: .7; }
