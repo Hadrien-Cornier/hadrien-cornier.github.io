@@ -1,5 +1,16 @@
 [
   {
+    "title": "Nobody knows yet how to organize a team of AI agents",
+    "description": "Splitting work across my crew of coding agents seemed to lower the quality, and the few studies so far leave the best way to organize a team of agents open.",
+    "tags": [
+      "agents",
+      "ai",
+      "measurement"
+    ],
+    "date": "2026-10-30",
+    "url": "/robotics/organizing-ai-agent-teams/"
+  },
+  {
     "title": "Why LLM reinforcement learning breaks on robots, and how the frontier is fixing it",
     "description": "Why is reinforcement learning on robots so much harder than on language models, and why can't we reuse the LLM recipe? An LLM picks from a finite menu of tokens, so it gets the exact probability of each answer for free. A robot outputs continuous actions from a flow policy, which gives classical RL neither that probability nor a stable gradient through the critic. This review explains those constraints and how RECAP, π0.7, GVC, DSRL and QF3 work around them, and it ends with possible future directions.",
     "tags": [
