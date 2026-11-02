@@ -1,5 +1,6 @@
 import {startArticle} from '/assets/robotics/rebuild/article-runtime.js';
 import {renderSim} from '/assets/robotics/why-llm-rl-breaks-on-robots/flow-sim.mjs';
+import {hydrate} from '/assets/robotics/why-llm-rl-breaks-on-robots/widgets.mjs';
 
 await startArticle([]);
 
@@ -20,3 +21,6 @@ document.querySelectorAll('[data-flow-sim]').forEach((fig) => {
   controls.querySelector('[data-k="noise"]').addEventListener('click', () => { seed += 1; draw(); });
   controls.hidden = false;
 });
+
+// The four small widgets: same pattern, one module.
+hydrate();
