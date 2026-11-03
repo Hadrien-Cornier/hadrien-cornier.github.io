@@ -141,9 +141,10 @@ test('only articles with a timeline load its small runtime script', () => {
     assert.doesNotMatch(componentPage, /<script src="\/assets\/site.js/);
     assert.doesNotMatch(plainPage, /<script[^>]*src="(?!\/assets\/theme\.js\?)/);
     assert.doesNotMatch(home, /robotics-timeline.js/);
-    assert.match(home, /<script type="module" src="\/assets\/control-playground.js\?v=[a-f0-9]+"><\/script>/);
+    assert.doesNotMatch(home, /control-playground\.js/);
     assert.match(geometryPage, /<script src="\/assets\/arm-geometry.js\?v=[a-f0-9]+" defer><\/script>/);
-    assert.doesNotMatch(geometryPage, /control-playground.js|robotics-timeline.js/);
+    assert.doesNotMatch(geometryPage, /control-playground\.js|robotics-timeline\.js/);
+    assert.doesNotMatch(home, /arm-geometry\.js|data-control-playground/);
     assert.doesNotMatch(home, /arm-geometry.js/);
   } finally { fs.rmSync(root, {recursive:true, force:true}); }
 });
@@ -168,7 +169,7 @@ test('build preserves sitemap entries and creates repeatable offline pages', () 
     assert.match(home, /01 essay/);
     assert.doesNotMatch(home, /Unfinished|\{\{/);
     assert.match(home, /href="\/about.html"/);
-    assert.match(home, /data-control-playground/);
+    assert.doesNotMatch(home, /data-control-playground/);
     assert.doesNotMatch(home, /id="joint-one"/);
     assert.doesNotMatch(home, /href="\/robotics\/from-joint-angles-to-a-moving-arm\/"/);
     assert.match(home, /href="#writing">Explore the writing/);
