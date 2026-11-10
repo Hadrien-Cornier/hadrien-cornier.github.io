@@ -1,5 +1,5 @@
 /* Writing pages share the site's paper, ink, and accent colors. */
-.home-hero { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); gap: 72px; align-items: center; padding: 68px 0 72px; }
+.home-hero { display: block; padding: 68px 0 72px; }
 .home-hero-copy { padding: 12px 0; }
 .home-hero h1 { margin: 27px 0 26px; max-width: 660px; font-size: clamp(46px, 5.3vw, 70px); line-height: 1.06; letter-spacing: -2.8px; }
 .home-intro { max-width: 485px; color: var(--muted); font-size: 17px; line-height: 1.75; }

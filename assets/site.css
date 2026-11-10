@@ -24,7 +24,7 @@
 .theme-toggle { flex-shrink: 0; padding: 7px 10px; min-height: 36px; border: 1px solid var(--line); background: transparent; color: var(--ink); font-size: 12px; white-space: nowrap; }
 .theme-toggle:hover { border-color: var(--accent); }
 /* Static inline illustrations keep their authored light palette. Live diagrams inherit the theme. */
-:root:not([data-theme="light"]) .article-body svg[role="img"]:not(:where(.control-playground *, .arm-demo *, .robotics-timeline *, .robotics-market *, .dex-demo *, .so101-widget *)) {
+:root:not([data-theme="light"]) .article-body svg[role="img"]:not(:where(.arm-demo *, .robotics-timeline *, .robotics-market *, .dex-demo *, .so101-widget *)) {
   color-scheme: light;
   --paper: #f7f6f2;
   --ink: #242622;
