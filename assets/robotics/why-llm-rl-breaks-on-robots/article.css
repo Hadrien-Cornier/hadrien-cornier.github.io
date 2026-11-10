@@ -7,8 +7,12 @@
 .rebuild-article .fsim-controls input[type=range] { flex: 1 1 auto; min-width: 0; accent-color: #f0d98a; }
 .rebuild-article .fsim-controls output { min-width: 2.2em; font-variant-numeric: tabular-nums; }
 .rebuild-article .fsim-controls button { font: inherit; padding: 6px 12px; border: 1px solid #b3b7ae; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
+.rebuild-article .fwid { max-width: 560px; margin-inline: auto; }
+.rebuild-article .fwid-modes { display: flex; flex-wrap: wrap; gap: 4px 14px; flex: 1 1 100%; }
+.rebuild-article .fwid-modes label { flex: 0 0 auto; gap: 6px; }
+.rebuild-article .fsim-controls input[type=radio] { accent-color: #f0d98a; }
 .rebuild-article .fsim-readout { margin: 0; padding: 8px 14px 0; font: 14px/1.45 var(--sans, Arial, sans-serif); color: #f0d98a; }
-/* WebKit clamps a filter buffer at 4,096 device pixels, and this 14-panel board is taller than that on a 2x desktop screen.
+/* WebKit clamps a filter buffer at 4,096 device pixels, and this 16-panel board is taller than that on a 2x desktop screen.
    Chalk each panel instead of the whole board, so every filter buffer stays one panel in size. */
 .article-body svg.flowrl-board { filter: none; }
 .article-body svg.flowrl-board .rc-panel { filter: url(#bb-chalk); }
