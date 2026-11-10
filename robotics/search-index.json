@@ -12,7 +12,7 @@
   },
   {
     "title": "Why LLM reinforcement learning breaks on robots, and how the frontier is fixing it",
-    "description": "PPO and GRPO need the exact probability of each action, and actor-critics need a short path from the critic to the weights. A flow-matching robot policy offers neither, even in a simulator. This essay builds the flow policy, derives both RL families from one equation, shows where each one breaks, and walks through the fixes: RECAP, GVC, DSRL and QF3.",
+    "description": "PPO and GRPO need each action's exact probability; actor-critics need a short path from the critic to the weights. A flow-matching robot policy offers neither, even in a simulator. I build the flow policy, derive both RL families from one equation, show where each breaks, and cover the fixes: RECAP, GVC, DSRL and QF3.",
     "tags": [
       "reinforcement-learning",
       "robot-learning",

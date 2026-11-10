@@ -1,6 +1,6 @@
 ---
 title: 'Why LLM reinforcement learning breaks on robots, and how the frontier is fixing it'
-description: 'PPO and GRPO need the exact probability of each action, and actor-critics need a short path from the critic to the weights. A flow-matching robot policy offers neither, even in a simulator. This essay builds the flow policy, derives both RL families from one equation, shows where each one breaks, and walks through the fixes: RECAP, GVC, DSRL and QF3.'
+description: 'PPO and GRPO need each action''s exact probability; actor-critics need a short path from the critic to the weights. A flow-matching robot policy offers neither, even in a simulator. I build the flow policy, derive both RL families from one equation, show where each breaks, and cover the fixes: RECAP, GVC, DSRL and QF3.'
 date: '2026-10-27'
 updated: '2026-11-02'
 draft: false
@@ -16,11 +16,11 @@ thumbnail_alt: 'Blackboard drawing: a flow policy steers noise around a mug into
 
 <div class="rc-mark" id="sec-walls" data-panel="walls" data-view="walls" data-title="Two walls"></div>
 
-A friend who works on robots told me, almost in passing, that classic reinforcement learning is hard to do with flow matching. I nodded, then realized I couldn't say why. The language-model recipe looks simple: give the model a prompt, sample 64 answers, score them, and make the good ones more likely. That's GRPO, the update behind DeepSeek-R1, and a modern robot policy, a pretrained vision-language transformer with a small action head (a VLA), looks a lot like the model it trains. So why can't we copy the recipe?
+A friend who works on robots mentioned that classic reinforcement learning is hard to do with flow matching, and I couldn't say why. The language-model recipe looks simple: sample 64 answers to a prompt, score them, and make the good ones more likely. That's GRPO, the update behind DeepSeek-R1, and a modern robot policy, a pretrained vision-language transformer with a small action head (a VLA), looks a lot like the model it trains. So why can't we copy it?
 
-There are two walls. The first is the environment. PPO needs fresh rollouts for every update, and GRPO needs its group of attempts to start from the same state, trivial for a text prompt and impossible for a crumpled shirt. A simulator knocks this wall down: [Rudin et al.](https://arxiv.org/abs/2109.11978) trained walking policies with 4,096 robots in parallel in Isaac Gym, and a simulator copies a start state as often as you like. A real robot can't throw data away, so it ends up with replay, bootstrapping and a neural critic, the deadly triad from [part 5 of the RL series](/robotics/rl-5-the-deadly-triad/).
+Two walls stand in the way. The first is the environment: PPO needs fresh rollouts for every update, and GRPO needs a group of attempts from the same start state, trivial for a prompt and impossible for a crumpled shirt. A simulator removes this wall by copying start states at will; [Rudin et al.](https://arxiv.org/abs/2109.11978) trained walking policies on 4,096 parallel robots in Isaac Gym. A real robot keeps its old data, so it ends up with replay, bootstrapping and a neural critic, the deadly triad from [part 5 of the RL series](/robotics/rl-5-the-deadly-triad/).
 
-The second wall is the architecture, and it stands even in a simulator. A manipulation VLA like $\pi_0$ refines noise into a whole second of motion over 10 steps with flow matching, and that design breaks both families of RL updates. This essay is about that wall: we'll build the flow policy, derive the two RL families from one equation, watch each one break, and end with the methods that get around it. The board on the side follows along.
+The second wall, the architecture, stands even in a simulator. A manipulation VLA like $\pi_0$ uses flow matching to refine noise into a second of motion over 10 steps, and that design breaks both families of RL updates. This essay is about that wall; the board on the side follows along.
 
 <div class="rc-mark" id="sec-mug" data-panel="mug" data-view="mug" data-title="Two good answers"></div>
 
